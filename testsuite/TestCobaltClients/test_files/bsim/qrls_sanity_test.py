@@ -6,11 +6,12 @@ def test_qrls_invalid_option():
     qrls test run: invalid_option
 
         Command Output:
-          Usage: qrls.py [options] <jobid1> [ ... <jobidN> ]
-          
-          qrls.py: error: no such option: -k
-          
-
+        
+        Command Error/Debug:Usage: qrls.py [options] <jobid1> [ ... <jobidN> ]
+        
+        qrls.py: error: no such option: -k
+        
+        
     """
 
     args      = """-k 1"""
@@ -19,6 +20,7 @@ def test_qrls_invalid_option():
     results = testutils.run_cmd('qrls.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -29,7 +31,8 @@ def test_qrls_invalid_option():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -39,29 +42,30 @@ def test_qrls_debug_flag():
     qrls test run: debug_flag
 
         Command Output:
-          
-          qrls.py -d 1
-          
-          component: "queue-manager.get_jobs", defer: False
-            get_jobs(
-               [{'user_hold': '*', 'tag': 'job', 'user': 'georgerojas', 'jobid': 1}],
-               )
-          
-          
-          component: "queue-manager.set_jobs", defer: False
-            set_jobs(
-               [],
-               {'user_hold': False},
-               georgerojas,
-               )
-          
-          
-             No jobs found.
-          Failed to match any jobs
-             Failed to remove user hold on jobs: 
-                job 1 not found
-          
-
+           Failed to remove user hold on jobs: 
+              job 1 not found
+        
+        Command Error/Debug:
+        qrls.py -d 1
+        
+        component: "queue-manager.get_jobs", defer: False
+          get_jobs(
+             [{'user_hold': '*', 'tag': 'job', 'user': 'georgerojas', 'jobid': 1}],
+             )
+        
+        
+        component: "queue-manager.set_jobs", defer: False
+          set_jobs(
+             [],
+             {'user_hold': False},
+             georgerojas,
+             )
+        
+        
+           No jobs found.
+        Failed to match any jobs
+        
+        
     """
 
     args      = """-d 1"""
@@ -70,6 +74,7 @@ def test_qrls_debug_flag():
     results = testutils.run_cmd('qrls.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -80,7 +85,8 @@ def test_qrls_debug_flag():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -90,9 +96,10 @@ def test_qrls_jobid_1():
     qrls test run: jobid_1
 
         Command Output:
-          jobid must be an integer: myq
-          
-
+        
+        Command Error/Debug:jobid must be an integer: myq
+        
+        
     """
 
     args      = """myq 1 2 3 4"""
@@ -101,6 +108,7 @@ def test_qrls_jobid_1():
     results = testutils.run_cmd('qrls.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -111,7 +119,8 @@ def test_qrls_jobid_1():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -121,15 +130,16 @@ def test_qrls_jobid_2():
     qrls test run: jobid_2
 
         Command Output:
-             No jobs found.
-          Failed to match any jobs
-             Failed to remove user hold on jobs: 
-                job 1 not found
-                job 2 not found
-                job 3 not found
-                job 4 not found
-          
-
+           Failed to remove user hold on jobs: 
+              job 1 not found
+              job 2 not found
+              job 3 not found
+              job 4 not found
+        
+        Command Error/Debug:   No jobs found.
+        Failed to match any jobs
+        
+        
     """
 
     args      = """1 2 3 4"""
@@ -138,6 +148,7 @@ def test_qrls_jobid_2():
     results = testutils.run_cmd('qrls.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -148,7 +159,8 @@ def test_qrls_jobid_2():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -158,12 +170,13 @@ def test_qrls_jobid_3():
     qrls test run: jobid_3
 
         Command Output:
-             No jobs found.
-          Failed to match any jobs
-             Failed to remove user hold on jobs: 
-                job 1 not found
-          
-
+           Failed to remove user hold on jobs: 
+              job 1 not found
+        
+        Command Error/Debug:   No jobs found.
+        Failed to match any jobs
+        
+        
     """
 
     args      = """1"""
@@ -172,6 +185,7 @@ def test_qrls_jobid_3():
     results = testutils.run_cmd('qrls.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -182,7 +196,8 @@ def test_qrls_jobid_3():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -192,31 +207,27 @@ def test_qrls_dependancy_option():
     qrls test run: dependancy_option
 
         Command Output:
-          
-          qrls.py -d --dependencies 1 2
-          
-          component: "queue-manager.get_jobs", defer: False
-            get_jobs(
-               [{'user_hold': '*', 'tag': 'job', 'user': 'georgerojas', 'jobid': 1}, {'user_hold': '*', 'tag': 'job', 'user': 'georgerojas', 'jobid': 2}],
-               )
-          
-          
-          component: "queue-manager.set_jobs", defer: False
-            set_jobs(
-               [],
-               {'all_dependencies': []},
-               georgerojas,
-               )
-          
-          
-             Removed dependencies from jobs: 
-             No jobs found.
-          Failed to match any jobs
-             Failed to remove user hold on jobs: 
-                job 1 not found
-                job 2 not found
-          
-
+           Removed dependencies from jobs: 
+        
+        Command Error/Debug:
+        qrls.py -d --dependencies 1 2
+        
+        component: "queue-manager.get_jobs", defer: False
+          get_jobs(
+             [{'user_hold': '*', 'tag': 'job', 'user': 'georgerojas', 'jobid': 1}, {'user_hold': '*', 'tag': 'job', 'user': 'georgerojas', 'jobid': 2}],
+             )
+        
+        
+        component: "queue-manager.set_jobs", defer: False
+          set_jobs(
+             [],
+             {'all_dependencies': []},
+             georgerojas,
+             )
+        
+        
+        
+        
     """
 
     args      = """-d --dependencies 1 2"""
@@ -225,6 +236,7 @@ def test_qrls_dependancy_option():
     results = testutils.run_cmd('qrls.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -235,6 +247,7 @@ def test_qrls_dependancy_option():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg

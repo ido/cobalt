@@ -6,11 +6,12 @@ def test_qdel_invalid_option():
     qdel test run: invalid_option
 
         Command Output:
-          Usage: qdel.py [options] <jobid1> [ ... <jobidN>]
-          
-          qdel.py: error: no such option: -k
-          
-
+        
+        Command Error/Debug:Usage: qdel.py [options] <jobid1> [ ... <jobidN>]
+        
+        qdel.py: error: no such option: -k
+        
+        
     """
 
     args      = """-k 1"""
@@ -19,6 +20,7 @@ def test_qdel_invalid_option():
     results = testutils.run_cmd('qdel.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -29,7 +31,8 @@ def test_qdel_invalid_option():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -39,19 +42,20 @@ def test_qdel_debug_option():
     qdel test run: debug_option
 
         Command Output:
-          
-          qdel.py -d 1
-          
-          component: "queue-manager.del_jobs", defer: True
-            del_jobs(
-               [{'tag': 'job', 'user': 'georgerojas', 'jobid': 1}],
-               False,
-               georgerojas,
-               )
-          
-          
-          
-
+        
+        Command Error/Debug:
+        qdel.py -d 1
+        
+        component: "queue-manager.del_jobs", defer: True
+          del_jobs(
+             [{'tag': 'job', 'user': 'georgerojas', 'jobid': 1}],
+             False,
+             georgerojas,
+             )
+        
+        
+        
+        
     """
 
     args      = """-d 1"""
@@ -60,6 +64,7 @@ def test_qdel_debug_option():
     results = testutils.run_cmd('qdel.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -70,7 +75,8 @@ def test_qdel_debug_option():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -80,9 +86,10 @@ def test_qdel_jobid_1():
     qdel test run: jobid_1
 
         Command Output:
-          jobid must be an integer: myq
-          
-
+        
+        Command Error/Debug:jobid must be an integer: myq
+        
+        
     """
 
     args      = """myq 1 2 3 4"""
@@ -91,6 +98,7 @@ def test_qdel_jobid_1():
     results = testutils.run_cmd('qdel.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -101,7 +109,8 @@ def test_qdel_jobid_1():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -111,8 +120,13 @@ def test_qdel_jobid_2():
     qdel test run: jobid_2
 
         Command Output:
-          
-
+              Deleted Jobs
+        JobID  User         
+        ====================
+        4      georgerojas  
+        
+        Command Error/Debug:
+        
     """
 
     args      = """1 2 3 4"""
@@ -121,6 +135,7 @@ def test_qdel_jobid_2():
     results = testutils.run_cmd('qdel.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -131,7 +146,8 @@ def test_qdel_jobid_2():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -141,8 +157,9 @@ def test_qdel_jobid_3():
     qdel test run: jobid_3
 
         Command Output:
-          
-
+        
+        Command Error/Debug:
+        
     """
 
     args      = """1"""
@@ -151,6 +168,7 @@ def test_qdel_jobid_3():
     results = testutils.run_cmd('qdel.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -161,6 +179,7 @@ def test_qdel_jobid_3():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg

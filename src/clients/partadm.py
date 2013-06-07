@@ -81,6 +81,7 @@ from Cobalt import client_utils
 from Cobalt.client_utils import cb_debug, cb_path
 
 from Cobalt.arg_parser import ArgParse
+from Cobalt.Exceptions import ComponentLookupError
 
 __revision__ = '$Revision: 1981 $'
 __version__  = '$Version$'
@@ -474,9 +475,11 @@ def handle_list_blocks_option(parts, sys_type):
         query = [{'queue':"*", 'partitions':"*", 'active':True, 'block_passthrough':'*'}]
     elif sys_type == 'bgp':
         query = [{'queue':"*", 'partitions':"*", 'active':True}]
-    reservations = client_utils.component_call(SCHMGR, False, 'get_reservations', (query,), False)
-    if not reservations:
-        client_utils.logger.error("No reservations data available")
+    try:
+        reservations = client_utils.component_call(SCHMGR, False, 'get_reservations', (query,), exit_on_error = False)
+    except ComponentLookupError:
+        client_utils.logger.error("Failed to connect to scheduler; no reservations data available")
+        reservations = []
 
     expanded_parts = {}
     for res in reservations:

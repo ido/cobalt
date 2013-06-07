@@ -38,6 +38,7 @@ if __name__ == '__main__':
     from arg_parser import ArgParse
 
 CMD_OUTPUT      = 'cmd.out'
+CMD_ERROR       = 'cmd.err'
 ARGS_FILES      = '*_args.py'
 TESTHOOK_FILE   = '.testhook'
 
@@ -45,6 +46,7 @@ TESTHOOK_FILE   = '.testhook'
 DS  = '<DOCSTR>'
 AR  = '<ARGS>'
 CO  = '<CMDOUT>'
+CE  = '<CMDERR>'
 SO  = '<STUBOUT>'
 RS  = '<RS>'
 TQ  = '<TQ>'
@@ -70,6 +72,9 @@ def test_<NAME>_<TC_NAME>():
     cmdout    = \\
 <TQ><CMDOUT><TQ>
 
+    cmderr    = \\
+<TQ><CMDERR><TQ>
+
     stubout   = \\
 <TQ><STUBOUT><TQ>
 
@@ -78,7 +83,8 @@ def test_<NAME>_<TC_NAME>():
     expected_results = ( 
                        <RS>, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("<TEST_HOOK>")
@@ -107,6 +113,7 @@ def test_<NAME>_<TC_NAME>():
     results = testutils.run_cmd('<CMD>.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -117,7 +124,8 @@ def test_<NAME>_<TC_NAME>():
     errmsg  = "\\n\\nFailed Data:\\n\\n" \\
         "Return Status %s, Expected Return Status %s\\n\\n" \\
         "Command Output:\\n%s\\n\\n" \\
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\\n%s\\n\\n" \\
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 """
@@ -165,14 +173,14 @@ def remove_testhook():
     if os.path.isfile(TESTHOOK_FILE):
         os.remove(TESTHOOK_FILE)
 
-def get_test(cmd,tc_name,docstr,args,rs,cmdout,stubout,stubout_file,thook):
+def get_test(cmd, tc_name, docstr, args, rs, cmdout, stubout, stubout_file, thook, cmderr):
     """
     Get Test from template with all tags replace
     """
-    return TEST_TEMPLATE.replace(CM,cmd).replace(TC,tc_name).replace(TQ,RTQ).             \
-        replace(DS,docstr).replace(AR,args).replace(CO,cmdout).replace(SO,stubout).       \
-        replace(RS,str(rs)).replace(ES1,"''").replace(SF,stubout_file).replace(ES2,"''"). \
-        replace(TH,thook).replace(NM,cmd.replace('-','_'))
+    return TEST_TEMPLATE.replace(CM,cmd).replace(TC,tc_name).replace(TQ,RTQ).                      \
+        replace(DS,docstr).replace(AR,args).replace(CO,cmdout).replace(SO,stubout).                \
+        replace(RS,str(rs)).replace(TH,thook).replace(NM,cmd.replace('-','_')).replace(CE,cmderr). \
+        replace(SF,stubout_file).replace(ES1,"''").replace(ES2,"''")
 
 def get_sanity_test(cmd, tc_name, docstr, args, rs):
     """
@@ -214,24 +222,23 @@ def validate_results(results,expected_results,stubout_compare_func = None):
     exp_cmdout  = expected_results[1]
     exp_stubout = expected_results[2]
 
+    cfunc = lambda e,a: e != a
+    compare_function = cfunc if stubout_compare_func == None else stubout_compare_func
+
     # Validate expected results
     if int(rs) != int(exp_rs):
         result  = "*** RETURN STATUS DOES NOT MATCH ***\n"
         result += "Expected Return Status: %s, Actual Return Status: %s\n" % (str(exp_rs),str(rs))
 
-    elif exp_stubout:
-        cfunc = lambda e,a: e != a
-        compare_function = cfunc if stubout_compare_func == None else stubout_compare_func
-        if compare_function(exp_stubout,stubout):
-            diffs   = getdiff(exp_stubout,stubout)
-            result  = "*** STUB OUTPUT DOES NOT MATCH ***\n"
-            result += diffs
+    elif compare_function(exp_stubout, stubout):
+        diffs   = getdiff(exp_stubout, stubout)
+        result  = "*** STUB OUTPUT DOES NOT MATCH ***\n"
+        result += diffs
 
-    elif exp_cmdout:
-        if exp_cmdout != cmdout:
-            diffs   = getdiff(exp_cmdout,cmdout)
-            result  = "*** COMMAND OUTPUT DOES NOT MATCH ***\n"
-            result += diffs
+    elif int(exp_rs) == 0 and exp_cmdout != cmdout:
+        line_sep = "\n--------------------------------------------\n"
+        result   = "\n*** COMMAND OUTPUT DOES NOT MATCH ***\n\nExpected Output:\n%s%sActual Output:\n%s\n" % \
+            (exp_cmdout, line_sep, cmdout)
 
     return result 
 
@@ -242,10 +249,11 @@ def run_cmd(cmd, args, stubout_file = None):
     If the getdata flag is set then it will return the command output information and no validation is done.
     """
     # run command and redirect output to a temp log file
-    rs      = os.system(cmd + ' ' + args + '&> %s' % CMD_OUTPUT)
+    rs      = os.system(cmd + ' ' + args + ' 1> %s 2> %s' % (CMD_OUTPUT, CMD_ERROR))
     cmdout  = get_output(CMD_OUTPUT)
+    cmderr  = get_output(CMD_ERROR)
     stubout = get_output(stubout_file) if stubout_file is not None else ''
-    return (rs, cmdout, stubout)
+    return (rs, cmdout, stubout, cmderr)
 
 def getlines(filename):
     """
@@ -276,21 +284,24 @@ def gen_test(fd, cmd, tc_name, args, old_results, new_results, stubout_file, tho
     docstr  = '    %s test run: %s\n' % (cmd,tc_name)
     result  = 1
     if old_results:
-        docstr += indent(8,'Old Command Output:') + '\n' + indent(10,old_results[1]) + '\n'
-        # redefine old_results to use the new return status and command output
-        old_results = (new_results[0], new_results[1], old_results[2])
+        # redefine old_results to use the new return status 
+        old_results = (new_results[0], old_results[1], old_results[2], old_results[3])
         result  = validate_results(old_results, new_results)
-        stubout = old_results[2] # need the old command stub output for generated test
+        cmdout  = old_results[1]
+        stubout = old_results[2]
     else:
-        stubout = new_results[2] # no old so use new
+        # no old so use new
+        cmdout  = new_results[1]
+        stubout = new_results[2]
+
 
     if result != 1:
         docstr += indent(4,result)
         
     rs     = new_results[0] # need the new return status for generated test
-    cmdout = new_results[1] # need the new command output for generated test
+    cmderr = new_results[3] # need the new command error output
 
-    test = get_test(cmd, tc_name, docstr, args, rs, cmdout, stubout, stubout_file, thook)
+    test = get_test(cmd, tc_name, docstr, args, rs, cmdout, stubout, stubout_file, thook, cmderr)
 
     fd.write(test)
 
@@ -300,8 +311,9 @@ def gen_sanity_test(fd, cmd, tc_name, args, new_results):
     """
     rs      = new_results[0] # need the new return status for generated test
     cmdout  = new_results[1] # need the new command output for generated test
+    cmderr  = new_results[3] 
     docstr  = '    %s test run: %s\n\n' % (cmd,tc_name,)
-    docstr += indent(8,'Command Output:') + '\n' + indent(10,cmdout) + '\n'
+    docstr += indent(8,'Command Output:\n%s\nCommand Error/Debug:%s\n' % (cmdout, cmderr))
     test    = get_sanity_test(cmd, tc_name, docstr, args, rs)
     fd.write(test)
 
@@ -348,8 +360,8 @@ def gen_tests(opath, npath, args_path, args_list, stubout_file, skip_list):
             new_only  = (args_info['new_only'] if 'new_only' in args_info else False) or (old_cmd == new_cmd)
             old_args  = args_info['old_args'] if 'old_args' in args_info else new_args
             save_testhook(thook)
-            oresults  = None if new_only else run_cmd(old_cmd,old_args,stubout_file)
-            nresults  = run_cmd(new_cmd,new_args,stubout_file)
+            oresults  = None if new_only else run_cmd(old_cmd, old_args, stubout_file)
+            nresults  = run_cmd(new_cmd, new_args, stubout_file)
 
             remove_testhook()
             gen_test(fd, _name, tc_name, new_args, oresults, nresults, stubout_file, thook)
@@ -436,8 +448,10 @@ def main():
     skip_list = parser.options.skip_list if parser.options.skip_list is not None else []
     if parser.options.sanity:
         gen_sanity_tests(npath, tpath, args_list, skip_list)
-    if parser.options.compare:
+    elif parser.options.compare:
         gen_tests(opath, npath, tpath, args_list, parser. options.stubo, skip_list)
+    else:
+        print("Specify Type of Test")
 
 if __name__ == '__main__':
     try:

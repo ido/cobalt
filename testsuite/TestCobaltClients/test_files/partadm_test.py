@@ -4,9 +4,6 @@ import testutils
 def test_partadm_version_option():
     """
     partadm test run: version_option
-        Old Command Output:
-          Cobalt Version: $Version$
-          
 
     """
 
@@ -16,6 +13,8 @@ def test_partadm_version_option():
 """version: "partadm.py " + $Revision: 1981 $ + , Cobalt  + $Version$
 """
 
+    cmderr    = ''
+
     stubout   = ''
 
     stubout_file = "stub.out"
@@ -23,7 +22,8 @@ def test_partadm_version_option():
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -41,55 +41,6 @@ def test_partadm_version_option():
 def test_partadm_help_option_1():
     """
     partadm test run: help_option_1
-        Old Command Output:
-          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
-          Usage: partadm.py -l
-          Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
-          Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
-          Usage: partadm.py --queue=queue1:queue2 part1 part2
-          Usage: partadm.py --fail part1 part2
-          Usage: partadm.py --unfail part1 part2
-          Usage: partadm.py --dump
-          Usage: partadm.py --xml
-          Usage: partadm.py --version
-          Usage: partadm.py --savestate filename
-          
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
-          
-          Options:
-            --version             show program's version number and exit
-            -h, --help            show this help message and exit
-            -a                    add the block to the list of managed blocks
-            -d                    remove the block from the list of managed blocks
-            -l                    list all blocks and their status
-            -r, --recursive       recursively add all child blocks of the specified
-                                  blocks in the positional arguments
-            --queue=QUEUE         set the queues associated with the target blocks to
-                                  this list of queues
-            --activate            activate the block for scheduling
-            --deactivate          deactivate the block for schedulign
-            --enable              enable the running of jobs on the target blocks
-            --disable             disable the running of jobs on the target blocks
-            --fail                mark the block as though it failed diagnostics
-                                  (deprecated)
-            --unfail              clear failed diagnostics on a block (deprecated)
-            --dump                dump a representation of the system's block state
-            --xml                 dump a xml representation of the system's blocks for
-                                  simulator usage
-            --savestate=SAVESTATE
-                                  force the system component to write it's statefile
-            --boot-stop           disable booting of any jobs
-            --boot-start          enable booting of any jobs
-            --boot-status         show whether or not booting is enabled
-            -b, --blockinfo       print the detailed state and information for all
-                                  requested blocks.
-            --pg_list             not implemented yet
-            -c, --clean_block     force the block to cleanup and clear all internal
-                                  reservations on that resource
-          
 
     """
 
@@ -162,6 +113,8 @@ Options:
   --io_autoboot_status  get status of IO Block autobooting
 """
 
+    cmderr    = ''
+
     stubout   = ''
 
     stubout_file = "stub.out"
@@ -169,7 +122,8 @@ Options:
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -187,55 +141,6 @@ Options:
 def test_partadm_help_option_2():
     """
     partadm test run: help_option_2
-        Old Command Output:
-          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
-          Usage: partadm.py -l
-          Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
-          Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
-          Usage: partadm.py --queue=queue1:queue2 part1 part2
-          Usage: partadm.py --fail part1 part2
-          Usage: partadm.py --unfail part1 part2
-          Usage: partadm.py --dump
-          Usage: partadm.py --xml
-          Usage: partadm.py --version
-          Usage: partadm.py --savestate filename
-          
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
-          
-          Options:
-            --version             show program's version number and exit
-            -h, --help            show this help message and exit
-            -a                    add the block to the list of managed blocks
-            -d                    remove the block from the list of managed blocks
-            -l                    list all blocks and their status
-            -r, --recursive       recursively add all child blocks of the specified
-                                  blocks in the positional arguments
-            --queue=QUEUE         set the queues associated with the target blocks to
-                                  this list of queues
-            --activate            activate the block for scheduling
-            --deactivate          deactivate the block for schedulign
-            --enable              enable the running of jobs on the target blocks
-            --disable             disable the running of jobs on the target blocks
-            --fail                mark the block as though it failed diagnostics
-                                  (deprecated)
-            --unfail              clear failed diagnostics on a block (deprecated)
-            --dump                dump a representation of the system's block state
-            --xml                 dump a xml representation of the system's blocks for
-                                  simulator usage
-            --savestate=SAVESTATE
-                                  force the system component to write it's statefile
-            --boot-stop           disable booting of any jobs
-            --boot-start          enable booting of any jobs
-            --boot-status         show whether or not booting is enabled
-            -b, --blockinfo       print the detailed state and information for all
-                                  requested blocks.
-            --pg_list             not implemented yet
-            -c, --clean_block     force the block to cleanup and clear all internal
-                                  reservations on that resource
-          
 
     """
 
@@ -308,6 +213,8 @@ Options:
   --io_autoboot_status  get status of IO Block autobooting
 """
 
+    cmderr    = ''
+
     stubout   = ''
 
     stubout_file = "stub.out"
@@ -315,7 +222,8 @@ Options:
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -338,7 +246,9 @@ def test_partadm_no_arg_1():
 
     args      = ''
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Must supply one of -a or -d or -l or -start or -stop or --queue or -b.
 Adding "-r" or "--recursive" will add the children of the blocks passed in.
 
@@ -351,7 +261,8 @@ Adding "-r" or "--recursive" will add the children of the blocks passed in.
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -374,7 +285,9 @@ def test_partadm_no_arg_2():
 
     args      = """-a"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """At least one partition must be supplied
 """
 
@@ -385,7 +298,8 @@ def test_partadm_no_arg_2():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -408,7 +322,9 @@ def test_partadm_debug():
 
     args      = """--debug"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """
 partadm.py --debug
 
@@ -424,7 +340,8 @@ Adding "-r" or "--recursive" will add the children of the blocks passed in.
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -447,7 +364,9 @@ def test_partadm_combo_options_1():
 
     args      = """-a -d ANL-R00-R01-2048"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Option combinations not allowed with: delete option(s)
 """
 
@@ -458,7 +377,8 @@ def test_partadm_combo_options_1():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -481,7 +401,9 @@ def test_partadm_combo_options_2():
 
     args      = """-a --enable ANL-R00-R01-2048"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Option combinations not allowed with: enable option(s)
 """
 
@@ -492,7 +414,8 @@ def test_partadm_combo_options_2():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -515,7 +438,9 @@ def test_partadm_combo_options_3():
 
     args      = """-d --enable ANL-R00-R01-2048"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Option combinations not allowed with: enable option(s)
 """
 
@@ -526,7 +451,8 @@ def test_partadm_combo_options_3():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -549,7 +475,9 @@ def test_partadm_combo_options_4():
 
     args      = """--enable --disable ANL-R00-R01-2048"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Option combinations not allowed with: disable option(s)
 """
 
@@ -560,7 +488,8 @@ def test_partadm_combo_options_4():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -583,7 +512,9 @@ def test_partadm_combo_options_5():
 
     args      = """--deactivate --activate ANL-R00-R01-2048"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Option combinations not allowed with: deactivate option(s)
 """
 
@@ -594,7 +525,8 @@ def test_partadm_combo_options_5():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -617,7 +549,9 @@ def test_partadm_combo_options_6():
 
     args      = """-a --deactivate ANL-R00-R01-2048"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Option combinations not allowed with: deactivate option(s)
 """
 
@@ -628,7 +562,8 @@ def test_partadm_combo_options_6():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -651,7 +586,9 @@ def test_partadm_combo_options_7():
 
     args      = """--fail --unfail ANL-R00-R01-2048"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Option combinations not allowed with: unfail option(s)
 """
 
@@ -662,7 +599,8 @@ def test_partadm_combo_options_7():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -685,7 +623,9 @@ def test_partadm_combo_options_8():
 
     args      = """--savestate /tmp/savestate -a"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Option combinations not allowed with: savestate option(s)
 """
 
@@ -696,7 +636,8 @@ def test_partadm_combo_options_8():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -719,7 +660,9 @@ def test_partadm_combo_options_9():
 
     args      = """-l --xml"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Option combinations not allowed with: list_blocks option(s)
 """
 
@@ -730,7 +673,8 @@ def test_partadm_combo_options_9():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -753,7 +697,9 @@ def test_partadm_combo_options_10():
 
     args      = """-l --xml"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Option combinations not allowed with: list_blocks option(s)
 """
 
@@ -764,7 +710,8 @@ def test_partadm_combo_options_10():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -787,7 +734,9 @@ def test_partadm_combo_options_11():
 
     args      = """-a --queue q1 ANL-R00-R01-2048"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Option combinations not allowed with: queue option(s)
 """
 
@@ -798,7 +747,8 @@ def test_partadm_combo_options_11():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -821,7 +771,9 @@ def test_partadm_combo_options_12():
 
     args      = """--dump --queue q1 ANL-R00-R01-2048"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Option combinations not allowed with: queue option(s)
 """
 
@@ -832,7 +784,8 @@ def test_partadm_combo_options_12():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -855,7 +808,9 @@ def test_partadm_combo_options_13():
 
     args      = """--savestate /tmp/s --xml"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Option combinations not allowed with: savestate option(s)
 """
 
@@ -866,7 +821,8 @@ def test_partadm_combo_options_13():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -889,7 +845,9 @@ def test_partadm_combo_options_14():
 
     args      = """-a -c -b ANL-R00-R01-2048"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Option combinations not allowed with: add, blockinfo, clean_block option(s)
 """
 
@@ -900,7 +858,8 @@ def test_partadm_combo_options_14():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -923,7 +882,9 @@ def test_partadm_combo_options_15():
 
     args      = """--list_io -a"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """WARNING: IO Block information only exists on BG/Q-type systems.
 """
 
@@ -939,7 +900,8 @@ user name: gooduser
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -962,7 +924,9 @@ def test_partadm_combo_options_16():
 
     args      = """--list_io -a ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """WARNING: IO Block information only exists on BG/Q-type systems.
 """
 
@@ -1062,7 +1026,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1085,7 +1050,9 @@ def test_partadm_combo_options_17():
 
     args      = """--list_io --rmq ANL-R00-M0-512"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Option combinations not allowed with: rmq, list_io, rmq option(s)
 """
 
@@ -1096,7 +1063,8 @@ def test_partadm_combo_options_17():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1119,7 +1087,9 @@ def test_partadm_combo_options_18():
 
     args      = """--list_io --appq ANL-R00-M0-512"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Option combinations not allowed with: appq, list_io, appq option(s)
 """
 
@@ -1130,7 +1100,8 @@ def test_partadm_combo_options_18():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1153,7 +1124,9 @@ def test_partadm_combo_options_19():
 
     args      = """--queue q1:q2 --rmq --appq ANL-R00-M0-512"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Option combinations not allowed with: rmq, appq option(s)
 """
 
@@ -1164,7 +1137,8 @@ def test_partadm_combo_options_19():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1191,6 +1165,8 @@ def test_partadm_add_option_1():
 """['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_PARTITIONS
@@ -1347,7 +1323,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1374,6 +1351,8 @@ def test_partadm_add_option_2():
 """['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_PARTITIONS
@@ -1530,7 +1509,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1548,9 +1528,6 @@ tag type: <type 'str'>
 def test_partadm_add_option_3():
     """
     partadm test run: add_option_3
-        Old Command Output:
-          ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
-          
 
     """
 
@@ -1559,6 +1536,8 @@ def test_partadm_add_option_3():
     cmdout    = \
 """['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -1656,7 +1635,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1714,6 +1694,8 @@ scheduled: True
 
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 ADD_PARTITION
@@ -1786,7 +1768,8 @@ plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*',
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1804,9 +1787,6 @@ plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*',
 def test_partadm_add_option_5():
     """
     partadm test run: add_option_5
-        Old Command Output:
-          Force clenaing not available for BG/P systems
-          
 
     """
 
@@ -1815,6 +1795,8 @@ def test_partadm_add_option_5():
     cmdout    = \
 """Force clenaing not available for BG/P systems
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -1884,7 +1866,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1911,6 +1894,8 @@ def test_partadm_delete_option_1():
 """['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_PARTITIONS
@@ -1967,7 +1952,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1994,6 +1980,8 @@ def test_partadm_delete_option_2():
 """['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_PARTITIONS
@@ -2050,7 +2038,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -2068,9 +2057,6 @@ tag type: <type 'str'>
 def test_partadm_delete_option_3():
     """
     partadm test run: delete_option_3
-        Old Command Output:
-          ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
-          
 
     """
 
@@ -2079,6 +2065,8 @@ def test_partadm_delete_option_3():
     cmdout    = \
 """['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -2116,7 +2104,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -2174,6 +2163,8 @@ scheduled: True
 
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 DEL_PARTITION
@@ -2206,7 +2197,8 @@ plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*',
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -2224,9 +2216,6 @@ plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*',
 def test_partadm_delete_option_5():
     """
     partadm test run: delete_option_5
-        Old Command Output:
-          Force clenaing not available for BG/P systems
-          
 
     """
 
@@ -2235,6 +2224,8 @@ def test_partadm_delete_option_5():
     cmdout    = \
 """Force clenaing not available for BG/P systems
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -2264,7 +2255,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -2291,6 +2283,8 @@ def test_partadm_enable_option_1():
 """['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_PARTITIONS
@@ -2349,7 +2343,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -2376,6 +2371,8 @@ def test_partadm_enable_option_2():
 """['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_PARTITIONS
@@ -2434,7 +2431,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -2452,9 +2450,6 @@ tag type: <type 'str'>
 def test_partadm_enable_option_3():
     """
     partadm test run: enable_option_3
-        Old Command Output:
-          ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
-          
 
     """
 
@@ -2463,6 +2458,8 @@ def test_partadm_enable_option_3():
     cmdout    = \
 """['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -2502,7 +2499,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -2560,6 +2558,8 @@ scheduled: True
 
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 SET_PARTITION
@@ -2594,7 +2594,8 @@ plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*',
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -2612,9 +2613,6 @@ plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*',
 def test_partadm_enable_option_5():
     """
     partadm test run: enable_option_5
-        Old Command Output:
-          Force clenaing not available for BG/P systems
-          
 
     """
 
@@ -2623,6 +2621,8 @@ def test_partadm_enable_option_5():
     cmdout    = \
 """Force clenaing not available for BG/P systems
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -2654,7 +2654,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -2681,6 +2682,8 @@ def test_partadm_disable_option_1():
 """['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_PARTITIONS
@@ -2739,7 +2742,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -2766,6 +2770,8 @@ def test_partadm_disable_option_2():
 """['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_PARTITIONS
@@ -2824,7 +2830,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -2842,9 +2849,6 @@ tag type: <type 'str'>
 def test_partadm_disable_option_3():
     """
     partadm test run: disable_option_3
-        Old Command Output:
-          ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
-          
 
     """
 
@@ -2853,6 +2857,8 @@ def test_partadm_disable_option_3():
     cmdout    = \
 """['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -2892,7 +2898,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -2950,6 +2957,8 @@ scheduled: True
 
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 SET_PARTITION
@@ -2984,7 +2993,8 @@ plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*',
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -3002,9 +3012,6 @@ plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*',
 def test_partadm_disable_option_5():
     """
     partadm test run: disable_option_5
-        Old Command Output:
-          Force clenaing not available for BG/P systems
-          
 
     """
 
@@ -3013,6 +3020,8 @@ def test_partadm_disable_option_5():
     cmdout    = \
 """Force clenaing not available for BG/P systems
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -3044,7 +3053,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -3071,6 +3081,8 @@ def test_partadm_activate_option_1():
 """['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_PARTITIONS
@@ -3129,7 +3141,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -3156,6 +3169,8 @@ def test_partadm_activate_option_2():
 """['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_PARTITIONS
@@ -3214,7 +3229,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -3232,9 +3248,6 @@ tag type: <type 'str'>
 def test_partadm_activate_option_3():
     """
     partadm test run: activate_option_3
-        Old Command Output:
-          ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
-          
 
     """
 
@@ -3243,6 +3256,8 @@ def test_partadm_activate_option_3():
     cmdout    = \
 """['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -3282,7 +3297,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -3340,6 +3356,8 @@ scheduled: True
 
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 SET_PARTITION
@@ -3374,7 +3392,8 @@ plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*',
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -3392,9 +3411,6 @@ plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*',
 def test_partadm_activate_option_5():
     """
     partadm test run: activate_option_5
-        Old Command Output:
-          Force clenaing not available for BG/P systems
-          
 
     """
 
@@ -3403,6 +3419,8 @@ def test_partadm_activate_option_5():
     cmdout    = \
 """Force clenaing not available for BG/P systems
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -3434,7 +3452,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -3461,6 +3480,8 @@ def test_partadm_deactivate_option_1():
 """['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_PARTITIONS
@@ -3519,7 +3540,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -3546,6 +3568,8 @@ def test_partadm_deactivate_option_2():
 """['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_PARTITIONS
@@ -3604,7 +3628,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -3622,9 +3647,6 @@ tag type: <type 'str'>
 def test_partadm_deactivate_option_3():
     """
     partadm test run: deactivate_option_3
-        Old Command Output:
-          ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
-          
 
     """
 
@@ -3633,6 +3655,8 @@ def test_partadm_deactivate_option_3():
     cmdout    = \
 """['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -3672,7 +3696,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -3730,6 +3755,8 @@ scheduled: True
 
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 SET_PARTITION
@@ -3764,7 +3791,8 @@ plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*',
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -3782,9 +3810,6 @@ plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*',
 def test_partadm_deactivate_option_5():
     """
     partadm test run: deactivate_option_5
-        Old Command Output:
-          Force clenaing not available for BG/P systems
-          
 
     """
 
@@ -3793,6 +3818,8 @@ def test_partadm_deactivate_option_5():
     cmdout    = \
 """Force clenaing not available for BG/P systems
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -3824,7 +3851,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -3851,6 +3879,8 @@ def test_partadm_fail_option_1():
 """['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_PARTITIONS
@@ -3888,7 +3918,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -3915,6 +3946,8 @@ def test_partadm_fail_option_2():
 """['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_PARTITIONS
@@ -3952,7 +3985,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -3970,9 +4004,6 @@ tag type: <type 'str'>
 def test_partadm_fail_option_3():
     """
     partadm test run: fail_option_3
-        Old Command Output:
-          ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
-          
 
     """
 
@@ -3981,6 +4012,8 @@ def test_partadm_fail_option_3():
     cmdout    = \
 """['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -4007,7 +4040,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -4065,6 +4099,8 @@ scheduled: True
 
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 FAIL_PARTITION
@@ -4090,7 +4126,8 @@ plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*',
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -4108,9 +4145,6 @@ plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*',
 def test_partadm_fail_option_5():
     """
     partadm test run: fail_option_5
-        Old Command Output:
-          Force clenaing not available for BG/P systems
-          
 
     """
 
@@ -4119,6 +4153,8 @@ def test_partadm_fail_option_5():
     cmdout    = \
 """Force clenaing not available for BG/P systems
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -4141,7 +4177,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -4168,6 +4205,8 @@ def test_partadm_unfail_option_1():
 """['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_PARTITIONS
@@ -4205,7 +4244,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -4232,6 +4272,8 @@ def test_partadm_unfail_option_2():
 """['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_PARTITIONS
@@ -4269,7 +4311,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -4287,9 +4330,6 @@ tag type: <type 'str'>
 def test_partadm_unfail_option_3():
     """
     partadm test run: unfail_option_3
-        Old Command Output:
-          ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
-          
 
     """
 
@@ -4298,6 +4338,8 @@ def test_partadm_unfail_option_3():
     cmdout    = \
 """['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -4324,7 +4366,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -4382,6 +4425,8 @@ scheduled: True
 
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 UNFAIL_PARTITION
@@ -4407,7 +4452,8 @@ plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*',
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -4425,9 +4471,6 @@ plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*',
 def test_partadm_unfail_option_5():
     """
     partadm test run: unfail_option_5
-        Old Command Output:
-          Force clenaing not available for BG/P systems
-          
 
     """
 
@@ -4436,6 +4479,8 @@ def test_partadm_unfail_option_5():
     cmdout    = \
 """Force clenaing not available for BG/P systems
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -4458,7 +4503,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -4476,15 +4522,16 @@ tag type: <type 'str'>
 def test_partadm_savestate_option_1():
     """
     partadm test run: savestate_option_1
-        Old Command Output:
-          directory /bad does not exist
-          
 
     """
 
     args      = """--savestate /bad/save"""
 
     cmdout    = \
+"""directory /bad does not exist
+"""
+
+    cmderr    = \
 """directory /bad/save does not exist
 """
 
@@ -4495,7 +4542,8 @@ def test_partadm_savestate_option_1():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -4513,9 +4561,6 @@ def test_partadm_savestate_option_1():
 def test_partadm_savestate_option_2():
     """
     partadm test run: savestate_option_2
-        Old Command Output:
-          [{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
-          
 
     """
 
@@ -4524,6 +4569,8 @@ def test_partadm_savestate_option_2():
     cmdout    = \
 """[{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -4538,7 +4585,8 @@ plist: [{'name': '*'}]
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -4556,32 +4604,14 @@ plist: [{'name': '*'}]
 def test_partadm_savestate_option_3():
     """
     partadm test run: savestate_option_3
-        Old Command Output:
-          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
-          Usage: partadm.py -l
-          Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
-          Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
-          Usage: partadm.py --queue=queue1:queue2 part1 part2
-          Usage: partadm.py --fail part1 part2
-          Usage: partadm.py --unfail part1 part2
-          Usage: partadm.py --dump
-          Usage: partadm.py --xml
-          Usage: partadm.py --version
-          Usage: partadm.py --savestate filename
-          
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
-          
-          partadm.py: error: --savestate option requires an argument
-          
 
     """
 
     args      = """--savestate"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Usage: partadm.py [-a|-d] part1 part2 (add or del)
 Usage: partadm.py -l
 Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
@@ -4609,7 +4639,8 @@ partadm.py: error: --savestate option requires an argument
     expected_results = ( 
                        512, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -4627,9 +4658,6 @@ partadm.py: error: --savestate option requires an argument
 def test_partadm_savestate_option_4():
     """
     partadm test run: savestate_option_4
-        Old Command Output:
-          Force clenaing not available for BG/P systems
-          
 
     """
 
@@ -4638,6 +4666,8 @@ def test_partadm_savestate_option_4():
     cmdout    = \
 """Force clenaing not available for BG/P systems
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -4652,7 +4682,8 @@ plist: [{'name': '*'}]
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -4838,6 +4869,8 @@ scheduled: True
 
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 SAVE
@@ -4855,7 +4888,8 @@ plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*',
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -4873,9 +4907,6 @@ plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*',
 def test_partadm_xml_option_1():
     """
     partadm test run: xml_option_1
-        Old Command Output:
-          ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10']
-          
 
     """
 
@@ -4884,6 +4915,8 @@ def test_partadm_xml_option_1():
     cmdout    = \
 """['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10']
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -4898,7 +4931,8 @@ name type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -4916,9 +4950,6 @@ name type: <type 'str'>
 def test_partadm_xml_option_2():
     """
     partadm test run: xml_option_2
-        Old Command Output:
-          ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10']
-          
 
     """
 
@@ -4927,6 +4958,8 @@ def test_partadm_xml_option_2():
     cmdout    = \
 """['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10']
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -4941,7 +4974,8 @@ name type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -4968,6 +5002,8 @@ def test_partadm_xml_option_3():
 """['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10']
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_PARTITIONS
@@ -4985,7 +5021,8 @@ name type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -5171,6 +5208,8 @@ scheduled: True
 
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GENERATE_XML
@@ -5188,7 +5227,8 @@ plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*',
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -5206,9 +5246,6 @@ plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*',
 def test_partadm_xml_option_5():
     """
     partadm test run: xml_option_5
-        Old Command Output:
-          Force clenaing not available for BG/P systems
-          
 
     """
 
@@ -5217,6 +5254,8 @@ def test_partadm_xml_option_5():
     cmdout    = \
 """Force clenaing not available for BG/P systems
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -5231,7 +5270,8 @@ name type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -5417,6 +5457,8 @@ scheduled: True
 
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_PARTITIONS
@@ -5438,7 +5480,8 @@ plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*',
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -5456,9 +5499,6 @@ plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*',
 def test_partadm_xml_option_7():
     """
     partadm test run: xml_option_7
-        Old Command Output:
-          Force clenaing not available for BG/P systems
-          
 
     """
 
@@ -5467,6 +5507,8 @@ def test_partadm_xml_option_7():
     cmdout    = \
 """Force clenaing not available for BG/P systems
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -5485,7 +5527,8 @@ name type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -5503,32 +5546,14 @@ name type: <type 'str'>
 def test_partadm_queue_option_1():
     """
     partadm test run: queue_option_1
-        Old Command Output:
-          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
-          Usage: partadm.py -l
-          Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
-          Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
-          Usage: partadm.py --queue=queue1:queue2 part1 part2
-          Usage: partadm.py --fail part1 part2
-          Usage: partadm.py --unfail part1 part2
-          Usage: partadm.py --dump
-          Usage: partadm.py --xml
-          Usage: partadm.py --version
-          Usage: partadm.py --savestate filename
-          
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
-          
-          partadm.py: error: --queue option requires an argument
-          
 
     """
 
     args      = """--queue"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Usage: partadm.py [-a|-d] part1 part2 (add or del)
 Usage: partadm.py -l
 Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
@@ -5556,7 +5581,8 @@ partadm.py: error: --queue option requires an argument
     expected_results = ( 
                        512, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -5574,16 +5600,17 @@ partadm.py: error: --queue option requires an argument
 def test_partadm_queue_option_2():
     """
     partadm test run: queue_option_2
-        Old Command Output:
-          'q_4' is not an existing queue
-          'q_3' is not an existing queue
-          
 
     """
 
     args      = """--queue q_4:q_3 ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
 
     cmdout    = \
+"""'q_4' is not an existing queue
+'q_3' is not an existing queue
+"""
+
+    cmderr    = \
 """'q_4' is not an existing queue
 'q_3' is not an existing queue
 """
@@ -5603,7 +5630,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -5621,18 +5649,19 @@ tag type: <type 'str'>
 def test_partadm_queue_option_3():
     """
     partadm test run: queue_option_3
-        Old Command Output:
-          'q_1' is not an existing queue
-          'q_2' is not an existing queue
-          'q_3' is not an existing queue
-          'q_4' is not an existing queue
-          
 
     """
 
     args      = """--queue q_1:q_2:q_3:q_4 ANL-R00-M0-512"""
 
     cmdout    = \
+"""'q_1' is not an existing queue
+'q_2' is not an existing queue
+'q_3' is not an existing queue
+'q_4' is not an existing queue
+"""
+
+    cmderr    = \
 """'q_1' is not an existing queue
 'q_2' is not an existing queue
 'q_3' is not an existing queue
@@ -5654,7 +5683,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -5672,15 +5702,16 @@ tag type: <type 'str'>
 def test_partadm_queue_option_4():
     """
     partadm test run: queue_option_4
-        Old Command Output:
-          'q_1' is not an existing queue
-          
 
     """
 
     args      = """--queue q_1 -c ANL-R00-M0-512"""
 
     cmdout    = \
+"""'q_1' is not an existing queue
+"""
+
+    cmderr    = \
 """'q_1' is not an existing queue
 """
 
@@ -5699,7 +5730,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -5722,7 +5754,9 @@ def test_partadm_queue_option_5():
 
     args      = """--queue q_2 -b ANL-R00-M0-512"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """'q_2' is not an existing queue
 """
 
@@ -5741,7 +5775,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -5764,7 +5799,9 @@ def test_partadm_queue_option_6():
 
     args      = """--queue q_1 -r -b ANL-R00-M0-512"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """'q_1' is not an existing queue
 """
 
@@ -5787,7 +5824,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -5810,7 +5848,9 @@ def test_partadm_queue_option_7():
 
     args      = """--queue q_2 -r -c ANL-R00-M0-512"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """'q_2' is not an existing queue
 """
 
@@ -5833,7 +5873,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -5856,7 +5897,9 @@ def test_partadm_queue_option_8():
 
     args      = """--queue q_1 --appq -r -c ANL-R00-M0-512"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Option combinations not allowed with: appq, clean_block, appq option(s)
 """
 
@@ -5867,7 +5910,8 @@ def test_partadm_queue_option_8():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -5890,7 +5934,9 @@ def test_partadm_queue_option_9():
 
     args      = """--queue q_2 --rmq -r -c ANL-R00-M0-512"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Option combinations not allowed with: rmq, clean_block, rmq option(s)
 """
 
@@ -5901,7 +5947,8 @@ def test_partadm_queue_option_9():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -5924,7 +5971,9 @@ def test_partadm_queue_option_10():
 
     args      = """--queue q_1 --rmq ANL-R00-M0-512 ANL-R00-M1-512"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """'q_1' is not an existing queue
 """
 
@@ -5943,7 +5992,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -5966,7 +6016,9 @@ def test_partadm_queue_option_11():
 
     args      = """--queue q_1 --appq ANL-R00-M0-512 ANL-R00-M1-512"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """'q_1' is not an existing queue
 """
 
@@ -5985,7 +6037,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -6003,9 +6056,6 @@ tag type: <type 'str'>
 def test_partadm_dump_option_1():
     """
     partadm test run: dump_option_1
-        Old Command Output:
-          [{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
-          
 
     """
 
@@ -6014,6 +6064,8 @@ def test_partadm_dump_option_1():
     cmdout    = \
 """[{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -6027,7 +6079,8 @@ plist: [{'scheduled': '*', 'queue': '*', 'state': '*', 'tag': 'partition', 'name
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -6045,9 +6098,6 @@ plist: [{'scheduled': '*', 'queue': '*', 'state': '*', 'tag': 'partition', 'name
 def test_partadm_dump_option_2():
     """
     partadm test run: dump_option_2
-        Old Command Output:
-          [{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
-          
 
     """
 
@@ -6056,6 +6106,8 @@ def test_partadm_dump_option_2():
     cmdout    = \
 """[{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -6069,7 +6121,8 @@ plist: [{'scheduled': '*', 'queue': '*', 'state': '*', 'tag': 'partition', 'name
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -6096,6 +6149,8 @@ def test_partadm_dump_option_3():
 """[{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_PARTITIONS
@@ -6112,7 +6167,8 @@ plist: [{'scheduled': '*', 'queue': '*', 'state': '*', 'tag': 'partition', 'name
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -6298,6 +6354,8 @@ scheduled: True
 
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_PARTITIONS
@@ -6314,7 +6372,8 @@ plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*',
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -6332,9 +6391,6 @@ plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*',
 def test_partadm_dump_option_5():
     """
     partadm test run: dump_option_5
-        Old Command Output:
-          Force clenaing not available for BG/P systems
-          
 
     """
 
@@ -6343,6 +6399,8 @@ def test_partadm_dump_option_5():
     cmdout    = \
 """Force clenaing not available for BG/P systems
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -6356,7 +6414,8 @@ plist: [{'scheduled': '*', 'queue': '*', 'state': '*', 'tag': 'partition', 'name
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -6542,6 +6601,8 @@ scheduled: True
 
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_PARTITIONS
@@ -6562,7 +6623,8 @@ plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*',
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -6580,9 +6642,6 @@ plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*',
 def test_partadm_dump_option_7():
     """
     partadm test run: dump_option_7
-        Old Command Output:
-          Force clenaing not available for BG/P systems
-          
 
     """
 
@@ -6591,6 +6650,8 @@ def test_partadm_dump_option_7():
     cmdout    = \
 """Force clenaing not available for BG/P systems
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -6608,7 +6669,8 @@ plist: [{'scheduled': '*', 'queue': '*', 'state': '*', 'tag': 'partition', 'name
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -6626,9 +6688,6 @@ plist: [{'scheduled': '*', 'queue': '*', 'state': '*', 'tag': 'partition', 'name
 def test_partadm_boot_stop_option_1():
     """
     partadm test run: boot_stop_option_1
-        Old Command Output:
-          Boot control not available for BG/P systems
-          
 
     """
 
@@ -6638,6 +6697,8 @@ def test_partadm_boot_stop_option_1():
 """Boot control not available for BG/P systems
 """
 
+    cmderr    = ''
+
     stubout   = ''
 
     stubout_file = "stub.out"
@@ -6645,7 +6706,8 @@ def test_partadm_boot_stop_option_1():
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -6663,9 +6725,6 @@ def test_partadm_boot_stop_option_1():
 def test_partadm_boot_stop_option_2():
     """
     partadm test run: boot_stop_option_2
-        Old Command Output:
-          Boot control not available for BG/P systems
-          
 
     """
 
@@ -6675,6 +6734,8 @@ def test_partadm_boot_stop_option_2():
 """Boot control not available for BG/P systems
 """
 
+    cmderr    = ''
+
     stubout   = ''
 
     stubout_file = "stub.out"
@@ -6682,7 +6743,8 @@ def test_partadm_boot_stop_option_2():
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -6709,6 +6771,8 @@ def test_partadm_boot_stop_option_3():
 """Boot control not available for BG/P systems
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_PARTITIONS
@@ -6721,7 +6785,8 @@ plist: [{'tag': 'partition', 'name': 'ANL-R00-M0-512', 'children': '*'}]
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -6739,9 +6804,6 @@ plist: [{'tag': 'partition', 'name': 'ANL-R00-M0-512', 'children': '*'}]
 def test_partadm_boot_stop_option_4():
     """
     partadm test run: boot_stop_option_4
-        Old Command Output:
-          Boot control not available for BG/P systems
-          
 
     """
 
@@ -6751,6 +6813,8 @@ def test_partadm_boot_stop_option_4():
 """Boot control not available for BG/P systems
 """
 
+    cmderr    = ''
+
     stubout   = ''
 
     stubout_file = "stub.out"
@@ -6758,7 +6822,8 @@ def test_partadm_boot_stop_option_4():
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -6776,9 +6841,6 @@ def test_partadm_boot_stop_option_4():
 def test_partadm_boot_stop_option_5():
     """
     partadm test run: boot_stop_option_5
-        Old Command Output:
-          Boot control not available for BG/P systems
-          
 
     """
 
@@ -6788,6 +6850,8 @@ def test_partadm_boot_stop_option_5():
 """Boot control not available for BG/P systems
 """
 
+    cmderr    = ''
+
     stubout   = ''
 
     stubout_file = "stub.out"
@@ -6795,7 +6859,8 @@ def test_partadm_boot_stop_option_5():
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -6813,9 +6878,6 @@ def test_partadm_boot_stop_option_5():
 def test_partadm_boot_stop_option_6():
     """
     partadm test run: boot_stop_option_6
-        Old Command Output:
-          Boot control not available for BG/P systems
-          
 
     """
 
@@ -6824,6 +6886,8 @@ def test_partadm_boot_stop_option_6():
     cmdout    = \
 """Boot control not available for BG/P systems
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -6837,7 +6901,8 @@ plist: []
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -6855,9 +6920,6 @@ plist: []
 def test_partadm_boot_stop_option_7():
     """
     partadm test run: boot_stop_option_7
-        Old Command Output:
-          Boot control not available for BG/P systems
-          
 
     """
 
@@ -6866,6 +6928,8 @@ def test_partadm_boot_stop_option_7():
     cmdout    = \
 """Boot control not available for BG/P systems
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -6879,7 +6943,8 @@ plist: []
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -6897,9 +6962,6 @@ plist: []
 def test_partadm_boot_start_option_1():
     """
     partadm test run: boot_start_option_1
-        Old Command Output:
-          Boot control not available for BG/P systems
-          
 
     """
 
@@ -6909,6 +6971,8 @@ def test_partadm_boot_start_option_1():
 """Boot control not available for BG/P systems
 """
 
+    cmderr    = ''
+
     stubout   = ''
 
     stubout_file = "stub.out"
@@ -6916,7 +6980,8 @@ def test_partadm_boot_start_option_1():
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -6934,9 +6999,6 @@ def test_partadm_boot_start_option_1():
 def test_partadm_boot_start_option_2():
     """
     partadm test run: boot_start_option_2
-        Old Command Output:
-          Boot control not available for BG/P systems
-          
 
     """
 
@@ -6946,6 +7008,8 @@ def test_partadm_boot_start_option_2():
 """Boot control not available for BG/P systems
 """
 
+    cmderr    = ''
+
     stubout   = ''
 
     stubout_file = "stub.out"
@@ -6953,7 +7017,8 @@ def test_partadm_boot_start_option_2():
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -6980,6 +7045,8 @@ def test_partadm_boot_start_option_3():
 """Boot control not available for BG/P systems
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_PARTITIONS
@@ -6992,7 +7059,8 @@ plist: [{'tag': 'partition', 'name': 'ANL-R00-M0-512', 'children': '*'}]
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7010,9 +7078,6 @@ plist: [{'tag': 'partition', 'name': 'ANL-R00-M0-512', 'children': '*'}]
 def test_partadm_boot_start_option_4():
     """
     partadm test run: boot_start_option_4
-        Old Command Output:
-          Boot control not available for BG/P systems
-          
 
     """
 
@@ -7022,6 +7087,8 @@ def test_partadm_boot_start_option_4():
 """Boot control not available for BG/P systems
 """
 
+    cmderr    = ''
+
     stubout   = ''
 
     stubout_file = "stub.out"
@@ -7029,7 +7096,8 @@ def test_partadm_boot_start_option_4():
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7047,9 +7115,6 @@ def test_partadm_boot_start_option_4():
 def test_partadm_boot_start_option_5():
     """
     partadm test run: boot_start_option_5
-        Old Command Output:
-          Boot control not available for BG/P systems
-          
 
     """
 
@@ -7059,6 +7124,8 @@ def test_partadm_boot_start_option_5():
 """Boot control not available for BG/P systems
 """
 
+    cmderr    = ''
+
     stubout   = ''
 
     stubout_file = "stub.out"
@@ -7066,7 +7133,8 @@ def test_partadm_boot_start_option_5():
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7084,9 +7152,6 @@ def test_partadm_boot_start_option_5():
 def test_partadm_boot_start_option_6():
     """
     partadm test run: boot_start_option_6
-        Old Command Output:
-          Boot control not available for BG/P systems
-          
 
     """
 
@@ -7095,6 +7160,8 @@ def test_partadm_boot_start_option_6():
     cmdout    = \
 """Boot control not available for BG/P systems
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -7108,7 +7175,8 @@ plist: []
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7126,9 +7194,6 @@ plist: []
 def test_partadm_boot_start_option_7():
     """
     partadm test run: boot_start_option_7
-        Old Command Output:
-          Boot control not available for BG/P systems
-          
 
     """
 
@@ -7137,6 +7202,8 @@ def test_partadm_boot_start_option_7():
     cmdout    = \
 """Boot control not available for BG/P systems
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -7150,7 +7217,8 @@ plist: []
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7168,9 +7236,6 @@ plist: []
 def test_partadm_boot_status_option_1():
     """
     partadm test run: boot_status_option_1
-        Old Command Output:
-          Boot control not available for BG/P systems
-          
 
     """
 
@@ -7180,6 +7245,8 @@ def test_partadm_boot_status_option_1():
 """Boot control not available for BG/P systems
 """
 
+    cmderr    = ''
+
     stubout   = ''
 
     stubout_file = "stub.out"
@@ -7187,7 +7254,8 @@ def test_partadm_boot_status_option_1():
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7205,9 +7273,6 @@ def test_partadm_boot_status_option_1():
 def test_partadm_boot_status_option_2():
     """
     partadm test run: boot_status_option_2
-        Old Command Output:
-          Boot control not available for BG/P systems
-          
 
     """
 
@@ -7217,6 +7282,8 @@ def test_partadm_boot_status_option_2():
 """Boot control not available for BG/P systems
 """
 
+    cmderr    = ''
+
     stubout   = ''
 
     stubout_file = "stub.out"
@@ -7224,7 +7291,8 @@ def test_partadm_boot_status_option_2():
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7251,6 +7319,8 @@ def test_partadm_boot_status_option_3():
 """Boot control not available for BG/P systems
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_PARTITIONS
@@ -7263,7 +7333,8 @@ plist: [{'tag': 'partition', 'name': 'ANL-R00-M0-512', 'children': '*'}]
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7281,9 +7352,6 @@ plist: [{'tag': 'partition', 'name': 'ANL-R00-M0-512', 'children': '*'}]
 def test_partadm_boot_status_option_4():
     """
     partadm test run: boot_status_option_4
-        Old Command Output:
-          Boot control not available for BG/P systems
-          
 
     """
 
@@ -7293,6 +7361,8 @@ def test_partadm_boot_status_option_4():
 """Boot control not available for BG/P systems
 """
 
+    cmderr    = ''
+
     stubout   = ''
 
     stubout_file = "stub.out"
@@ -7300,7 +7370,8 @@ def test_partadm_boot_status_option_4():
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7318,9 +7389,6 @@ def test_partadm_boot_status_option_4():
 def test_partadm_boot_status_option_5():
     """
     partadm test run: boot_status_option_5
-        Old Command Output:
-          Boot control not available for BG/P systems
-          
 
     """
 
@@ -7330,6 +7398,8 @@ def test_partadm_boot_status_option_5():
 """Boot control not available for BG/P systems
 """
 
+    cmderr    = ''
+
     stubout   = ''
 
     stubout_file = "stub.out"
@@ -7337,7 +7407,8 @@ def test_partadm_boot_status_option_5():
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7355,9 +7426,6 @@ def test_partadm_boot_status_option_5():
 def test_partadm_boot_status_option_6():
     """
     partadm test run: boot_status_option_6
-        Old Command Output:
-          Boot control not available for BG/P systems
-          
 
     """
 
@@ -7366,6 +7434,8 @@ def test_partadm_boot_status_option_6():
     cmdout    = \
 """Boot control not available for BG/P systems
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -7379,7 +7449,8 @@ plist: []
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7397,9 +7468,6 @@ plist: []
 def test_partadm_boot_status_option_7():
     """
     partadm test run: boot_status_option_7
-        Old Command Output:
-          Boot control not available for BG/P systems
-          
 
     """
 
@@ -7408,6 +7476,8 @@ def test_partadm_boot_status_option_7():
     cmdout    = \
 """Boot control not available for BG/P systems
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -7421,7 +7491,8 @@ plist: []
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7444,7 +7515,9 @@ def test_partadm_list_io_1():
 
     args      = """--list_io"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """WARNING: IO Block information only exists on BG/Q-type systems.
 """
 
@@ -7455,7 +7528,8 @@ def test_partadm_list_io_1():
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7478,7 +7552,9 @@ def test_partadm_list_io_2():
 
     args      = """--list_io ANL-R00-M0-512 ANL-R00-M1-512"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """WARNING: IO Block information only exists on BG/Q-type systems.
 """
 
@@ -7489,7 +7565,8 @@ def test_partadm_list_io_2():
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7512,7 +7589,9 @@ def test_partadm_list_io_3():
 
     args      = """-i"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """WARNING: IO Block information only exists on BG/Q-type systems.
 """
 
@@ -7523,7 +7602,8 @@ def test_partadm_list_io_3():
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7546,7 +7626,9 @@ def test_partadm_add_io_block_1():
 
     args      = """--add_io_block"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """At least one partition must be supplied
 """
 
@@ -7557,7 +7639,8 @@ def test_partadm_add_io_block_1():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7584,6 +7667,8 @@ def test_partadm_add_io_block_2():
 """['ANL-R00-M0-512', 'ANL-R00-M1-512', 'ANL-R01-M0-512']
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 ADD_IO_BLOCKS
@@ -7608,7 +7693,8 @@ name type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7631,7 +7717,9 @@ def test_partadm_del_io_block_1():
 
     args      = """--del_io_block"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """At least one partition must be supplied
 """
 
@@ -7642,7 +7730,8 @@ def test_partadm_del_io_block_1():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7669,6 +7758,8 @@ def test_partadm_del_io_block_2():
 """['ANL-R00-M0-512', 'ANL-R00-M1-512', 'ANL-R01-M0-512']
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 DEL_IO_BLOCKS
@@ -7693,7 +7784,8 @@ name type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7716,7 +7808,9 @@ def test_partadm_boot_io_block_1():
 
     args      = """--boot_io_block"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """At least one partition must be supplied
 """
 
@@ -7727,7 +7821,8 @@ def test_partadm_boot_io_block_1():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7754,6 +7849,8 @@ def test_partadm_boot_io_block_2():
 """IO Boot initiated on ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 INITIATE_IO_BOOT
@@ -7767,7 +7864,8 @@ parts: ['ANL-R00-M0-512', 'ANL-R00-M1-512', 'ANL-R01-M0-512']
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7790,7 +7888,9 @@ def test_partadm_free_io_block_1():
 
     args      = """--free_io_block"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """At least one partition must be supplied
 """
 
@@ -7801,7 +7901,8 @@ def test_partadm_free_io_block_1():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7828,6 +7929,8 @@ def test_partadm_free_io_block_2():
 """IO Free initiated on ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 INITIATE_IO_BOOT
@@ -7842,7 +7945,8 @@ parts: ['ANL-R00-M0-512', 'ANL-R00-M1-512', 'ANL-R01-M0-512']
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7865,7 +7969,9 @@ def test_partadm_set_io_autoboot_1():
 
     args      = """--set_io_autoboot"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """At least one partition must be supplied
 """
 
@@ -7876,7 +7982,8 @@ def test_partadm_set_io_autoboot_1():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7903,6 +8010,8 @@ def test_partadm_set_io_autoboot_2():
 """Autoreboot flag set for IO Blocks: ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 SET_AUTOREBOOT
@@ -7916,7 +8025,8 @@ parts: ['ANL-R00-M0-512', 'ANL-R00-M1-512', 'ANL-R01-M0-512']
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7939,7 +8049,9 @@ def test_partadm_unset_io_autoboot_1():
 
     args      = """--unset_io_autoboot"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """At least one partition must be supplied
 """
 
@@ -7950,7 +8062,8 @@ def test_partadm_unset_io_autoboot_1():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7977,6 +8090,8 @@ def test_partadm_unset_io_autoboot_2():
 """Autoreboot flag unset for IO Blocks: ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 UNSET_AUTOREBOOT
@@ -7990,7 +8105,8 @@ parts: ['ANL-R00-M0-512', 'ANL-R00-M1-512', 'ANL-R01-M0-512']
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -8013,7 +8129,9 @@ def test_partadm_io_autoboot_start_1():
 
     args      = """--io_autoboot_start"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """IO Block autoreboot enabled.
 """
 
@@ -8028,7 +8146,8 @@ ENABLE_IO_AUTOREBOOT
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -8051,7 +8170,9 @@ def test_partadm_io_autoboot_start_2():
 
     args      = """--io_autoboot_start ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """IO Block autoreboot enabled.
 """
 
@@ -8066,7 +8187,8 @@ ENABLE_IO_AUTOREBOOT
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -8089,7 +8211,9 @@ def test_partadm_io_autoboot_stop_1():
 
     args      = """--io_autoboot_stop"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """IO Block autoreboot disabled.
 """
 
@@ -8104,7 +8228,8 @@ DISABLE_IO_AUTOREBOOT
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -8127,7 +8252,9 @@ def test_partadm_io_autoboot_stop_2():
 
     args      = """--io_autoboot_stop ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """IO Block autoreboot disabled.
 """
 
@@ -8142,7 +8269,8 @@ DISABLE_IO_AUTOREBOOT
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -8165,7 +8293,9 @@ def test_partadm_io_autoboot_status_1():
 
     args      = """--io_autoboot_status"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """IO Block autoreboot: ENABLED
 """
 
@@ -8180,7 +8310,8 @@ GET_IO_AUTOREBOOT_STATUS
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -8203,7 +8334,9 @@ def test_partadm_io_autoboot_status_2():
 
     args      = """--io_autoboot_status ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """IO Block autoreboot: ENABLED
 """
 
@@ -8218,7 +8351,8 @@ GET_IO_AUTOREBOOT_STATUS
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")

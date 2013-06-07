@@ -6,9 +6,10 @@ def test_boot_block_combo():
     boot-block test run: combo
 
         Command Output:
-          ERROR: --free may not be specified with --reboot.
-          
-
+        
+        Command Error/Debug:ERROR: --free may not be specified with --reboot.
+        
+        
     """
 
     args      = """--free --reboot --block b --jobid 1"""
@@ -17,6 +18,7 @@ def test_boot_block_combo():
     results = testutils.run_cmd('boot-block.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -27,7 +29,8 @@ def test_boot_block_combo():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -37,9 +40,10 @@ def test_boot_block_free_1():
     boot-block test run: free_1
 
         Command Output:
-          ERROR: block not specified as option or in environment.
-          
-
+        
+        Command Error/Debug:ERROR: block not specified as option or in environment.
+        
+        
     """
 
     args      = """--free"""
@@ -48,6 +52,7 @@ def test_boot_block_free_1():
     results = testutils.run_cmd('boot-block.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -58,7 +63,8 @@ def test_boot_block_free_1():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -68,9 +74,10 @@ def test_boot_block_free_2():
     boot-block test run: free_2
 
         Command Output:
-          ERROR: block not specified as option or in environment.
-          
-
+        
+        Command Error/Debug:ERROR: block not specified as option or in environment.
+        
+        
     """
 
     args      = """--free --jobid 1"""
@@ -79,6 +86,7 @@ def test_boot_block_free_2():
     results = testutils.run_cmd('boot-block.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -89,7 +97,8 @@ def test_boot_block_free_2():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -99,9 +108,10 @@ def test_boot_block_reboot_1():
     boot-block test run: reboot_1
 
         Command Output:
-          ERROR: block not specified as option or in environment.
-          
-
+        
+        Command Error/Debug:ERROR: block not specified as option or in environment.
+        
+        
     """
 
     args      = """--reboot"""
@@ -110,6 +120,7 @@ def test_boot_block_reboot_1():
     results = testutils.run_cmd('boot-block.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -120,7 +131,8 @@ def test_boot_block_reboot_1():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -130,9 +142,10 @@ def test_boot_block_reboot_2():
     boot-block test run: reboot_2
 
         Command Output:
-          ERROR: block not specified as option or in environment.
-          
-
+        
+        Command Error/Debug:ERROR: block not specified as option or in environment.
+        
+        
     """
 
     args      = """--reboot --jobid 1"""
@@ -141,6 +154,7 @@ def test_boot_block_reboot_2():
     results = testutils.run_cmd('boot-block.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -151,7 +165,8 @@ def test_boot_block_reboot_2():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -161,9 +176,10 @@ def test_boot_block_nofree_noreboot_1():
     boot-block test run: nofree_noreboot_1
 
         Command Output:
-          ERROR: block not specified as option or in environment.
-          
-
+        
+        Command Error/Debug:ERROR: block not specified as option or in environment.
+        
+        
     """
 
     args      = """--jobid 1"""
@@ -172,6 +188,7 @@ def test_boot_block_nofree_noreboot_1():
     results = testutils.run_cmd('boot-block.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -182,7 +199,8 @@ def test_boot_block_nofree_noreboot_1():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -192,9 +210,10 @@ def test_boot_block_nofree_noreboot_2():
     boot-block test run: nofree_noreboot_2
 
         Command Output:
-          ERROR: Cobalt jobid not specified as option or in environment.
-          
-
+        
+        Command Error/Debug:ERROR: Cobalt jobid not specified as option or in environment.
+        
+        
     """
 
     args      = """--block b"""
@@ -203,6 +222,7 @@ def test_boot_block_nofree_noreboot_2():
     results = testutils.run_cmd('boot-block.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -213,7 +233,8 @@ def test_boot_block_nofree_noreboot_2():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -223,18 +244,19 @@ def test_boot_block_help_1():
     boot-block test run: help_1
 
         Command Output:
-          Usage: boot-block.py [options]
-          
-          Options:
-            --version      show program's version number and exit
-            -h, --help     show this help message and exit
-            -d, --debug    turn on communication debugging
-            --block=BLOCK  Name of block to boot.
-            --reboot       If the block is already booted, free the block and reboot.
-            --free         Free the block, if booted.  May not be combined with reboot
-            --jobid=JOBID  Specify a cobalt jobid for this boot.
-          
-
+        Usage: boot-block.py [options]
+        
+        Options:
+          --version      show program's version number and exit
+          -h, --help     show this help message and exit
+          -d, --debug    turn on communication debugging
+          --block=BLOCK  Name of block to boot.
+          --reboot       If the block is already booted, free the block and reboot.
+          --free         Free the block, if booted.  May not be combined with reboot
+          --jobid=JOBID  Specify a cobalt jobid for this boot.
+        
+        Command Error/Debug:
+        
     """
 
     args      = """--help"""
@@ -243,6 +265,7 @@ def test_boot_block_help_1():
     results = testutils.run_cmd('boot-block.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -253,7 +276,8 @@ def test_boot_block_help_1():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -263,18 +287,19 @@ def test_boot_block_help_2():
     boot-block test run: help_2
 
         Command Output:
-          Usage: boot-block.py [options]
-          
-          Options:
-            --version      show program's version number and exit
-            -h, --help     show this help message and exit
-            -d, --debug    turn on communication debugging
-            --block=BLOCK  Name of block to boot.
-            --reboot       If the block is already booted, free the block and reboot.
-            --free         Free the block, if booted.  May not be combined with reboot
-            --jobid=JOBID  Specify a cobalt jobid for this boot.
-          
-
+        Usage: boot-block.py [options]
+        
+        Options:
+          --version      show program's version number and exit
+          -h, --help     show this help message and exit
+          -d, --debug    turn on communication debugging
+          --block=BLOCK  Name of block to boot.
+          --reboot       If the block is already booted, free the block and reboot.
+          --free         Free the block, if booted.  May not be combined with reboot
+          --jobid=JOBID  Specify a cobalt jobid for this boot.
+        
+        Command Error/Debug:
+        
     """
 
     args      = """-h"""
@@ -283,6 +308,7 @@ def test_boot_block_help_2():
     results = testutils.run_cmd('boot-block.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -293,7 +319,8 @@ def test_boot_block_help_2():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -303,9 +330,10 @@ def test_boot_block_version():
     boot-block test run: version
 
         Command Output:
-          version: "boot-block.py " + TBD + , Cobalt  + $Version$
-          
-
+        version: "boot-block.py " + TBD + , Cobalt  + $Version$
+        
+        Command Error/Debug:
+        
     """
 
     args      = """--version"""
@@ -314,6 +342,7 @@ def test_boot_block_version():
     results = testutils.run_cmd('boot-block.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -324,7 +353,8 @@ def test_boot_block_version():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -334,12 +364,13 @@ def test_boot_block_debug_1():
     boot-block test run: debug_1
 
         Command Output:
-          
-          boot-block.py --debug
-          
-          ERROR: block not specified as option or in environment.
-          
-
+        
+        Command Error/Debug:
+        boot-block.py --debug
+        
+        ERROR: block not specified as option or in environment.
+        
+        
     """
 
     args      = """--debug"""
@@ -348,6 +379,7 @@ def test_boot_block_debug_1():
     results = testutils.run_cmd('boot-block.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -358,7 +390,8 @@ def test_boot_block_debug_1():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -368,12 +401,13 @@ def test_boot_block_debug_2():
     boot-block test run: debug_2
 
         Command Output:
-          
-          boot-block.py --d
-          
-          ERROR: block not specified as option or in environment.
-          
-
+        
+        Command Error/Debug:
+        boot-block.py --d
+        
+        ERROR: block not specified as option or in environment.
+        
+        
     """
 
     args      = """--d"""
@@ -382,6 +416,7 @@ def test_boot_block_debug_2():
     results = testutils.run_cmd('boot-block.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -392,6 +427,7 @@ def test_boot_block_debug_2():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg

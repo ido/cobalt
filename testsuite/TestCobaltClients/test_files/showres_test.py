@@ -4,11 +4,6 @@ import testutils
 def test_showres_arg_1():
     """
     showres test run: arg_1
-        Old Command Output:
-          Reservation  Queue  User   Start                                 Duration  Passthrough  Partitions  
-          ====================================================================================================
-          *            kebra  james  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Blocked      [P1-10]     
-          
 
     """
 
@@ -19,6 +14,8 @@ def test_showres_arg_1():
 ====================================================================================================
 *            kebra  james  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Blocked      [P1-10]     
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -56,7 +53,8 @@ users type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -74,11 +72,6 @@ users type: <type 'str'>
 def test_showres_arg_2():
     """
     showres test run: arg_2
-        Old Command Output:
-          Reservation  Queue  User   Start                     Duration  Passthrough  Partitions  
-          ========================================================================================
-          *            kebra  james  Tue Mar 26 16:56:40 2013  00:08     Blocked      [P1-10]     
-          
 
     """
 
@@ -89,6 +82,8 @@ def test_showres_arg_2():
 ========================================================================================
 *            kebra  james  Tue Mar 26 16:56:40 2013  00:08     Blocked      [P1-10]     
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -126,7 +121,8 @@ users type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -144,21 +140,19 @@ users type: <type 'str'>
 def test_showres_arg_3():
     """
     showres test run: arg_3
-        Old Command Output:
-          Reservation  Queue  User   Start                                 Duration  Passthrough  Partitions  
-          ====================================================================================================
-          *            kebra  james  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Blocked      [P1-10]     
-          
 
     """
 
     args      = """arg1"""
 
     cmdout    = \
-"""No arguments needed
-Reservation  Queue  User   Start                                 Duration  Passthrough  Partitions  
+"""Reservation  Queue  User   Start                                 Duration  Passthrough  Partitions  
 ====================================================================================================
 *            kebra  james  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Blocked      [P1-10]     
+"""
+
+    cmderr    = \
+"""No arguments needed
 """
 
     stubout   = \
@@ -197,7 +191,8 @@ users type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -215,11 +210,6 @@ users type: <type 'str'>
 def test_showres_l_option_1():
     """
     showres test run: l_option_1
-        Old Command Output:
-          Reservation  Queue  User   Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions  
-          ======================================================================================================================================================
-          *            kebra  james  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Tue Mar 26 22:05:00 2013 +0000 (UTC)  00:05       Blocked      [P1-10]     
-          
 
     """
 
@@ -230,6 +220,8 @@ def test_showres_l_option_1():
 ======================================================================================================================================================
 *            kebra  james  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Tue Mar 26 22:05:00 2013 +0000 (UTC)  00:05       Blocked      [P1-10]     
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -267,7 +259,8 @@ users type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -285,11 +278,6 @@ users type: <type 'str'>
 def test_showres_l_option_2():
     """
     showres test run: l_option_2
-        Old Command Output:
-          Reservation  Queue  User   Start                     Duration  End Time                  Cycle Time  Passthrough  Partitions  
-          ==============================================================================================================================
-          *            kebra  james  Tue Mar 26 16:56:40 2013  00:08     Tue Mar 26 17:05:00 2013  00:05       Blocked      [P1-10]     
-          
 
     """
 
@@ -301,6 +289,8 @@ def test_showres_l_option_2():
 *            kebra  james  Tue Mar 26 16:56:40 2013  00:08     Tue Mar 26 17:05:00 2013  00:05       Blocked      [P1-10]     
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_IMPLEMENTATION
@@ -337,7 +327,8 @@ users type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -355,11 +346,6 @@ users type: <type 'str'>
 def test_showres_x_option_1():
     """
     showres test run: x_option_1
-        Old Command Output:
-          Reservation  Queue  User   Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions  Project  ResID  CycleID  
-          ===============================================================================================================================================================================
-          *            kebra  james  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Tue Mar 26 22:05:00 2013 +0000 (UTC)  00:05       Blocked      [P1-10]     proj     id     10       
-          
 
     """
 
@@ -371,6 +357,8 @@ def test_showres_x_option_1():
 *            kebra  james  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Tue Mar 26 22:05:00 2013 +0000 (UTC)  00:05       Blocked      [P1-10]     proj     id     10       
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_IMPLEMENTATION
@@ -407,7 +395,8 @@ users type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -425,11 +414,6 @@ users type: <type 'str'>
 def test_showres_x_option_1():
     """
     showres test run: x_option_1
-        Old Command Output:
-          Reservation  Queue  User   Start                     Duration  End Time                  Cycle Time  Passthrough  Partitions  Project  ResID  CycleID  
-          =======================================================================================================================================================
-          *            kebra  james  Tue Mar 26 16:56:40 2013  00:08     Tue Mar 26 17:05:00 2013  00:05       Blocked      [P1-10]     proj     id     10       
-          
 
     """
 
@@ -440,6 +424,8 @@ def test_showres_x_option_1():
 =======================================================================================================================================================
 *            kebra  james  Tue Mar 26 16:56:40 2013  00:08     Tue Mar 26 17:05:00 2013  00:05       Blocked      [P1-10]     proj     id     10       
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -477,7 +463,8 @@ users type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -500,7 +487,9 @@ def test_showres_combo():
 
     args      = """-l -x"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Only use -l or -x not both
 """
 
@@ -511,7 +500,8 @@ def test_showres_combo():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -546,6 +536,8 @@ Options:
   -x           print reservations really verbose
 """
 
+    cmderr    = ''
+
     stubout   = ''
 
     stubout_file = "stub.out"
@@ -553,7 +545,8 @@ Options:
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -588,6 +581,8 @@ Options:
   -x           print reservations really verbose
 """
 
+    cmderr    = ''
+
     stubout   = ''
 
     stubout_file = "stub.out"
@@ -595,7 +590,8 @@ Options:
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -622,6 +618,8 @@ def test_showres_version():
 """version: "showres.py " + $Revision: 2154 $ + , Cobalt  + $Version$
 """
 
+    cmderr    = ''
+
     stubout   = ''
 
     stubout_file = "stub.out"
@@ -629,7 +627,8 @@ def test_showres_version():
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -653,6 +652,12 @@ def test_showres_debug():
     args      = """--debug"""
 
     cmdout    = \
+"""Reservation  Queue  User   Start                                 Duration  Passthrough  Partitions  
+====================================================================================================
+*            kebra  james  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Blocked      [P1-10]     
+"""
+
+    cmderr    = \
 """
 showres.py --debug
 
@@ -667,9 +672,6 @@ component: "scheduler.get_reservations", defer: False
      )
 
 
-Reservation  Queue  User   Start                                 Duration  Passthrough  Partitions  
-====================================================================================================
-*            kebra  james  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Blocked      [P1-10]     
 """
 
     stubout   = \
@@ -708,7 +710,8 @@ users type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")

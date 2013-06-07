@@ -4,16 +4,17 @@ import testutils
 def test_qmove_invalid_option():
     """
     qmove test run: invalid_option
-        Old Command Output:
-          Usage:
-          qmove <queue name> <jobid> <jobid>
-          
 
     """
 
     args      = """-k"""
 
     cmdout    = \
+"""Usage:
+qmove <queue name> <jobid> <jobid>
+"""
+
+    cmderr    = \
 """Usage: qmove.py [options] <queue name> <jobid1> [... <jobidN>]
 
 qmove.py: error: no such option: -k
@@ -26,7 +27,8 @@ qmove.py: error: no such option: -k
     expected_results = ( 
                        512, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -44,11 +46,6 @@ qmove.py: error: no such option: -k
 def test_qmove_queue_1():
     """
     qmove test run: queue_1
-        Old Command Output:
-          moved job 1 to queue 'kebra'
-          moved job 2 to queue 'kebra'
-          moved job 3 to queue 'kebra'
-          
 
     """
 
@@ -59,6 +56,8 @@ def test_qmove_queue_1():
 moved job 2 to queue 'kebra'
 moved job 3 to queue 'kebra'
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -431,7 +430,8 @@ walltime type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -455,6 +455,12 @@ def test_qmove_queue_2():
     args      = """-d myq 1 2 3"""
 
     cmdout    = \
+"""moved job 1 to queue 'kebra'
+moved job 2 to queue 'kebra'
+moved job 3 to queue 'kebra'
+"""
+
+    cmderr    = \
 """
 qmove.py -d myq 1 2 3
 
@@ -488,9 +494,6 @@ component: "queue-manager.set_jobs", defer: False
      )
 
 
-moved job 1 to queue 'kebra'
-moved job 2 to queue 'kebra'
-moved job 3 to queue 'kebra'
 """
 
     stubout   = \
@@ -864,7 +867,8 @@ walltime type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -882,11 +886,6 @@ walltime type: <type 'str'>
 def test_qmove_queue_3():
     """
     qmove test run: queue_3
-        Old Command Output:
-          moved job 2 to queue 'kebra'
-          moved job 3 to queue 'kebra'
-          moved job 4 to queue 'kebra'
-          
 
     """
 
@@ -897,6 +896,8 @@ def test_qmove_queue_3():
 moved job 3 to queue 'kebra'
 moved job 4 to queue 'kebra'
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -1269,7 +1270,8 @@ walltime type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1287,15 +1289,14 @@ walltime type: <type 'str'>
 def test_qmove_queu_4():
     """
     qmove test run: queu_4
-        Old Command Output:
-          jobid must be an integer
-          
 
     """
 
     args      = """q1 q2 1 2 3"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """jobid must be an integer: q2
 """
 
@@ -1306,7 +1307,8 @@ def test_qmove_queu_4():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")

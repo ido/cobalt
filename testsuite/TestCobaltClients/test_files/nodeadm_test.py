@@ -4,33 +4,24 @@ import testutils
 def test_nodeadm_args_1():
     """
     nodeadm test run: args_1
-        Old Command Output:
-          Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]
-          
-          Options:
-            -h, --help     show this help message and exit
-            --down         mark nodes as down
-            --up           mark nodes as up (even if allocated)
-            --queue=QUEUE  set queue associations
-            -l             list node states
-          
 
     """
 
     args      = ''
 
     cmdout    = \
-"""No arguments provided
-Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]"
+"""Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]
 
 Options:
-  --version      show program's version number and exit
   -h, --help     show this help message and exit
-  -d, --debug    turn on communication debugging
   --down         mark nodes as down
   --up           mark nodes as up (even if allocated)
   --queue=QUEUE  set queue associations
-  -l, --list     list node states
+  -l             list node states
+"""
+
+    cmderr    = \
+"""No arguments provided
 """
 
     stubout   = ''
@@ -40,7 +31,8 @@ Options:
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -58,33 +50,24 @@ Options:
 def test_nodeadm_args_2():
     """
     nodeadm test run: args_2
-        Old Command Output:
-          Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]
-          
-          Options:
-            -h, --help     show this help message and exit
-            --down         mark nodes as down
-            --up           mark nodes as up (even if allocated)
-            --queue=QUEUE  set queue associations
-            -l             list node states
-          
 
     """
 
     args      = """p1"""
 
     cmdout    = \
-"""Need at least one option
-Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]"
+"""Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]
 
 Options:
-  --version      show program's version number and exit
   -h, --help     show this help message and exit
-  -d, --debug    turn on communication debugging
   --down         mark nodes as down
   --up           mark nodes as up (even if allocated)
   --queue=QUEUE  set queue associations
-  -l, --list     list node states
+  -l             list node states
+"""
+
+    cmderr    = \
+"""Need at least one option
 """
 
     stubout   = ''
@@ -94,7 +77,8 @@ Options:
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -112,15 +96,14 @@ Options:
 def test_nodeadm_combo_1():
     """
     nodeadm test run: combo_1
-        Old Command Output:
-          --down and --up cannot be used together
-          
 
     """
 
     args      = """--up --down p1"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Option combinations not allowed with: up option(s)
 """
 
@@ -135,7 +118,8 @@ GET_IMPLEMENTATION
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -158,7 +142,9 @@ def test_nodeadm_combo_2():
 
     args      = """--up -l p1"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Option combinations not allowed with: list option(s)
 """
 
@@ -173,7 +159,8 @@ GET_IMPLEMENTATION
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -196,7 +183,9 @@ def test_nodeadm_combo_3():
 
     args      = """--list --queue q1 p1"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Option combinations not allowed with: queue option(s)
 """
 
@@ -211,7 +200,8 @@ GET_IMPLEMENTATION
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -234,7 +224,9 @@ def test_nodeadm_combo_4():
 
     args      = """--up --queue q1 p1"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Option combinations not allowed with: queue option(s)
 """
 
@@ -249,7 +241,8 @@ GET_IMPLEMENTATION
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -272,7 +265,9 @@ def test_nodeadm_combo_5():
 
     args      = """--down --list p1"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Option combinations not allowed with: list option(s)
 """
 
@@ -287,7 +282,8 @@ GET_IMPLEMENTATION
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -305,19 +301,6 @@ GET_IMPLEMENTATION
 def test_nodeadm_up_1():
     """
     nodeadm test run: up_1
-        Old Command Output:
-          nodes marked up:
-             U1
-             U2
-             U3
-             U4
-             U5
-          
-          nodes that weren't in the down list:
-             p1
-             p2
-             p3
-          
 
     """
 
@@ -337,6 +320,8 @@ nodes that weren't in the down list:
    p3
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_IMPLEMENTATION
@@ -353,7 +338,8 @@ args: ['p1', 'p2', 'p3']
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -371,17 +357,6 @@ args: ['p1', 'p2', 'p3']
 def test_nodeadm_up_2():
     """
     nodeadm test run: up_2
-        Old Command Output:
-          nodes marked up:
-             U1
-             U2
-             U3
-             U4
-             U5
-          
-          nodes that weren't in the down list:
-             p1
-          
 
     """
 
@@ -399,6 +374,8 @@ nodes that weren't in the down list:
    p1
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_IMPLEMENTATION
@@ -415,7 +392,8 @@ args: ['U1', 'U2', 'U5', 'p1']
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -433,19 +411,6 @@ args: ['U1', 'U2', 'U5', 'p1']
 def test_nodeadm_down_1():
     """
     nodeadm test run: down_1
-        Old Command Output:
-          nodes marked down:
-             D1
-             D2
-             D3
-             D4
-             D5
-          
-          unknown nodes:
-             p1
-             p2
-             p3
-          
 
     """
 
@@ -465,6 +430,8 @@ unknown nodes:
    p3
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_IMPLEMENTATION
@@ -483,7 +450,8 @@ p3
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -507,6 +475,20 @@ def test_nodeadm_down_2():
     args      = """-d --down p1 p2 p3"""
 
     cmdout    = \
+"""nodes marked down:
+   D1
+   D2
+   D3
+   D4
+   D5
+
+unknown nodes:
+   p1
+   p2
+   p3
+"""
+
+    cmderr    = \
 """
 nodeadm.py -d --down p1 p2 p3
 
@@ -522,17 +504,6 @@ component: "system.nodes_down", defer: False
      )
 
 
-nodes marked down:
-   D1
-   D2
-   D3
-   D4
-   D5
-
-unknown nodes:
-   p1
-   p2
-   p3
 """
 
     stubout   = \
@@ -553,7 +524,8 @@ p3
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -571,17 +543,6 @@ p3
 def test_nodeadm_down_3():
     """
     nodeadm test run: down_3
-        Old Command Output:
-          nodes marked down:
-             D1
-             D2
-             D3
-             D4
-             D5
-          
-          unknown nodes:
-             p1
-          
 
     """
 
@@ -598,6 +559,8 @@ def test_nodeadm_down_3():
 unknown nodes:
    p1
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -618,7 +581,8 @@ p1
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -636,16 +600,6 @@ p1
 def test_nodeadm_list_1():
     """
     nodeadm test run: list_1
-        Old Command Output:
-          Host  Queue  State
-          ====================
-          D1    QD1    good 
-          D2    QD2    bad  
-          D3    QD3    ugly 
-          U1    QU1    one  
-          U2    QU2    two  
-          U3    QU3    three
-          
 
     """
 
@@ -661,6 +615,8 @@ U1    QU1    one
 U2    QU2    two  
 U3    QU3    three
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -679,7 +635,8 @@ GET_QUEUE_ASSIGNMENTS
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -697,16 +654,6 @@ GET_QUEUE_ASSIGNMENTS
 def test_nodeadm_list_2():
     """
     nodeadm test run: list_2
-        Old Command Output:
-          Host  Queue  State
-          ====================
-          D1    QD1    good 
-          D2    QD2    bad  
-          D3    QD3    ugly 
-          U1    QU1    one  
-          U2    QU2    two  
-          U3    QU3    three
-          
 
     """
 
@@ -722,6 +669,8 @@ U1    QU1    one
 U2    QU2    two  
 U3    QU3    three
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -740,7 +689,8 @@ GET_QUEUE_ASSIGNMENTS
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -758,33 +708,24 @@ GET_QUEUE_ASSIGNMENTS
 def test_nodeadm_queue_1():
     """
     nodeadm test run: queue_1
-        Old Command Output:
-          Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]
-          
-          Options:
-            -h, --help     show this help message and exit
-            --down         mark nodes as down
-            --up           mark nodes as up (even if allocated)
-            --queue=QUEUE  set queue associations
-            -l             list node states
-          
 
     """
 
     args      = """--queue QU1"""
 
     cmdout    = \
-"""No arguments provided
-Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]"
+"""Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]
 
 Options:
-  --version      show program's version number and exit
   -h, --help     show this help message and exit
-  -d, --debug    turn on communication debugging
   --down         mark nodes as down
   --up           mark nodes as up (even if allocated)
   --queue=QUEUE  set queue associations
-  -l, --list     list node states
+  -l             list node states
+"""
+
+    cmderr    = \
+"""No arguments provided
 """
 
     stubout   = ''
@@ -794,7 +735,8 @@ Options:
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -812,9 +754,6 @@ Options:
 def test_nodeadm_queue_2():
     """
     nodeadm test run: queue_2
-        Old Command Output:
-          QU1 QD1
-          
 
     """
 
@@ -823,6 +762,8 @@ def test_nodeadm_queue_2():
     cmdout    = \
 """QU1 QD1
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -841,7 +782,8 @@ queues: QU1 QD1
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")

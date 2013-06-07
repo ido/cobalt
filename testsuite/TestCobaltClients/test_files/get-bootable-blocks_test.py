@@ -4,15 +4,14 @@ import testutils
 def test_get_bootable_blocks_arg_1():
     """
     get-bootable-blocks test run: arg_1
-        Old Command Output:
-          Must specify a block location for search
-          
 
     """
 
     args      = ''
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Must specify a block location for search
 """
 
@@ -23,7 +22,8 @@ def test_get_bootable_blocks_arg_1():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -41,25 +41,16 @@ def test_get_bootable_blocks_arg_1():
 def test_get_bootable_blocks_arg_2():
     """
     get-bootable-blocks test run: arg_2
-        Old Command Output:
-          Traceback (most recent call last):
-            File "oldcmds/get-bootable-blocks.py", line 57, in <module>
-              retval = main()
-            File "oldcmds/get-bootable-blocks.py", line 51, in main
-              idle_blocks = ComponentProxy('system', defer=False).get_idle_blocks(block_loc, query_size, geo_list)
-            File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 290, in get_idle_blocks
-              logmsg("query size: %s, type = %s" % (str(query_size), str(type(queue_size))))
-          NameError: global name 'queue_size' is not defined
-          
 
     """
 
     args      = """arg"""
 
-    cmdout    = \
-"""component error:  Following exception while trying to excecute system.get_idle_blocks
+    cmdout    = ''
 
-global name 'queue_size' is not defined
+    cmderr    = \
+"""component error: Following exception while trying to excecute system.get_idle_blocks: global name 'queue_size' is not defined
+
 """
 
     stubout   = \
@@ -74,7 +65,8 @@ block location: arg, type = <type 'str'>
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -92,15 +84,14 @@ block location: arg, type = <type 'str'>
 def test_get_bootable_blocks_size_1():
     """
     get-bootable-blocks test run: size_1
-        Old Command Output:
-          Must specify a block location for search
-          
 
     """
 
     args      = """--size 1024"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Must specify a block location for search
 """
 
@@ -111,7 +102,8 @@ def test_get_bootable_blocks_size_1():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -129,25 +121,16 @@ def test_get_bootable_blocks_size_1():
 def test_get_bootable_blocks_size_2():
     """
     get-bootable-blocks test run: size_2
-        Old Command Output:
-          Traceback (most recent call last):
-            File "oldcmds/get-bootable-blocks.py", line 57, in <module>
-              retval = main()
-            File "oldcmds/get-bootable-blocks.py", line 51, in main
-              idle_blocks = ComponentProxy('system', defer=False).get_idle_blocks(block_loc, query_size, geo_list)
-            File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 290, in get_idle_blocks
-              logmsg("query size: %s, type = %s" % (str(query_size), str(type(queue_size))))
-          NameError: global name 'queue_size' is not defined
-          
 
     """
 
     args      = """--size 1024 arg"""
 
-    cmdout    = \
-"""component error:  Following exception while trying to excecute system.get_idle_blocks
+    cmdout    = ''
 
-global name 'queue_size' is not defined
+    cmderr    = \
+"""component error: Following exception while trying to excecute system.get_idle_blocks: global name 'queue_size' is not defined
+
 """
 
     stubout   = \
@@ -162,7 +145,8 @@ block location: arg, type = <type 'str'>
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -180,15 +164,14 @@ block location: arg, type = <type 'str'>
 def test_get_bootable_blocks_geometry_1():
     """
     get-bootable-blocks test run: geometry_1
-        Old Command Output:
-          Invalid Geometry. Geometry must be in the form of AxBxCxDxE
-          
 
     """
 
     args      = """--geometry 1              arg"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Invalid Geometry. Geometry must be in the form of AxBxCxDxE
 """
 
@@ -199,7 +182,8 @@ def test_get_bootable_blocks_geometry_1():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -217,15 +201,14 @@ def test_get_bootable_blocks_geometry_1():
 def test_get_bootable_blocks_geometry_2():
     """
     get-bootable-blocks test run: geometry_2
-        Old Command Output:
-          Invalid Geometry. Geometry must be in the form of AxBxCxDxE
-          
 
     """
 
     args      = """--geometry geo            arg"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Invalid Geometry. Geometry must be in the form of AxBxCxDxE
 """
 
@@ -236,7 +219,8 @@ def test_get_bootable_blocks_geometry_2():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -254,15 +238,14 @@ def test_get_bootable_blocks_geometry_2():
 def test_get_bootable_blocks_geometry_3():
     """
     get-bootable-blocks test run: geometry_3
-        Old Command Output:
-          Invalid Geometry. Geometry must be in the form of AxBxCxDxE
-          
 
     """
 
     args      = """--geometry 90x90x90x90x90 arg"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Invalid Geometry. Geometry must be in the form of AxBxCxDxE
 """
 
@@ -273,7 +256,8 @@ def test_get_bootable_blocks_geometry_3():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -291,15 +275,14 @@ def test_get_bootable_blocks_geometry_3():
 def test_get_bootable_blocks_geometry_4():
     """
     get-bootable-blocks test run: geometry_4
-        Old Command Output:
-          Invalid Geometry. Geometry must be in the form of AxBxCxDxE
-          
 
     """
 
     args      = """--geometry 90x90x90x90    arg"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Invalid Geometry. Geometry must be in the form of AxBxCxDxE
 """
 
@@ -310,7 +293,8 @@ def test_get_bootable_blocks_geometry_4():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -328,15 +312,14 @@ def test_get_bootable_blocks_geometry_4():
 def test_get_bootable_blocks_geometry_5():
     """
     get-bootable-blocks test run: geometry_5
-        Old Command Output:
-          Invalid Geometry. Geometry must be in the form of AxBxCxDxE
-          
 
     """
 
     args      = """--geometry -9x90x90x90x2  arg"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Invalid Geometry. Geometry must be in the form of AxBxCxDxE
 """
 
@@ -347,7 +330,8 @@ def test_get_bootable_blocks_geometry_5():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -365,25 +349,16 @@ def test_get_bootable_blocks_geometry_5():
 def test_get_bootable_blocks_geometry_6():
     """
     get-bootable-blocks test run: geometry_6
-        Old Command Output:
-          Traceback (most recent call last):
-            File "oldcmds/get-bootable-blocks.py", line 57, in <module>
-              retval = main()
-            File "oldcmds/get-bootable-blocks.py", line 51, in main
-              idle_blocks = ComponentProxy('system', defer=False).get_idle_blocks(block_loc, query_size, geo_list)
-            File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 290, in get_idle_blocks
-              logmsg("query size: %s, type = %s" % (str(query_size), str(type(queue_size))))
-          NameError: global name 'queue_size' is not defined
-          
 
     """
 
     args      = """--geometry 9x10x11x12x2   arg"""
 
-    cmdout    = \
-"""component error:  Following exception while trying to excecute system.get_idle_blocks
+    cmdout    = ''
 
-global name 'queue_size' is not defined
+    cmderr    = \
+"""component error: Following exception while trying to excecute system.get_idle_blocks: global name 'queue_size' is not defined
+
 """
 
     stubout   = \
@@ -398,7 +373,8 @@ block location: arg, type = <type 'str'>
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -416,25 +392,16 @@ block location: arg, type = <type 'str'>
 def test_get_bootable_blocks_geometry_7():
     """
     get-bootable-blocks test run: geometry_7
-        Old Command Output:
-          Traceback (most recent call last):
-            File "oldcmds/get-bootable-blocks.py", line 57, in <module>
-              retval = main()
-            File "oldcmds/get-bootable-blocks.py", line 51, in main
-              idle_blocks = ComponentProxy('system', defer=False).get_idle_blocks(block_loc, query_size, geo_list)
-            File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 290, in get_idle_blocks
-              logmsg("query size: %s, type = %s" % (str(query_size), str(type(queue_size))))
-          NameError: global name 'queue_size' is not defined
-          
 
     """
 
     args      = """--geometry 90x90x90x90x1  arg"""
 
-    cmdout    = \
-"""component error:  Following exception while trying to excecute system.get_idle_blocks
+    cmdout    = ''
 
-global name 'queue_size' is not defined
+    cmderr    = \
+"""component error: Following exception while trying to excecute system.get_idle_blocks: global name 'queue_size' is not defined
+
 """
 
     stubout   = \
@@ -449,7 +416,8 @@ block location: arg, type = <type 'str'>
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -467,25 +435,16 @@ block location: arg, type = <type 'str'>
 def test_get_bootable_blocks_geometry_8():
     """
     get-bootable-blocks test run: geometry_8
-        Old Command Output:
-          Traceback (most recent call last):
-            File "oldcmds/get-bootable-blocks.py", line 57, in <module>
-              retval = main()
-            File "oldcmds/get-bootable-blocks.py", line 51, in main
-              idle_blocks = ComponentProxy('system', defer=False).get_idle_blocks(block_loc, query_size, geo_list)
-            File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 290, in get_idle_blocks
-              logmsg("query size: %s, type = %s" % (str(query_size), str(type(queue_size))))
-          NameError: global name 'queue_size' is not defined
-          
 
     """
 
     args      = """--geometry 90x90x90x90x2  arg"""
 
-    cmdout    = \
-"""component error:  Following exception while trying to excecute system.get_idle_blocks
+    cmdout    = ''
 
-global name 'queue_size' is not defined
+    cmderr    = \
+"""component error: Following exception while trying to excecute system.get_idle_blocks: global name 'queue_size' is not defined
+
 """
 
     stubout   = \
@@ -500,7 +459,8 @@ block location: arg, type = <type 'str'>
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -518,15 +478,14 @@ block location: arg, type = <type 'str'>
 def test_get_bootable_blocks_geometry_9():
     """
     get-bootable-blocks test run: geometry_9
-        Old Command Output:
-          Invalid Geometry. Geometry must be in the form of AxBxCxDxE
-          
 
     """
 
     args      = """--geometry 90x90x90x90x3  arg"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Invalid Geometry. Geometry must be in the form of AxBxCxDxE
 """
 
@@ -537,7 +496,8 @@ def test_get_bootable_blocks_geometry_9():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -555,15 +515,14 @@ def test_get_bootable_blocks_geometry_9():
 def test_get_bootable_blocks_geometry_10():
     """
     get-bootable-blocks test run: geometry_10
-        Old Command Output:
-          Invalid Geometry. Geometry must be in the form of AxBxCxDxE
-          
 
     """
 
     args      = """--geometry 90x90x90x90x11 arg"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Invalid Geometry. Geometry must be in the form of AxBxCxDxE
 """
 
@@ -574,7 +533,8 @@ def test_get_bootable_blocks_geometry_10():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -592,25 +552,16 @@ def test_get_bootable_blocks_geometry_10():
 def test_get_bootable_blocks_geometry_11():
     """
     get-bootable-blocks test run: geometry_11
-        Old Command Output:
-          Traceback (most recent call last):
-            File "oldcmds/get-bootable-blocks.py", line 57, in <module>
-              retval = main()
-            File "oldcmds/get-bootable-blocks.py", line 51, in main
-              idle_blocks = ComponentProxy('system', defer=False).get_idle_blocks(block_loc, query_size, geo_list)
-            File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 290, in get_idle_blocks
-              logmsg("query size: %s, type = %s" % (str(query_size), str(type(queue_size))))
-          NameError: global name 'queue_size' is not defined
-          
 
     """
 
     args      = """--geometry 99x99x99x99x2  arg"""
 
-    cmdout    = \
-"""component error:  Following exception while trying to excecute system.get_idle_blocks
+    cmdout    = ''
 
-global name 'queue_size' is not defined
+    cmderr    = \
+"""component error: Following exception while trying to excecute system.get_idle_blocks: global name 'queue_size' is not defined
+
 """
 
     stubout   = \
@@ -625,7 +576,8 @@ block location: arg, type = <type 'str'>
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -643,25 +595,16 @@ block location: arg, type = <type 'str'>
 def test_get_bootable_blocks_geometry_12():
     """
     get-bootable-blocks test run: geometry_12
-        Old Command Output:
-          Traceback (most recent call last):
-            File "oldcmds/get-bootable-blocks.py", line 57, in <module>
-              retval = main()
-            File "oldcmds/get-bootable-blocks.py", line 51, in main
-              idle_blocks = ComponentProxy('system', defer=False).get_idle_blocks(block_loc, query_size, geo_list)
-            File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 290, in get_idle_blocks
-              logmsg("query size: %s, type = %s" % (str(query_size), str(type(queue_size))))
-          NameError: global name 'queue_size' is not defined
-          
 
     """
 
     args      = """--geometry 00x00x00x00x2  arg"""
 
-    cmdout    = \
-"""component error:  Following exception while trying to excecute system.get_idle_blocks
+    cmdout    = ''
 
-global name 'queue_size' is not defined
+    cmderr    = \
+"""component error: Following exception while trying to excecute system.get_idle_blocks: global name 'queue_size' is not defined
+
 """
 
     stubout   = \
@@ -676,7 +619,8 @@ block location: arg, type = <type 'str'>
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -694,25 +638,16 @@ block location: arg, type = <type 'str'>
 def test_get_bootable_blocks_geometry_13():
     """
     get-bootable-blocks test run: geometry_13
-        Old Command Output:
-          Traceback (most recent call last):
-            File "oldcmds/get-bootable-blocks.py", line 57, in <module>
-              retval = main()
-            File "oldcmds/get-bootable-blocks.py", line 51, in main
-              idle_blocks = ComponentProxy('system', defer=False).get_idle_blocks(block_loc, query_size, geo_list)
-            File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 290, in get_idle_blocks
-              logmsg("query size: %s, type = %s" % (str(query_size), str(type(queue_size))))
-          NameError: global name 'queue_size' is not defined
-          
 
     """
 
     args      = """--geometry 100x00x00x00x2 arg"""
 
-    cmdout    = \
-"""component error:  Following exception while trying to excecute system.get_idle_blocks
+    cmdout    = ''
 
-global name 'queue_size' is not defined
+    cmderr    = \
+"""component error: Following exception while trying to excecute system.get_idle_blocks: global name 'queue_size' is not defined
+
 """
 
     stubout   = \
@@ -727,7 +662,8 @@ block location: arg, type = <type 'str'>
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -745,25 +681,16 @@ block location: arg, type = <type 'str'>
 def test_get_bootable_blocks_geometry_14():
     """
     get-bootable-blocks test run: geometry_14
-        Old Command Output:
-          Traceback (most recent call last):
-            File "oldcmds/get-bootable-blocks.py", line 57, in <module>
-              retval = main()
-            File "oldcmds/get-bootable-blocks.py", line 51, in main
-              idle_blocks = ComponentProxy('system', defer=False).get_idle_blocks(block_loc, query_size, geo_list)
-            File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 290, in get_idle_blocks
-              logmsg("query size: %s, type = %s" % (str(query_size), str(type(queue_size))))
-          NameError: global name 'queue_size' is not defined
-          
 
     """
 
     args      = """--geometry 00x100x00x00x2 arg"""
 
-    cmdout    = \
-"""component error:  Following exception while trying to excecute system.get_idle_blocks
+    cmdout    = ''
 
-global name 'queue_size' is not defined
+    cmderr    = \
+"""component error: Following exception while trying to excecute system.get_idle_blocks: global name 'queue_size' is not defined
+
 """
 
     stubout   = \
@@ -778,7 +705,8 @@ block location: arg, type = <type 'str'>
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -796,25 +724,16 @@ block location: arg, type = <type 'str'>
 def test_get_bootable_blocks_geometry_15():
     """
     get-bootable-blocks test run: geometry_15
-        Old Command Output:
-          Traceback (most recent call last):
-            File "oldcmds/get-bootable-blocks.py", line 57, in <module>
-              retval = main()
-            File "oldcmds/get-bootable-blocks.py", line 51, in main
-              idle_blocks = ComponentProxy('system', defer=False).get_idle_blocks(block_loc, query_size, geo_list)
-            File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 290, in get_idle_blocks
-              logmsg("query size: %s, type = %s" % (str(query_size), str(type(queue_size))))
-          NameError: global name 'queue_size' is not defined
-          
 
     """
 
     args      = """--geometry 00x00x100x00x2 arg"""
 
-    cmdout    = \
-"""component error:  Following exception while trying to excecute system.get_idle_blocks
+    cmdout    = ''
 
-global name 'queue_size' is not defined
+    cmderr    = \
+"""component error: Following exception while trying to excecute system.get_idle_blocks: global name 'queue_size' is not defined
+
 """
 
     stubout   = \
@@ -829,7 +748,8 @@ block location: arg, type = <type 'str'>
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -847,25 +767,16 @@ block location: arg, type = <type 'str'>
 def test_get_bootable_blocks_geometry_16():
     """
     get-bootable-blocks test run: geometry_16
-        Old Command Output:
-          Traceback (most recent call last):
-            File "oldcmds/get-bootable-blocks.py", line 57, in <module>
-              retval = main()
-            File "oldcmds/get-bootable-blocks.py", line 51, in main
-              idle_blocks = ComponentProxy('system', defer=False).get_idle_blocks(block_loc, query_size, geo_list)
-            File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 290, in get_idle_blocks
-              logmsg("query size: %s, type = %s" % (str(query_size), str(type(queue_size))))
-          NameError: global name 'queue_size' is not defined
-          
 
     """
 
     args      = """--geometry 00x00x00x100x2 arg"""
 
-    cmdout    = \
-"""component error:  Following exception while trying to excecute system.get_idle_blocks
+    cmdout    = ''
 
-global name 'queue_size' is not defined
+    cmderr    = \
+"""component error: Following exception while trying to excecute system.get_idle_blocks: global name 'queue_size' is not defined
+
 """
 
     stubout   = \
@@ -880,7 +791,8 @@ block location: arg, type = <type 'str'>
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -898,25 +810,16 @@ block location: arg, type = <type 'str'>
 def test_get_bootable_blocks_combo():
     """
     get-bootable-blocks test run: combo
-        Old Command Output:
-          Traceback (most recent call last):
-            File "oldcmds/get-bootable-blocks.py", line 57, in <module>
-              retval = main()
-            File "oldcmds/get-bootable-blocks.py", line 51, in main
-              idle_blocks = ComponentProxy('system', defer=False).get_idle_blocks(block_loc, query_size, geo_list)
-            File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 290, in get_idle_blocks
-              logmsg("query size: %s, type = %s" % (str(query_size), str(type(queue_size))))
-          NameError: global name 'queue_size' is not defined
-          
 
     """
 
     args      = """--geometry 00x00x00x00x2 --size 2048 arg"""
 
-    cmdout    = \
-"""component error:  Following exception while trying to excecute system.get_idle_blocks
+    cmdout    = ''
 
-global name 'queue_size' is not defined
+    cmderr    = \
+"""component error: Following exception while trying to excecute system.get_idle_blocks: global name 'queue_size' is not defined
+
 """
 
     stubout   = \
@@ -931,7 +834,8 @@ block location: arg, type = <type 'str'>
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -949,14 +853,6 @@ block location: arg, type = <type 'str'>
 def test_get_bootable_blocks_help_1():
     """
     get-bootable-blocks test run: help_1
-        Old Command Output:
-          Usage: get-bootable-blocks.py [options]
-          
-          Options:
-            -h, --help           show this help message and exit
-            --size=BLOCK_SIZE    Constrain blocks to a particular nodecount
-            --geometry=GEOMETRY  Constrain blocks to a particular geometry
-          
 
     """
 
@@ -973,6 +869,8 @@ Options:
   --geometry=GEO_LIST  Constrain blocks to a particular geometry
 """
 
+    cmderr    = ''
+
     stubout   = ''
 
     stubout_file = "stub.out"
@@ -980,7 +878,8 @@ Options:
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -998,14 +897,6 @@ Options:
 def test_get_bootable_blocks_help_2():
     """
     get-bootable-blocks test run: help_2
-        Old Command Output:
-          Usage: get-bootable-blocks.py [options]
-          
-          Options:
-            -h, --help           show this help message and exit
-            --size=BLOCK_SIZE    Constrain blocks to a particular nodecount
-            --geometry=GEOMETRY  Constrain blocks to a particular geometry
-          
 
     """
 
@@ -1022,6 +913,8 @@ Options:
   --geometry=GEO_LIST  Constrain blocks to a particular geometry
 """
 
+    cmderr    = ''
+
     stubout   = ''
 
     stubout_file = "stub.out"
@@ -1029,7 +922,8 @@ Options:
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1047,11 +941,6 @@ Options:
 def test_get_bootable_blocks_version():
     """
     get-bootable-blocks test run: version
-        Old Command Output:
-          Usage: get-bootable-blocks.py [options]
-          
-          get-bootable-blocks.py: error: no such option: --version
-          
 
     """
 
@@ -1061,6 +950,8 @@ def test_get_bootable_blocks_version():
 """version: "get-bootable-blocks.py " + TBD + , Cobalt  + TBD
 """
 
+    cmderr    = ''
+
     stubout   = ''
 
     stubout_file = "stub.out"
@@ -1068,7 +959,8 @@ def test_get_bootable_blocks_version():
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1091,7 +983,9 @@ def test_get_bootable_blocks_debug():
 
     args      = """--debug"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """
 get-bootable-blocks.py --debug
 
@@ -1105,7 +999,8 @@ Must specify a block location for search
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")

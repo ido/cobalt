@@ -6,9 +6,10 @@ def test_partlist_version_option_1():
     partlist test run: version_option_1
 
         Command Output:
-          version: "partlist.py " + $Revision: 1981 $ + , Cobalt  + $Version$
-          
-
+        version: "partlist.py " + $Revision: 1981 $ + , Cobalt  + $Version$
+        
+        Command Error/Debug:
+        
     """
 
     args      = """--version"""
@@ -17,6 +18,7 @@ def test_partlist_version_option_1():
     results = testutils.run_cmd('partlist.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -27,7 +29,8 @@ def test_partlist_version_option_1():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -37,11 +40,12 @@ def test_partlist_version_option_2():
     partlist test run: version_option_2
 
         Command Output:
-          Usage: partlist.py [options] 
-          
-          partlist.py: error: no such option: -v
-          
-
+        
+        Command Error/Debug:Usage: partlist.py [options] 
+        
+        partlist.py: error: no such option: -v
+        
+        
     """
 
     args      = """-v"""
@@ -50,6 +54,7 @@ def test_partlist_version_option_2():
     results = testutils.run_cmd('partlist.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -60,7 +65,8 @@ def test_partlist_version_option_2():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -70,25 +76,26 @@ def test_partlist_debug():
     partlist test run: debug
 
         Command Output:
-          
-          partlist.py -d
-          
-          component: "system.get_partitions", defer: True
-            get_partitions(
-               [{'queue': '*', 'scheduled': '*', 'state': '*', 'tag': 'partition', 'name': '*', 'backfill_time': '*', 'children': '*', 'functional': '*', 'draining': '*', 'size': '*'}],
-               )
-          
-          
-          component: "scheduler.get_reservations", defer: False
-            get_reservations(
-               [{'queue': '*', 'active': True, 'partitions': '*'}],
-               )
-          
-          
-          Name  Queue  State  Backfill
-          ==============================
-          
-
+        Name  Queue  State  Backfill
+        ==============================
+        
+        Command Error/Debug:
+        partlist.py -d
+        
+        component: "system.get_partitions", defer: True
+          get_partitions(
+             [{'queue': '*', 'scheduled': '*', 'state': '*', 'tag': 'partition', 'name': '*', 'backfill_time': '*', 'children': '*', 'functional': '*', 'draining': '*', 'size': '*'}],
+             )
+        
+        
+        component: "scheduler.get_reservations", defer: False
+          get_reservations(
+             [{'queue': '*', 'active': True, 'partitions': '*'}],
+             )
+        
+        
+        
+        
     """
 
     args      = """-d"""
@@ -97,6 +104,7 @@ def test_partlist_debug():
     results = testutils.run_cmd('partlist.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -107,7 +115,8 @@ def test_partlist_debug():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -117,14 +126,15 @@ def test_partlist_help_option_1():
     partlist test run: help_option_1
 
         Command Output:
-          Usage: partlist.py [options] 
-          
-          Options:
-            --version    show program's version number and exit
-            -h, --help   show this help message and exit
-            -d, --debug  turn on communication debugging
-          
-
+        Usage: partlist.py [options] 
+        
+        Options:
+          --version    show program's version number and exit
+          -h, --help   show this help message and exit
+          -d, --debug  turn on communication debugging
+        
+        Command Error/Debug:
+        
     """
 
     args      = """-h"""
@@ -133,6 +143,7 @@ def test_partlist_help_option_1():
     results = testutils.run_cmd('partlist.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -143,7 +154,8 @@ def test_partlist_help_option_1():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -153,14 +165,15 @@ def test_partlist_help_option_1():
     partlist test run: help_option_1
 
         Command Output:
-          Usage: partlist.py [options] 
-          
-          Options:
-            --version    show program's version number and exit
-            -h, --help   show this help message and exit
-            -d, --debug  turn on communication debugging
-          
-
+        Usage: partlist.py [options] 
+        
+        Options:
+          --version    show program's version number and exit
+          -h, --help   show this help message and exit
+          -d, --debug  turn on communication debugging
+        
+        Command Error/Debug:
+        
     """
 
     args      = """--help"""
@@ -169,6 +182,7 @@ def test_partlist_help_option_1():
     results = testutils.run_cmd('partlist.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -179,7 +193,8 @@ def test_partlist_help_option_1():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -189,11 +204,12 @@ def test_partlist_invalid():
     partlist test run: invalid
 
         Command Output:
-          Usage: partlist.py [options] 
-          
-          partlist.py: error: no such option: -k
-          
-
+        
+        Command Error/Debug:Usage: partlist.py [options] 
+        
+        partlist.py: error: no such option: -k
+        
+        
     """
 
     args      = """-k"""
@@ -202,6 +218,7 @@ def test_partlist_invalid():
     results = testutils.run_cmd('partlist.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -212,7 +229,8 @@ def test_partlist_invalid():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -222,9 +240,10 @@ def test_partlist_argument_1():
     partlist test run: argument_1
 
         Command Output:
-          No arguments required
-          
-
+        
+        Command Error/Debug:No arguments required
+        
+        
     """
 
     args      = """arg"""
@@ -233,6 +252,7 @@ def test_partlist_argument_1():
     results = testutils.run_cmd('partlist.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -243,7 +263,8 @@ def test_partlist_argument_1():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -253,10 +274,11 @@ def test_partlist_argument_2():
     partlist test run: argument_2
 
         Command Output:
-          Name  Queue  State  Backfill
-          ==============================
-          
-
+        Name  Queue  State  Backfill
+        ==============================
+        
+        Command Error/Debug:
+        
     """
 
     args      = ''
@@ -265,6 +287,7 @@ def test_partlist_argument_2():
     results = testutils.run_cmd('partlist.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -275,6 +298,7 @@ def test_partlist_argument_2():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg

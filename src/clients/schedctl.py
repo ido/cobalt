@@ -58,7 +58,7 @@ def validate_args(parser, args):
 
     elif not parser.no_args():
         if not args_opts:
-            client_utils.logger.info("No arguments needed")
+            client_utils.logger.error("No arguments needed")
         else:
             for i in range(len(args)):
                 if args[i] == '*':

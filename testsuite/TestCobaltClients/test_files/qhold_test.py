@@ -4,17 +4,18 @@ import testutils
 def test_qhold_invalid_option():
     """
     qhold test run: invalid_option
-        Old Command Output:
-          option -k not recognized
-          Usage:
-          qhold [--version] <jobid> <jobid>
-          
 
     """
 
     args      = """-k 1"""
 
     cmdout    = \
+"""option -k not recognized
+Usage:
+qhold [--version] <jobid> <jobid>
+"""
+
+    cmderr    = \
 """Usage: qhold.py [options] <jobid1> [ ... <jobidN> ]
 
 qhold.py: error: no such option: -k
@@ -27,7 +28,8 @@ qhold.py: error: no such option: -k
     expected_results = ( 
                        512, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -45,16 +47,17 @@ qhold.py: error: no such option: -k
 def test_qhold_debg_option():
     """
     qhold test run: debg_option
-        Old Command Output:
-             Failed to place user hold on jobs: 
-                job 1 encountered an unexpected problem while attempting to place the 'user hold'
-          
 
     """
 
     args      = """-d 1"""
 
     cmdout    = \
+"""   Failed to place user hold on jobs: 
+      job 1 encountered an unexpected problem while attempting to place the 'user hold'
+"""
+
+    cmderr    = \
 """
 qhold.py -d 1
 
@@ -73,8 +76,6 @@ component: "queue-manager.set_jobs", defer: False
 
 
 Response: [{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
-   Failed to place user hold on jobs: 
-      job 1 encountered an unexpected problem while attempting to place the 'user hold'
 """
 
     stubout   = \
@@ -118,7 +119,8 @@ user_hold type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -136,15 +138,14 @@ user_hold type: <type 'bool'>
 def test_qhold_jobid_1():
     """
     qhold test run: jobid_1
-        Old Command Output:
-          jobid must be an integer
-          
 
     """
 
     args      = """myq 1 2 3 4"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """jobid must be an integer: myq
 """
 
@@ -155,7 +156,8 @@ def test_qhold_jobid_1():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -173,13 +175,6 @@ def test_qhold_jobid_1():
 def test_qhold_jobid_2():
     """
     qhold test run: jobid_2
-        Old Command Output:
-             Failed to place user hold on jobs: 
-                job 1 encountered an unexpected problem while attempting to place the 'user hold'
-                job 2 encountered an unexpected problem while attempting to place the 'user hold'
-                job 3 encountered an unexpected problem while attempting to place the 'user hold'
-                job 4 encountered an unexpected problem while attempting to place the 'user hold'
-          
 
     """
 
@@ -192,6 +187,8 @@ def test_qhold_jobid_2():
       job 3 encountered an unexpected problem while attempting to place the 'user hold'
       job 4 encountered an unexpected problem while attempting to place the 'user hold'
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -288,7 +285,8 @@ user_hold type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -306,10 +304,6 @@ user_hold type: <type 'bool'>
 def test_qhold_jobid_3():
     """
     qhold test run: jobid_3
-        Old Command Output:
-             Failed to place user hold on jobs: 
-                job 1 encountered an unexpected problem while attempting to place the 'user hold'
-          
 
     """
 
@@ -319,6 +313,8 @@ def test_qhold_jobid_3():
 """   Failed to place user hold on jobs: 
       job 1 encountered an unexpected problem while attempting to place the 'user hold'
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -361,7 +357,8 @@ user_hold type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -379,17 +376,18 @@ user_hold type: <type 'bool'>
 def test_qhold_dependancy_option():
     """
     qhold test run: dependancy_option
-        Old Command Output:
-          option --dependencies not recognized
-          Usage:
-          qhold [--version] <jobid> <jobid>
-          
 
     """
 
     args      = """--dependencies 1 2"""
 
     cmdout    = \
+"""option --dependencies not recognized
+Usage:
+qhold [--version] <jobid> <jobid>
+"""
+
+    cmderr    = \
 """Usage: qhold.py [options] <jobid1> [ ... <jobidN> ]
 
 qhold.py: error: no such option: --dependencies
@@ -402,7 +400,8 @@ qhold.py: error: no such option: --dependencies
     expected_results = ( 
                        512, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")

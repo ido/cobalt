@@ -6,11 +6,12 @@ def test_showres_arg_1():
     showres test run: arg_1
 
         Command Output:
-          Reservation  Queue  User  Start                                 Duration  Passthrough  Partitions        
-          =========================================================================================================
-          george       q_1    None  Wed May 31 20:00:00 2023 +0000 (UTC)  05:00     Allowed      ANL-R00-R01-2048  
-          
-
+        Reservation  Queue  User  Start                                 Duration  Passthrough  Partitions        
+        =========================================================================================================
+        george       q_1    None  Wed Jun  7 02:32:00 2023 +0000 (UTC)  05:00     Allowed      ANL-R00-R01-2048  
+        
+        Command Error/Debug:
+        
     """
 
     args      = ''
@@ -19,6 +20,7 @@ def test_showres_arg_1():
     results = testutils.run_cmd('showres.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -29,7 +31,8 @@ def test_showres_arg_1():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -39,11 +42,12 @@ def test_showres_arg_2():
     showres test run: arg_2
 
         Command Output:
-          Reservation  Queue  User  Start                     Duration  Passthrough  Partitions        
-          =============================================================================================
-          george       q_1    None  Wed May 31 15:00:00 2023  05:00     Allowed      ANL-R00-R01-2048  
-          
-
+        Reservation  Queue  User  Start                     Duration  Passthrough  Partitions        
+        =============================================================================================
+        george       q_1    None  Tue Jun  6 21:32:00 2023  05:00     Allowed      ANL-R00-R01-2048  
+        
+        Command Error/Debug:
+        
     """
 
     args      = """--oldts"""
@@ -52,6 +56,7 @@ def test_showres_arg_2():
     results = testutils.run_cmd('showres.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -62,7 +67,8 @@ def test_showres_arg_2():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -72,12 +78,13 @@ def test_showres_arg_3():
     showres test run: arg_3
 
         Command Output:
-          No arguments needed
-          Reservation  Queue  User  Start                                 Duration  Passthrough  Partitions        
-          =========================================================================================================
-          george       q_1    None  Wed May 31 20:00:00 2023 +0000 (UTC)  05:00     Allowed      ANL-R00-R01-2048  
-          
-
+        Reservation  Queue  User  Start                                 Duration  Passthrough  Partitions        
+        =========================================================================================================
+        george       q_1    None  Wed Jun  7 02:32:00 2023 +0000 (UTC)  05:00     Allowed      ANL-R00-R01-2048  
+        
+        Command Error/Debug:No arguments needed
+        
+        
     """
 
     args      = """arg1"""
@@ -86,6 +93,7 @@ def test_showres_arg_3():
     results = testutils.run_cmd('showres.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -96,7 +104,8 @@ def test_showres_arg_3():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -106,11 +115,12 @@ def test_showres_l_option_1():
     showres test run: l_option_1
 
         Command Output:
-          Reservation  Queue  User  Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions        
-          ===========================================================================================================================================================
-          george       q_1    None  Wed May 31 20:00:00 2023 +0000 (UTC)  05:00     Thu Jun  1 01:00:00 2023 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  
-          
-
+        Reservation  Queue  User  Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions        
+        ===========================================================================================================================================================
+        george       q_1    None  Wed Jun  7 02:32:00 2023 +0000 (UTC)  05:00     Wed Jun  7 07:32:00 2023 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  
+        
+        Command Error/Debug:
+        
     """
 
     args      = """-l"""
@@ -119,6 +129,7 @@ def test_showres_l_option_1():
     results = testutils.run_cmd('showres.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -129,7 +140,8 @@ def test_showres_l_option_1():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -139,11 +151,12 @@ def test_showres_l_option_2():
     showres test run: l_option_2
 
         Command Output:
-          Reservation  Queue  User  Start                     Duration  End Time                  Cycle Time  Passthrough  Partitions        
-          ===================================================================================================================================
-          george       q_1    None  Wed May 31 15:00:00 2023  05:00     Wed May 31 20:00:00 2023  None        Allowed      ANL-R00-R01-2048  
-          
-
+        Reservation  Queue  User  Start                     Duration  End Time                  Cycle Time  Passthrough  Partitions        
+        ===================================================================================================================================
+        george       q_1    None  Tue Jun  6 21:32:00 2023  05:00     Wed Jun  7 02:32:00 2023  None        Allowed      ANL-R00-R01-2048  
+        
+        Command Error/Debug:
+        
     """
 
     args      = """-l --oldts"""
@@ -152,6 +165,7 @@ def test_showres_l_option_2():
     results = testutils.run_cmd('showres.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -162,7 +176,8 @@ def test_showres_l_option_2():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -172,11 +187,12 @@ def test_showres_x_option_1():
     showres test run: x_option_1
 
         Command Output:
-          Reservation  Queue  User  Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions        Project  ResID  CycleID  
-          ====================================================================================================================================================================================
-          george       q_1    None  Wed May 31 20:00:00 2023 +0000 (UTC)  05:00     Thu Jun  1 01:00:00 2023 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  None     1      -        
-          
-
+        Reservation  Queue  User  Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions        Project  ResID  CycleID  
+        ====================================================================================================================================================================================
+        george       q_1    None  Wed Jun  7 02:32:00 2023 +0000 (UTC)  05:00     Wed Jun  7 07:32:00 2023 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  None     1      -        
+        
+        Command Error/Debug:
+        
     """
 
     args      = """-x"""
@@ -185,6 +201,7 @@ def test_showres_x_option_1():
     results = testutils.run_cmd('showres.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -195,7 +212,8 @@ def test_showres_x_option_1():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -205,11 +223,12 @@ def test_showres_x_option_1():
     showres test run: x_option_1
 
         Command Output:
-          Reservation  Queue  User  Start                     Duration  End Time                  Cycle Time  Passthrough  Partitions        Project  ResID  CycleID  
-          ============================================================================================================================================================
-          george       q_1    None  Wed May 31 15:00:00 2023  05:00     Wed May 31 20:00:00 2023  None        Allowed      ANL-R00-R01-2048  None     1      -        
-          
-
+        Reservation  Queue  User  Start                     Duration  End Time                  Cycle Time  Passthrough  Partitions        Project  ResID  CycleID  
+        ============================================================================================================================================================
+        george       q_1    None  Tue Jun  6 21:32:00 2023  05:00     Wed Jun  7 02:32:00 2023  None        Allowed      ANL-R00-R01-2048  None     1      -        
+        
+        Command Error/Debug:
+        
     """
 
     args      = """-x --oldts"""
@@ -218,6 +237,7 @@ def test_showres_x_option_1():
     results = testutils.run_cmd('showres.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -228,7 +248,8 @@ def test_showres_x_option_1():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -238,9 +259,10 @@ def test_showres_combo():
     showres test run: combo
 
         Command Output:
-          Only use -l or -x not both
-          
-
+        
+        Command Error/Debug:Only use -l or -x not both
+        
+        
     """
 
     args      = """-l -x"""
@@ -249,6 +271,7 @@ def test_showres_combo():
     results = testutils.run_cmd('showres.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -259,7 +282,8 @@ def test_showres_combo():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -269,17 +293,18 @@ def test_showres_help_1():
     showres test run: help_1
 
         Command Output:
-          Usage: showres [-l] [-x] [--oldts] [--version]
-          
-          Options:
-            --version    show program's version number and exit
-            -h, --help   show this help message and exit
-            -d, --debug  turn on communication debugging
-            -l           print reservation list verbose
-            --oldts      use old timestamp
-            -x           print reservations really verbose
-          
-
+        Usage: showres [-l] [-x] [--oldts] [--version]
+        
+        Options:
+          --version    show program's version number and exit
+          -h, --help   show this help message and exit
+          -d, --debug  turn on communication debugging
+          -l           print reservation list verbose
+          --oldts      use old timestamp
+          -x           print reservations really verbose
+        
+        Command Error/Debug:
+        
     """
 
     args      = """--help"""
@@ -288,6 +313,7 @@ def test_showres_help_1():
     results = testutils.run_cmd('showres.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -298,7 +324,8 @@ def test_showres_help_1():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -308,17 +335,18 @@ def test_showres_help_2():
     showres test run: help_2
 
         Command Output:
-          Usage: showres [-l] [-x] [--oldts] [--version]
-          
-          Options:
-            --version    show program's version number and exit
-            -h, --help   show this help message and exit
-            -d, --debug  turn on communication debugging
-            -l           print reservation list verbose
-            --oldts      use old timestamp
-            -x           print reservations really verbose
-          
-
+        Usage: showres [-l] [-x] [--oldts] [--version]
+        
+        Options:
+          --version    show program's version number and exit
+          -h, --help   show this help message and exit
+          -d, --debug  turn on communication debugging
+          -l           print reservation list verbose
+          --oldts      use old timestamp
+          -x           print reservations really verbose
+        
+        Command Error/Debug:
+        
     """
 
     args      = """-h"""
@@ -327,6 +355,7 @@ def test_showres_help_2():
     results = testutils.run_cmd('showres.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -337,7 +366,8 @@ def test_showres_help_2():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -347,9 +377,10 @@ def test_showres_version():
     showres test run: version
 
         Command Output:
-          version: "showres.py " + $Revision: 2154 $ + , Cobalt  + $Version$
-          
-
+        version: "showres.py " + $Revision: 2154 $ + , Cobalt  + $Version$
+        
+        Command Error/Debug:
+        
     """
 
     args      = """--version"""
@@ -358,6 +389,7 @@ def test_showres_version():
     results = testutils.run_cmd('showres.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -368,7 +400,8 @@ def test_showres_version():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -378,25 +411,26 @@ def test_showres_debug():
     showres test run: debug
 
         Command Output:
-          
-          showres.py --debug
-          
-          component: "system.get_implementation", defer: False
-            get_implementation(
-               )
-          
-          
-          component: "scheduler.get_reservations", defer: False
-            get_reservations(
-               [{'users': '*', 'block_passthrough': '*', 'duration': '*', 'cycle': '*', 'project': '*', 'cycle_id': '*', 'name': '*', 'queue': '*', 'start': '*', 'partitions': '*', 'res_id': '*'}],
-               )
-          
-          
-          Reservation  Queue  User  Start                                 Duration  Passthrough  Partitions        
-          =========================================================================================================
-          george       q_1    None  Wed May 31 20:00:00 2023 +0000 (UTC)  05:00     Allowed      ANL-R00-R01-2048  
-          
-
+        Reservation  Queue  User  Start                                 Duration  Passthrough  Partitions        
+        =========================================================================================================
+        george       q_1    None  Wed Jun  7 02:32:00 2023 +0000 (UTC)  05:00     Allowed      ANL-R00-R01-2048  
+        
+        Command Error/Debug:
+        showres.py --debug
+        
+        component: "system.get_implementation", defer: False
+          get_implementation(
+             )
+        
+        
+        component: "scheduler.get_reservations", defer: False
+          get_reservations(
+             [{'users': '*', 'block_passthrough': '*', 'duration': '*', 'cycle': '*', 'project': '*', 'cycle_id': '*', 'name': '*', 'queue': '*', 'start': '*', 'partitions': '*', 'res_id': '*'}],
+             )
+        
+        
+        
+        
     """
 
     args      = """--debug"""
@@ -405,6 +439,7 @@ def test_showres_debug():
     results = testutils.run_cmd('showres.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -415,6 +450,7 @@ def test_showres_debug():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg

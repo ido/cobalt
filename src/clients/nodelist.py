@@ -45,7 +45,7 @@ def main():
     parser.parse_it() # parse the command line
 
     if not parser.no_args():
-        client_utils.logger.info("No arguments needed")
+        client_utils.logger.error("No arguments needed")
     
     impl = client_utils.component_call(SYSMGR, False, 'get_implementation', ())
 
