@@ -6,9 +6,10 @@ def test_nodelist_arg_1():
     nodelist test run: arg_1
 
         Command Output:
-          nodelist is only supported on cluster systems.  Try partlist instead.
-          
-
+        
+        Command Error/Debug:nodelist is only supported on cluster systems.  Try partlist instead.
+        
+        
     """
 
     args      = ''
@@ -17,6 +18,7 @@ def test_nodelist_arg_1():
     results = testutils.run_cmd('nodelist.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -27,7 +29,8 @@ def test_nodelist_arg_1():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -37,10 +40,11 @@ def test_nodelist_arg_2():
     nodelist test run: arg_2
 
         Command Output:
-          No arguments needed
-          nodelist is only supported on cluster systems.  Try partlist instead.
-          
-
+        
+        Command Error/Debug:No arguments needed
+        nodelist is only supported on cluster systems.  Try partlist instead.
+        
+        
     """
 
     args      = """arg1"""
@@ -49,6 +53,7 @@ def test_nodelist_arg_2():
     results = testutils.run_cmd('nodelist.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -59,7 +64,8 @@ def test_nodelist_arg_2():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -69,17 +75,18 @@ def test_nodelist_debug():
     nodelist test run: debug
 
         Command Output:
-          
-          nodelist.py -d
-          
-          component: "system.get_implementation", defer: False
-            get_implementation(
-               )
-          
-          
-          nodelist is only supported on cluster systems.  Try partlist instead.
-          
-
+        
+        Command Error/Debug:
+        nodelist.py -d
+        
+        component: "system.get_implementation", defer: False
+          get_implementation(
+             )
+        
+        
+        nodelist is only supported on cluster systems.  Try partlist instead.
+        
+        
     """
 
     args      = """-d"""
@@ -88,6 +95,7 @@ def test_nodelist_debug():
     results = testutils.run_cmd('nodelist.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -98,7 +106,8 @@ def test_nodelist_debug():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -108,11 +117,12 @@ def test_nodelist_options_1():
     nodelist test run: options_1
 
         Command Output:
-          Usage: nodelist.py
-          
-          nodelist.py: error: no such option: -l
-          
-
+        
+        Command Error/Debug:Usage: nodelist.py
+        
+        nodelist.py: error: no such option: -l
+        
+        
     """
 
     args      = """-l"""
@@ -121,6 +131,7 @@ def test_nodelist_options_1():
     results = testutils.run_cmd('nodelist.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -131,7 +142,8 @@ def test_nodelist_options_1():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -141,14 +153,15 @@ def test_nodelist_options_2():
     nodelist test run: options_2
 
         Command Output:
-          Usage: nodelist.py
-          
-          Options:
-            --version    show program's version number and exit
-            -h, --help   show this help message and exit
-            -d, --debug  turn on communication debugging
-          
-
+        Usage: nodelist.py
+        
+        Options:
+          --version    show program's version number and exit
+          -h, --help   show this help message and exit
+          -d, --debug  turn on communication debugging
+        
+        Command Error/Debug:
+        
     """
 
     args      = """--help"""
@@ -157,6 +170,7 @@ def test_nodelist_options_2():
     results = testutils.run_cmd('nodelist.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -167,7 +181,8 @@ def test_nodelist_options_2():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -177,14 +192,15 @@ def test_nodelist_options_3():
     nodelist test run: options_3
 
         Command Output:
-          Usage: nodelist.py
-          
-          Options:
-            --version    show program's version number and exit
-            -h, --help   show this help message and exit
-            -d, --debug  turn on communication debugging
-          
-
+        Usage: nodelist.py
+        
+        Options:
+          --version    show program's version number and exit
+          -h, --help   show this help message and exit
+          -d, --debug  turn on communication debugging
+        
+        Command Error/Debug:
+        
     """
 
     args      = """-h"""
@@ -193,6 +209,7 @@ def test_nodelist_options_3():
     results = testutils.run_cmd('nodelist.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -203,7 +220,8 @@ def test_nodelist_options_3():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -213,9 +231,10 @@ def test_nodelist_options_4():
     nodelist test run: options_4
 
         Command Output:
-          version: "nodelist.py " + TBD + , Cobalt  + TBD
-          
-
+        version: "nodelist.py " + TBD + , Cobalt  + TBD
+        
+        Command Error/Debug:
+        
     """
 
     args      = """--version"""
@@ -224,6 +243,7 @@ def test_nodelist_options_4():
     results = testutils.run_cmd('nodelist.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -234,6 +254,7 @@ def test_nodelist_options_4():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg

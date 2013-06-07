@@ -4,19 +4,20 @@ import testutils
 def test_qselect_invalid_option():
     """
     qselect test run: invalid_option
-        Old Command Output:
-          option -k not recognized
-          
-          Usage: qselect [-d] [-v] -A <project name> -q <queue> -n <number of nodes> 
-                         -t <time in minutes> -h <hold types> --mode <mode co/vn>
-          
-          
 
     """
 
     args      = """-k"""
 
     cmdout    = \
+"""option -k not recognized
+
+Usage: qselect [-d] [-v] -A <project name> -q <queue> -n <number of nodes> 
+               -t <time in minutes> -h <hold types> --mode <mode co/vn>
+
+"""
+
+    cmderr    = \
 """Usage: qselect.py [options]
 
 qselect.py: error: no such option: -k
@@ -29,7 +30,8 @@ qselect.py: error: no such option: -k
     expected_results = ( 
                        512, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -47,18 +49,19 @@ qselect.py: error: no such option: -k
 def test_qselect_only_arg():
     """
     qselect test run: only_arg
-        Old Command Output:
-          
-          Usage: qselect [-d] [-v] -A <project name> -q <queue> -n <number of nodes> 
-                         -t <time in minutes> -h <hold types> --mode <mode co/vn>
-          
-          
 
     """
 
     args      = """1"""
 
     cmdout    = \
+"""
+Usage: qselect [-d] [-v] -A <project name> -q <queue> -n <number of nodes> 
+               -t <time in minutes> -h <hold types> --mode <mode co/vn>
+
+"""
+
+    cmderr    = \
 """qselect takes no arguments
 """
 
@@ -69,7 +72,8 @@ def test_qselect_only_arg():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -87,11 +91,6 @@ def test_qselect_only_arg():
 def test_qselect_no_args_opts():
     """
     qselect test run: no_args_opts
-        Old Command Output:
-           {'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'queue': 'jello', 'envs': {}, 'submittime': '60', 'state': '*', 'score': 50, 'location': '/tmp', 'nodes': '512', 'args': '', 'is_active': False, 'user': 'land', 'procs': '512', 'walltime': '5', 'geometry': None, 'user_hold': False, 'jobid': 100, 'project': 'my_project', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']} 
-             The following jobs matched your query:
-                100
-          
 
     """
 
@@ -101,6 +100,8 @@ def test_qselect_no_args_opts():
 """   The following jobs matched your query:
       100
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -129,7 +130,8 @@ walltime type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -147,17 +149,17 @@ walltime type: <type 'str'>
 def test_qselect_debug_flag():
     """
     qselect test run: debug_flag
-        Old Command Output:
-           {'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'queue': 'jello', 'envs': {}, 'submittime': '60', 'state': '*', 'score': 50, 'location': '/tmp', 'nodes': '512', 'args': '', 'is_active': False, 'user': 'land', 'procs': '512', 'walltime': '5', 'geometry': None, 'user_hold': False, 'jobid': 100, 'project': 'my_project', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']} 
-             The following jobs matched your query:
-                100
-          
 
     """
 
     args      = """-d"""
 
     cmdout    = \
+"""   The following jobs matched your query:
+      100
+"""
+
+    cmderr    = \
 """
 qselect.py -d
 
@@ -168,8 +170,6 @@ component: "queue-manager.get_jobs", defer: False
 
 
 [{'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'project': 'my_project', 'envs': {}, 'submittime': '60', 'state': '*', 'score': 50, 'location': '/tmp', 'nodes': '512', 'args': '', 'is_active': False, 'user': 'land', 'procs': '512', 'walltime': '5', 'geometry': None, 'user_hold': False, 'jobid': 100, 'queue': 'jello', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']}]
-   The following jobs matched your query:
-      100
 """
 
     stubout   = \
@@ -199,7 +199,8 @@ walltime type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -217,10 +218,6 @@ walltime type: <type 'str'>
 def test_qselect_held_option():
     """
     qselect test run: held_option
-        Old Command Output:
-             The following jobs matched your query:
-                100
-          
 
     """
 
@@ -230,6 +227,8 @@ def test_qselect_held_option():
 """   The following jobs matched your query:
       100
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -258,7 +257,8 @@ walltime type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -276,10 +276,6 @@ walltime type: <type 'str'>
 def test_qselect_nodecount_option():
     """
     qselect test run: nodecount_option
-        Old Command Output:
-             The following jobs matched your query:
-                100
-          
 
     """
 
@@ -289,6 +285,8 @@ def test_qselect_nodecount_option():
 """   The following jobs matched your query:
       100
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -317,7 +315,8 @@ walltime type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -335,10 +334,6 @@ walltime type: <type 'str'>
 def test_qselect_state_and_nodecount():
     """
     qselect test run: state_and_nodecount
-        Old Command Output:
-             The following jobs matched your query:
-                100
-          
 
     """
 
@@ -348,6 +343,8 @@ def test_qselect_state_and_nodecount():
 """   The following jobs matched your query:
       100
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -376,7 +373,8 @@ walltime type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -394,10 +392,6 @@ walltime type: <type 'str'>
 def test_qselect_walltime():
     """
     qselect test run: walltime
-        Old Command Output:
-             The following jobs matched your query:
-                100
-          
 
     """
 
@@ -407,6 +401,8 @@ def test_qselect_walltime():
 """   The following jobs matched your query:
       100
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -435,7 +431,8 @@ walltime type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -453,10 +450,6 @@ walltime type: <type 'str'>
 def test_qselect_mode():
     """
     qselect test run: mode
-        Old Command Output:
-             The following jobs matched your query:
-                100
-          
 
     """
 
@@ -466,6 +459,8 @@ def test_qselect_mode():
 """   The following jobs matched your query:
       100
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -494,7 +489,8 @@ walltime type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -512,10 +508,6 @@ walltime type: <type 'str'>
 def test_qselect_verbose():
     """
     qselect test run: verbose
-        Old Command Output:
-             The following jobs matched your query:
-                100
-          
 
     """
 
@@ -525,6 +517,8 @@ def test_qselect_verbose():
 """   The following jobs matched your query:
       100
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -553,7 +547,8 @@ walltime type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")

@@ -4,16 +4,6 @@ import testutils
 def test_nodelist_arg_1():
     """
     nodelist test run: arg_1
-        Old Command Output:
-          Host  Queue  State
-          ====================
-          D1    QD1    good 
-          D2    QD2    bad  
-          D3    QD3    ugly 
-          U1    QU1    one  
-          U2    QU2    two  
-          U3    QU3    three
-          
 
     """
 
@@ -29,6 +19,8 @@ U1    QU1    one
 U2    QU2    two  
 U3    QU3    three
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -47,7 +39,8 @@ GET_QUEUE_ASSIGNMENTS
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -65,24 +58,13 @@ GET_QUEUE_ASSIGNMENTS
 def test_nodelist_arg_2():
     """
     nodelist test run: arg_2
-        Old Command Output:
-          Host  Queue  State
-          ====================
-          D1    QD1    good 
-          D2    QD2    bad  
-          D3    QD3    ugly 
-          U1    QU1    one  
-          U2    QU2    two  
-          U3    QU3    three
-          
 
     """
 
     args      = """arg1"""
 
     cmdout    = \
-"""No arguments needed
-Host  Queue  State
+"""Host  Queue  State
 ====================
 D1    QD1    good 
 D2    QD2    bad  
@@ -90,6 +72,10 @@ D3    QD3    ugly
 U1    QU1    one  
 U2    QU2    two  
 U3    QU3    three
+"""
+
+    cmderr    = \
+"""No arguments needed
 """
 
     stubout   = \
@@ -109,7 +95,8 @@ GET_QUEUE_ASSIGNMENTS
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -133,6 +120,17 @@ def test_nodelist_debug():
     args      = """-d"""
 
     cmdout    = \
+"""Host  Queue  State
+====================
+D1    QD1    good 
+D2    QD2    bad  
+D3    QD3    ugly 
+U1    QU1    one  
+U2    QU2    two  
+U3    QU3    three
+"""
+
+    cmderr    = \
 """
 nodelist.py -d
 
@@ -151,14 +149,6 @@ component: "system.get_queue_assignments", defer: False
      )
 
 
-Host  Queue  State
-====================
-D1    QD1    good 
-D2    QD2    bad  
-D3    QD3    ugly 
-U1    QU1    one  
-U2    QU2    two  
-U3    QU3    three
 """
 
     stubout   = \
@@ -178,7 +168,8 @@ GET_QUEUE_ASSIGNMENTS
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -201,7 +192,9 @@ def test_nodelist_options_1():
 
     args      = """-l"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Usage: nodelist.py
 
 nodelist.py: error: no such option: -l
@@ -214,7 +207,8 @@ nodelist.py: error: no such option: -l
     expected_results = ( 
                        512, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -246,6 +240,8 @@ Options:
   -d, --debug  turn on communication debugging
 """
 
+    cmderr    = ''
+
     stubout   = ''
 
     stubout_file = "stub.out"
@@ -253,7 +249,8 @@ Options:
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -285,6 +282,8 @@ Options:
   -d, --debug  turn on communication debugging
 """
 
+    cmderr    = ''
+
     stubout   = ''
 
     stubout_file = "stub.out"
@@ -292,7 +291,8 @@ Options:
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -319,6 +319,8 @@ def test_nodelist_options_4():
 """version: "nodelist.py " + TBD + , Cobalt  + TBD
 """
 
+    cmderr    = ''
+
     stubout   = ''
 
     stubout_file = "stub.out"
@@ -326,7 +328,8 @@ def test_nodelist_options_4():
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")

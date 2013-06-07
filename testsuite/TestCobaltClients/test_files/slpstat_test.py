@@ -4,15 +4,6 @@ import testutils
 def test_slpstat_arg_1():
     """
     slpstat test run: arg_1
-        Old Command Output:
-          Name  Location  Update Time               
-          ==========================================
-          S0    P0        Mon Apr 22 17:06:10 2013  
-          S1    P1        Mon Apr 22 17:06:20 2013  
-          S2    P2        Mon Apr 22 17:06:30 2013  
-          S3    P3        Mon Apr 22 17:06:40 2013  
-          S4    P4        Mon Apr 22 17:06:50 2013  
-          
 
     """
 
@@ -27,6 +18,8 @@ S2    P2        Mon Apr 22 17:06:30 2013
 S3    P3        Mon Apr 22 17:06:40 2013  
 S4    P4        Mon Apr 22 17:06:50 2013  
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -47,7 +40,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -65,9 +59,6 @@ tag type: <type 'str'>
 def test_slpstat_arg_2():
     """
     slpstat test run: arg_2
-        Old Command Output:
-          no services registered
-          
 
     """
 
@@ -76,6 +67,8 @@ def test_slpstat_arg_2():
     cmdout    = \
 """no services registered
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -96,7 +89,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("NO SERVICES")
@@ -114,29 +108,23 @@ tag type: <type 'str'>
 def test_slpstat_arg_3():
     """
     slpstat test run: arg_3
-        Old Command Output:
-          Name  Location  Update Time               
-          ==========================================
-          S0    P0        Mon Apr 22 17:06:10 2013  
-          S1    P1        Mon Apr 22 17:06:20 2013  
-          S2    P2        Mon Apr 22 17:06:30 2013  
-          S3    P3        Mon Apr 22 17:06:40 2013  
-          S4    P4        Mon Apr 22 17:06:50 2013  
-          
 
     """
 
     args      = """arg1"""
 
     cmdout    = \
-"""No arguments needed
-Name  Location  Update Time               
+"""Name  Location  Update Time               
 ==========================================
 S0    P0        Mon Apr 22 17:06:10 2013  
 S1    P1        Mon Apr 22 17:06:20 2013  
 S2    P2        Mon Apr 22 17:06:30 2013  
 S3    P3        Mon Apr 22 17:06:40 2013  
 S4    P4        Mon Apr 22 17:06:50 2013  
+"""
+
+    cmderr    = \
+"""No arguments needed
 """
 
     stubout   = \
@@ -158,7 +146,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -176,21 +165,22 @@ tag type: <type 'str'>
 def test_slpstat_debug_1():
     """
     slpstat test run: debug_1
-        Old Command Output:
-          Name  Location  Update Time               
-          ==========================================
-          S0    P0        Mon Apr 22 17:06:10 2013  
-          S1    P1        Mon Apr 22 17:06:20 2013  
-          S2    P2        Mon Apr 22 17:06:30 2013  
-          S3    P3        Mon Apr 22 17:06:40 2013  
-          S4    P4        Mon Apr 22 17:06:50 2013  
-          
 
     """
 
     args      = """-d"""
 
     cmdout    = \
+"""Name  Location  Update Time               
+==========================================
+S0    P0        Mon Apr 22 17:06:10 2013  
+S1    P1        Mon Apr 22 17:06:20 2013  
+S2    P2        Mon Apr 22 17:06:30 2013  
+S3    P3        Mon Apr 22 17:06:40 2013  
+S4    P4        Mon Apr 22 17:06:50 2013  
+"""
+
+    cmderr    = \
 """
 slpstat.py -d
 
@@ -200,13 +190,6 @@ component: "service-location.get_services", defer: False
      )
 
 
-Name  Location  Update Time               
-==========================================
-S0    P0        Mon Apr 22 17:06:10 2013  
-S1    P1        Mon Apr 22 17:06:20 2013  
-S2    P2        Mon Apr 22 17:06:30 2013  
-S3    P3        Mon Apr 22 17:06:40 2013  
-S4    P4        Mon Apr 22 17:06:50 2013  
 """
 
     stubout   = \
@@ -228,7 +211,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -246,15 +230,16 @@ tag type: <type 'str'>
 def test_slpstat_debug_2():
     """
     slpstat test run: debug_2
-        Old Command Output:
-          no services registered
-          
 
     """
 
     args      = """-d"""
 
     cmdout    = \
+"""no services registered
+"""
+
+    cmderr    = \
 """
 slpstat.py -d
 
@@ -264,7 +249,6 @@ component: "service-location.get_services", defer: False
      )
 
 
-no services registered
 """
 
     stubout   = \
@@ -286,7 +270,8 @@ tag type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("NO SERVICES")
@@ -318,6 +303,8 @@ Options:
   -d, --debug  turn on communication debugging
 """
 
+    cmderr    = ''
+
     stubout   = ''
 
     stubout_file = "stub.out"
@@ -325,7 +312,8 @@ Options:
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -357,6 +345,8 @@ Options:
   -d, --debug  turn on communication debugging
 """
 
+    cmderr    = ''
+
     stubout   = ''
 
     stubout_file = "stub.out"
@@ -364,7 +354,8 @@ Options:
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -391,6 +382,8 @@ def test_slpstat_version():
 """version: "slpstat.py " + $Revision: 1221 $ + , Cobalt  + $Version$
 """
 
+    cmderr    = ''
+
     stubout   = ''
 
     stubout_file = "stub.out"
@@ -398,7 +391,8 @@ def test_slpstat_version():
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")

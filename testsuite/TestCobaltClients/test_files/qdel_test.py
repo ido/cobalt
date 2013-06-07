@@ -4,17 +4,18 @@ import testutils
 def test_qdel_invalid_option():
     """
     qdel test run: invalid_option
-        Old Command Output:
-          option -k not recognized
-          Usage:
-          qdel [--version] [-f] <jobid> <jobid>
-          
 
     """
 
     args      = """-k 1"""
 
     cmdout    = \
+"""option -k not recognized
+Usage:
+qdel [--version] [-f] <jobid> <jobid>
+"""
+
+    cmderr    = \
 """Usage: qdel.py [options] <jobid1> [ ... <jobidN>]
 
 qdel.py: error: no such option: -k
@@ -27,7 +28,8 @@ qdel.py: error: no such option: -k
     expected_results = ( 
                        512, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -51,6 +53,13 @@ def test_qdel_debug_option():
     args      = """-d 1"""
 
     cmdout    = \
+"""      Deleted Jobs
+JobID  User      
+=================
+1      gooduser  
+"""
+
+    cmderr    = \
 """
 qdel.py -d 1
 
@@ -62,10 +71,6 @@ component: "queue-manager.del_jobs", defer: True
      )
 
 
-      Deleted Jobs
-JobID  User      
-=================
-1      gooduser  
 """
 
     stubout   = \
@@ -87,7 +92,8 @@ user type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -105,15 +111,14 @@ user type: <type 'str'>
 def test_qdel_jobid_1():
     """
     qdel test run: jobid_1
-        Old Command Output:
-          jobid must be an integer
-          
 
     """
 
     args      = """myq 1 2 3 4"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """jobid must be an integer: myq
 """
 
@@ -124,7 +129,8 @@ def test_qdel_jobid_1():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -142,15 +148,6 @@ def test_qdel_jobid_1():
 def test_qdel_jobid_2():
     """
     qdel test run: jobid_2
-        Old Command Output:
-                Deleted Jobs
-          JobID  User      
-          =================
-          1      gooduser  
-          2      gooduser  
-          3      gooduser  
-          4      gooduser  
-          
 
     """
 
@@ -165,6 +162,8 @@ JobID  User
 3      gooduser  
 4      gooduser  
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -203,7 +202,8 @@ user type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -221,12 +221,6 @@ user type: <type 'str'>
 def test_qdel_jobid_3():
     """
     qdel test run: jobid_3
-        Old Command Output:
-                Deleted Jobs
-          JobID  User      
-          =================
-          1      gooduser  
-          
 
     """
 
@@ -238,6 +232,8 @@ JobID  User
 =================
 1      gooduser  
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -258,7 +254,8 @@ user type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")

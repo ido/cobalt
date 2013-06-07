@@ -30,8 +30,8 @@ test_argslist = [
     { "tc_name" : "geometry_15", "args" : """--geometry 00x00x100x00x2 arg""", 'skip_list' : ['not_bsim'], },
     { "tc_name" : "geometry_16", "args" : """--geometry 00x00x00x100x2 arg""", 'skip_list' : ['not_bsim'], },
     { "tc_name" : "combo", "args" : """--geometry 00x00x00x00x2 --size 2048 arg""", 'skip_list' : ['not_bsim'], },
-    { "tc_name" : "help_1", "args" : """--help""", },
-    { "tc_name" : "help_2", "args" : """-h""", },
-    { "tc_name" : "version", "args" : """--version""", },
+    { "tc_name" : "help_1", "args" : """--help""", "new_only" : True, },
+    { "tc_name" : "help_2", "args" : """-h""", "new_only" : True, },
+    { "tc_name" : "version", "args" : """--version""", "new_only" : True, },
     { "tc_name" : "debug", "args" : """--debug""", "new_only" : True,},
     ]

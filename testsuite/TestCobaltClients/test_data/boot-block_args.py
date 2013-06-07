@@ -19,9 +19,9 @@ test_argslist = [
     { "tc_name" : "nofree_noreboot_1", "args" : """--jobid 1""", },
     { "tc_name" : "nofree_noreboot_2", "args" : """--block b""", },
     { "tc_name" : "nofree_noreboot_3", "args" : """--jobid 1 --block b""", 'skip_list' : ['not_bsim'], },
-    { "tc_name" : "help_1", "args" : """--help""", },
-    { "tc_name" : "help_2", "args" : """-h""", },
-    { "tc_name" : "version", "args" : """--version""", },
+    { "tc_name" : "help_1", "args" : """--help""", "new_only" : True, },
+    { "tc_name" : "help_2", "args" : """-h""", "new_only" : True, },
+    { "tc_name" : "version", "args" : """--version""", "new_only" : True, },
     { "tc_name" : "debug_1", "args" : """--debug""", "new_only" : True,},
     { "tc_name" : "debug_2", "args" : """--d""", "new_only" : True,},
     ]

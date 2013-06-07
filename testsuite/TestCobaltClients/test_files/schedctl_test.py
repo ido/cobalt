@@ -4,36 +4,16 @@ import testutils
 def test_schedctl_args_1():
     """
     schedctl test run: args_1
-        Old Command Output:
-          Usage: schedctl.py [options]
-          
-          Options:
-            -h, --help            show this help message and exit
-            --stop                stop scheduling jobs
-            --start               resume scheduling jobs
-            --status              query scheduling status
-            --reread-policy       reread the utility function definition file
-            --savestate=SAVESTATE
-                                  write the current state to the specified file
-            --score=ADJUST        <jobid> <jobid> adjust the scores of the arguments
-            --inherit=DEP_FRAC    <jobid> <jobid> control the fraction of the score
-                                  inherited by jobs which depend on the arguments
-          
 
     """
 
     args      = ''
 
     cmdout    = \
-"""Need at least one option
-Usage: schedctl.py [--stop | --start | --status | --reread-policy | --savestate]
-Usage: schedctl.py [--score | --inherit] jobid1 .. jobidN
-
+"""Usage: schedctl.py [options]
 
 Options:
-  --version             show program's version number and exit
   -h, --help            show this help message and exit
-  -d, --debug           turn on communication debugging
   --stop                stop scheduling jobs
   --start               resume scheduling jobs
   --status              query scheduling status
@@ -45,6 +25,10 @@ Options:
                         inherited by jobs which depend on the arguments
 """
 
+    cmderr    = \
+"""Need at least one option
+"""
+
     stubout   = ''
 
     stubout_file = "stub.out"
@@ -52,7 +36,8 @@ Options:
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -70,32 +55,15 @@ Options:
 def test_schedctl_args_2():
     """
     schedctl test run: args_2
-        Old Command Output:
-          
 
     """
 
     args      = """1"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Need at least one option
-Usage: schedctl.py [--stop | --start | --status | --reread-policy | --savestate]
-Usage: schedctl.py [--score | --inherit] jobid1 .. jobidN
-
-
-Options:
-  --version             show program's version number and exit
-  -h, --help            show this help message and exit
-  -d, --debug           turn on communication debugging
-  --stop                stop scheduling jobs
-  --start               resume scheduling jobs
-  --status              query scheduling status
-  --reread-policy       reread the utility function definition file
-  --savestate=SAVESTATE
-                        write the current state to the specified file
-  --score=ADJUST        <jobid> <jobid> adjust the scores of the arguments
-  --inherit=DEP_FRAC    <jobid> <jobid> control the fraction of the score
-                        inherited by jobs which depend on the arguments
 """
 
     stubout   = ''
@@ -105,7 +73,8 @@ Options:
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -123,27 +92,28 @@ Options:
 def test_schedctl_combo_1():
     """
     schedctl test run: combo_1
-        Old Command Output:
-          Usage: schedctl.py [options]
-          
-          Options:
-            -h, --help            show this help message and exit
-            --stop                stop scheduling jobs
-            --start               resume scheduling jobs
-            --status              query scheduling status
-            --reread-policy       reread the utility function definition file
-            --savestate=SAVESTATE
-                                  write the current state to the specified file
-            --score=ADJUST        <jobid> <jobid> adjust the scores of the arguments
-            --inherit=DEP_FRAC    <jobid> <jobid> control the fraction of the score
-                                  inherited by jobs which depend on the arguments
-          
 
     """
 
     args      = """--start --stop"""
 
     cmdout    = \
+"""Usage: schedctl.py [options]
+
+Options:
+  -h, --help            show this help message and exit
+  --stop                stop scheduling jobs
+  --start               resume scheduling jobs
+  --status              query scheduling status
+  --reread-policy       reread the utility function definition file
+  --savestate=SAVESTATE
+                        write the current state to the specified file
+  --score=ADJUST        <jobid> <jobid> adjust the scores of the arguments
+  --inherit=DEP_FRAC    <jobid> <jobid> control the fraction of the score
+                        inherited by jobs which depend on the arguments
+"""
+
+    cmderr    = \
 """Option combinations not allowed with: start option(s)
 """
 
@@ -154,7 +124,8 @@ def test_schedctl_combo_1():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -172,27 +143,28 @@ def test_schedctl_combo_1():
 def test_schedctl_combo_2():
     """
     schedctl test run: combo_2
-        Old Command Output:
-          Usage: schedctl.py [options]
-          
-          Options:
-            -h, --help            show this help message and exit
-            --stop                stop scheduling jobs
-            --start               resume scheduling jobs
-            --status              query scheduling status
-            --reread-policy       reread the utility function definition file
-            --savestate=SAVESTATE
-                                  write the current state to the specified file
-            --score=ADJUST        <jobid> <jobid> adjust the scores of the arguments
-            --inherit=DEP_FRAC    <jobid> <jobid> control the fraction of the score
-                                  inherited by jobs which depend on the arguments
-          
 
     """
 
     args      = """--stop --status"""
 
     cmdout    = \
+"""Usage: schedctl.py [options]
+
+Options:
+  -h, --help            show this help message and exit
+  --stop                stop scheduling jobs
+  --start               resume scheduling jobs
+  --status              query scheduling status
+  --reread-policy       reread the utility function definition file
+  --savestate=SAVESTATE
+                        write the current state to the specified file
+  --score=ADJUST        <jobid> <jobid> adjust the scores of the arguments
+  --inherit=DEP_FRAC    <jobid> <jobid> control the fraction of the score
+                        inherited by jobs which depend on the arguments
+"""
+
+    cmderr    = \
 """Option combinations not allowed with: stat option(s)
 """
 
@@ -203,7 +175,8 @@ def test_schedctl_combo_2():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -221,27 +194,28 @@ def test_schedctl_combo_2():
 def test_schedctl_combo_3():
     """
     schedctl test run: combo_3
-        Old Command Output:
-          Usage: schedctl.py [options]
-          
-          Options:
-            -h, --help            show this help message and exit
-            --stop                stop scheduling jobs
-            --start               resume scheduling jobs
-            --status              query scheduling status
-            --reread-policy       reread the utility function definition file
-            --savestate=SAVESTATE
-                                  write the current state to the specified file
-            --score=ADJUST        <jobid> <jobid> adjust the scores of the arguments
-            --inherit=DEP_FRAC    <jobid> <jobid> control the fraction of the score
-                                  inherited by jobs which depend on the arguments
-          
 
     """
 
     args      = """--start --status"""
 
     cmdout    = \
+"""Usage: schedctl.py [options]
+
+Options:
+  -h, --help            show this help message and exit
+  --stop                stop scheduling jobs
+  --start               resume scheduling jobs
+  --status              query scheduling status
+  --reread-policy       reread the utility function definition file
+  --savestate=SAVESTATE
+                        write the current state to the specified file
+  --score=ADJUST        <jobid> <jobid> adjust the scores of the arguments
+  --inherit=DEP_FRAC    <jobid> <jobid> control the fraction of the score
+                        inherited by jobs which depend on the arguments
+"""
+
+    cmderr    = \
 """Option combinations not allowed with: stat option(s)
 """
 
@@ -252,7 +226,8 @@ def test_schedctl_combo_3():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -270,27 +245,28 @@ def test_schedctl_combo_3():
 def test_schedctl_combo_4():
     """
     schedctl test run: combo_4
-        Old Command Output:
-          Usage: schedctl.py [options]
-          
-          Options:
-            -h, --help            show this help message and exit
-            --stop                stop scheduling jobs
-            --start               resume scheduling jobs
-            --status              query scheduling status
-            --reread-policy       reread the utility function definition file
-            --savestate=SAVESTATE
-                                  write the current state to the specified file
-            --score=ADJUST        <jobid> <jobid> adjust the scores of the arguments
-            --inherit=DEP_FRAC    <jobid> <jobid> control the fraction of the score
-                                  inherited by jobs which depend on the arguments
-          
 
     """
 
     args      = """--reread-policy --status"""
 
     cmdout    = \
+"""Usage: schedctl.py [options]
+
+Options:
+  -h, --help            show this help message and exit
+  --stop                stop scheduling jobs
+  --start               resume scheduling jobs
+  --status              query scheduling status
+  --reread-policy       reread the utility function definition file
+  --savestate=SAVESTATE
+                        write the current state to the specified file
+  --score=ADJUST        <jobid> <jobid> adjust the scores of the arguments
+  --inherit=DEP_FRAC    <jobid> <jobid> control the fraction of the score
+                        inherited by jobs which depend on the arguments
+"""
+
+    cmderr    = \
 """Option combinations not allowed with: reread option(s)
 """
 
@@ -301,7 +277,8 @@ def test_schedctl_combo_4():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -319,27 +296,28 @@ def test_schedctl_combo_4():
 def test_schedctl_combo_5():
     """
     schedctl test run: combo_5
-        Old Command Output:
-          Usage: schedctl.py [options]
-          
-          Options:
-            -h, --help            show this help message and exit
-            --stop                stop scheduling jobs
-            --start               resume scheduling jobs
-            --status              query scheduling status
-            --reread-policy       reread the utility function definition file
-            --savestate=SAVESTATE
-                                  write the current state to the specified file
-            --score=ADJUST        <jobid> <jobid> adjust the scores of the arguments
-            --inherit=DEP_FRAC    <jobid> <jobid> control the fraction of the score
-                                  inherited by jobs which depend on the arguments
-          
 
     """
 
     args      = """--score 1.1 --stop 1 2 3 4"""
 
     cmdout    = \
+"""Usage: schedctl.py [options]
+
+Options:
+  -h, --help            show this help message and exit
+  --stop                stop scheduling jobs
+  --start               resume scheduling jobs
+  --status              query scheduling status
+  --reread-policy       reread the utility function definition file
+  --savestate=SAVESTATE
+                        write the current state to the specified file
+  --score=ADJUST        <jobid> <jobid> adjust the scores of the arguments
+  --inherit=DEP_FRAC    <jobid> <jobid> control the fraction of the score
+                        inherited by jobs which depend on the arguments
+"""
+
+    cmderr    = \
 """Option combinations not allowed with: adjust option(s)
 """
 
@@ -350,7 +328,8 @@ def test_schedctl_combo_5():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -368,27 +347,28 @@ def test_schedctl_combo_5():
 def test_schedctl_combo_6():
     """
     schedctl test run: combo_6
-        Old Command Output:
-          Usage: schedctl.py [options]
-          
-          Options:
-            -h, --help            show this help message and exit
-            --stop                stop scheduling jobs
-            --start               resume scheduling jobs
-            --status              query scheduling status
-            --reread-policy       reread the utility function definition file
-            --savestate=SAVESTATE
-                                  write the current state to the specified file
-            --score=ADJUST        <jobid> <jobid> adjust the scores of the arguments
-            --inherit=DEP_FRAC    <jobid> <jobid> control the fraction of the score
-                                  inherited by jobs which depend on the arguments
-          
 
     """
 
     args      = """--inherit 1.1 --start 1 2 3 4"""
 
     cmdout    = \
+"""Usage: schedctl.py [options]
+
+Options:
+  -h, --help            show this help message and exit
+  --stop                stop scheduling jobs
+  --start               resume scheduling jobs
+  --status              query scheduling status
+  --reread-policy       reread the utility function definition file
+  --savestate=SAVESTATE
+                        write the current state to the specified file
+  --score=ADJUST        <jobid> <jobid> adjust the scores of the arguments
+  --inherit=DEP_FRAC    <jobid> <jobid> control the fraction of the score
+                        inherited by jobs which depend on the arguments
+"""
+
+    cmderr    = \
 """Option combinations not allowed with: start, dep_frac option(s)
 """
 
@@ -399,7 +379,8 @@ def test_schedctl_combo_6():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -417,27 +398,28 @@ def test_schedctl_combo_6():
 def test_schedctl_combo_7():
     """
     schedctl test run: combo_7
-        Old Command Output:
-          Usage: schedctl.py [options]
-          
-          Options:
-            -h, --help            show this help message and exit
-            --stop                stop scheduling jobs
-            --start               resume scheduling jobs
-            --status              query scheduling status
-            --reread-policy       reread the utility function definition file
-            --savestate=SAVESTATE
-                                  write the current state to the specified file
-            --score=ADJUST        <jobid> <jobid> adjust the scores of the arguments
-            --inherit=DEP_FRAC    <jobid> <jobid> control the fraction of the score
-                                  inherited by jobs which depend on the arguments
-          
 
     """
 
     args      = """--start --savestate /tmp/s"""
 
     cmdout    = \
+"""Usage: schedctl.py [options]
+
+Options:
+  -h, --help            show this help message and exit
+  --stop                stop scheduling jobs
+  --start               resume scheduling jobs
+  --status              query scheduling status
+  --reread-policy       reread the utility function definition file
+  --savestate=SAVESTATE
+                        write the current state to the specified file
+  --score=ADJUST        <jobid> <jobid> adjust the scores of the arguments
+  --inherit=DEP_FRAC    <jobid> <jobid> control the fraction of the score
+                        inherited by jobs which depend on the arguments
+"""
+
+    cmderr    = \
 """Option combinations not allowed with: savestate option(s)
 """
 
@@ -448,7 +430,8 @@ def test_schedctl_combo_7():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -466,10 +449,6 @@ def test_schedctl_combo_7():
 def test_schedctl_combo_8():
     """
     schedctl test run: combo_8
-        Old Command Output:
-          updating scores for jobs: 1, 2, 3, 4
-          updating inheritance fraction for jobs: 1, 2, 3, 4
-          
 
     """
 
@@ -479,6 +458,8 @@ def test_schedctl_combo_8():
 """updating scores for jobs: 1, 2, 3, 4
 updating inheritance fraction for jobs: 1, 2, 3, 4
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -520,7 +501,8 @@ dep_frac type: <type 'float'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -538,17 +520,17 @@ dep_frac type: <type 'float'>
 def test_schedctl_start_1():
     """
     schedctl test run: start_1
-        Old Command Output:
-          Job Scheduling: ENABLED
-          
 
     """
 
     args      = """--start 1"""
 
     cmdout    = \
+"""Job Scheduling: ENABLED
+"""
+
+    cmderr    = \
 """No arguments needed
-Job Scheduling: ENABLED
 """
 
     stubout   = \
@@ -563,7 +545,8 @@ whoami: gooduser
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -581,9 +564,6 @@ whoami: gooduser
 def test_schedctl_start_2():
     """
     schedctl test run: start_2
-        Old Command Output:
-          Job Scheduling: ENABLED
-          
 
     """
 
@@ -592,6 +572,8 @@ def test_schedctl_start_2():
     cmdout    = \
 """Job Scheduling: ENABLED
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -605,7 +587,8 @@ whoami: gooduser
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -623,17 +606,17 @@ whoami: gooduser
 def test_schedctl_stop_1():
     """
     schedctl test run: stop_1
-        Old Command Output:
-          Job Scheduling: DISABLED
-          
 
     """
 
     args      = """--stop  1"""
 
     cmdout    = \
+"""Job Scheduling: DISABLED
+"""
+
+    cmderr    = \
 """No arguments needed
-Job Scheduling: DISABLED
 """
 
     stubout   = \
@@ -648,7 +631,8 @@ whoami: gooduser
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -666,9 +650,6 @@ whoami: gooduser
 def test_schedctl_stop_2():
     """
     schedctl test run: stop_2
-        Old Command Output:
-          Job Scheduling: DISABLED
-          
 
     """
 
@@ -677,6 +658,8 @@ def test_schedctl_stop_2():
     cmdout    = \
 """Job Scheduling: DISABLED
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -690,7 +673,8 @@ whoami: gooduser
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -714,6 +698,10 @@ def test_schedctl_stop_3():
     args      = """-d --stop"""
 
     cmdout    = \
+"""Job Scheduling: DISABLED
+"""
+
+    cmderr    = \
 """
 schedctl.py -d --stop
 
@@ -723,7 +711,6 @@ component: "scheduler.disable", defer: False
      )
 
 
-Job Scheduling: DISABLED
 """
 
     stubout   = \
@@ -738,7 +725,8 @@ whoami: gooduser
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -756,17 +744,17 @@ whoami: gooduser
 def test_schedctl_reread_1():
     """
     schedctl test run: reread_1
-        Old Command Output:
-          Attempting to reread utility functions.
-          
 
     """
 
     args      = """--reread-policy 1"""
 
     cmdout    = \
+"""Attempting to reread utility functions.
+"""
+
+    cmderr    = \
 """No arguments needed
-Attempting to reread utility functions.
 """
 
     stubout   = \
@@ -781,7 +769,8 @@ whoami: gooduser
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -799,10 +788,6 @@ whoami: gooduser
 def test_schedctl_reread_2():
     """
     schedctl test run: reread_2
-        Old Command Output:
-          must specify at least one jobid
-          Attempting to reread utility functions.
-          
 
     """
 
@@ -811,6 +796,8 @@ def test_schedctl_reread_2():
     cmdout    = \
 """Attempting to reread utility functions.
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -824,7 +811,8 @@ whoami: gooduser
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -842,9 +830,6 @@ whoami: gooduser
 def test_schedctl_save_1():
     """
     schedctl test run: save_1
-        Old Command Output:
-          True
-          
 
     """
 
@@ -853,6 +838,8 @@ def test_schedctl_save_1():
     cmdout    = \
 """True
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -866,7 +853,8 @@ filename:/tmp/s
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -884,15 +872,14 @@ filename:/tmp/s
 def test_schedctl_save_2():
     """
     schedctl test run: save_2
-        Old Command Output:
-          directory  does not exist
-          
 
     """
 
     args      = """--savestate s"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """directory s does not exist
 """
 
@@ -903,7 +890,8 @@ def test_schedctl_save_2():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -921,9 +909,6 @@ def test_schedctl_save_2():
 def test_schedctl_score_1():
     """
     schedctl test run: score_1
-        Old Command Output:
-          updating scores for jobs: 1, 2, 3
-          
 
     """
 
@@ -932,6 +917,8 @@ def test_schedctl_score_1():
     cmdout    = \
 """updating scores for jobs: 1, 2, 3
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -951,7 +938,8 @@ new score: 0, type = <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -969,9 +957,6 @@ new score: 0, type = <type 'str'>
 def test_schedctl_score_2():
     """
     schedctl test run: score_2
-        Old Command Output:
-          updating scores for jobs: 1, 2, 3
-          
 
     """
 
@@ -980,6 +965,8 @@ def test_schedctl_score_2():
     cmdout    = \
 """updating scores for jobs: 1, 2, 3
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -999,7 +986,8 @@ new score: 1, type = <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1017,9 +1005,6 @@ new score: 1, type = <type 'str'>
 def test_schedctl_score_3():
     """
     schedctl test run: score_3
-        Old Command Output:
-          updating scores for jobs: 1, 2, 3
-          
 
     """
 
@@ -1028,6 +1013,8 @@ def test_schedctl_score_3():
     cmdout    = \
 """updating scores for jobs: 1, 2, 3
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -1047,7 +1034,8 @@ new score: 1.0, type = <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1065,9 +1053,6 @@ new score: 1.0, type = <type 'str'>
 def test_schedctl_score_4():
     """
     schedctl test run: score_4
-        Old Command Output:
-          updating scores for jobs: 1, 2, 3
-          
 
     """
 
@@ -1076,6 +1061,8 @@ def test_schedctl_score_4():
     cmdout    = \
 """updating scores for jobs: 1, 2, 3
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -1095,7 +1082,8 @@ new score: -1.0, type = <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1113,9 +1101,6 @@ new score: -1.0, type = <type 'str'>
 def test_schedctl_score_5():
     """
     schedctl test run: score_5
-        Old Command Output:
-          updating scores for jobs: 1, 2, 3
-          
 
     """
 
@@ -1124,6 +1109,8 @@ def test_schedctl_score_5():
     cmdout    = \
 """updating scores for jobs: 1, 2, 3
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -1143,7 +1130,8 @@ new score: +1.0, type = <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1161,9 +1149,6 @@ new score: +1.0, type = <type 'str'>
 def test_schedctl_inherit_1():
     """
     schedctl test run: inherit_1
-        Old Command Output:
-          updating inheritance fraction for jobs: 1, 2, 3
-          
 
     """
 
@@ -1172,6 +1157,8 @@ def test_schedctl_inherit_1():
     cmdout    = \
 """updating inheritance fraction for jobs: 1, 2, 3
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -1199,7 +1186,8 @@ dep_frac type: <type 'float'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1217,9 +1205,6 @@ dep_frac type: <type 'float'>
 def test_schedctl_inherit_2():
     """
     schedctl test run: inherit_2
-        Old Command Output:
-          updating inheritance fraction for jobs: 1, 2, 3
-          
 
     """
 
@@ -1228,6 +1213,8 @@ def test_schedctl_inherit_2():
     cmdout    = \
 """updating inheritance fraction for jobs: 1, 2, 3
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -1255,7 +1242,8 @@ dep_frac type: <type 'float'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1273,9 +1261,6 @@ dep_frac type: <type 'float'>
 def test_schedctl_inherit_3():
     """
     schedctl test run: inherit_3
-        Old Command Output:
-          updating inheritance fraction for jobs: 1, 2, 3
-          
 
     """
 
@@ -1284,6 +1269,8 @@ def test_schedctl_inherit_3():
     cmdout    = \
 """updating inheritance fraction for jobs: 1, 2, 3
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -1311,7 +1298,8 @@ dep_frac type: <type 'float'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1329,9 +1317,6 @@ dep_frac type: <type 'float'>
 def test_schedctl_inherit_4():
     """
     schedctl test run: inherit_4
-        Old Command Output:
-          updating inheritance fraction for jobs: 1, 2, 3
-          
 
     """
 
@@ -1340,6 +1325,8 @@ def test_schedctl_inherit_4():
     cmdout    = \
 """updating inheritance fraction for jobs: 1, 2, 3
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -1367,7 +1354,8 @@ dep_frac type: <type 'float'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1385,9 +1373,6 @@ dep_frac type: <type 'float'>
 def test_schedctl_inherit_5():
     """
     schedctl test run: inherit_5
-        Old Command Output:
-          updating inheritance fraction for jobs: 1, 2, 3
-          
 
     """
 
@@ -1396,6 +1381,8 @@ def test_schedctl_inherit_5():
     cmdout    = \
 """updating inheritance fraction for jobs: 1, 2, 3
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -1423,7 +1410,8 @@ dep_frac type: <type 'float'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")

@@ -4,17 +4,14 @@ import testutils
 def test_qrls_invalid_option():
     """
     qrls test run: invalid_option
-        Old Command Output:
-          Usage: qrls.py [options] <jobid> <jobid>
-          
-          qrls.py: error: no such option: -k
-          
 
     """
 
     args      = """-k 1"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Usage: qrls.py [options] <jobid1> [ ... <jobidN> ]
 
 qrls.py: error: no such option: -k
@@ -27,7 +24,8 @@ qrls.py: error: no such option: -k
     expected_results = ( 
                        512, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -45,17 +43,17 @@ qrls.py: error: no such option: -k
 def test_qrls_debug_flag():
     """
     qrls test run: debug_flag
-        Old Command Output:
-          Response: [{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
-             Failed to remove user hold on jobs: 
-                job 1 does not have a 'user hold'
-          
 
     """
 
     args      = """-d 1"""
 
     cmdout    = \
+"""   Failed to remove user hold on jobs: 
+      job 1 does not have a 'user hold'
+"""
+
+    cmderr    = \
 """
 qrls.py -d 1
 
@@ -74,8 +72,6 @@ component: "queue-manager.set_jobs", defer: False
 
 
 Response: [{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
-   Failed to remove user hold on jobs: 
-      job 1 does not have a 'user hold'
 """
 
     stubout   = \
@@ -119,7 +115,8 @@ user_hold type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -137,15 +134,14 @@ user_hold type: <type 'bool'>
 def test_qrls_jobid_1():
     """
     qrls test run: jobid_1
-        Old Command Output:
-          jobid must be an integer
-          
 
     """
 
     args      = """myq 1 2 3 4"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """jobid must be an integer: myq
 """
 
@@ -156,7 +152,8 @@ def test_qrls_jobid_1():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -174,13 +171,6 @@ def test_qrls_jobid_1():
 def test_qrls_jobid_2():
     """
     qrls test run: jobid_2
-        Old Command Output:
-             Failed to remove user hold on jobs: 
-                job 1 does not have a 'user hold'
-                job 2 does not have a 'user hold'
-                job 3 does not have a 'user hold'
-                job 4 does not have a 'user hold'
-          
 
     """
 
@@ -193,6 +183,8 @@ def test_qrls_jobid_2():
       job 3 does not have a 'user hold'
       job 4 does not have a 'user hold'
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -289,7 +281,8 @@ user_hold type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -307,10 +300,6 @@ user_hold type: <type 'bool'>
 def test_qrls_jobid_3():
     """
     qrls test run: jobid_3
-        Old Command Output:
-             Failed to remove user hold on jobs: 
-                job 1 does not have a 'user hold'
-          
 
     """
 
@@ -320,6 +309,8 @@ def test_qrls_jobid_3():
 """   Failed to remove user hold on jobs: 
       job 1 does not have a 'user hold'
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -362,7 +353,8 @@ user_hold type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -380,17 +372,18 @@ user_hold type: <type 'bool'>
 def test_qrls_dependancy_option():
     """
     qrls test run: dependancy_option
-        Old Command Output:
-             Removed dependencies from jobs: 
-                1
-                2
-          
 
     """
 
     args      = """-d --dependencies 1 2"""
 
     cmdout    = \
+"""   Removed dependencies from jobs: 
+      1
+      2
+"""
+
+    cmderr    = \
 """
 qrls.py -d --dependencies 1 2
 
@@ -408,8 +401,6 @@ component: "queue-manager.set_jobs", defer: False
      )
 
 
-   Removed dependencies from jobs: 
-      1
 """
 
     stubout   = \
@@ -471,7 +462,8 @@ all_dependencies type: <type 'list'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")

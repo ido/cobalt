@@ -6,11 +6,12 @@ def test_qselect_invalid_option():
     qselect test run: invalid_option
 
         Command Output:
-          Usage: qselect.py [options]
-          
-          qselect.py: error: no such option: -k
-          
-
+        
+        Command Error/Debug:Usage: qselect.py [options]
+        
+        qselect.py: error: no such option: -k
+        
+        
     """
 
     args      = """-k"""
@@ -19,6 +20,7 @@ def test_qselect_invalid_option():
     results = testutils.run_cmd('qselect.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -29,7 +31,8 @@ def test_qselect_invalid_option():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -39,9 +42,10 @@ def test_qselect_only_arg():
     qselect test run: only_arg
 
         Command Output:
-          qselect takes no arguments
-          
-
+        
+        Command Error/Debug:qselect takes no arguments
+        
+        
     """
 
     args      = """1"""
@@ -50,6 +54,7 @@ def test_qselect_only_arg():
     results = testutils.run_cmd('qselect.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -60,7 +65,8 @@ def test_qselect_only_arg():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -70,9 +76,11 @@ def test_qselect_no_args_opts():
     qselect test run: no_args_opts
 
         Command Output:
-          Failed to match any jobs
-          
-
+           The following jobs matched your query:
+              5
+        
+        Command Error/Debug:
+        
     """
 
     args      = ''
@@ -81,6 +89,7 @@ def test_qselect_no_args_opts():
     results = testutils.run_cmd('qselect.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -91,7 +100,8 @@ def test_qselect_no_args_opts():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -101,18 +111,21 @@ def test_qselect_debug_flag():
     qselect test run: debug_flag
 
         Command Output:
-          
-          qselect.py -d
-          
-          component: "queue-manager.get_jobs", defer: False
-            get_jobs(
-               [{'project': '*', 'queue': '*', 'state': '*', 'tag': 'job', 'mode': '*', 'nodes': '*', 'walltime': '*', 'jobid': '*'}],
-               )
-          
-          
-          Failed to match any jobs
-          
-
+           The following jobs matched your query:
+              5
+        
+        Command Error/Debug:
+        qselect.py -d
+        
+        component: "queue-manager.get_jobs", defer: False
+          get_jobs(
+             [{'project': '*', 'queue': '*', 'state': '*', 'tag': 'job', 'mode': '*', 'nodes': '*', 'walltime': '*', 'jobid': '*'}],
+             )
+        
+        
+        [{'project': None, 'jobid': 5, 'queue': 'default', 'state': 'queued', 'tag': 'job', 'mode': 'smp', 'nodes': 10, 'walltime': 30}]
+        
+        
     """
 
     args      = """-d"""
@@ -121,6 +134,7 @@ def test_qselect_debug_flag():
     results = testutils.run_cmd('qselect.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -131,7 +145,8 @@ def test_qselect_debug_flag():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -141,9 +156,10 @@ def test_qselect_held_option():
     qselect test run: held_option
 
         Command Output:
-          Failed to match any jobs
-          
-
+        
+        Command Error/Debug:Failed to match any jobs
+        
+        
     """
 
     args      = """-h user_hold"""
@@ -152,6 +168,7 @@ def test_qselect_held_option():
     results = testutils.run_cmd('qselect.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -162,7 +179,8 @@ def test_qselect_held_option():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -172,9 +190,10 @@ def test_qselect_nodecount_option():
     qselect test run: nodecount_option
 
         Command Output:
-          Failed to match any jobs
-          
-
+        
+        Command Error/Debug:Failed to match any jobs
+        
+        
     """
 
     args      = """-n 312"""
@@ -183,6 +202,7 @@ def test_qselect_nodecount_option():
     results = testutils.run_cmd('qselect.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -193,7 +213,8 @@ def test_qselect_nodecount_option():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -203,9 +224,10 @@ def test_qselect_state_and_nodecount():
     qselect test run: state_and_nodecount
 
         Command Output:
-          Failed to match any jobs
-          
-
+        
+        Command Error/Debug:Failed to match any jobs
+        
+        
     """
 
     args      = """-n 312 -h user_hold"""
@@ -214,6 +236,7 @@ def test_qselect_state_and_nodecount():
     results = testutils.run_cmd('qselect.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -224,7 +247,8 @@ def test_qselect_state_and_nodecount():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -234,9 +258,10 @@ def test_qselect_walltime():
     qselect test run: walltime
 
         Command Output:
-          Failed to match any jobs
-          
-
+        
+        Command Error/Debug:Failed to match any jobs
+        
+        
     """
 
     args      = """-t 10:10:10"""
@@ -245,6 +270,7 @@ def test_qselect_walltime():
     results = testutils.run_cmd('qselect.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -255,7 +281,8 @@ def test_qselect_walltime():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -265,9 +292,10 @@ def test_qselect_mode():
     qselect test run: mode
 
         Command Output:
-          Failed to match any jobs
-          
-
+        
+        Command Error/Debug:Failed to match any jobs
+        
+        
     """
 
     args      = """--mode vn"""
@@ -276,6 +304,7 @@ def test_qselect_mode():
     results = testutils.run_cmd('qselect.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -286,7 +315,8 @@ def test_qselect_mode():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg
 
@@ -296,9 +326,11 @@ def test_qselect_verbose():
     qselect test run: verbose
 
         Command Output:
-          Failed to match any jobs
-          
-
+           The following jobs matched your query:
+              5
+        
+        Command Error/Debug:
+        
     """
 
     args      = """-v"""
@@ -307,6 +339,7 @@ def test_qselect_verbose():
     results = testutils.run_cmd('qselect.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
+    cmd_err = results[3]
 
     # Test Pass Criterias
     no_rs_err     = (rs == exp_rs)
@@ -317,6 +350,7 @@ def test_qselect_verbose():
     errmsg  = "\n\nFailed Data:\n\n" \
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
 
     assert result, errmsg

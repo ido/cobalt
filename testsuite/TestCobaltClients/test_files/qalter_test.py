@@ -4,15 +4,16 @@ import testutils
 def test_qalter_simple_1():
     """
     qalter test run: simple_1
-        Old Command Output:
-          Failed to match any jobs
-          
 
     """
 
     args      = """-d -n30"""
 
     cmdout    = \
+"""Failed to match any jobs
+"""
+
+    cmderr    = \
 """
 qalter.py -d -n30
 
@@ -26,7 +27,8 @@ No Jobid(s) given
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -50,6 +52,11 @@ def test_qalter_simple_2():
     args      = """-d -n30 1"""
 
     cmdout    = \
+"""nodes changed from 512 to 30
+procs changed from 512 to 30
+"""
+
+    cmderr    = \
 """
 qalter.py -d -n30 1
 
@@ -67,8 +74,6 @@ component: "queue-manager.set_jobs", defer: False
      )
 
 
-nodes changed from 512 to 30
-procs changed from 512 to 30
 [{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
 """
 
@@ -203,7 +208,8 @@ walltime type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -230,6 +236,8 @@ def test_qalter_simple_3():
 """nodes changed from 512 to 30
 procs changed from 512 to 30
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -362,7 +370,8 @@ walltime type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -380,15 +389,14 @@ walltime type: <type 'str'>
 def test_qalter_time_1():
     """
     qalter test run: time_1
-        Old Command Output:
-          jobid must be an integer
-          
 
     """
 
     args      = """-v n10 -t5 1 2 3"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """No job altering options entered
 """
 
@@ -399,7 +407,8 @@ def test_qalter_time_1():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -433,6 +442,8 @@ nodes changed from 1536 to 10
 procs changed from 1536 to 10
 walltime changed from 15 to 20.0
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -805,7 +816,8 @@ walltime type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -851,6 +863,8 @@ nodes changed from 3584 to 10
 procs changed from 3584 to 10
 walltime changed from 35 to 55.0
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -1703,7 +1717,8 @@ walltime type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1754,6 +1769,8 @@ nodes changed from 4608 to 10
 procs changed from 4608 to 10
 walltime changed from 45 to 30
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -2846,7 +2863,8 @@ walltime type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -2881,6 +2899,8 @@ procs changed from 1536 to 10
 walltime changed from 15 to 0
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_JOBS
@@ -3252,7 +3272,8 @@ walltime type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -3287,6 +3308,8 @@ procs changed from 1536 to 10
 walltime changed from 15 to 15.0
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_JOBS
@@ -3658,7 +3681,8 @@ walltime type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -3693,6 +3717,8 @@ procs changed from 1536 to 10
 walltime changed from 15 to 0
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_JOBS
@@ -4064,7 +4090,8 @@ walltime type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -4098,6 +4125,8 @@ nodes changed from 1536 to 10
 procs changed from 1536 to 10
 walltime changed from 15 to 15.0
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -4470,7 +4499,8 @@ walltime type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -4488,24 +4518,25 @@ walltime type: <type 'str'>
 def test_qalter_invalid_option():
     """
     qalter test run: invalid_option
-        Old Command Output:
-          option -m not recognized
-          
-          Usage: qalter [-d] [-v] -A <project name> -t <time in minutes>
-                        -e <error file path> -o <output file path>
-                        --dependencies <jobid1>:<jobid2> --geometry AxBxCxDxE
-                        -n <number of nodes> -h --proccount <processor count>
-                        -M <email address> --mode <mode co/vn>
-                        --run_users <user1>:<user2> --run_project <jobid1> <jobid2>
-                        --attrs <attr1=val1>:<attr2=val2>
-          
-          
 
     """
 
     args      = """-v -m j@gmail.com"""
 
     cmdout    = \
+"""option -m not recognized
+
+Usage: qalter [-d] [-v] -A <project name> -t <time in minutes>
+              -e <error file path> -o <output file path>
+              --dependencies <jobid1>:<jobid2> --geometry AxBxCxDxE
+              -n <number of nodes> -h --proccount <processor count>
+              -M <email address> --mode <mode co/vn>
+              --run_users <user1>:<user2> --run_project <jobid1> <jobid2>
+              --attrs <attr1=val1>:<attr2=val2>
+
+"""
+
+    cmderr    = \
 """Usage: qalter.py [options] <jobid1> ... <jobidN>
 
 qalter.py: error: no such option: -m
@@ -4518,7 +4549,8 @@ qalter.py: error: no such option: -m
     expected_results = ( 
                        512, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -4545,6 +4577,8 @@ def test_qalter_email_option():
 """notify changed from myemail@gmail.com to j@gmail.com
 notify changed from myemail@gmail.com to j@gmail.com
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -4797,7 +4831,8 @@ walltime type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -4815,20 +4850,14 @@ walltime type: <type 'str'>
 def test_qalter_mode_1():
     """
     qalter test run: mode_1
-        Old Command Output:
-          Specifed mode 'jjj' not valid, valid modes are
-          smp
-          co
-          dual
-          vn
-          script
-          
 
     """
 
     args      = """-v --mode jjj  -n40 -t50 -e p -o o 1 2 3"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Specifed mode 'jjj' not valid, valid modes are
 co
 vn
@@ -4842,7 +4871,8 @@ script
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -4865,7 +4895,9 @@ def test_qalter_mode_2():
 
     args      = """-v --mode dual -n40 -t50 -e p -o o 1 2 3"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Specifed mode 'dual' not valid, valid modes are
 co
 vn
@@ -4879,7 +4911,8 @@ script
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -4897,15 +4930,14 @@ script
 def test_qalter_proccount_1():
     """
     qalter test run: proccount_1
-        Old Command Output:
-          non-integer node count specified
-          
 
     """
 
     args      = """-v --mode dual -n512 --proccount one -t50 -e /tmp/p -o /tmp/o 1 2 3 4 5 6 7 8 9 10"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Specifed mode 'dual' not valid, valid modes are
 co
 vn
@@ -4919,7 +4951,8 @@ script
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -4942,7 +4975,9 @@ def test_qalter_proccount_2():
 
     args      = """-v --mode dual -n512 --proccount 1023 -t50 -e /tmp/p -o /tmp/o 1 2 3 4 5 6 7 8 9 10"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Specifed mode 'dual' not valid, valid modes are
 co
 vn
@@ -4956,7 +4991,8 @@ script
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -4974,15 +5010,14 @@ script
 def test_qalter_invalid_nodecount():
     """
     qalter test run: invalid_nodecount
-        Old Command Output:
-          non-integer node count specified
-          
 
     """
 
     args      = """-v --mode dual -nfiver --proccount 1023 -t50 -e /tmp/p -o /tmp/o 1 2 3 4 5 6 7 8 9 10"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Specifed mode 'dual' not valid, valid modes are
 co
 vn
@@ -4996,7 +5031,8 @@ script
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -5027,6 +5063,8 @@ user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king',
 user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser', 'user1', 'user2', 'user3']
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_JOBS
@@ -5638,7 +5676,8 @@ walltime type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -5656,15 +5695,14 @@ walltime type: <type 'str'>
 def test_qalter_user_2():
     """
     qalter test run: user_2
-        Old Command Output:
-          user naughtyuser does not exist.
-          
 
     """
 
     args      = """-v --run_users user1:naughtyuser 1 2 3 4 5"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """user naughtyuser does not exist.
 """
 
@@ -5675,7 +5713,8 @@ def test_qalter_user_2():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -5707,6 +5746,8 @@ run_project set to True
 user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser']
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_JOBS
@@ -6084,7 +6125,8 @@ walltime type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -6102,23 +6144,24 @@ walltime type: <type 'str'>
 def test_qalter_geometry_1():
     """
     qalter test run: geometry_1
-        Old Command Output:
-          
-          Usage: qalter [-d] [-v] -A <project name> -t <time in minutes>
-                        -e <error file path> -o <output file path>
-                        --dependencies <jobid1>:<jobid2> --geometry AxBxCxDxE
-                        -n <number of nodes> -h --proccount <processor count>
-                        -M <email address> --mode <mode co/vn>
-                        --run_users <user1>:<user2> --run_project <jobid1> <jobid2>
-                        --attrs <attr1=val1>:<attr2=val2>
-          
-          
 
     """
 
     args      = """-v --geometry 10 1 2 3 4 5"""
 
     cmdout    = \
+"""
+Usage: qalter [-d] [-v] -A <project name> -t <time in minutes>
+              -e <error file path> -o <output file path>
+              --dependencies <jobid1>:<jobid2> --geometry AxBxCxDxE
+              -n <number of nodes> -h --proccount <processor count>
+              -M <email address> --mode <mode co/vn>
+              --run_users <user1>:<user2> --run_project <jobid1> <jobid2>
+              --attrs <attr1=val1>:<attr2=val2>
+
+"""
+
+    cmderr    = \
 """Invalid geometry entered: 
 """
 
@@ -6129,7 +6172,8 @@ def test_qalter_geometry_1():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -6147,23 +6191,24 @@ def test_qalter_geometry_1():
 def test_qalter_geometry_2():
     """
     qalter test run: geometry_2
-        Old Command Output:
-          
-          Usage: qalter [-d] [-v] -A <project name> -t <time in minutes>
-                        -e <error file path> -o <output file path>
-                        --dependencies <jobid1>:<jobid2> --geometry AxBxCxDxE
-                        -n <number of nodes> -h --proccount <processor count>
-                        -M <email address> --mode <mode co/vn>
-                        --run_users <user1>:<user2> --run_project <jobid1> <jobid2>
-                        --attrs <attr1=val1>:<attr2=val2>
-          
-          
 
     """
 
     args      = """-v --geometry 10x10x10x10x10 1 2 3 4 5"""
 
     cmdout    = \
+"""
+Usage: qalter [-d] [-v] -A <project name> -t <time in minutes>
+              -e <error file path> -o <output file path>
+              --dependencies <jobid1>:<jobid2> --geometry AxBxCxDxE
+              -n <number of nodes> -h --proccount <processor count>
+              -M <email address> --mode <mode co/vn>
+              --run_users <user1>:<user2> --run_project <jobid1> <jobid2>
+              --attrs <attr1=val1>:<attr2=val2>
+
+"""
+
+    cmderr    = \
 """Invalid geometry entered: 
 """
 
@@ -6174,7 +6219,8 @@ def test_qalter_geometry_2():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -6197,7 +6243,9 @@ def test_qalter_geometry_3():
 
     args      = """-v --geometry 04x04x04x04    1 2 3 4"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Invalid Geometry
 """
 
@@ -6300,7 +6348,8 @@ walltime type: <type 'str'>
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -6323,7 +6372,9 @@ def test_qalter_geometry_4():
 
     args      = """-v --geometry 10x10x10x10x1  1 2 3 4 5"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Invalid Geometry
 """
 
@@ -6448,7 +6499,8 @@ walltime type: <type 'str'>
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -6471,7 +6523,9 @@ def test_qalter_geometry_5():
 
     args      = """-v --geometry 04x04x04x04x2  1 2 3 4"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Invalid Geometry
 """
 
@@ -6574,7 +6628,8 @@ walltime type: <type 'str'>
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -6609,6 +6664,8 @@ script_preboot set to True
 user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser']
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_JOBS
@@ -6992,7 +7049,8 @@ walltime type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7027,6 +7085,8 @@ script_preboot set to False
 user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser']
 """
 
+    cmderr    = ''
+
     stubout   = \
 """
 GET_JOBS
@@ -7410,7 +7470,8 @@ walltime type: <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7433,7 +7494,9 @@ def test_qalter_defer_1():
 
     args      = """--defer"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """No Jobid(s) given
 """
 
@@ -7444,7 +7507,8 @@ def test_qalter_defer_1():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -7470,6 +7534,8 @@ def test_qalter_defer_2():
     cmdout    = \
 """updating scores for jobs: 1, 2, 3, 4, 5
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -7606,7 +7672,8 @@ new score: 0, type = <type 'str'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")

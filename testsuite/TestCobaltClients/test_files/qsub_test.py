@@ -4,17 +4,24 @@ import testutils
 def test_qsub_all_options_1():
     """
     qsub test run: all_options_1
-        Old Command Output:
-          1
-          
 
     """
 
     args      = """-v -A myproj --attrs=a=1:b=2 --cwd /tmp -d --debuglog=/tmp/d --dependencies=1:2:3 -e /tmp/e --env v1=1:v2=2 --geometry 198x198x198x198 -h -i /bin/ls -M myemal@gmail.com -n10 -o /tmp/o -O /tmp --proccount 10 -qqueue --run_users user1:user2:user3 --run_project -t 10 --mode smp --kernel kernel -K kopts /bin/ls"""
 
     cmdout    = \
+"""1
+"""
+
+    cmderr    = \
 """
 qsub.py -v -A myproj --attrs=a=1:b=2 --cwd /tmp -d --debuglog=/tmp/d --dependencies=1:2:3 -e /tmp/e --env v1=1:v2=2 --geometry 198x198x198x198 -h -i /bin/ls -M myemal@gmail.com -n10 -o /tmp/o -O /tmp --proccount 10 -qqueue --run_users user1:user2:user3 --run_project -t 10 --mode smp --kernel kernel -K kopts /bin/ls
+
+component: "queue-manager.get_jobs", defer: True
+  get_jobs(
+     [{'jobid': 1}, {'jobid': 3}, {'jobid': 2}],
+     )
+
 
 component: "system.validate_job", defer: False
   validate_job(
@@ -28,7 +35,6 @@ component: "queue-manager.add_jobs", defer: False
      )
 
 
-1
 """
 
     stubout   = \
@@ -173,7 +179,8 @@ version type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -191,9 +198,6 @@ version type: <type 'bool'>
 def test_qsub_misc_1():
     """
     qsub test run: misc_1
-        Old Command Output:
-          1
-          
 
     """
 
@@ -202,6 +206,8 @@ def test_qsub_misc_1():
     cmdout    = \
 """1
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -314,7 +320,8 @@ version type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -332,25 +339,14 @@ version type: <type 'bool'>
 def test_qsub_no_options_passed():
     """
     qsub test run: no_options_passed
-        Old Command Output:
-          Not all required arguments provided: time,nodecount needed
-          
-          Usage: qsub [-d] [-v] -A <project name> -q <queue> --cwd <working directory>
-                       --dependencies <jobid1>:<jobid2> --preemptable
-                       --env envvar1=value1:envvar2=value2 --kernel <kernel profile>
-                       -K <kernel options> -O <outputprefix> -t time <in minutes>
-                       -e <error file path> -o <output file path> -i <input file path>
-                       -n <number of nodes> -h --proccount <processor count> -u <umask>
-                       --mode <mode> --debuglog <cobaltlog file path> <command> <args>
-                       --users <user1>:<user2> --run_project --disable_preboot
-          
-          
 
     """
 
     args      = """/bin/ls"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """No required options entered
 'time' not provided
 """
@@ -362,7 +358,8 @@ def test_qsub_no_options_passed():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -380,25 +377,26 @@ def test_qsub_no_options_passed():
 def test_qsub_non_existant_option():
     """
     qsub test run: non_existant_option
-        Old Command Output:
-          option -z not recognized
-          
-          Usage: qsub [-d] [-v] -A <project name> -q <queue> --cwd <working directory>
-                       --dependencies <jobid1>:<jobid2> --preemptable
-                       --env envvar1=value1:envvar2=value2 --kernel <kernel profile>
-                       -K <kernel options> -O <outputprefix> -t time <in minutes>
-                       -e <error file path> -o <output file path> -i <input file path>
-                       -n <number of nodes> -h --proccount <processor count> -u <umask>
-                       --mode <mode> --debuglog <cobaltlog file path> <command> <args>
-                       --users <user1>:<user2> --run_project --disable_preboot
-          
-          
 
     """
 
     args      = """-z -t10 -n10 /bin/ls"""
 
     cmdout    = \
+"""option -z not recognized
+
+Usage: qsub [-d] [-v] -A <project name> -q <queue> --cwd <working directory>
+             --dependencies <jobid1>:<jobid2> --preemptable
+             --env envvar1=value1:envvar2=value2 --kernel <kernel profile>
+             -K <kernel options> -O <outputprefix> -t time <in minutes>
+             -e <error file path> -o <output file path> -i <input file path>
+             -n <number of nodes> -h --proccount <processor count> -u <umask>
+             --mode <mode> --debuglog <cobaltlog file path> <command> <args>
+             --users <user1>:<user2> --run_project --disable_preboot
+
+"""
+
+    cmderr    = \
 """Usage: qsub.py [options] <executable> [<excutable options>]
 
 qsub.py: error: no such option: -z
@@ -411,7 +409,8 @@ qsub.py: error: no such option: -z
     expected_results = ( 
                        512, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -429,25 +428,14 @@ qsub.py: error: no such option: -z
 def test_qsub_debug_flag_only_1():
     """
     qsub test run: debug_flag_only_1
-        Old Command Output:
-          Command required
-          
-          Usage: qsub [-d] [-v] -A <project name> -q <queue> --cwd <working directory>
-                       --dependencies <jobid1>:<jobid2> --preemptable
-                       --env envvar1=value1:envvar2=value2 --kernel <kernel profile>
-                       -K <kernel options> -O <outputprefix> -t time <in minutes>
-                       -e <error file path> -o <output file path> -i <input file path>
-                       -n <number of nodes> -h --proccount <processor count> -u <umask>
-                       --mode <mode> --debuglog <cobaltlog file path> <command> <args>
-                       --users <user1>:<user2> --run_project --disable_preboot
-          
-          
 
     """
 
     args      = """-d"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """
 qsub.py -d
 
@@ -462,7 +450,8 @@ No required options entered
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -485,7 +474,9 @@ def test_qsub_debug_flag_only_2():
 
     args      = """-debug"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """
 qsub.py -debug
 
@@ -499,7 +490,8 @@ qsub.py -debug
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -517,25 +509,14 @@ qsub.py -debug
 def test_qsub_verbose_flag_only():
     """
     qsub test run: verbose_flag_only
-        Old Command Output:
-          Command required
-          
-          Usage: qsub [-d] [-v] -A <project name> -q <queue> --cwd <working directory>
-                       --dependencies <jobid1>:<jobid2> --preemptable
-                       --env envvar1=value1:envvar2=value2 --kernel <kernel profile>
-                       -K <kernel options> -O <outputprefix> -t time <in minutes>
-                       -e <error file path> -o <output file path> -i <input file path>
-                       -n <number of nodes> -h --proccount <processor count> -u <umask>
-                       --mode <mode> --debuglog <cobaltlog file path> <command> <args>
-                       --users <user1>:<user2> --run_project --disable_preboot
-          
-          
 
     """
 
     args      = """-v"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """No required options entered
 'time' not provided
 """
@@ -547,7 +528,8 @@ def test_qsub_verbose_flag_only():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -565,25 +547,14 @@ def test_qsub_verbose_flag_only():
 def test_qsub_non_integer_nodecount():
     """
     qsub test run: non_integer_nodecount
-        Old Command Output:
-          Command required
-          
-          Usage: qsub [-d] [-v] -A <project name> -q <queue> --cwd <working directory>
-                       --dependencies <jobid1>:<jobid2> --preemptable
-                       --env envvar1=value1:envvar2=value2 --kernel <kernel profile>
-                       -K <kernel options> -O <outputprefix> -t time <in minutes>
-                       -e <error file path> -o <output file path> -i <input file path>
-                       -n <number of nodes> -h --proccount <processor count> -u <umask>
-                       --mode <mode> --debuglog <cobaltlog file path> <command> <args>
-                       --users <user1>:<user2> --run_project --disable_preboot
-          
-          
 
     """
 
     args      = """--mode smp -t50 -nfive --geometry 40x40x50x50   /bin/ls"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Usage: qsub.py [options] <executable> [<excutable options>]
 
 qsub.py: error: option -n: invalid integer value: 'five'
@@ -596,7 +567,8 @@ qsub.py: error: option -n: invalid integer value: 'five'
     expected_results = ( 
                        512, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -614,25 +586,14 @@ qsub.py: error: option -n: invalid integer value: 'five'
 def test_qsub_non_realistic_nodecount():
     """
     qsub test run: non_realistic_nodecount
-        Old Command Output:
-          Command required
-          
-          Usage: qsub [-d] [-v] -A <project name> -q <queue> --cwd <working directory>
-                       --dependencies <jobid1>:<jobid2> --preemptable
-                       --env envvar1=value1:envvar2=value2 --kernel <kernel profile>
-                       -K <kernel options> -O <outputprefix> -t time <in minutes>
-                       -e <error file path> -o <output file path> -i <input file path>
-                       -n <number of nodes> -h --proccount <processor count> -u <umask>
-                       --mode <mode> --debuglog <cobaltlog file path> <command> <args>
-                       --users <user1>:<user2> --run_project --disable_preboot
-          
-          
 
     """
 
     args      = """--mode smp -t50 -n2048 --geometry 40x40x50x50x1 /bin/ls"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """node count out of realistic range
 """
 
@@ -643,7 +604,8 @@ def test_qsub_non_realistic_nodecount():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -661,20 +623,14 @@ def test_qsub_non_realistic_nodecount():
 def test_qsub_invalid_geometry_1():
     """
     qsub test run: invalid_geometry_1
-        Old Command Output:
-          Traceback (most recent call last):
-            File "oldcmds/qsub.py", line 179, in <module>
-              jobspec['geometry'] = parse_geometry_string(opts['geometry'])
-            File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Util.py", line 1112, in parse_geometry_string
-              raise ValueError, "%s is an invalid geometry specification." % geometry_str
-          ValueError: x is an invalid geometry specification.
-          
 
     """
 
     args      = """--mode smp -t50 -n10 --geometry x /bin/ls"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Invalid geometry entered: 
 """
 
@@ -685,7 +641,8 @@ def test_qsub_invalid_geometry_1():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -703,9 +660,6 @@ def test_qsub_invalid_geometry_1():
 def test_qsub_invalid_geometry_2():
     """
     qsub test run: invalid_geometry_2
-        Old Command Output:
-          1
-          
 
     """
 
@@ -714,6 +668,8 @@ def test_qsub_invalid_geometry_2():
     cmdout    = \
 """1
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -826,7 +782,8 @@ version type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -844,9 +801,6 @@ version type: <type 'bool'>
 def test_qsub_invalid_geometry_3():
     """
     qsub test run: invalid_geometry_3
-        Old Command Output:
-          1
-          
 
     """
 
@@ -855,6 +809,8 @@ def test_qsub_invalid_geometry_3():
     cmdout    = \
 """1
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -967,7 +923,8 @@ version type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -985,9 +942,6 @@ version type: <type 'bool'>
 def test_qsub_invalid_geometry_4():
     """
     qsub test run: invalid_geometry_4
-        Old Command Output:
-          1
-          
 
     """
 
@@ -996,6 +950,8 @@ def test_qsub_invalid_geometry_4():
     cmdout    = \
 """1
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -1108,7 +1064,8 @@ version type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1126,20 +1083,14 @@ version type: <type 'bool'>
 def test_qsub_invalid_geometry_5():
     """
     qsub test run: invalid_geometry_5
-        Old Command Output:
-          Traceback (most recent call last):
-            File "oldcmds/qsub.py", line 179, in <module>
-              jobspec['geometry'] = parse_geometry_string(opts['geometry'])
-            File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Util.py", line 1112, in parse_geometry_string
-              raise ValueError, "%s is an invalid geometry specification." % geometry_str
-          ValueError: 48x48x48x48x3 is an invalid geometry specification.
-          
 
     """
 
     args      = """--mode smp -t50 -n10 --geometry 48x48x48x48x3  /bin/ls"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """Invalid geometry entered: 
 """
 
@@ -1150,7 +1101,8 @@ def test_qsub_invalid_geometry_5():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1168,9 +1120,6 @@ def test_qsub_invalid_geometry_5():
 def test_qsub_invalid_geometry_6():
     """
     qsub test run: invalid_geometry_6
-        Old Command Output:
-          1
-          
 
     """
 
@@ -1179,6 +1128,8 @@ def test_qsub_invalid_geometry_6():
     cmdout    = \
 """1
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -1291,7 +1242,8 @@ version type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1309,25 +1261,14 @@ version type: <type 'bool'>
 def test_qsub_no_roject_specified():
     """
     qsub test run: no_roject_specified
-        Old Command Output:
-          Not all required arguments provided: time needed
-          
-          Usage: qsub [-d] [-v] -A <project name> -q <queue> --cwd <working directory>
-                       --dependencies <jobid1>:<jobid2> --preemptable
-                       --env envvar1=value1:envvar2=value2 --kernel <kernel profile>
-                       -K <kernel options> -O <outputprefix> -t time <in minutes>
-                       -e <error file path> -o <output file path> -i <input file path>
-                       -n <number of nodes> -h --proccount <processor count> -u <umask>
-                       --mode <mode> --debuglog <cobaltlog file path> <command> <args>
-                       --users <user1>:<user2> --run_project --disable_preboot
-          
-          
 
     """
 
     args      = """-A -t50 -n10 /bin/ls"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """'time' not provided
 """
 
@@ -1338,7 +1279,8 @@ def test_qsub_no_roject_specified():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1356,9 +1298,6 @@ def test_qsub_no_roject_specified():
 def test_qsub_project_specified():
     """
     qsub test run: project_specified
-        Old Command Output:
-          1
-          
 
     """
 
@@ -1367,6 +1306,8 @@ def test_qsub_project_specified():
     cmdout    = \
 """1
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -1479,7 +1420,8 @@ version type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1497,9 +1439,6 @@ version type: <type 'bool'>
 def test_qsub_Check_attrs_1():
     """
     qsub test run: Check_attrs_1
-        Old Command Output:
-          1
-          
 
     """
 
@@ -1508,6 +1447,8 @@ def test_qsub_Check_attrs_1():
     cmdout    = \
 """1
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -1620,7 +1561,8 @@ version type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1638,9 +1580,6 @@ version type: <type 'bool'>
 def test_qsub_Check_attrs_2():
     """
     qsub test run: Check_attrs_2
-        Old Command Output:
-          1
-          
 
     """
 
@@ -1649,6 +1588,8 @@ def test_qsub_Check_attrs_2():
     cmdout    = \
 """1
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -1761,7 +1702,8 @@ version type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1779,9 +1721,6 @@ version type: <type 'bool'>
 def test_qsub_Check_attrs_3():
     """
     qsub test run: Check_attrs_3
-        Old Command Output:
-          1
-          
 
     """
 
@@ -1790,6 +1729,8 @@ def test_qsub_Check_attrs_3():
     cmdout    = \
 """1
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -1902,7 +1843,8 @@ version type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -1920,9 +1862,6 @@ version type: <type 'bool'>
 def test_qsub_Check_attrs_4():
     """
     qsub test run: Check_attrs_4
-        Old Command Output:
-          1
-          
 
     """
 
@@ -1931,6 +1870,8 @@ def test_qsub_Check_attrs_4():
     cmdout    = \
 """1
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -2043,7 +1984,8 @@ version type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -2061,9 +2003,6 @@ version type: <type 'bool'>
 def test_qsub_cwd_option_1():
     """
     qsub test run: cwd_option_1
-        Old Command Output:
-          1
-          
 
     """
 
@@ -2072,6 +2011,8 @@ def test_qsub_cwd_option_1():
     cmdout    = \
 """1
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -2184,7 +2125,8 @@ version type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -2202,9 +2144,6 @@ version type: <type 'bool'>
 def test_qsub_cwd_option_2():
     """
     qsub test run: cwd_option_2
-        Old Command Output:
-          1
-          
 
     """
 
@@ -2213,6 +2152,8 @@ def test_qsub_cwd_option_2():
     cmdout    = \
 """1
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -2325,7 +2266,8 @@ version type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -2343,15 +2285,14 @@ version type: <type 'bool'>
 def test_qsub_cwd_option_3():
     """
     qsub test run: cwd_option_3
-        Old Command Output:
-          Error: dir '/x' is not a directory
-          
 
     """
 
     args      = """--cwd /x -t10 -n 10 -e p /bin/ls"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """directory /x/p does not exist
 """
 
@@ -2362,7 +2303,8 @@ def test_qsub_cwd_option_3():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -2380,9 +2322,6 @@ def test_qsub_cwd_option_3():
 def test_qsub_cwd_option_4():
     """
     qsub test run: cwd_option_4
-        Old Command Output:
-          1
-          
 
     """
 
@@ -2391,6 +2330,8 @@ def test_qsub_cwd_option_4():
     cmdout    = \
 """1
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -2505,7 +2446,8 @@ version type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -2523,9 +2465,6 @@ version type: <type 'bool'>
 def test_qsub_cwd_option_5():
     """
     qsub test run: cwd_option_5
-        Old Command Output:
-          1
-          
 
     """
 
@@ -2534,6 +2473,8 @@ def test_qsub_cwd_option_5():
     cmdout    = \
 """1
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -2648,7 +2589,8 @@ version type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -2666,9 +2608,6 @@ version type: <type 'bool'>
 def test_qsub_debuglog_option():
     """
     qsub test run: debuglog_option
-        Old Command Output:
-          1
-          
 
     """
 
@@ -2677,6 +2616,8 @@ def test_qsub_debuglog_option():
     cmdout    = \
 """1
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -2793,7 +2734,8 @@ version type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -2811,15 +2753,14 @@ version type: <type 'bool'>
 def test_qsub_inputfile_option_1():
     """
     qsub test run: inputfile_option_1
-        Old Command Output:
-          file /tmp/none not found, or is not a file
-          
 
     """
 
     args      = """-i none -t10 -n 10 /bin/ls"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """file /tmp/none not found, or is not a file
 """
 
@@ -2830,7 +2771,8 @@ def test_qsub_inputfile_option_1():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -2848,9 +2790,6 @@ def test_qsub_inputfile_option_1():
 def test_qsub_inputfile_option_2():
     """
     qsub test run: inputfile_option_2
-        Old Command Output:
-          1
-          
 
     """
 
@@ -2859,6 +2798,8 @@ def test_qsub_inputfile_option_2():
     cmdout    = \
 """1
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -2971,7 +2912,8 @@ version type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -2989,9 +2931,6 @@ version type: <type 'bool'>
 def test_qsub_email_option():
     """
     qsub test run: email_option
-        Old Command Output:
-          1
-          
 
     """
 
@@ -3000,6 +2939,8 @@ def test_qsub_email_option():
     cmdout    = \
 """1
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -3112,7 +3053,8 @@ version type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -3130,11 +3072,6 @@ version type: <type 'bool'>
 def test_qsub_outputprefix():
     """
     qsub test run: outputprefix
-        Old Command Output:
-          WARNING: failed to create cobalt log file at: /tmp.cobaltlog
-                   Permission denied
-          1
-          
 
     """
 
@@ -3142,7 +3079,10 @@ def test_qsub_outputprefix():
 
     cmdout    = \
 """1
-WARNING: failed to create cobalt log file at: /tmp.cobaltlog
+"""
+
+    cmderr    = \
+"""WARNING: failed to create cobalt log file at: /tmp.cobaltlog
          Permission denied
 """
 
@@ -3261,7 +3201,8 @@ version type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -3279,25 +3220,26 @@ version type: <type 'bool'>
 def test_qsub_invalid_user():
     """
     qsub test run: invalid_user
-        Old Command Output:
-          option -r not recognized
-          
-          Usage: qsub [-d] [-v] -A <project name> -q <queue> --cwd <working directory>
-                       --dependencies <jobid1>:<jobid2> --preemptable
-                       --env envvar1=value1:envvar2=value2 --kernel <kernel profile>
-                       -K <kernel options> -O <outputprefix> -t time <in minutes>
-                       -e <error file path> -o <output file path> -i <input file path>
-                       -n <number of nodes> -h --proccount <processor count> -u <umask>
-                       --mode <mode> --debuglog <cobaltlog file path> <command> <args>
-                       --users <user1>:<user2> --run_project --disable_preboot
-          
-          
 
     """
 
     args      = """-run_users naughtyuser -t10 -n10 /bin/ls"""
 
     cmdout    = \
+"""option -r not recognized
+
+Usage: qsub [-d] [-v] -A <project name> -q <queue> --cwd <working directory>
+             --dependencies <jobid1>:<jobid2> --preemptable
+             --env envvar1=value1:envvar2=value2 --kernel <kernel profile>
+             -K <kernel options> -O <outputprefix> -t time <in minutes>
+             -e <error file path> -o <output file path> -i <input file path>
+             -n <number of nodes> -h --proccount <processor count> -u <umask>
+             --mode <mode> --debuglog <cobaltlog file path> <command> <args>
+             --users <user1>:<user2> --run_project --disable_preboot
+
+"""
+
+    cmderr    = \
 """Usage: qsub.py [options] <executable> [<excutable options>]
 
 qsub.py: error: no such option: -r
@@ -3310,7 +3252,8 @@ qsub.py: error: no such option: -r
     expected_results = ( 
                        512, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -3328,9 +3271,6 @@ qsub.py: error: no such option: -r
 def test_qsub_mode_option_1():
     """
     qsub test run: mode_option_1
-        Old Command Output:
-          1
-          
 
     """
 
@@ -3339,6 +3279,8 @@ def test_qsub_mode_option_1():
     cmdout    = \
 """1
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -3449,7 +3391,8 @@ version type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -3467,9 +3410,6 @@ version type: <type 'bool'>
 def test_qsub_mode_option_2():
     """
     qsub test run: mode_option_2
-        Old Command Output:
-          1
-          
 
     """
 
@@ -3478,6 +3418,8 @@ def test_qsub_mode_option_2():
     cmdout    = \
 """1
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -3588,7 +3530,8 @@ version type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -3606,9 +3549,6 @@ version type: <type 'bool'>
 def test_qsub_mode_option_3():
     """
     qsub test run: mode_option_3
-        Old Command Output:
-          1
-          
 
     """
 
@@ -3617,6 +3557,8 @@ def test_qsub_mode_option_3():
     cmdout    = \
 """1
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -3729,7 +3671,8 @@ version type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -3747,25 +3690,14 @@ version type: <type 'bool'>
 def test_qsub_mode_option_4():
     """
     qsub test run: mode_option_4
-        Old Command Output:
-          Command required
-          
-          Usage: qsub [-d] [-v] -A <project name> -q <queue> --cwd <working directory>
-                       --dependencies <jobid1>:<jobid2> --preemptable
-                       --env envvar1=value1:envvar2=value2 --kernel <kernel profile>
-                       -K <kernel options> -O <outputprefix> -t time <in minutes>
-                       -e <error file path> -o <output file path> -i <input file path>
-                       -n <number of nodes> -h --proccount <processor count> -u <umask>
-                       --mode <mode> --debuglog <cobaltlog file path> <command> <args>
-                       --users <user1>:<user2> --run_project --disable_preboot
-          
-          
 
     """
 
     args      = """-A Acceptance -q testing -n 49152 -t 60 --mode script /bin/ls"""
 
-    cmdout    = \
+    cmdout    = ''
+
+    cmderr    = \
 """node count out of realistic range
 """
 
@@ -3776,7 +3708,8 @@ def test_qsub_mode_option_4():
     expected_results = ( 
                        256, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
@@ -3794,9 +3727,6 @@ def test_qsub_mode_option_4():
 def test_qsub_preboot_option():
     """
     qsub test run: preboot_option
-        Old Command Output:
-          1
-          
 
     """
 
@@ -3805,6 +3735,8 @@ def test_qsub_preboot_option():
     cmdout    = \
 """1
 """
+
+    cmderr    = ''
 
     stubout   = \
 """
@@ -3915,7 +3847,8 @@ version type: <type 'bool'>
     expected_results = ( 
                        0, # Expected return status 
                        cmdout, # Expected command output
-                       stubout # Expected stub functions output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
                        ) 
 
     testutils.save_testhook("")
