@@ -17,7 +17,7 @@ import xmlrpclib
 import ConfigParser
 import traceback
 import pybgsched
-
+import errno
 
 import Cobalt
 import Cobalt.Data
@@ -1890,33 +1890,71 @@ class BGSystem (BGBaseSystem):
             self._blocks_lock.release()
 
     def _validate_kernel(self, kernel):
-        '''Keeping around for when we actually get kernel support added in for this system.
+        '''Validate that we have alternate kernels to boot.'''
 
-        '''
-        raise NotImplementedError, "kernels not supported for Q yet"
-        #if self.config.get('kernel') != 'true':
-            #return True
-        #kernel_dir = "%s/%s" % (os.path.expandvars(self.config.get('bootprofiles')), kernel)
-        #return os.path.exists(kernel_dir)
+        if get_config_option('bgsystem', 'allow_alternate_kernels', 'false').lower() not in Cobalt.Util.config_true_values:
+            return True
+        kernel_dir = "%s/%s" % (os.path.expandvars(get_config_option('bgsystem', 'bootprofiles')), kernel)
+        return os.path.exists(kernel_dir)
 
-    def _set_kernel(self, partition, kernel):
+    def _set_kernel(self, partition, kernel, kernel_type):
         '''Set the kernel to be used by jobs run on the specified partition
+        Kernel type one of 'CN' or 'ION'
 
-        This has to be redone.
         '''
-        pass
+
+        if get_config_option('bgsystem', 'allow_alternate_kernels', 'false') not in Cobalt.Util.config_true_values:
+            if kernel != get_config_option('bgsystem', '%s_default_kernel' % kernel_type, 'default'):
+                raise RuntimeError("custom kernel capabilities disabled")
+            return
+        partition_link = "%s/%s" % (os.path.expandvars(get_config_option('bgsystem', 'partitionboot')), partition)
+        kernel_dir = "%s/%s" % (os.path.expandvars(get_config_option('bgsystem', 'bootprofiles')), kernel)
+
+        try:
+            current = os.readlink(partition_link)
+        except OSError, e:
+            if e.errno == errno.ENOENT:
+                self.logger.warning("partition %s: partitionboot location %s does not exist; creating link",
+                    partition, partition_link)
+                current = None
+            elif e.errno == errno.EINVAL:
+                self.logger.warning("partition %s: partitionboot location %s is not a symlink; removing and resetting",
+                    partition, partition_link)
+                current = None
+            else:
+                self.logger.warning("partition %s: failed to read partitionboot location %s: %s",
+                    partition, partition_link, e.strerror)
+                raise
+        if current != kernel_dir:
+            if not self._validate_kernel(kernel):
+                self.logger.error("partition %s: kernel directory \"%s\" does not exist", partition, kernel_dir)
+                raise Exception("kernel directory \"%s\" does not exist" % (kernel_dir,))
+            if current:
+                self.logger.info("partition %s: updating boot image; currently set to \"%s\"", partition, current.split('/')[-1])
+            try:
+                try:
+                    os.unlink(partition_link)
+                except OSError, e:
+                    if e.errno != errno.ENOENT:
+                        self.logger.error("partition %s: unable to unlink \"%s\": %s", partition, partition_link, e.strerror)
+                        raise
+                try:
+                    os.symlink(kernel_dir, partition_link)
+                except OSError, e:
+                    self.logger.error("partition %s: failed to reset boot location \"%s\" to \"%s\": %s" %
+                        (partition, partition_link, kernel_dir, e.strerror))
+                    raise
+            except OSError:
+                raise Exception("failed to reset boot location for partition", partition)
+            self.logger.info("partition %s: boot image updated; now set to \"%s\"", partition, kernel)
 
     def _clear_kernel(self, partition):
-        '''Set the kernel to be used by a partition to the default value
-
-        No real change needed here
-        '''
-        raise NotImplementedError, "kernels not supported for Q yet"
-        #if self.config.get('kernel') == 'true':
-            #try:
-                #self._set_kernel(partition, "default")
-            #except:
-                #logger.error("partition %s: failed to reset boot location" % (partition,))
+        '''Set the kernel to be used by a partition to the default value'''
+        if get_config_option('bgsystem', 'kernel', 'false') in Cobalt.Util.config_true_values:
+            try:
+                self._set_kernel(partition, "default")
+            except:
+                logger.error("partition %s: failed to reset boot location", partition)
 
     def generate_xml(self):
         """This method produces an XML file describing the managed partitions, suitable for use with the simulator."""
