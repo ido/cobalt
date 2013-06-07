@@ -88,7 +88,9 @@ def test_qstat_debug_only():
         Command Output:
         JobID  User         WallTime  Nodes  State   Location  
         =======================================================
-        5      georgerojas  00:30:00  10     queued  None      
+        5      georgerojas  02:45:00  30     queued  None      
+        6      georgerojas  02:30:00  30     queued  None      
+        7      georgerojas  02:30:00  30     queued  None      
         
         Command Error/Debug:
         qstat.py -d
@@ -139,7 +141,9 @@ def test_qstat_full_option_10():
         Command Output:
         JobID  JobName  User         Score    WallTime  QueuedTime  RunTime  Nodes  State   Location  Mode  Procs  Queue    StartTime  
         ===============================================================================================================================
-        5      -        georgerojas    0.1    00:30:00  00:21:43    N/A      10     queued  None      smp   10     default  N/A        
+        5      -        georgerojas    0.6    02:45:00  00:01:10    N/A      30     queued  None      smp   30     default  N/A        
+        6      -        georgerojas    0.6    02:30:00  00:01:06    N/A      30     queued  None      smp   30     default  N/A        
+        7      -        georgerojas    0.6    02:30:00  00:01:06    N/A      30     queued  None      smp   30     default  N/A        
         
         Command Error/Debug:
         
@@ -175,8 +179,22 @@ def test_qstat_long_option_1():
         Command Output:
         JobID: 5
             User     : georgerojas
-            WallTime : 00:30:00
-            Nodes    : 10
+            WallTime : 02:45:00
+            Nodes    : 30
+            State    : queued
+            Location : None
+        
+        JobID: 6
+            User     : georgerojas
+            WallTime : 02:30:00
+            Nodes    : 30
+            State    : queued
+            Location : None
+        
+        JobID: 7
+            User     : georgerojas
+            WallTime : 02:30:00
+            Nodes    : 30
             State    : queued
             Location : None
         
@@ -217,8 +235,8 @@ def test_qstat_queue_option_3():
         ==========================================================================================================
         default  None   None     None     None        None       None          None          None        running  
         q_4      None   None     None     None        None       None          None          None        running  
-        q_1      None   None     None     None        None       None          None          None        running  
         q_2      None   None     None     None        None       None          None          None        running  
+        q_1      None   None     None     None        None       None          None          None        running  
         q_3      None   None     None     None        None       None          None          None        running  
         
         Command Error/Debug:
@@ -337,8 +355,8 @@ def test_qstat_queue_option_6():
         ==========================================================================================================
         default  None   None     None     None        None       None          None          None        running  
         q_4      None   None     None     None        None       None          None          None        running  
-        q_1      None   None     None     None        None       None          None          None        running  
         q_2      None   None     None     None        None       None          None          None        running  
+        q_1      None   None     None     None        None       None          None          None        running  
         q_3      None   None     None     None        None       None          None          None        running  
         
         Command Error/Debug:
@@ -376,8 +394,8 @@ def test_qstat_queue_option_7():
         Name     Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
         ==========================================================================================================
         q_3      None   None     None     None        None       None          None          None        running  
-        q_2      None   None     None     None        None       None          None          None        running  
         q_1      None   None     None     None        None       None          None          None        running  
+        q_2      None   None     None     None        None       None          None          None        running  
         q_4      None   None     None     None        None       None          None          None        running  
         default  None   None     None     None        None       None          None          None        running  
         
@@ -611,7 +629,7 @@ def test_qstat_queue_option_10():
             TotalNodes   : None
             State        : running
         
-        Name: q_1
+        Name: q_2
             Users        : None
             MinTime      : None
             MaxTime      : None
@@ -622,7 +640,7 @@ def test_qstat_queue_option_10():
             TotalNodes   : None
             State        : running
         
-        Name: q_2
+        Name: q_1
             Users        : None
             MinTime      : None
             MaxTime      : None
@@ -688,7 +706,7 @@ def test_qstat_queue_option_11():
             TotalNodes   : None
             State        : running
         
-        Name: q_2
+        Name: q_1
             Users        : None
             MinTime      : None
             MaxTime      : None
@@ -699,7 +717,7 @@ def test_qstat_queue_option_11():
             TotalNodes   : None
             State        : running
         
-        Name: q_1
+        Name: q_2
             Users        : None
             MinTime      : None
             MaxTime      : None
@@ -807,7 +825,9 @@ def test_qstat_no_arguments_or_options():
         Command Output:
         JobID  User         WallTime  Nodes  State   Location  
         =======================================================
-        5      georgerojas  00:30:00  10     queued  None      
+        5      georgerojas  02:45:00  30     queued  None      
+        6      georgerojas  02:30:00  30     queued  None      
+        7      georgerojas  02:30:00  30     queued  None      
         
         Command Error/Debug:
         

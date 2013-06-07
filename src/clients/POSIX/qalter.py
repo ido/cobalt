@@ -102,7 +102,7 @@ def options_disallowed(parser):
     if parser.options.geometry != None:
         client_utils.logger.error( "cannot change the node geometry of a running job")
         _quit = True
-    if parser.option.defer != None:
+    if parser.options.defer != None:
         client_utils.logger.error( "cannot change the score of a running job")
         _quit = True
     return _quit
@@ -286,9 +286,6 @@ def main():
 if __name__ == '__main__':
     try:
         main()
-    except SystemExit:
-        raise
-    #except Exception, e:
-        #sys.exc_info()
-        #client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", e)
-        #sys.exit(1)
+    except Exception, e:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", e)
+        sys.exit(1)

@@ -325,7 +325,7 @@ def test_qsub_project_specified():
     qsub test run: project_specified
 
         Command Output:
-        6
+        8
         
         Command Error/Debug:
         
@@ -359,7 +359,7 @@ def test_qsub_Check_attrs_1():
     qsub test run: Check_attrs_1
 
         Command Output:
-        7
+        9
         
         Command Error/Debug:
         
@@ -393,7 +393,7 @@ def test_qsub_Check_attrs_2():
     qsub test run: Check_attrs_2
 
         Command Output:
-        8
+        10
         
         Command Error/Debug:
         
@@ -427,7 +427,7 @@ def test_qsub_Check_attrs_3():
     qsub test run: Check_attrs_3
 
         Command Output:
-        9
+        11
         
         Command Error/Debug:
         
@@ -461,7 +461,7 @@ def test_qsub_Check_attrs_4():
     qsub test run: Check_attrs_4
 
         Command Output:
-        10
+        12
         
         Command Error/Debug:
         
@@ -495,7 +495,7 @@ def test_qsub_cwd_option_1():
     qsub test run: cwd_option_1
 
         Command Output:
-        11
+        13
         
         Command Error/Debug:
         
@@ -529,7 +529,7 @@ def test_qsub_cwd_option_2():
     qsub test run: cwd_option_2
 
         Command Output:
-        12
+        14
         
         Command Error/Debug:
         
@@ -597,7 +597,7 @@ def test_qsub_cwd_option_4():
     qsub test run: cwd_option_4
 
         Command Output:
-        13
+        15
         
         Command Error/Debug:
         
@@ -631,7 +631,7 @@ def test_qsub_cwd_option_5():
     qsub test run: cwd_option_5
 
         Command Output:
-        14
+        16
         
         Command Error/Debug:
         
@@ -665,7 +665,7 @@ def test_qsub_debuglog_option():
     qsub test run: debuglog_option
 
         Command Output:
-        15
+        17
         
         Command Error/Debug:
         
@@ -733,7 +733,7 @@ def test_qsub_inputfile_option_2():
     qsub test run: inputfile_option_2
 
         Command Output:
-        16
+        18
         
         Command Error/Debug:
         
@@ -767,7 +767,7 @@ def test_qsub_email_option():
     qsub test run: email_option
 
         Command Output:
-        17
+        19
         
         Command Error/Debug:
         
@@ -801,7 +801,7 @@ def test_qsub_outputprefix():
     qsub test run: outputprefix
 
         Command Output:
-        18
+        20
         
         Command Error/Debug:WARNING: failed to create cobalt log file at: /tmp.cobaltlog
                  Permission denied
@@ -873,7 +873,7 @@ def test_qsub_mode_option_2():
     qsub test run: mode_option_2
 
         Command Output:
-        19
+        21
         
         Command Error/Debug:
         

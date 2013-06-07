@@ -72,4 +72,9 @@ test_argslist = [
     {"tc_name" : "qstat_7"                             , "command" : "qstat"  , "args" : ""},
     {"tc_name" : "qrls_2"                              , "command" : "qrls"   , "args" : "-d --dep 4 5"},
     {"tc_name" : "qstat_8"                             , "command" : "qstat"  , "args" : ""},
+    {"tc_name" : "qsub_6"                              , "command" : "qsub"   , "args" : "--debug -t 150 -n 30 /bin/ls"},
+    {"tc_name" : "qsub_7"                              , "command" : "qsub"   , "args" : "--debug -t 150 -n 30 /bin/ls"},
+    {"tc_name" : "qstat_9"                             , "command" : "qstat"  , "args" : ""},
+    {"tc_name" : "qalter_4"                            , "command" : "qalter" , "args" : "--debug  --defer 6 7"},
+    {"tc_name" : "qstat_10"                            , "command" : "qstat"  , "args" : ""},
     ]

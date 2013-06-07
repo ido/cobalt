@@ -78,6 +78,8 @@ def test_qselect_no_args_opts():
         Command Output:
            The following jobs matched your query:
               5
+              6
+              7
         
         Command Error/Debug:
         
@@ -113,6 +115,8 @@ def test_qselect_debug_flag():
         Command Output:
            The following jobs matched your query:
               5
+              6
+              7
         
         Command Error/Debug:
         qselect.py -d
@@ -123,7 +127,7 @@ def test_qselect_debug_flag():
              )
         
         
-        [{'project': None, 'jobid': 5, 'queue': 'default', 'state': 'queued', 'tag': 'job', 'mode': 'smp', 'nodes': 10, 'walltime': 30}]
+        [{'project': None, 'jobid': 5, 'queue': 'default', 'state': 'queued', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 165}, {'project': None, 'jobid': 6, 'queue': 'default', 'state': 'queued', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 150}, {'project': None, 'jobid': 7, 'queue': 'default', 'state': 'queued', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 150}]
         
         
     """
@@ -328,6 +332,8 @@ def test_qselect_verbose():
         Command Output:
            The following jobs matched your query:
               5
+              6
+              7
         
         Command Error/Debug:
         

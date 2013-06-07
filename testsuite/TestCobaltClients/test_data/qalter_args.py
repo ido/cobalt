@@ -14,8 +14,8 @@ test_argslist = [
     { "tc_name" : "simple_3", "args" : """-n30 1""", "new_only" : True }, 
     { "tc_name" : "time_1", "args" : """-v n10 -t5 1 2 3""", },
     { "tc_name" : "time_2", "args" : """-v -n10 -t+5 1 2 3""", "new_only" : True,},
-    { "tc_name" : "time_3", "args" : """-v -n10 -t+20 1 2 3 4 5 6 7""", "new_only" : True, },
-    { "tc_name" : "time_4", "args" : """-v -n10 -t30 1 2 3 4 5 6 7 10 15""", "new_only" : True, },
+    { "tc_name" : "time_3", "args" : """-v -n10 -t+20 1 2 3 4 5 6 7""", "new_only" : True, 'skip_list' : ['not_bsim'], },
+    { "tc_name" : "time_4", "args" : """-v -n10 -t30 1 2 3 4 5 6 7 10 15""", "new_only" : True, 'skip_list' : ['not_bsim'], },
     { "tc_name" : "time_5", "args" : """-v -n10 -t00:00:30 1 2 3""", "new_only" : True, },
     { "tc_name" : "time_6", "args" : """-v -n10 -t+00:00:30 1 2 3""", "new_only" : True, },
     { "tc_name" : "time_7", "args" : """-v -n10 -t 00:00:30 1 2 3""", "new_only" : True, },
@@ -38,5 +38,5 @@ test_argslist = [
     { "tc_name" : "preboot_1", "args" : """-v --enable_preboot --run_project 10 20 30""", "new_only" : True, },
     { "tc_name" : "preboot_2", "args" : """-v --disable_preboot --run_project 10 20 30""", "new_only" : True,  },
     { "tc_name" : "defer_1", "args" : """--defer""", "new_only": True},
-    { "tc_name" : "defer_2", "args" : """--defer 1 2 3 4 5""", "new_only": True},
+    { "tc_name" : "defer_2", "args" : """--defer 1 2 3 4 5""", "new_only": True, 'skip_list' : ['not_bsim'], },
     ]

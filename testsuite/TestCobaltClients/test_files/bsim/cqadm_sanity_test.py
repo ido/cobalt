@@ -63,7 +63,7 @@ def test_cqadm_getq_option_2():
              )
         
         
-        [{'maxuserjobs': None, 'priority': 0, 'name': 'default', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_4', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_1', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_2', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_3', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}]
+        [{'maxuserjobs': None, 'priority': 0, 'name': 'default', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_4', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_2', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_1', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_3', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}]
         
         
     """
@@ -148,7 +148,7 @@ def test_cqadm_preempt_job_1():
              )
         
         
-        component error: XMLRPC failure <Fault 1007: '("Jobs in the \'queued\' state may not be preempted.", 3, \'georgerojas\', False)'> in queue-manager.preempt_jobs
+        component error: XMLRPC failure <Fault 1007: '("Jobs in the \'queued\' state may not be preempted.", 1, \'georgerojas\', False)'> in queue-manager.preempt_jobs
         
         
         
@@ -183,7 +183,7 @@ def test_cqadm_preempt_job_2():
 
         Command Output:
         
-        Command Error/Debug:component error: XMLRPC failure <Fault 1007: '("Jobs in the \'queued\' state may not be preempted.", 3, \'georgerojas\', True)'> in queue-manager.preempt_jobs
+        Command Error/Debug:component error: XMLRPC failure <Fault 1007: '("Jobs in the \'queued\' state may not be preempted.", 1, \'georgerojas\', True)'> in queue-manager.preempt_jobs
         
         
         
@@ -229,7 +229,7 @@ def test_cqadm_kill_job_1():
              )
         
         
-        [{'tag': 'job', 'location': None, 'walltime': 165, 'jobid': 3}]
+        [{'tag': 'job', 'location': None, 'walltime': 65, 'jobid': 1}, {'tag': 'job', 'location': ['ANL-R01-M0-512'], 'walltime': 115, 'jobid': 2}, {'tag': 'job', 'location': ['ANL-R00-M0-512'], 'walltime': 165, 'jobid': 3}]
         
         
     """
@@ -1176,7 +1176,7 @@ def test_cqadm_setjobid_option_3():
 
         Command Output:
         
-        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'The new jobid must be greater than the next jobid (6)'> in queue-manager.set_jobid
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'The new jobid must be greater than the next jobid (8)'> in queue-manager.set_jobid
         
         
         
@@ -1211,7 +1211,7 @@ def test_cqadm_setjobid_option_4():
 
         Command Output:
         
-        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'The new jobid must be greater than the next jobid (6)'> in queue-manager.set_jobid
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'The new jobid must be greater than the next jobid (8)'> in queue-manager.set_jobid
         
         
         
@@ -1246,7 +1246,7 @@ def test_cqadm_setjobid_option_5():
 
         Command Output:
         
-        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'The new jobid must be greater than the next jobid (6)'> in queue-manager.set_jobid
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'The new jobid must be greater than the next jobid (8)'> in queue-manager.set_jobid
         
         
         

@@ -183,80 +183,6 @@ def test_qalter_time_2():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
-def test_qalter_time_3():
-    """
-    qalter test run: time_3
-
-        Command Output:
-        nodes changed from 30 to 10
-        walltime changed from 165 to 185.0
-        procs changed from 30 to 10
-        nodes changed from 30 to 10
-        walltime changed from 165 to 185.0
-        procs changed from 30 to 10
-        
-        Command Error/Debug:
-        
-    """
-
-    args      = """-v -n10 -t+20 1 2 3 4 5 6 7"""
-    exp_rs    = 0
-
-    results = testutils.run_cmd('qalter.py',args,None) 
-    rs      = results[0]
-    cmd_out = results[1]
-    cmd_err = results[3]
-
-    # Test Pass Criterias
-    no_rs_err     = (rs == exp_rs)
-    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
-
-    result = no_rs_err and no_fatal_exc
-
-    errmsg  = "\n\nFailed Data:\n\n" \
-        "Return Status %s, Expected Return Status %s\n\n" \
-        "Command Output:\n%s\n\n" \
-        "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
-
-    assert result, errmsg
-
-# ---------------------------------------------------------------------------------
-def test_qalter_time_4():
-    """
-    qalter test run: time_4
-
-        Command Output:
-        walltime changed from 185 to 30
-        walltime changed from 185 to 30
-        
-        Command Error/Debug:
-        
-    """
-
-    args      = """-v -n10 -t30 1 2 3 4 5 6 7 10 15"""
-    exp_rs    = 0
-
-    results = testutils.run_cmd('qalter.py',args,None) 
-    rs      = results[0]
-    cmd_out = results[1]
-    cmd_err = results[3]
-
-    # Test Pass Criterias
-    no_rs_err     = (rs == exp_rs)
-    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
-
-    result = no_rs_err and no_fatal_exc
-
-    errmsg  = "\n\nFailed Data:\n\n" \
-        "Return Status %s, Expected Return Status %s\n\n" \
-        "Command Output:\n%s\n\n" \
-        "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
-
-    assert result, errmsg
-
-# ---------------------------------------------------------------------------------
 def test_qalter_time_5():
     """
     qalter test run: time_5
@@ -899,40 +825,6 @@ def test_qalter_defer_1():
 
     args      = """--defer"""
     exp_rs    = 256
-
-    results = testutils.run_cmd('qalter.py',args,None) 
-    rs      = results[0]
-    cmd_out = results[1]
-    cmd_err = results[3]
-
-    # Test Pass Criterias
-    no_rs_err     = (rs == exp_rs)
-    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
-
-    result = no_rs_err and no_fatal_exc
-
-    errmsg  = "\n\nFailed Data:\n\n" \
-        "Return Status %s, Expected Return Status %s\n\n" \
-        "Command Output:\n%s\n\n" \
-        "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
-
-    assert result, errmsg
-
-# ---------------------------------------------------------------------------------
-def test_qalter_defer_2():
-    """
-    qalter test run: defer_2
-
-        Command Output:
-        updating scores for jobs: 4, 5
-        
-        Command Error/Debug:
-        
-    """
-
-    args      = """--defer 1 2 3 4 5"""
-    exp_rs    = 0
 
     results = testutils.run_cmd('qalter.py',args,None) 
     rs      = results[0]

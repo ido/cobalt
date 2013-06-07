@@ -8,7 +8,7 @@ def test_showres_arg_1():
         Command Output:
         Reservation  Queue  User  Start                                 Duration  Passthrough  Partitions        
         =========================================================================================================
-        george       q_1    None  Tue Jun  6 19:15:00 2023 +0000 (UTC)  05:00     Allowed      ANL-R00-R01-2048  
+        george       q_1    None  Wed Jun  7 02:32:00 2023 +0000 (UTC)  05:00     Allowed      ANL-R00-R01-2048  
         
         Command Error/Debug:
         
@@ -44,7 +44,7 @@ def test_showres_arg_2():
         Command Output:
         Reservation  Queue  User  Start                     Duration  Passthrough  Partitions        
         =============================================================================================
-        george       q_1    None  Tue Jun  6 14:15:00 2023  05:00     Allowed      ANL-R00-R01-2048  
+        george       q_1    None  Tue Jun  6 21:32:00 2023  05:00     Allowed      ANL-R00-R01-2048  
         
         Command Error/Debug:
         
@@ -80,7 +80,7 @@ def test_showres_arg_3():
         Command Output:
         Reservation  Queue  User  Start                                 Duration  Passthrough  Partitions        
         =========================================================================================================
-        george       q_1    None  Tue Jun  6 19:15:00 2023 +0000 (UTC)  05:00     Allowed      ANL-R00-R01-2048  
+        george       q_1    None  Wed Jun  7 02:32:00 2023 +0000 (UTC)  05:00     Allowed      ANL-R00-R01-2048  
         
         Command Error/Debug:No arguments needed
         
@@ -117,7 +117,7 @@ def test_showres_l_option_1():
         Command Output:
         Reservation  Queue  User  Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions        
         ===========================================================================================================================================================
-        george       q_1    None  Tue Jun  6 19:15:00 2023 +0000 (UTC)  05:00     Wed Jun  7 00:15:00 2023 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  
+        george       q_1    None  Wed Jun  7 02:32:00 2023 +0000 (UTC)  05:00     Wed Jun  7 07:32:00 2023 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  
         
         Command Error/Debug:
         
@@ -153,7 +153,7 @@ def test_showres_l_option_2():
         Command Output:
         Reservation  Queue  User  Start                     Duration  End Time                  Cycle Time  Passthrough  Partitions        
         ===================================================================================================================================
-        george       q_1    None  Tue Jun  6 14:15:00 2023  05:00     Tue Jun  6 19:15:00 2023  None        Allowed      ANL-R00-R01-2048  
+        george       q_1    None  Tue Jun  6 21:32:00 2023  05:00     Wed Jun  7 02:32:00 2023  None        Allowed      ANL-R00-R01-2048  
         
         Command Error/Debug:
         
@@ -189,7 +189,7 @@ def test_showres_x_option_1():
         Command Output:
         Reservation  Queue  User  Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions        Project  ResID  CycleID  
         ====================================================================================================================================================================================
-        george       q_1    None  Tue Jun  6 19:15:00 2023 +0000 (UTC)  05:00     Wed Jun  7 00:15:00 2023 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  None     1      -        
+        george       q_1    None  Wed Jun  7 02:32:00 2023 +0000 (UTC)  05:00     Wed Jun  7 07:32:00 2023 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  None     1      -        
         
         Command Error/Debug:
         
@@ -225,7 +225,7 @@ def test_showres_x_option_1():
         Command Output:
         Reservation  Queue  User  Start                     Duration  End Time                  Cycle Time  Passthrough  Partitions        Project  ResID  CycleID  
         ============================================================================================================================================================
-        george       q_1    None  Tue Jun  6 14:15:00 2023  05:00     Tue Jun  6 19:15:00 2023  None        Allowed      ANL-R00-R01-2048  None     1      -        
+        george       q_1    None  Tue Jun  6 21:32:00 2023  05:00     Wed Jun  7 02:32:00 2023  None        Allowed      ANL-R00-R01-2048  None     1      -        
         
         Command Error/Debug:
         
@@ -413,7 +413,7 @@ def test_showres_debug():
         Command Output:
         Reservation  Queue  User  Start                                 Duration  Passthrough  Partitions        
         =========================================================================================================
-        george       q_1    None  Tue Jun  6 19:15:00 2023 +0000 (UTC)  05:00     Allowed      ANL-R00-R01-2048  
+        george       q_1    None  Wed Jun  7 02:32:00 2023 +0000 (UTC)  05:00     Allowed      ANL-R00-R01-2048  
         
         Command Error/Debug:
         showres.py --debug
