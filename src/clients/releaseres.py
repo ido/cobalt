@@ -3,7 +3,7 @@
 """
 Delete Cobalt Scheduler Reservation(s)
 
-Usage: %prog [--version | --help] [-p partition] name
+Usage: %prog [--version | --help | --debug] <reservation name>
 version: "%prog " + __revision__ + , Cobalt  + __version__
 
 
@@ -26,15 +26,13 @@ SCHMGR = client_utils.SCHMGR
 
 def main():
     """
-    showres main
+    releaseres main
     """
     # setup logging for client. The clients should call this before doing anything else.
     client_utils.setup_logging(logging.INFO)
 
     # list of callback with its arguments
-    callbacks = [
-        # <cb function>     <cb args>
-        [ cb_debug        , () ] ]
+    callbacks = [(cb_debug, ())]
 
     # Get the version information
     opt_def =  __doc__.replace('__revision__',__revision__)

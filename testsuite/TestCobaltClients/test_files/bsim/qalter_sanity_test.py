@@ -1,5 +1,6 @@
 import testutils
-
+import os
+import pwd
 # ---------------------------------------------------------------------------------
 def test_qalter_simple_1():
     """
@@ -18,7 +19,10 @@ def test_qalter_simple_1():
     args      = """-d -n30"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('qalter.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -33,7 +37,7 @@ def test_qalter_simple_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -61,7 +65,10 @@ def test_qalter_simple_2():
     args      = """-d -n30 1"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qalter.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -76,7 +83,7 @@ def test_qalter_simple_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -95,7 +102,10 @@ def test_qalter_simple_3():
     args      = """-n30 1"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qalter.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -110,7 +120,7 @@ def test_qalter_simple_3():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -129,7 +139,10 @@ def test_qalter_time_1():
     args      = """-v n10 -t5 1 2 3"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('qalter.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -144,7 +157,7 @@ def test_qalter_time_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -163,7 +176,10 @@ def test_qalter_time_2():
     args      = """-v -n10 -t+5 1 2 3"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qalter.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -178,7 +194,7 @@ def test_qalter_time_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -197,7 +213,10 @@ def test_qalter_time_5():
     args      = """-v -n10 -t00:00:30 1 2 3"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qalter.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -212,7 +231,7 @@ def test_qalter_time_5():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -231,7 +250,10 @@ def test_qalter_time_6():
     args      = """-v -n10 -t+00:00:30 1 2 3"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qalter.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -246,7 +268,7 @@ def test_qalter_time_6():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -265,7 +287,10 @@ def test_qalter_time_7():
     args      = """-v -n10 -t 00:00:30 1 2 3"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qalter.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -280,7 +305,7 @@ def test_qalter_time_7():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -299,7 +324,10 @@ def test_qalter_time_8():
     args      = """-v -n10 -t +00:00:30 1 2 3"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qalter.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -314,7 +342,7 @@ def test_qalter_time_8():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -335,7 +363,10 @@ def test_qalter_invalid_option():
     args      = """-v -m j@gmail.com"""
     exp_rs    = 512
 
-    results = testutils.run_cmd('qalter.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -350,7 +381,7 @@ def test_qalter_invalid_option():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -369,7 +400,10 @@ def test_qalter_email_option():
     args      = """-v -M j@gmail.com 1 2"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qalter.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -384,7 +418,7 @@ def test_qalter_email_option():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -406,7 +440,10 @@ def test_qalter_mode_1():
     args      = """-v --mode jjj  -n40 -t50 -e p -o o 1 2 3"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('qalter.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -421,7 +458,7 @@ def test_qalter_mode_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -443,7 +480,10 @@ def test_qalter_mode_2():
     args      = """-v --mode dual -n40 -t50 -e p -o o 1 2 3"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('qalter.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -458,7 +498,7 @@ def test_qalter_mode_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -480,7 +520,10 @@ def test_qalter_proccount_1():
     args      = """-v --mode dual -n512 --proccount one -t50 -e /tmp/p -o /tmp/o 1 2 3 4 5 6 7 8 9 10"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('qalter.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -495,7 +538,7 @@ def test_qalter_proccount_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -517,7 +560,10 @@ def test_qalter_proccount_2():
     args      = """-v --mode dual -n512 --proccount 1023 -t50 -e /tmp/p -o /tmp/o 1 2 3 4 5 6 7 8 9 10"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('qalter.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -532,7 +578,7 @@ def test_qalter_proccount_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -554,7 +600,10 @@ def test_qalter_invalid_nodecount():
     args      = """-v --mode dual -nfiver --proccount 1023 -t50 -e /tmp/p -o /tmp/o 1 2 3 4 5 6 7 8 9 10"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('qalter.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -569,7 +618,7 @@ def test_qalter_invalid_nodecount():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -588,7 +637,10 @@ def test_qalter_user_2():
     args      = """-v --run_users user1:naughtyuser 1 2 3 4 5"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('qalter.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -603,7 +655,7 @@ def test_qalter_user_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -622,7 +674,10 @@ def test_qalter_project():
     args      = """-v --run_project 10 20 30"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qalter.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -637,7 +692,7 @@ def test_qalter_project():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -656,7 +711,10 @@ def test_qalter_geometry_1():
     args      = """-v --geometry 10 1 2 3 4 5"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('qalter.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -671,7 +729,7 @@ def test_qalter_geometry_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -690,7 +748,10 @@ def test_qalter_geometry_2():
     args      = """-v --geometry 10x10x10x10x10 1 2 3 4 5"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('qalter.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -705,7 +766,7 @@ def test_qalter_geometry_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -724,7 +785,10 @@ def test_qalter_preboot_1():
     args      = """-v --enable_preboot --run_project 10 20 30"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qalter.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -739,7 +803,7 @@ def test_qalter_preboot_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -758,7 +822,10 @@ def test_qalter_preboot_2():
     args      = """-v --disable_preboot --run_project 10 20 30"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qalter.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -773,7 +840,7 @@ def test_qalter_preboot_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -792,7 +859,10 @@ def test_qalter_defer_1():
     args      = """--defer"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('qalter.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -807,6 +877,6 @@ def test_qalter_defer_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg

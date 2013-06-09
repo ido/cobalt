@@ -1,5 +1,6 @@
 import testutils
-
+import os
+import pwd
 # ---------------------------------------------------------------------------------
 def test_slpstat_arg_1():
     """
@@ -8,12 +9,12 @@ def test_slpstat_arg_1():
         Command Output:
         Name                  Location                                 Update Time               
         =========================================================================================
-        system                https://Georges-MacBook-Pro.local:59479  Sat Jun  8 20:57:48 2013  
-        queue-manager         https://Georges-MacBook-Pro.local:59465  Sat Jun  8 20:57:47 2013  
-        bg_mpirun_forker      https://Georges-MacBook-Pro.local:59457  Sat Jun  8 20:57:51 2013  
-        scheduler             https://Georges-MacBook-Pro.local:59463  Sat Jun  8 20:57:47 2013  
-        system_script_forker  https://Georges-MacBook-Pro.local:59459  Sat Jun  8 20:58:00 2013  
-        user_script_forker    https://Georges-MacBook-Pro.local:59460  Sat Jun  8 20:57:51 2013  
+        system                https://Georges-MacBook-Pro.local:63045  Sun Jun  9 15:46:47 2013  
+        queue-manager         https://Georges-MacBook-Pro.local:63033  Sun Jun  9 15:46:45 2013  
+        system_script_forker  https://Georges-MacBook-Pro.local:63028  Sun Jun  9 15:46:59 2013  
+        scheduler             https://Georges-MacBook-Pro.local:63031  Sun Jun  9 15:46:45 2013  
+        user_script_forker    https://Georges-MacBook-Pro.local:63024  Sun Jun  9 15:46:50 2013  
+        bg_mpirun_forker      https://Georges-MacBook-Pro.local:63026  Sun Jun  9 15:46:50 2013  
         
         Command Error/Debug:
         
@@ -22,7 +23,10 @@ def test_slpstat_arg_1():
     args      = ''
     exp_rs    = 0
 
-    results = testutils.run_cmd('slpstat.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('slpstat.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -37,7 +41,7 @@ def test_slpstat_arg_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -49,12 +53,12 @@ def test_slpstat_arg_2():
         Command Output:
         Name                  Location                                 Update Time               
         =========================================================================================
-        system                https://Georges-MacBook-Pro.local:59479  Sat Jun  8 20:57:48 2013  
-        queue-manager         https://Georges-MacBook-Pro.local:59465  Sat Jun  8 20:57:47 2013  
-        bg_mpirun_forker      https://Georges-MacBook-Pro.local:59457  Sat Jun  8 20:57:51 2013  
-        scheduler             https://Georges-MacBook-Pro.local:59463  Sat Jun  8 20:57:47 2013  
-        system_script_forker  https://Georges-MacBook-Pro.local:59459  Sat Jun  8 20:58:00 2013  
-        user_script_forker    https://Georges-MacBook-Pro.local:59460  Sat Jun  8 20:57:51 2013  
+        system                https://Georges-MacBook-Pro.local:63045  Sun Jun  9 15:46:47 2013  
+        queue-manager         https://Georges-MacBook-Pro.local:63033  Sun Jun  9 15:46:45 2013  
+        system_script_forker  https://Georges-MacBook-Pro.local:63028  Sun Jun  9 15:46:59 2013  
+        scheduler             https://Georges-MacBook-Pro.local:63031  Sun Jun  9 15:46:45 2013  
+        user_script_forker    https://Georges-MacBook-Pro.local:63024  Sun Jun  9 15:46:50 2013  
+        bg_mpirun_forker      https://Georges-MacBook-Pro.local:63026  Sun Jun  9 15:46:50 2013  
         
         Command Error/Debug:
         
@@ -63,7 +67,10 @@ def test_slpstat_arg_2():
     args      = ''
     exp_rs    = 0
 
-    results = testutils.run_cmd('slpstat.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('slpstat.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -78,7 +85,7 @@ def test_slpstat_arg_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -90,12 +97,12 @@ def test_slpstat_arg_3():
         Command Output:
         Name                  Location                                 Update Time               
         =========================================================================================
-        system                https://Georges-MacBook-Pro.local:59479  Sat Jun  8 20:57:48 2013  
-        queue-manager         https://Georges-MacBook-Pro.local:59465  Sat Jun  8 20:57:47 2013  
-        bg_mpirun_forker      https://Georges-MacBook-Pro.local:59457  Sat Jun  8 20:57:51 2013  
-        scheduler             https://Georges-MacBook-Pro.local:59463  Sat Jun  8 20:57:47 2013  
-        system_script_forker  https://Georges-MacBook-Pro.local:59459  Sat Jun  8 20:58:00 2013  
-        user_script_forker    https://Georges-MacBook-Pro.local:59460  Sat Jun  8 20:57:51 2013  
+        system                https://Georges-MacBook-Pro.local:63045  Sun Jun  9 15:46:47 2013  
+        queue-manager         https://Georges-MacBook-Pro.local:63033  Sun Jun  9 15:46:45 2013  
+        system_script_forker  https://Georges-MacBook-Pro.local:63028  Sun Jun  9 15:46:59 2013  
+        scheduler             https://Georges-MacBook-Pro.local:63031  Sun Jun  9 15:46:45 2013  
+        user_script_forker    https://Georges-MacBook-Pro.local:63024  Sun Jun  9 15:46:50 2013  
+        bg_mpirun_forker      https://Georges-MacBook-Pro.local:63026  Sun Jun  9 15:46:50 2013  
         
         Command Error/Debug:No arguments needed
         
@@ -105,7 +112,10 @@ def test_slpstat_arg_3():
     args      = """arg1"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('slpstat.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('slpstat.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -120,7 +130,7 @@ def test_slpstat_arg_3():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -132,12 +142,12 @@ def test_slpstat_debug_1():
         Command Output:
         Name                  Location                                 Update Time               
         =========================================================================================
-        system                https://Georges-MacBook-Pro.local:59479  Sat Jun  8 20:57:48 2013  
-        queue-manager         https://Georges-MacBook-Pro.local:59465  Sat Jun  8 20:57:47 2013  
-        bg_mpirun_forker      https://Georges-MacBook-Pro.local:59457  Sat Jun  8 20:57:51 2013  
-        scheduler             https://Georges-MacBook-Pro.local:59463  Sat Jun  8 20:57:47 2013  
-        system_script_forker  https://Georges-MacBook-Pro.local:59459  Sat Jun  8 20:58:00 2013  
-        user_script_forker    https://Georges-MacBook-Pro.local:59460  Sat Jun  8 20:57:51 2013  
+        system                https://Georges-MacBook-Pro.local:63045  Sun Jun  9 15:46:47 2013  
+        queue-manager         https://Georges-MacBook-Pro.local:63033  Sun Jun  9 15:46:45 2013  
+        system_script_forker  https://Georges-MacBook-Pro.local:63028  Sun Jun  9 15:46:59 2013  
+        scheduler             https://Georges-MacBook-Pro.local:63031  Sun Jun  9 15:46:45 2013  
+        user_script_forker    https://Georges-MacBook-Pro.local:63024  Sun Jun  9 15:46:50 2013  
+        bg_mpirun_forker      https://Georges-MacBook-Pro.local:63026  Sun Jun  9 15:46:50 2013  
         
         Command Error/Debug:
         slpstat.py -d
@@ -155,7 +165,10 @@ def test_slpstat_debug_1():
     args      = """-d"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('slpstat.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('slpstat.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -170,7 +183,7 @@ def test_slpstat_debug_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -182,12 +195,12 @@ def test_slpstat_debug_2():
         Command Output:
         Name                  Location                                 Update Time               
         =========================================================================================
-        system                https://Georges-MacBook-Pro.local:59479  Sat Jun  8 20:57:48 2013  
-        queue-manager         https://Georges-MacBook-Pro.local:59465  Sat Jun  8 20:57:47 2013  
-        bg_mpirun_forker      https://Georges-MacBook-Pro.local:59457  Sat Jun  8 20:57:51 2013  
-        scheduler             https://Georges-MacBook-Pro.local:59463  Sat Jun  8 20:57:47 2013  
-        system_script_forker  https://Georges-MacBook-Pro.local:59459  Sat Jun  8 20:58:00 2013  
-        user_script_forker    https://Georges-MacBook-Pro.local:59460  Sat Jun  8 20:57:51 2013  
+        system                https://Georges-MacBook-Pro.local:63045  Sun Jun  9 15:46:47 2013  
+        queue-manager         https://Georges-MacBook-Pro.local:63033  Sun Jun  9 15:46:45 2013  
+        system_script_forker  https://Georges-MacBook-Pro.local:63028  Sun Jun  9 15:46:59 2013  
+        scheduler             https://Georges-MacBook-Pro.local:63031  Sun Jun  9 15:46:45 2013  
+        user_script_forker    https://Georges-MacBook-Pro.local:63024  Sun Jun  9 15:46:50 2013  
+        bg_mpirun_forker      https://Georges-MacBook-Pro.local:63026  Sun Jun  9 15:46:50 2013  
         
         Command Error/Debug:
         slpstat.py -d
@@ -205,7 +218,10 @@ def test_slpstat_debug_2():
     args      = """-d"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('slpstat.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('slpstat.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -220,7 +236,7 @@ def test_slpstat_debug_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -244,7 +260,10 @@ def test_slpstat_help_1():
     args      = """--help"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('slpstat.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('slpstat.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -259,7 +278,7 @@ def test_slpstat_help_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -283,7 +302,10 @@ def test_slpstat_help_2():
     args      = """-h"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('slpstat.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('slpstat.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -298,7 +320,7 @@ def test_slpstat_help_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -317,7 +339,10 @@ def test_slpstat_version():
     args      = """--version"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('slpstat.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('slpstat.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -332,6 +357,6 @@ def test_slpstat_version():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg

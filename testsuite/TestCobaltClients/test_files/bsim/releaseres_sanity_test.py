@@ -1,5 +1,6 @@
 import testutils
-
+import os
+import pwd
 # ---------------------------------------------------------------------------------
 def test_releaseres_arg_1():
     """
@@ -15,7 +16,10 @@ def test_releaseres_arg_1():
     args      = ''
     exp_rs    = 256
 
-    results = testutils.run_cmd('releaseres.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('releaseres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -30,7 +34,7 @@ def test_releaseres_arg_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -49,7 +53,10 @@ def test_releaseres_arg_2():
     args      = """-p p1"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('releaseres.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('releaseres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -64,7 +71,7 @@ def test_releaseres_arg_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -83,7 +90,10 @@ def test_releaseres_arg_3():
     args      = """s1 s2 s3"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('releaseres.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('releaseres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -98,7 +108,7 @@ def test_releaseres_arg_3():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -117,7 +127,10 @@ def test_releaseres_arg_4():
     args      = """s1 s2 s3 s4"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('releaseres.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('releaseres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -132,7 +145,7 @@ def test_releaseres_arg_4():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -151,7 +164,10 @@ def test_releaseres_arg_5():
     args      = """-p p1 s1 s2 s3"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('releaseres.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('releaseres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -166,7 +182,7 @@ def test_releaseres_arg_5():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -177,7 +193,7 @@ def test_releaseres_arg_6():
 
         Command Output:
         
-        Command Error/Debug:Usage: releaseres.py [--version | --help] [-p partition] name
+        Command Error/Debug:Usage: releaseres.py [--version | --help | --debug] <reservation name>
         
         releaseres.py: error: no such option: -t
         
@@ -187,7 +203,10 @@ def test_releaseres_arg_6():
     args      = """-t p1 s1 s2 s3"""
     exp_rs    = 512
 
-    results = testutils.run_cmd('releaseres.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('releaseres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -202,7 +221,7 @@ def test_releaseres_arg_6():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -230,7 +249,10 @@ def test_releaseres_arg_7():
     args      = """-d p1 s1 s2 s3"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('releaseres.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('releaseres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -245,7 +267,7 @@ def test_releaseres_arg_7():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -273,7 +295,10 @@ def test_releaseres_arg_8():
     args      = """--debug p1 s1 s2 s3"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('releaseres.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('releaseres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -288,7 +313,7 @@ def test_releaseres_arg_8():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -298,7 +323,7 @@ def test_releaseres_help_1():
     releaseres test run: help_1
 
         Command Output:
-        Usage: releaseres.py [--version | --help] [-p partition] name
+        Usage: releaseres.py [--version | --help | --debug] <reservation name>
         
         Options:
           --version             show program's version number and exit
@@ -314,7 +339,10 @@ def test_releaseres_help_1():
     args      = """--help"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('releaseres.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('releaseres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -329,7 +357,7 @@ def test_releaseres_help_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -339,7 +367,7 @@ def test_releaseres_help_2():
     releaseres test run: help_2
 
         Command Output:
-        Usage: releaseres.py [--version | --help] [-p partition] name
+        Usage: releaseres.py [--version | --help | --debug] <reservation name>
         
         Options:
           --version             show program's version number and exit
@@ -355,7 +383,10 @@ def test_releaseres_help_2():
     args      = """-h"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('releaseres.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('releaseres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -370,7 +401,7 @@ def test_releaseres_help_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -389,7 +420,10 @@ def test_releaseres_version():
     args      = """--version"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('releaseres.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('releaseres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -404,6 +438,6 @@ def test_releaseres_version():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg

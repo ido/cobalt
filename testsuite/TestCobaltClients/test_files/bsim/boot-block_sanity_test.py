@@ -1,5 +1,6 @@
 import testutils
-
+import os
+import pwd
 # ---------------------------------------------------------------------------------
 def test_boot_block_combo():
     """
@@ -15,7 +16,10 @@ def test_boot_block_combo():
     args      = """--free --reboot --block b --jobid 1"""
     exp_rs    = 768
 
-    results = testutils.run_cmd('boot-block.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('boot-block.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -30,7 +34,7 @@ def test_boot_block_combo():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -49,7 +53,10 @@ def test_boot_block_free_1():
     args      = """--free"""
     exp_rs    = 768
 
-    results = testutils.run_cmd('boot-block.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('boot-block.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -64,7 +71,7 @@ def test_boot_block_free_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -83,7 +90,10 @@ def test_boot_block_free_2():
     args      = """--free --jobid 1"""
     exp_rs    = 768
 
-    results = testutils.run_cmd('boot-block.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('boot-block.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -98,7 +108,7 @@ def test_boot_block_free_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -117,7 +127,10 @@ def test_boot_block_reboot_1():
     args      = """--reboot"""
     exp_rs    = 768
 
-    results = testutils.run_cmd('boot-block.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('boot-block.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -132,7 +145,7 @@ def test_boot_block_reboot_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -151,7 +164,10 @@ def test_boot_block_reboot_2():
     args      = """--reboot --jobid 1"""
     exp_rs    = 768
 
-    results = testutils.run_cmd('boot-block.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('boot-block.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -166,7 +182,7 @@ def test_boot_block_reboot_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -185,7 +201,10 @@ def test_boot_block_nofree_noreboot_1():
     args      = """--jobid 1"""
     exp_rs    = 768
 
-    results = testutils.run_cmd('boot-block.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('boot-block.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -200,7 +219,7 @@ def test_boot_block_nofree_noreboot_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -219,7 +238,10 @@ def test_boot_block_nofree_noreboot_2():
     args      = """--block b"""
     exp_rs    = 768
 
-    results = testutils.run_cmd('boot-block.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('boot-block.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -234,7 +256,7 @@ def test_boot_block_nofree_noreboot_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -262,7 +284,10 @@ def test_boot_block_help_1():
     args      = """--help"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('boot-block.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('boot-block.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -277,7 +302,7 @@ def test_boot_block_help_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -305,7 +330,10 @@ def test_boot_block_help_2():
     args      = """-h"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('boot-block.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('boot-block.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -320,7 +348,7 @@ def test_boot_block_help_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -339,7 +367,10 @@ def test_boot_block_version():
     args      = """--version"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('boot-block.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('boot-block.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -354,7 +385,7 @@ def test_boot_block_version():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -376,7 +407,10 @@ def test_boot_block_debug_1():
     args      = """--debug"""
     exp_rs    = 768
 
-    results = testutils.run_cmd('boot-block.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('boot-block.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -391,7 +425,7 @@ def test_boot_block_debug_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -413,7 +447,10 @@ def test_boot_block_debug_2():
     args      = """--d"""
     exp_rs    = 768
 
-    results = testutils.run_cmd('boot-block.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('boot-block.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -428,6 +465,6 @@ def test_boot_block_debug_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg

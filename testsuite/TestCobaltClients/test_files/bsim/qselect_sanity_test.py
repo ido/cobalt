@@ -1,5 +1,6 @@
 import testutils
-
+import os
+import pwd
 # ---------------------------------------------------------------------------------
 def test_qselect_invalid_option():
     """
@@ -17,7 +18,10 @@ def test_qselect_invalid_option():
     args      = """-k"""
     exp_rs    = 512
 
-    results = testutils.run_cmd('qselect.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qselect.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -32,7 +36,7 @@ def test_qselect_invalid_option():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -51,7 +55,10 @@ def test_qselect_only_arg():
     args      = """1"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('qselect.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qselect.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -66,7 +73,7 @@ def test_qselect_only_arg():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -88,7 +95,10 @@ def test_qselect_no_args_opts():
     args      = ''
     exp_rs    = 0
 
-    results = testutils.run_cmd('qselect.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qselect.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -103,7 +113,7 @@ def test_qselect_no_args_opts():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -135,7 +145,10 @@ def test_qselect_debug_flag():
     args      = """-d"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qselect.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qselect.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -150,7 +163,7 @@ def test_qselect_debug_flag():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -169,7 +182,10 @@ def test_qselect_held_option():
     args      = """-h user_hold"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qselect.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qselect.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -184,7 +200,7 @@ def test_qselect_held_option():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -203,7 +219,10 @@ def test_qselect_nodecount_option():
     args      = """-n 312"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qselect.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qselect.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -218,7 +237,7 @@ def test_qselect_nodecount_option():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -237,7 +256,10 @@ def test_qselect_state_and_nodecount():
     args      = """-n 312 -h user_hold"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qselect.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qselect.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -252,7 +274,7 @@ def test_qselect_state_and_nodecount():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -271,7 +293,10 @@ def test_qselect_walltime():
     args      = """-t 10:10:10"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qselect.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qselect.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -286,7 +311,7 @@ def test_qselect_walltime():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -305,7 +330,10 @@ def test_qselect_mode():
     args      = """--mode vn"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qselect.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qselect.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -320,7 +348,7 @@ def test_qselect_mode():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -342,7 +370,10 @@ def test_qselect_verbose():
     args      = """-v"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qselect.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qselect.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -357,6 +388,6 @@ def test_qselect_verbose():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg

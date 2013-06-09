@@ -1,5 +1,6 @@
 import testutils
-
+import os
+import pwd
 # ---------------------------------------------------------------------------------
 def test_cqadm_getq_option_1():
     """
@@ -21,7 +22,10 @@ def test_cqadm_getq_option_1():
     args      = """--getq"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -36,7 +40,7 @@ def test_cqadm_getq_option_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -63,7 +67,7 @@ def test_cqadm_getq_option_2():
              )
         
         
-        [{'maxuserjobs': None, 'priority': 0, 'name': 'default', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_4', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_1', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_2', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_3', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}]
+        [{'maxuserjobs': None, 'priority': 0, 'name': 'default', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_4', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_2', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_3', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_1', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}]
         
         
     """
@@ -71,7 +75,10 @@ def test_cqadm_getq_option_2():
     args      = """-d --getq"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -86,7 +93,7 @@ def test_cqadm_getq_option_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -111,7 +118,10 @@ def test_cqadm_getq_option_3():
     args      = """-f --getq"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -126,7 +136,7 @@ def test_cqadm_getq_option_3():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -157,7 +167,10 @@ def test_cqadm_preempt_job_1():
     args      = """-d --preempt 1 2 3"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -172,7 +185,7 @@ def test_cqadm_preempt_job_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -192,7 +205,10 @@ def test_cqadm_preempt_job_2():
     args      = """-f --preempt 1 2 3"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -207,7 +223,7 @@ def test_cqadm_preempt_job_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -237,7 +253,10 @@ def test_cqadm_kill_job_1():
     args      = """-d -f --kill 1 2 3"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -252,7 +271,7 @@ def test_cqadm_kill_job_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -271,7 +290,10 @@ def test_cqadm_kill_job_2():
     args      = """--kill 1 2 3"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -286,7 +308,7 @@ def test_cqadm_kill_job_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -305,7 +327,10 @@ def test_cqadm_kill_job_3():
     args      = """-f --kill 1 2 3"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -320,7 +345,7 @@ def test_cqadm_kill_job_3():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -350,7 +375,10 @@ def test_cqadm_kill_job_4():
     args      = """-d --kill 1 2 3"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -365,7 +393,7 @@ def test_cqadm_kill_job_4():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -384,7 +412,10 @@ def test_cqadm_addq_option_1():
     args      = """--addq"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -399,7 +430,7 @@ def test_cqadm_addq_option_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -422,7 +453,10 @@ def test_cqadm_addq_option_2():
     args      = """--addq myq1 myq2 myq3"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -437,7 +471,7 @@ def test_cqadm_addq_option_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -456,7 +490,10 @@ def test_cqadm_delq_option_1():
     args      = """--delq"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -471,7 +508,7 @@ def test_cqadm_delq_option_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -494,7 +531,10 @@ def test_cqadm_delq_option_2():
     args      = """--delq myq1 myq2 myq3"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -509,7 +549,7 @@ def test_cqadm_delq_option_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -528,7 +568,10 @@ def test_cqadm_stopq_option_1():
     args      = """--stopq"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -543,7 +586,7 @@ def test_cqadm_stopq_option_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -562,7 +605,10 @@ def test_cqadm_stopq_option_2():
     args      = """--stopq myq1 myq2 myq3"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -577,7 +623,7 @@ def test_cqadm_stopq_option_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -596,7 +642,10 @@ def test_cqadm_startq_option_1():
     args      = """--startq"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -611,7 +660,7 @@ def test_cqadm_startq_option_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -630,7 +679,10 @@ def test_cqadm_startq_option_2():
     args      = """--startq myq1 myq2 myq3"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -645,7 +697,7 @@ def test_cqadm_startq_option_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -664,7 +716,10 @@ def test_cqadm_drainq_option_1():
     args      = """--drainq"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -679,7 +734,7 @@ def test_cqadm_drainq_option_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -698,7 +753,10 @@ def test_cqadm_drainq_option_2():
     args      = """--drainq myq1 myq2 myq3"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -713,7 +771,7 @@ def test_cqadm_drainq_option_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -732,7 +790,10 @@ def test_cqadm_killq_option_1():
     args      = """--killq"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -747,7 +808,7 @@ def test_cqadm_killq_option_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -766,7 +827,10 @@ def test_cqadm_killq_option_2():
     args      = """--killq myq1 myq2 myq3"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -781,7 +845,7 @@ def test_cqadm_killq_option_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -802,7 +866,10 @@ def test_cqadm_policy_option_1():
     args      = """--policy"""
     exp_rs    = 512
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -817,7 +884,7 @@ def test_cqadm_policy_option_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -836,7 +903,10 @@ def test_cqadm_policy_option_2():
     args      = """--policy 'mypolicy'"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -851,7 +921,7 @@ def test_cqadm_policy_option_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -870,7 +940,10 @@ def test_cqadm_policy_option_3():
     args      = """--policy 'mypolicy' myq1 myq2"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -885,7 +958,7 @@ def test_cqadm_policy_option_3():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -906,7 +979,10 @@ def test_cqadm_setq_option_1():
     args      = """--setq"""
     exp_rs    = 512
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -921,7 +997,7 @@ def test_cqadm_setq_option_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -940,7 +1016,10 @@ def test_cqadm_setq_option_2():
     args      = """--setq 'a=b b=c a=c'"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -955,7 +1034,7 @@ def test_cqadm_setq_option_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -974,7 +1053,10 @@ def test_cqadm_setq_option_3():
     args      = """--setq 'a=b b=c a=c' myq1 myq2"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -989,7 +1071,7 @@ def test_cqadm_setq_option_3():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1010,7 +1092,10 @@ def test_cqadm_unsetq_option_1():
     args      = """--unsetq"""
     exp_rs    = 512
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -1025,7 +1110,7 @@ def test_cqadm_unsetq_option_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1044,7 +1129,10 @@ def test_cqadm_unsetq_option_2():
     args      = """--unsetq 'a b a'"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -1059,7 +1147,7 @@ def test_cqadm_unsetq_option_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1078,7 +1166,10 @@ def test_cqadm_unsetq_option_3():
     args      = """--unsetq 'a b a' myq1 myq2"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -1093,7 +1184,7 @@ def test_cqadm_unsetq_option_3():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1114,7 +1205,10 @@ def test_cqadm_setjobid_option_1():
     args      = """-j"""
     exp_rs    = 512
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -1129,7 +1223,7 @@ def test_cqadm_setjobid_option_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1150,7 +1244,10 @@ def test_cqadm_setjobid_option_2():
     args      = """--setjobid"""
     exp_rs    = 512
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -1165,7 +1262,7 @@ def test_cqadm_setjobid_option_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1185,7 +1282,10 @@ def test_cqadm_setjobid_option_3():
     args      = """-j 1"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -1200,7 +1300,7 @@ def test_cqadm_setjobid_option_3():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1220,7 +1320,10 @@ def test_cqadm_setjobid_option_4():
     args      = """--setjobid 1"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -1235,7 +1338,7 @@ def test_cqadm_setjobid_option_4():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1255,7 +1358,10 @@ def test_cqadm_setjobid_option_5():
     args      = """-j 1 --setjobid 2"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -1270,7 +1376,7 @@ def test_cqadm_setjobid_option_5():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1291,7 +1397,10 @@ def test_cqadm_run_option_1():
     args      = """--run"""
     exp_rs    = 512
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -1306,7 +1415,7 @@ def test_cqadm_run_option_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1325,7 +1434,10 @@ def test_cqadm_run_option_2():
     args      = """--run mayaguez"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -1340,7 +1452,7 @@ def test_cqadm_run_option_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1359,7 +1471,10 @@ def test_cqadm_hold_option_1():
     args      = """--hold"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -1374,7 +1489,7 @@ def test_cqadm_hold_option_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1393,7 +1508,10 @@ def test_cqadm_hold_option_2():
     args      = """--hold 1 2 3"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -1408,7 +1526,7 @@ def test_cqadm_hold_option_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1438,7 +1556,10 @@ def test_cqadm_hold_option_3():
     args      = """-d --hold  1 2 3"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -1453,7 +1574,7 @@ def test_cqadm_hold_option_3():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1472,7 +1593,10 @@ def test_cqadm_hold_option_4():
     args      = """-f --hold  1 2 3"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -1487,7 +1611,7 @@ def test_cqadm_hold_option_4():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1506,7 +1630,10 @@ def test_cqadm_release_option_1():
     args      = """--release"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -1521,7 +1648,7 @@ def test_cqadm_release_option_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1540,7 +1667,10 @@ def test_cqadm_release_option_2():
     args      = """--release 1 2 3"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -1555,7 +1685,7 @@ def test_cqadm_release_option_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1585,7 +1715,10 @@ def test_cqadm_release_option_3():
     args      = """-d --release 1 2 3"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -1600,7 +1733,7 @@ def test_cqadm_release_option_3():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1619,7 +1752,10 @@ def test_cqadm_release_option_4():
     args      = """-f --release 1 2 3"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -1634,7 +1770,7 @@ def test_cqadm_release_option_4():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1653,7 +1789,10 @@ def test_cqadm_release_and_hold():
     args      = """--hold --release 1 2 3"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -1668,7 +1807,7 @@ def test_cqadm_release_and_hold():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1689,7 +1828,10 @@ def test_cqadm_queue_option_1():
     args      = """--queue"""
     exp_rs    = 512
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -1704,7 +1846,7 @@ def test_cqadm_queue_option_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1723,7 +1865,10 @@ def test_cqadm_queue_option_2():
     args      = """--queue myq"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -1738,7 +1883,7 @@ def test_cqadm_queue_option_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1759,7 +1904,10 @@ def test_cqadm_time_option_1():
     args      = """--time"""
     exp_rs    = 512
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -1774,7 +1922,7 @@ def test_cqadm_time_option_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1793,7 +1941,10 @@ def test_cqadm_time_option_2():
     args      = """--time 50"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -1808,7 +1959,7 @@ def test_cqadm_time_option_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1827,7 +1978,10 @@ def test_cqadm_time_option_4():
     args      = """--time 50 1 2 3"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -1842,7 +1996,7 @@ def test_cqadm_time_option_4():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1861,7 +2015,10 @@ def test_cqadm_combine_getq_and_addq():
     args      = """--getq --addq myq1 myq2 myq3"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -1876,7 +2033,7 @@ def test_cqadm_combine_getq_and_addq():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1895,7 +2052,10 @@ def test_cqadm_combine_getq_and_setjobid():
     args      = """--getq -j 1 123"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -1910,7 +2070,7 @@ def test_cqadm_combine_getq_and_setjobid():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1929,7 +2089,10 @@ def test_cqadm_combine_time_and_getq():
     args      = """--time 50 --getq"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -1944,7 +2107,7 @@ def test_cqadm_combine_time_and_getq():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1963,7 +2126,10 @@ def test_cqadm_combine_release_and_getq():
     args      = """--release --getq 123"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -1978,7 +2144,7 @@ def test_cqadm_combine_release_and_getq():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -1997,7 +2163,10 @@ def test_cqadm_combine_setq_with_queue():
     args      = """--setq 'a=1 b=2' --queue q 1"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -2012,7 +2181,7 @@ def test_cqadm_combine_setq_with_queue():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -2031,7 +2200,10 @@ def test_cqadm_combine_addq_and_delq():
     args      = """--addq --delq q1 q2"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -2046,7 +2218,7 @@ def test_cqadm_combine_addq_and_delq():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -2065,7 +2237,10 @@ def test_cqadm_combine_addq_and_stopq():
     args      = """--stopq --addq q1 q2"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -2080,7 +2255,7 @@ def test_cqadm_combine_addq_and_stopq():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -2099,7 +2274,10 @@ def test_cqadm_combine_addq_and_startq():
     args      = """--startq --addq q1 q2"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('cqadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -2114,6 +2292,6 @@ def test_cqadm_combine_addq_and_startq():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg

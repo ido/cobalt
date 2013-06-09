@@ -1,8 +1,9 @@
 import time
+import pwd
+import os
 """
 This module is use for generating combo cobalt client commands on a Brooklyn or real system
 """
-
 test_argslist = [
     {"tc_name" : "delete_partions"                     , "command" : "partadm", "args" : "-d '*'"},
     {"tc_name" : "add_partition_ANL_R00_R01_2048"      , "command" : "partadm", "args" : "-a ANL-R00-R01-2048"},
@@ -74,5 +75,18 @@ test_argslist = [
     {"tc_name" : "setres_4"                            , "command" : "setres" , "args" : "-n res1 -s 2032_12_1-10:30 -d 50  -q q_1 ANL-R00-R01-2048 ANL-R00-1024"},
     {"tc_name" : "setres_5"                            , "command" : "setres" , "args" : "-n res2 -s 2033_12_1-10:30 -d 50  -q q_1 ANL-R01-1024 ANL-R00-M0-512"},
     {"tc_name" : "showres_4"                           , "command" : "showres", "args" : "-x"},
-    {"tc_name" : "releaseres_1"                        , "command" : "releaseres" , "args" : "-d res1 res2 george", }
+    {"tc_name" : "releaseres_1"                        , "command" : "releaseres" , "args" : "-d res1 res2 george", },
+    {"tc_name" : "setres_6"                            , "command" : "setres" , "args" : "-n r1 -u <USER> -s 2033_12_1-10:30 -d 50 -q q_1 ANL-R01-1024 ANL-R00-M0-512"},
+    {"tc_name" : "setres_7"                            , "command" : "setres" , "args" : "-n r2 -u <USER> -s 2033_12_2-10:30 -d 50 -q q_1 ANL-R01-1024 ANL-R00-M0-512"},
+    {"tc_name" : "setres_8"                            , "command" : "setres" , "args" : "-n rc1 -u <USER> -s 2033_12_3-10:30 -d 50 -c 72 -q q_1 ANL-R01-1024 ANL-R00-M0-512"},
+    {"tc_name" : "setres_9"                            , "command" : "setres" , "args" : "-n rc2 -u <USER> -s 2033_12_4-10:30 -d 50 -c 72 -q q_1 ANL-R01-1024 ANL-R00-M0-512"},
+    {"tc_name" : "showres_5"                           , "command" : "showres", "args" : "-x"},
+    {"tc_name" : "userres_1"                           , "command" : "userres", "args" : "r1 r2"},
+    {"tc_name" : "userres_2"                           , "command" : "userres", "args" : "rc1 rc2"},
+    {"tc_name" : "releaseres_2"                        , "command" : "releaseres" , "args" : "-d rc1 rc2", },
+    {"tc_name" : "setres_10"                           , "command" : "setres" , "args" : "-n r1 -s 2033_12_1-10:30 -d 50 -q q_1 ANL-R01-1024 ANL-R00-M0-512"},
+    {"tc_name" : "userres_3"                           , "command" : "userres", "args" : "r1 r2"},
+    {"tc_name" : "showres_6"                           , "command" : "showres", "args" : "-x"},
+    {"tc_name" : "releaseres_3"                        , "command" : "releaseres" , "args" : "-d r1", },
+    {"tc_name" : "showres_7"                           , "command" : "showres", "args" : "-x"},
     ]

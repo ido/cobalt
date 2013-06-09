@@ -91,9 +91,7 @@ def test_releaseres_arg_3():
 """Released reservation 's1,s2,s3', matched on 3 partitions
 """
 
-    cmderr    = \
-"""Reservation subset matched
-"""
+    cmderr    = ''
 
     stubout   = \
 """
@@ -149,9 +147,7 @@ def test_releaseres_arg_4():
 """Released reservation 's1,s2,s3,s4', matched on 3 partitions
 """
 
-    cmderr    = \
-"""Reservation subset matched
-"""
+    cmderr    = ''
 
     stubout   = \
 """
@@ -211,9 +207,7 @@ def test_releaseres_arg_5():
 """Released reservation 's1,s2,s3', matched on 3 partitions
 """
 
-    cmderr    = \
-"""Reservation subset matched
-"""
+    cmderr    = ''
 
     stubout   = \
 """
@@ -271,7 +265,7 @@ releaseres [--version] -p <partition> name
 """
 
     cmderr    = \
-"""Usage: releaseres.py [--version | --help] [-p partition] name
+"""Usage: releaseres.py [--version | --help | --debug] <reservation name>
 
 releaseres.py: error: no such option: -t
 """
@@ -321,7 +315,6 @@ component: "scheduler.get_reservations", defer: False
      )
 
 
-Reservation subset matched
 component: "scheduler.release_reservations", defer: False
   release_reservations(
      [{'name': 'p1'}, {'name': 's1'}, {'name': 's2'}, {'name': 's3'}],
@@ -399,7 +392,6 @@ component: "scheduler.get_reservations", defer: False
      )
 
 
-Reservation subset matched
 component: "scheduler.release_reservations", defer: False
   release_reservations(
      [{'name': 'p1'}, {'name': 's1'}, {'name': 's2'}, {'name': 's3'}],
@@ -464,7 +456,7 @@ def test_releaseres_help_1():
     args      = """--help"""
 
     cmdout    = \
-"""Usage: releaseres.py [--version | --help] [-p partition] name
+"""Usage: releaseres.py [--version | --help | --debug] <reservation name>
 
 Options:
   --version             show program's version number and exit
@@ -508,7 +500,7 @@ def test_releaseres_help_2():
     args      = """-h"""
 
     cmdout    = \
-"""Usage: releaseres.py [--version | --help] [-p partition] name
+"""Usage: releaseres.py [--version | --help | --debug] <reservation name>
 
 Options:
   --version             show program's version number and exit
