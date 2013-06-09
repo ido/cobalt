@@ -1,267 +1,21 @@
 import testutils
 
 # ---------------------------------------------------------------------------------
-def test_showres_arg_1():
+def test_releaseres_arg_1():
     """
-    showres test run: arg_1
+    releaseres test run: arg_1
 
         Command Output:
-        Reservation  Queue  User  Start  Duration  Passthrough  Partitions  
-        ====================================================================
         
-        Command Error/Debug:
+        Command Error/Debug:Need at least one reservation
+        
         
     """
 
     args      = ''
-    exp_rs    = 0
-
-    results = testutils.run_cmd('showres.py',args,None) 
-    rs      = results[0]
-    cmd_out = results[1]
-    cmd_err = results[3]
-
-    # Test Pass Criterias
-    no_rs_err     = (rs == exp_rs)
-    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
-
-    result = no_rs_err and no_fatal_exc
-
-    errmsg  = "\n\nFailed Data:\n\n" \
-        "Return Status %s, Expected Return Status %s\n\n" \
-        "Command Output:\n%s\n\n" \
-        "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
-
-    assert result, errmsg
-
-# ---------------------------------------------------------------------------------
-def test_showres_arg_2():
-    """
-    showres test run: arg_2
-
-        Command Output:
-        Reservation  Queue  User  Start  Duration  Passthrough  Partitions  
-        ====================================================================
-        
-        Command Error/Debug:
-        
-    """
-
-    args      = """--oldts"""
-    exp_rs    = 0
-
-    results = testutils.run_cmd('showres.py',args,None) 
-    rs      = results[0]
-    cmd_out = results[1]
-    cmd_err = results[3]
-
-    # Test Pass Criterias
-    no_rs_err     = (rs == exp_rs)
-    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
-
-    result = no_rs_err and no_fatal_exc
-
-    errmsg  = "\n\nFailed Data:\n\n" \
-        "Return Status %s, Expected Return Status %s\n\n" \
-        "Command Output:\n%s\n\n" \
-        "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
-
-    assert result, errmsg
-
-# ---------------------------------------------------------------------------------
-def test_showres_arg_3():
-    """
-    showres test run: arg_3
-
-        Command Output:
-        Reservation  Queue  User  Start  Duration  Passthrough  Partitions  
-        ====================================================================
-        
-        Command Error/Debug:No arguments needed
-        
-        
-    """
-
-    args      = """arg1"""
-    exp_rs    = 0
-
-    results = testutils.run_cmd('showres.py',args,None) 
-    rs      = results[0]
-    cmd_out = results[1]
-    cmd_err = results[3]
-
-    # Test Pass Criterias
-    no_rs_err     = (rs == exp_rs)
-    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
-
-    result = no_rs_err and no_fatal_exc
-
-    errmsg  = "\n\nFailed Data:\n\n" \
-        "Return Status %s, Expected Return Status %s\n\n" \
-        "Command Output:\n%s\n\n" \
-        "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
-
-    assert result, errmsg
-
-# ---------------------------------------------------------------------------------
-def test_showres_l_option_1():
-    """
-    showres test run: l_option_1
-
-        Command Output:
-        Reservation  Queue  User  Start  Duration  End Time  Cycle Time  Passthrough  Partitions  
-        ==========================================================================================
-        
-        Command Error/Debug:
-        
-    """
-
-    args      = """-l"""
-    exp_rs    = 0
-
-    results = testutils.run_cmd('showres.py',args,None) 
-    rs      = results[0]
-    cmd_out = results[1]
-    cmd_err = results[3]
-
-    # Test Pass Criterias
-    no_rs_err     = (rs == exp_rs)
-    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
-
-    result = no_rs_err and no_fatal_exc
-
-    errmsg  = "\n\nFailed Data:\n\n" \
-        "Return Status %s, Expected Return Status %s\n\n" \
-        "Command Output:\n%s\n\n" \
-        "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
-
-    assert result, errmsg
-
-# ---------------------------------------------------------------------------------
-def test_showres_l_option_2():
-    """
-    showres test run: l_option_2
-
-        Command Output:
-        Reservation  Queue  User  Start  Duration  End Time  Cycle Time  Passthrough  Partitions  
-        ==========================================================================================
-        
-        Command Error/Debug:
-        
-    """
-
-    args      = """-l --oldts"""
-    exp_rs    = 0
-
-    results = testutils.run_cmd('showres.py',args,None) 
-    rs      = results[0]
-    cmd_out = results[1]
-    cmd_err = results[3]
-
-    # Test Pass Criterias
-    no_rs_err     = (rs == exp_rs)
-    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
-
-    result = no_rs_err and no_fatal_exc
-
-    errmsg  = "\n\nFailed Data:\n\n" \
-        "Return Status %s, Expected Return Status %s\n\n" \
-        "Command Output:\n%s\n\n" \
-        "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
-
-    assert result, errmsg
-
-# ---------------------------------------------------------------------------------
-def test_showres_x_option_1():
-    """
-    showres test run: x_option_1
-
-        Command Output:
-        Reservation  Queue  User  Start  Duration  End Time  Cycle Time  Passthrough  Partitions  Project  ResID  CycleID  
-        ===================================================================================================================
-        
-        Command Error/Debug:
-        
-    """
-
-    args      = """-x"""
-    exp_rs    = 0
-
-    results = testutils.run_cmd('showres.py',args,None) 
-    rs      = results[0]
-    cmd_out = results[1]
-    cmd_err = results[3]
-
-    # Test Pass Criterias
-    no_rs_err     = (rs == exp_rs)
-    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
-
-    result = no_rs_err and no_fatal_exc
-
-    errmsg  = "\n\nFailed Data:\n\n" \
-        "Return Status %s, Expected Return Status %s\n\n" \
-        "Command Output:\n%s\n\n" \
-        "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
-
-    assert result, errmsg
-
-# ---------------------------------------------------------------------------------
-def test_showres_x_option_1():
-    """
-    showres test run: x_option_1
-
-        Command Output:
-        Reservation  Queue  User  Start  Duration  End Time  Cycle Time  Passthrough  Partitions  Project  ResID  CycleID  
-        ===================================================================================================================
-        
-        Command Error/Debug:
-        
-    """
-
-    args      = """-x --oldts"""
-    exp_rs    = 0
-
-    results = testutils.run_cmd('showres.py',args,None) 
-    rs      = results[0]
-    cmd_out = results[1]
-    cmd_err = results[3]
-
-    # Test Pass Criterias
-    no_rs_err     = (rs == exp_rs)
-    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
-
-    result = no_rs_err and no_fatal_exc
-
-    errmsg  = "\n\nFailed Data:\n\n" \
-        "Return Status %s, Expected Return Status %s\n\n" \
-        "Command Output:\n%s\n\n" \
-        "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
-
-    assert result, errmsg
-
-# ---------------------------------------------------------------------------------
-def test_showres_combo():
-    """
-    showres test run: combo
-
-        Command Output:
-        
-        Command Error/Debug:Only use -l or -x not both
-        
-        
-    """
-
-    args      = """-l -x"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('showres.py',args,None) 
+    results = testutils.run_cmd('releaseres.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -281,20 +35,277 @@ def test_showres_combo():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
-def test_showres_help_1():
+def test_releaseres_arg_2():
     """
-    showres test run: help_1
+    releaseres test run: arg_2
 
         Command Output:
-        Usage: showres [-l] [-x] [--oldts] [--version]
+        
+        Command Error/Debug:Need at least one reservation
+        
+        
+    """
+
+    args      = """-p p1"""
+    exp_rs    = 256
+
+    results = testutils.run_cmd('releaseres.py',args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_releaseres_arg_3():
+    """
+    releaseres test run: arg_3
+
+        Command Output:
+        
+        Command Error/Debug:No Reservations matched
+        
+        
+    """
+
+    args      = """s1 s2 s3"""
+    exp_rs    = 256
+
+    results = testutils.run_cmd('releaseres.py',args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_releaseres_arg_4():
+    """
+    releaseres test run: arg_4
+
+        Command Output:
+        
+        Command Error/Debug:No Reservations matched
+        
+        
+    """
+
+    args      = """s1 s2 s3 s4"""
+    exp_rs    = 256
+
+    results = testutils.run_cmd('releaseres.py',args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_releaseres_arg_5():
+    """
+    releaseres test run: arg_5
+
+        Command Output:
+        
+        Command Error/Debug:No Reservations matched
+        
+        
+    """
+
+    args      = """-p p1 s1 s2 s3"""
+    exp_rs    = 256
+
+    results = testutils.run_cmd('releaseres.py',args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_releaseres_arg_6():
+    """
+    releaseres test run: arg_6
+
+        Command Output:
+        
+        Command Error/Debug:Usage: releaseres.py [--version | --help] [-p partition] name
+        
+        releaseres.py: error: no such option: -t
+        
+        
+    """
+
+    args      = """-t p1 s1 s2 s3"""
+    exp_rs    = 512
+
+    results = testutils.run_cmd('releaseres.py',args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_releaseres_arg_7():
+    """
+    releaseres test run: arg_7
+
+        Command Output:
+        
+        Command Error/Debug:
+        releaseres.py -d p1 s1 s2 s3
+        
+        component: "scheduler.get_reservations", defer: False
+          get_reservations(
+             [{'name': 'p1'}, {'name': 's1'}, {'name': 's2'}, {'name': 's3'}],
+             )
+        
+        
+        No Reservations matched
+        
+        
+    """
+
+    args      = """-d p1 s1 s2 s3"""
+    exp_rs    = 256
+
+    results = testutils.run_cmd('releaseres.py',args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_releaseres_arg_8():
+    """
+    releaseres test run: arg_8
+
+        Command Output:
+        
+        Command Error/Debug:
+        releaseres.py --debug p1 s1 s2 s3
+        
+        component: "scheduler.get_reservations", defer: False
+          get_reservations(
+             [{'name': 'p1'}, {'name': 's1'}, {'name': 's2'}, {'name': 's3'}],
+             )
+        
+        
+        No Reservations matched
+        
+        
+    """
+
+    args      = """--debug p1 s1 s2 s3"""
+    exp_rs    = 256
+
+    results = testutils.run_cmd('releaseres.py',args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_releaseres_help_1():
+    """
+    releaseres test run: help_1
+
+        Command Output:
+        Usage: releaseres.py [--version | --help] [-p partition] name
         
         Options:
-          --version    show program's version number and exit
-          -h, --help   show this help message and exit
-          -d, --debug  turn on communication debugging
-          -l           print reservation list verbose
-          --oldts      use old timestamp
-          -x           print reservations really verbose
+          --version             show program's version number and exit
+          -h, --help            show this help message and exit
+          -d, --debug           turn on communication debugging
+          -p PARTITION, --partition=PARTITION
+                                name of partion(s). Option currently not implemented.
         
         Command Error/Debug:
         
@@ -303,7 +314,7 @@ def test_showres_help_1():
     args      = """--help"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('showres.py',args,None) 
+    results = testutils.run_cmd('releaseres.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -323,20 +334,19 @@ def test_showres_help_1():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
-def test_showres_help_2():
+def test_releaseres_help_2():
     """
-    showres test run: help_2
+    releaseres test run: help_2
 
         Command Output:
-        Usage: showres [-l] [-x] [--oldts] [--version]
+        Usage: releaseres.py [--version | --help] [-p partition] name
         
         Options:
-          --version    show program's version number and exit
-          -h, --help   show this help message and exit
-          -d, --debug  turn on communication debugging
-          -l           print reservation list verbose
-          --oldts      use old timestamp
-          -x           print reservations really verbose
+          --version             show program's version number and exit
+          -h, --help            show this help message and exit
+          -d, --debug           turn on communication debugging
+          -p PARTITION, --partition=PARTITION
+                                name of partion(s). Option currently not implemented.
         
         Command Error/Debug:
         
@@ -345,7 +355,7 @@ def test_showres_help_2():
     args      = """-h"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('showres.py',args,None) 
+    results = testutils.run_cmd('releaseres.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -365,12 +375,12 @@ def test_showres_help_2():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
-def test_showres_version():
+def test_releaseres_version():
     """
-    showres test run: version
+    releaseres test run: version
 
         Command Output:
-        version: "showres.py " + $Revision: 2154 $ + , Cobalt  + $Version$
+        version: "releaseres.py " + $Id: releaseres.py 2146 2011-04-29 16:19:22Z richp $ + , Cobalt  + $Version$
         
         Command Error/Debug:
         
@@ -379,56 +389,7 @@ def test_showres_version():
     args      = """--version"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('showres.py',args,None) 
-    rs      = results[0]
-    cmd_out = results[1]
-    cmd_err = results[3]
-
-    # Test Pass Criterias
-    no_rs_err     = (rs == exp_rs)
-    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
-
-    result = no_rs_err and no_fatal_exc
-
-    errmsg  = "\n\nFailed Data:\n\n" \
-        "Return Status %s, Expected Return Status %s\n\n" \
-        "Command Output:\n%s\n\n" \
-        "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
-
-    assert result, errmsg
-
-# ---------------------------------------------------------------------------------
-def test_showres_debug():
-    """
-    showres test run: debug
-
-        Command Output:
-        Reservation  Queue  User  Start  Duration  Passthrough  Partitions  
-        ====================================================================
-        
-        Command Error/Debug:
-        showres.py --debug
-        
-        component: "system.get_implementation", defer: False
-          get_implementation(
-             )
-        
-        
-        component: "scheduler.get_reservations", defer: False
-          get_reservations(
-             [{'users': '*', 'block_passthrough': '*', 'duration': '*', 'cycle': '*', 'project': '*', 'cycle_id': '*', 'name': '*', 'queue': '*', 'start': '*', 'partitions': '*', 'res_id': '*'}],
-             )
-        
-        
-        
-        
-    """
-
-    args      = """--debug"""
-    exp_rs    = 0
-
-    results = testutils.run_cmd('showres.py',args,None) 
+    results = testutils.run_cmd('releaseres.py',args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]

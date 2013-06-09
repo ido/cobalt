@@ -63,7 +63,7 @@ def test_cqadm_getq_option_2():
              )
         
         
-        [{'maxuserjobs': None, 'priority': 0, 'name': 'default', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_4', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_1', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_3', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_2', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}]
+        [{'maxuserjobs': None, 'priority': 0, 'name': 'default', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_4', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_1', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_2', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_3', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}]
         
         
     """
@@ -229,7 +229,7 @@ def test_cqadm_kill_job_1():
              )
         
         
-        [{'tag': 'job', 'location': None, 'walltime': 65, 'jobid': 1}, {'tag': 'job', 'location': ['ANL-R01-M0-512'], 'walltime': 115, 'jobid': 2}, {'tag': 'job', 'location': ['ANL-R00-M0-512'], 'walltime': 165, 'jobid': 3}]
+        [{'tag': 'job', 'location': None, 'walltime': 65, 'jobid': 1}]
         
         
     """

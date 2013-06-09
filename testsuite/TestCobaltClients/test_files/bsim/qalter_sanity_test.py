@@ -53,15 +53,7 @@ def test_qalter_simple_2():
              )
         
         
-        component: "queue-manager.set_jobs", defer: False
-          set_jobs(
-             [{'project': None, 'user': 'georgerojas', 'jobid': 1, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 65, 'procs': 30, 'notify': None}],
-             {'queue': 'default', 'mode': 'smp', 'jobid': 1, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': 65, 'procs': 30, 'user': 'georgerojas'},
-             georgerojas,
-             )
-        
-        
-        [{'project': None, 'user': 'georgerojas', 'jobid': 1, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 65, 'procs': 30, 'notify': None}]
+        Failed to match any jobs or queues
         
         
     """
@@ -95,7 +87,8 @@ def test_qalter_simple_3():
 
         Command Output:
         
-        Command Error/Debug:
+        Command Error/Debug:Failed to match any jobs or queues
+        
         
     """
 
@@ -161,11 +154,9 @@ def test_qalter_time_2():
     qalter test run: time_2
 
         Command Output:
-        nodes changed from 30 to 10
-        walltime changed from 65 to 70.0
-        procs changed from 30 to 10
         
-        Command Error/Debug:
+        Command Error/Debug:Failed to match any jobs or queues
+        
         
     """
 
@@ -197,9 +188,9 @@ def test_qalter_time_5():
     qalter test run: time_5
 
         Command Output:
-        walltime changed from 70 to 0
         
-        Command Error/Debug:
+        Command Error/Debug:Failed to match any jobs or queues
+        
         
     """
 
@@ -231,9 +222,9 @@ def test_qalter_time_6():
     qalter test run: time_6
 
         Command Output:
-        walltime changed from 0 to 0.0
         
-        Command Error/Debug:
+        Command Error/Debug:Failed to match any jobs or queues
+        
         
     """
 
@@ -265,9 +256,9 @@ def test_qalter_time_7():
     qalter test run: time_7
 
         Command Output:
-        walltime changed from 0 to 0
         
-        Command Error/Debug:
+        Command Error/Debug:Failed to match any jobs or queues
+        
         
     """
 
@@ -299,9 +290,9 @@ def test_qalter_time_8():
     qalter test run: time_8
 
         Command Output:
-        walltime changed from 0 to 0.0
         
-        Command Error/Debug:
+        Command Error/Debug:Failed to match any jobs or queues
+        
         
     """
 
@@ -369,9 +360,9 @@ def test_qalter_email_option():
     qalter test run: email_option
 
         Command Output:
-        notify changed from None to j@gmail.com
         
-        Command Error/Debug:
+        Command Error/Debug:Failed to match any jobs or queues
+        
         
     """
 

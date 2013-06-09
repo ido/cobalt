@@ -627,6 +627,12 @@ class SchedStub(object):
         logmsg('user: '     + str(user))
         return True
 
+    def release_reservations(self,spec,user):
+        logmsg("\RELEASE_RESERVATIONS\n")
+        logdiclist(spec)
+        logmsg('user: '     + str(user))
+        return ['one','two','three']
+
     def add_reservations(self,specs,user):
         logmsg("\nADD_RESERVATIONS\n")
         logdiclist(specs)

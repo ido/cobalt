@@ -8,12 +8,12 @@ def test_slpstat_arg_1():
         Command Output:
         Name                  Location                                 Update Time               
         =========================================================================================
-        system                https://Georges-MacBook-Pro.local:54115  Thu Jun  6 21:55:56 2013  
-        queue-manager         https://Georges-MacBook-Pro.local:54102  Thu Jun  6 21:55:54 2013  
-        scheduler             https://Georges-MacBook-Pro.local:54096  Thu Jun  6 21:55:54 2013  
-        system_script_forker  https://Georges-MacBook-Pro.local:54100  Thu Jun  6 21:56:04 2013  
-        bg_mpirun_forker      https://Georges-MacBook-Pro.local:54094  Thu Jun  6 21:55:56 2013  
-        user_script_forker    https://Georges-MacBook-Pro.local:54097  Thu Jun  6 21:55:56 2013  
+        system                https://Georges-MacBook-Pro.local:59479  Sat Jun  8 20:57:48 2013  
+        queue-manager         https://Georges-MacBook-Pro.local:59465  Sat Jun  8 20:57:47 2013  
+        bg_mpirun_forker      https://Georges-MacBook-Pro.local:59457  Sat Jun  8 20:57:51 2013  
+        scheduler             https://Georges-MacBook-Pro.local:59463  Sat Jun  8 20:57:47 2013  
+        system_script_forker  https://Georges-MacBook-Pro.local:59459  Sat Jun  8 20:58:00 2013  
+        user_script_forker    https://Georges-MacBook-Pro.local:59460  Sat Jun  8 20:57:51 2013  
         
         Command Error/Debug:
         
@@ -49,12 +49,12 @@ def test_slpstat_arg_2():
         Command Output:
         Name                  Location                                 Update Time               
         =========================================================================================
-        system                https://Georges-MacBook-Pro.local:54115  Thu Jun  6 21:55:56 2013  
-        queue-manager         https://Georges-MacBook-Pro.local:54102  Thu Jun  6 21:55:54 2013  
-        scheduler             https://Georges-MacBook-Pro.local:54096  Thu Jun  6 21:55:54 2013  
-        system_script_forker  https://Georges-MacBook-Pro.local:54100  Thu Jun  6 21:56:04 2013  
-        bg_mpirun_forker      https://Georges-MacBook-Pro.local:54094  Thu Jun  6 21:55:56 2013  
-        user_script_forker    https://Georges-MacBook-Pro.local:54097  Thu Jun  6 21:55:56 2013  
+        system                https://Georges-MacBook-Pro.local:59479  Sat Jun  8 20:57:48 2013  
+        queue-manager         https://Georges-MacBook-Pro.local:59465  Sat Jun  8 20:57:47 2013  
+        bg_mpirun_forker      https://Georges-MacBook-Pro.local:59457  Sat Jun  8 20:57:51 2013  
+        scheduler             https://Georges-MacBook-Pro.local:59463  Sat Jun  8 20:57:47 2013  
+        system_script_forker  https://Georges-MacBook-Pro.local:59459  Sat Jun  8 20:58:00 2013  
+        user_script_forker    https://Georges-MacBook-Pro.local:59460  Sat Jun  8 20:57:51 2013  
         
         Command Error/Debug:
         
@@ -90,12 +90,12 @@ def test_slpstat_arg_3():
         Command Output:
         Name                  Location                                 Update Time               
         =========================================================================================
-        system                https://Georges-MacBook-Pro.local:54115  Thu Jun  6 21:55:56 2013  
-        queue-manager         https://Georges-MacBook-Pro.local:54102  Thu Jun  6 21:55:54 2013  
-        scheduler             https://Georges-MacBook-Pro.local:54096  Thu Jun  6 21:55:54 2013  
-        system_script_forker  https://Georges-MacBook-Pro.local:54100  Thu Jun  6 21:56:04 2013  
-        bg_mpirun_forker      https://Georges-MacBook-Pro.local:54094  Thu Jun  6 21:55:56 2013  
-        user_script_forker    https://Georges-MacBook-Pro.local:54097  Thu Jun  6 21:55:56 2013  
+        system                https://Georges-MacBook-Pro.local:59479  Sat Jun  8 20:57:48 2013  
+        queue-manager         https://Georges-MacBook-Pro.local:59465  Sat Jun  8 20:57:47 2013  
+        bg_mpirun_forker      https://Georges-MacBook-Pro.local:59457  Sat Jun  8 20:57:51 2013  
+        scheduler             https://Georges-MacBook-Pro.local:59463  Sat Jun  8 20:57:47 2013  
+        system_script_forker  https://Georges-MacBook-Pro.local:59459  Sat Jun  8 20:58:00 2013  
+        user_script_forker    https://Georges-MacBook-Pro.local:59460  Sat Jun  8 20:57:51 2013  
         
         Command Error/Debug:No arguments needed
         
@@ -132,12 +132,12 @@ def test_slpstat_debug_1():
         Command Output:
         Name                  Location                                 Update Time               
         =========================================================================================
-        system                https://Georges-MacBook-Pro.local:54115  Thu Jun  6 21:55:56 2013  
-        queue-manager         https://Georges-MacBook-Pro.local:54102  Thu Jun  6 21:55:54 2013  
-        scheduler             https://Georges-MacBook-Pro.local:54096  Thu Jun  6 21:55:54 2013  
-        system_script_forker  https://Georges-MacBook-Pro.local:54100  Thu Jun  6 21:56:04 2013  
-        bg_mpirun_forker      https://Georges-MacBook-Pro.local:54094  Thu Jun  6 21:55:56 2013  
-        user_script_forker    https://Georges-MacBook-Pro.local:54097  Thu Jun  6 21:55:56 2013  
+        system                https://Georges-MacBook-Pro.local:59479  Sat Jun  8 20:57:48 2013  
+        queue-manager         https://Georges-MacBook-Pro.local:59465  Sat Jun  8 20:57:47 2013  
+        bg_mpirun_forker      https://Georges-MacBook-Pro.local:59457  Sat Jun  8 20:57:51 2013  
+        scheduler             https://Georges-MacBook-Pro.local:59463  Sat Jun  8 20:57:47 2013  
+        system_script_forker  https://Georges-MacBook-Pro.local:59459  Sat Jun  8 20:58:00 2013  
+        user_script_forker    https://Georges-MacBook-Pro.local:59460  Sat Jun  8 20:57:51 2013  
         
         Command Error/Debug:
         slpstat.py -d
@@ -182,12 +182,12 @@ def test_slpstat_debug_2():
         Command Output:
         Name                  Location                                 Update Time               
         =========================================================================================
-        system                https://Georges-MacBook-Pro.local:54115  Thu Jun  6 21:55:56 2013  
-        queue-manager         https://Georges-MacBook-Pro.local:54102  Thu Jun  6 21:55:54 2013  
-        scheduler             https://Georges-MacBook-Pro.local:54096  Thu Jun  6 21:55:54 2013  
-        system_script_forker  https://Georges-MacBook-Pro.local:54100  Thu Jun  6 21:56:04 2013  
-        bg_mpirun_forker      https://Georges-MacBook-Pro.local:54094  Thu Jun  6 21:55:56 2013  
-        user_script_forker    https://Georges-MacBook-Pro.local:54097  Thu Jun  6 21:55:56 2013  
+        system                https://Georges-MacBook-Pro.local:59479  Sat Jun  8 20:57:48 2013  
+        queue-manager         https://Georges-MacBook-Pro.local:59465  Sat Jun  8 20:57:47 2013  
+        bg_mpirun_forker      https://Georges-MacBook-Pro.local:59457  Sat Jun  8 20:57:51 2013  
+        scheduler             https://Georges-MacBook-Pro.local:59463  Sat Jun  8 20:57:47 2013  
+        system_script_forker  https://Georges-MacBook-Pro.local:59459  Sat Jun  8 20:58:00 2013  
+        user_script_forker    https://Georges-MacBook-Pro.local:59460  Sat Jun  8 20:57:51 2013  
         
         Command Error/Debug:
         slpstat.py -d

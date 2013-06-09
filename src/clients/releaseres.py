@@ -1,62 +1,73 @@
 #!/usr/bin/env python
 
-'''This script removes reservations'''
+"""
+Delete Cobalt Scheduler Reservation(s)
+
+Usage: %prog [--version | --help] [-p partition] name
+version: "%prog " + __revision__ + , Cobalt  + __version__
+
+
+OPTIONS DEFINITIONS:
+
+'-d','--debug',dest='debug',help='turn on communication debugging',callback=cb_debug
+'-p', '--partition', dest='partition', help='name of partion(s). Option currently not implemented.'
+
+"""
+import logging
+import sys
+from Cobalt import client_utils
+from Cobalt.client_utils import cb_debug
+from Cobalt.arg_parser import ArgParse
+
 __revision__ = '$Id: releaseres.py 2146 2011-04-29 16:19:22Z richp $'
 __version__ = '$Version$'
 
-import getopt, sys
-import os
-import pwd
-import xmlrpclib
+SCHMGR = client_utils.SCHMGR
 
-from Cobalt.Proxy import ComponentProxy
-from Cobalt.Exceptions import ComponentLookupError
+def main():
+    """
+    showres main
+    """
+    # setup logging for client. The clients should call this before doing anything else.
+    client_utils.setup_logging(logging.INFO)
 
-if __name__ == '__main__':
-    if '--version' in sys.argv:
-        print "releaseres %s" % __revision__
-        print "cobalt %s" % __version__
-        raise SystemExit, 0
+    # list of callback with its arguments
+    callbacks = [
+        # <cb function>     <cb args>
+        [ cb_debug        , () ] ]
 
-    try:
-        (opts, args) = getopt.getopt(sys.argv[1:], 'p:', [])
-    except getopt.GetoptError, msg:
-        print msg
-        print "releaseres [--version] -p <partition> name"
-        raise SystemExit, 1
+    # Get the version information
+    opt_def =  __doc__.replace('__revision__',__revision__)
+    opt_def =  opt_def.replace('__version__',__version__)
 
-    if not args:
-        print "releaseres [--version] -p <partition> name"
-        raise SystemExit, 1
+    parser = ArgParse(opt_def,callbacks)
 
-    try:
-        scheduler = ComponentProxy("scheduler", defer=False)
-    except ComponentLookupError:
-        print "Failed to connect to scheduler"
-        raise SystemExit, 1
+    parser.parse_it() # parse the command line
+    args = parser.args
+
+    if parser.no_args():
+        client_utils.logger.error("Need at least one reservation")
+        sys.exit(1)
 
     # Check if reservation exists
     spec = [{'name': arg} for arg in args]
-    try:
-        result = scheduler.get_reservations(spec)
-    except xmlrpclib.Fault, flt:
-        if flt.faultCode == 1:
-            print "Error communicating with scheduler"
-            sys.exit(1)
+    result = client_utils.component_call(SCHMGR, False, 'get_reservations', (spec,))
 
     if len(result) and len(result) != len(args):
-        print "Reservation subset matched" 
+        client_utils.logger.error("Reservation subset matched")
     elif not result:
-        print "No Reservations matched"
-        raise SystemExit, 1
+        client_utils.logger.error("No Reservations matched")
+        sys.exit(1)
 
+    result = client_utils.component_call(SCHMGR, False, 'release_reservations', (spec, client_utils.getuid()))
 
+    client_utils.logger.info("Released reservation '%s', matched on %d partitions", ','.join(args), len(result))
+
+if __name__ == '__main__':
     try:
-        result = scheduler.release_reservations(spec, pwd.getpwuid(os.getuid())[0])
-    except xmlrpclib.Fault, flt:
-        if flt.faultCode == 1:
-            print "Error communicating with scheduler"
-            sys.exit(1)
-
-    print "Released reservation '%s', matched on %d partitions" % \
-          (','.join(args), len(result))
+        main()
+    except SystemExit:
+        raise
+    except Exception, e:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", e)
+        sys.exit(1)
