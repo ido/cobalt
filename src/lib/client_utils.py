@@ -567,7 +567,6 @@ def setup_logging(level):
     global logger
 
     if hasattr(logger, 'already_setup'):
-        print('already done')
         return
 
     logger               = Logger(level)

@@ -1,5 +1,6 @@
 import testutils
-
+import os
+import pwd
 # ---------------------------------------------------------------------------------
 def test_qstat_version_option():
     """
@@ -15,7 +16,10 @@ def test_qstat_version_option():
     args      = """--version"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qstat.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qstat.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -30,7 +34,7 @@ def test_qstat_version_option():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -61,7 +65,10 @@ def test_qstat_help_option():
     args      = """-h"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qstat.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qstat.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -76,7 +83,7 @@ def test_qstat_help_option():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -114,7 +121,10 @@ def test_qstat_debug_only():
     args      = """-d"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qstat.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qstat.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -129,7 +139,7 @@ def test_qstat_debug_only():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -141,9 +151,9 @@ def test_qstat_full_option_10():
         Command Output:
         JobID  JobName  User         Score    WallTime  QueuedTime  RunTime  Nodes  State   Location  Mode  Procs  Queue    StartTime  
         ===============================================================================================================================
-        5      -        georgerojas    0.6    02:45:00  00:01:06    N/A      30     queued  None      smp   30     default  N/A        
-        6      -        georgerojas    0.6    02:30:00  00:01:02    N/A      30     queued  None      smp   30     default  N/A        
-        7      -        georgerojas    0.6    02:30:00  00:01:02    N/A      30     queued  None      smp   30     default  N/A        
+        5      -        georgerojas    1.2    02:45:00  00:02:09    N/A      30     queued  None      smp   30     default  N/A        
+        6      -        georgerojas    1.2    02:30:00  00:02:05    N/A      30     queued  None      smp   30     default  N/A        
+        7      -        georgerojas    1.2    02:30:00  00:02:05    N/A      30     queued  None      smp   30     default  N/A        
         
         Command Error/Debug:
         
@@ -152,7 +162,10 @@ def test_qstat_full_option_10():
     args      = """-f"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qstat.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qstat.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -167,7 +180,7 @@ def test_qstat_full_option_10():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -206,7 +219,10 @@ def test_qstat_long_option_1():
     args      = """-l"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qstat.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qstat.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -221,7 +237,7 @@ def test_qstat_long_option_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -235,9 +251,9 @@ def test_qstat_queue_option_3():
         ==========================================================================================================
         default  None   None     None     None        None       None          None          None        running  
         q_4      None   None     None     None        None       None          None          None        running  
-        q_1      None   None     None     None        None       None          None          None        running  
-        q_3      None   None     None     None        None       None          None          None        running  
         q_2      None   None     None     None        None       None          None          None        running  
+        q_3      None   None     None     None        None       None          None          None        running  
+        q_1      None   None     None     None        None       None          None          None        running  
         
         Command Error/Debug:
         
@@ -246,7 +262,10 @@ def test_qstat_queue_option_3():
     args      = """-f --sort users -Q"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qstat.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qstat.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -261,7 +280,7 @@ def test_qstat_queue_option_3():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -286,7 +305,10 @@ def test_qstat_queue_option_4():
     args      = """-Q"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qstat.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qstat.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -301,7 +323,7 @@ def test_qstat_queue_option_4():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -326,7 +348,10 @@ def test_qstat_queue_option_5():
     args      = """-Q --reverse"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qstat.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qstat.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -341,7 +366,7 @@ def test_qstat_queue_option_5():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -355,9 +380,9 @@ def test_qstat_queue_option_6():
         ==========================================================================================================
         default  None   None     None     None        None       None          None          None        running  
         q_4      None   None     None     None        None       None          None          None        running  
-        q_1      None   None     None     None        None       None          None          None        running  
-        q_3      None   None     None     None        None       None          None          None        running  
         q_2      None   None     None     None        None       None          None          None        running  
+        q_3      None   None     None     None        None       None          None          None        running  
+        q_1      None   None     None     None        None       None          None          None        running  
         
         Command Error/Debug:
         
@@ -366,7 +391,10 @@ def test_qstat_queue_option_6():
     args      = """-Q --sort users"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qstat.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qstat.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -381,7 +409,7 @@ def test_qstat_queue_option_6():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -393,9 +421,9 @@ def test_qstat_queue_option_7():
         Command Output:
         Name     Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
         ==========================================================================================================
-        q_2      None   None     None     None        None       None          None          None        running  
-        q_3      None   None     None     None        None       None          None          None        running  
         q_1      None   None     None     None        None       None          None          None        running  
+        q_3      None   None     None     None        None       None          None          None        running  
+        q_2      None   None     None     None        None       None          None          None        running  
         q_4      None   None     None     None        None       None          None          None        running  
         default  None   None     None     None        None       None          None          None        running  
         
@@ -406,7 +434,10 @@ def test_qstat_queue_option_7():
     args      = """-Q --sort users --reverse"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qstat.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qstat.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -421,7 +452,7 @@ def test_qstat_queue_option_7():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -494,7 +525,10 @@ def test_qstat_queue_option_8():
     args      = """-Q -l"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qstat.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qstat.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -509,7 +543,7 @@ def test_qstat_queue_option_8():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -582,7 +616,10 @@ def test_qstat_queue_option_9():
     args      = """-Q --reverse -l"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qstat.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qstat.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -597,7 +634,7 @@ def test_qstat_queue_option_9():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -629,7 +666,7 @@ def test_qstat_queue_option_10():
             TotalNodes   : None
             State        : running
         
-        Name: q_1
+        Name: q_2
             Users        : None
             MinTime      : None
             MaxTime      : None
@@ -651,7 +688,7 @@ def test_qstat_queue_option_10():
             TotalNodes   : None
             State        : running
         
-        Name: q_2
+        Name: q_1
             Users        : None
             MinTime      : None
             MaxTime      : None
@@ -670,7 +707,10 @@ def test_qstat_queue_option_10():
     args      = """-Q --sort users -l"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qstat.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qstat.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -685,7 +725,7 @@ def test_qstat_queue_option_10():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -695,7 +735,7 @@ def test_qstat_queue_option_11():
     qstat test run: queue_option_11
 
         Command Output:
-        Name: q_2
+        Name: q_1
             Users        : None
             MinTime      : None
             MaxTime      : None
@@ -717,7 +757,7 @@ def test_qstat_queue_option_11():
             TotalNodes   : None
             State        : running
         
-        Name: q_1
+        Name: q_2
             Users        : None
             MinTime      : None
             MaxTime      : None
@@ -758,7 +798,10 @@ def test_qstat_queue_option_11():
     args      = """-Q --sort users --reverse -l"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qstat.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qstat.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -773,7 +816,7 @@ def test_qstat_queue_option_11():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -798,7 +841,10 @@ def test_qstat_queue_option_12():
     args      = """-Q --header Jobid:State:RunTime"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('qstat.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qstat.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -813,7 +859,7 @@ def test_qstat_queue_option_12():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -836,7 +882,10 @@ def test_qstat_no_arguments_or_options():
     args      = ''
     exp_rs    = 0
 
-    results = testutils.run_cmd('qstat.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qstat.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -851,6 +900,6 @@ def test_qstat_no_arguments_or_options():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg

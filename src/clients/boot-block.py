@@ -80,7 +80,7 @@ def main():
     jobid = opts.jobid
     if jobid == None:
         try:
-            jobid = os.environ['COBALT_JOBID']
+            jobid = int(os.environ['COBALT_JOBID'])
         except KeyError:
             client_utils.logger.error("ERROR: Cobalt jobid not specified as option or in environment.")
             sys.exit(BAD_OPTION_FAIL)

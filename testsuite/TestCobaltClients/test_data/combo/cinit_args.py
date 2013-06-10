@@ -1,14 +1,9 @@
 import time
+import pwd
+import os
 """
 This module is use for generating combo cobalt client commands on a Brooklyn or real system
 """
-
-year    = str(time.localtime(time.time()).tm_year+10)
-mon     = str(time.localtime(time.time()).tm_mon)
-day     = str(time.localtime(time.time()).tm_mday)
-hr      = str(time.localtime(time.time()).tm_hour)
-minutes = str(time.localtime(time.time()).tm_min)
-
 test_argslist = [
     {"tc_name" : "delete_partions"                     , "command" : "partadm", "args" : "-d '*'"},
     {"tc_name" : "add_partition_ANL_R00_R01_2048"      , "command" : "partadm", "args" : "-a ANL-R00-R01-2048"},
@@ -50,7 +45,7 @@ test_argslist = [
     {"tc_name" : "appq_2"                              , "command" : "partadm", "args" : """--queue q_2 --appq ANL-R00-R01-2048"""},
     {"tc_name" : "list_9"                              , "command" : "partadm", "args" : "-l"},
     {"tc_name" : "qstat_2"                             , "command" : "qstat"  , "args" : "-Q"},
-    {"tc_name" : "setres_1"                            , "command" : "setres" , "args" : "-n george -s %s_%s_%s-%s:%s -d 50  -q q_1 ANL-R00-R01-2048" % (year, mon, day, hr, minutes) },
+    {"tc_name" : "setres_1"                            , "command" : "setres" , "args" : "-n george -s 2022_06_30-10:30 -d 50  -q q_1 ANL-R00-R01-2048"},
     {"tc_name" : "showres_1"                           , "command" : "showres", "args" : "-x"},
     {"tc_name" : "setres_2"                            , "command" : "setres" , "args" : "-n george -m -d 300"},
     {"tc_name" : "showres_2"                           , "command" : "showres", "args" : "-x"},
@@ -77,4 +72,21 @@ test_argslist = [
     {"tc_name" : "qstat_9"                             , "command" : "qstat"  , "args" : ""},
     {"tc_name" : "qalter_4"                            , "command" : "qalter" , "args" : "--debug  --defer 6 7"},
     {"tc_name" : "qstat_10"                            , "command" : "qstat"  , "args" : ""},
+    {"tc_name" : "setres_4"                            , "command" : "setres" , "args" : "-n res1 -s 2032_12_1-10:30 -d 50  -q q_1 ANL-R00-R01-2048 ANL-R00-1024"},
+    {"tc_name" : "setres_5"                            , "command" : "setres" , "args" : "-n res2 -s 2033_12_1-10:30 -d 50  -q q_1 ANL-R01-1024 ANL-R00-M0-512"},
+    {"tc_name" : "showres_4"                           , "command" : "showres", "args" : "-x"},
+    {"tc_name" : "releaseres_1"                        , "command" : "releaseres" , "args" : "-d res1 res2 george", },
+    {"tc_name" : "setres_6"                            , "command" : "setres" , "args" : "-n r1 -u <USER> -s 2033_12_1-10:30 -d 50 -q q_1 ANL-R01-1024 ANL-R00-M0-512"},
+    {"tc_name" : "setres_7"                            , "command" : "setres" , "args" : "-n r2 -u <USER> -s 2033_12_2-10:30 -d 50 -q q_1 ANL-R01-1024 ANL-R00-M0-512"},
+    {"tc_name" : "setres_8"                            , "command" : "setres" , "args" : "-n rc1 -u <USER> -s 2033_12_3-10:30 -d 50 -c 72 -q q_1 ANL-R01-1024 ANL-R00-M0-512"},
+    {"tc_name" : "setres_9"                            , "command" : "setres" , "args" : "-n rc2 -u <USER> -s 2033_12_4-10:30 -d 50 -c 72 -q q_1 ANL-R01-1024 ANL-R00-M0-512"},
+    {"tc_name" : "showres_5"                           , "command" : "showres", "args" : "-x"},
+    {"tc_name" : "userres_1"                           , "command" : "userres", "args" : "r1 r2"},
+    {"tc_name" : "userres_2"                           , "command" : "userres", "args" : "rc1 rc2"},
+    {"tc_name" : "releaseres_2"                        , "command" : "releaseres" , "args" : "-d rc1 rc2", },
+    {"tc_name" : "setres_10"                           , "command" : "setres" , "args" : "-n r1 -s 2033_12_1-10:30 -d 50 -q q_1 ANL-R01-1024 ANL-R00-M0-512"},
+    {"tc_name" : "userres_3"                           , "command" : "userres", "args" : "r1 r2"},
+    {"tc_name" : "showres_6"                           , "command" : "showres", "args" : "-x"},
+    {"tc_name" : "releaseres_3"                        , "command" : "releaseres" , "args" : "-d r1", },
+    {"tc_name" : "showres_7"                           , "command" : "showres", "args" : "-x"},
     ]

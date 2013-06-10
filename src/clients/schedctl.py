@@ -109,8 +109,6 @@ def main():
 
     validate_args(parser, args)
 
-    #sched = client_utils.client_data.scheduler_manager(False)
-
     if opt.stop != None:
         client_utils.component_call(SCHMGR, False, 'disable', (whoami,))
         client_utils.logger.info("Job Scheduling: DISABLED")

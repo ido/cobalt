@@ -2,23 +2,13 @@ import testutils
 import os
 import pwd
 # ---------------------------------------------------------------------------------
-def test_nodeadm_args_1():
+def test_releaseres_arg_1():
     """
-    nodeadm test run: args_1
+    releaseres test run: arg_1
 
         Command Output:
-        Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]"
         
-        Options:
-          --version      show program's version number and exit
-          -h, --help     show this help message and exit
-          -d, --debug    turn on communication debugging
-          --down         mark nodes as down
-          --up           mark nodes as up (even if allocated)
-          --queue=QUEUE  set queue associations
-          -l, --list     list node states
-        
-        Command Error/Debug:No arguments provided
+        Command Error/Debug:Need at least one reservation
         
         
     """
@@ -29,7 +19,7 @@ def test_nodeadm_args_1():
     user    = pwd.getpwuid(os.getuid())[0] 
     _args   = args.replace('<USER>',user)
 
-    results = testutils.run_cmd('nodeadm.py',_args,None) 
+    results = testutils.run_cmd('releaseres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -49,34 +39,24 @@ def test_nodeadm_args_1():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
-def test_nodeadm_args_2():
+def test_releaseres_arg_2():
     """
-    nodeadm test run: args_2
+    releaseres test run: arg_2
 
         Command Output:
-        Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]"
         
-        Options:
-          --version      show program's version number and exit
-          -h, --help     show this help message and exit
-          -d, --debug    turn on communication debugging
-          --down         mark nodes as down
-          --up           mark nodes as up (even if allocated)
-          --queue=QUEUE  set queue associations
-          -l, --list     list node states
-        
-        Command Error/Debug:Need at least one option
+        Command Error/Debug:No Reservations matched
         
         
     """
 
-    args      = """p1"""
+    args      = """s1"""
     exp_rs    = 256
 
     user    = pwd.getpwuid(os.getuid())[0] 
     _args   = args.replace('<USER>',user)
 
-    results = testutils.run_cmd('nodeadm.py',_args,None) 
+    results = testutils.run_cmd('releaseres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -96,24 +76,24 @@ def test_nodeadm_args_2():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
-def test_nodeadm_up_1():
+def test_releaseres_arg_3():
     """
-    nodeadm test run: up_1
+    releaseres test run: arg_3
 
         Command Output:
         
-        Command Error/Debug:nodeadm is only supported on cluster systems.  Try partlist instead.
+        Command Error/Debug:No Reservations matched
         
         
     """
 
-    args      = """--up p1 p2 p3"""
-    exp_rs    = 0
+    args      = """s1 s2"""
+    exp_rs    = 256
 
     user    = pwd.getpwuid(os.getuid())[0] 
     _args   = args.replace('<USER>',user)
 
-    results = testutils.run_cmd('nodeadm.py',_args,None) 
+    results = testutils.run_cmd('releaseres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -133,24 +113,24 @@ def test_nodeadm_up_1():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
-def test_nodeadm_up_2():
+def test_releaseres_arg_4():
     """
-    nodeadm test run: up_2
+    releaseres test run: arg_4
 
         Command Output:
         
-        Command Error/Debug:nodeadm is only supported on cluster systems.  Try partlist instead.
+        Command Error/Debug:No Reservations matched
         
         
     """
 
-    args      = """--up U1 U2 U5 p1"""
-    exp_rs    = 0
+    args      = """s1 s2 s3"""
+    exp_rs    = 256
 
     user    = pwd.getpwuid(os.getuid())[0] 
     _args   = args.replace('<USER>',user)
 
-    results = testutils.run_cmd('nodeadm.py',_args,None) 
+    results = testutils.run_cmd('releaseres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -170,24 +150,26 @@ def test_nodeadm_up_2():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
-def test_nodeadm_down_1():
+def test_releaseres_arg_5():
     """
-    nodeadm test run: down_1
+    releaseres test run: arg_5
 
         Command Output:
         
-        Command Error/Debug:nodeadm is only supported on cluster systems.  Try partlist instead.
+        Command Error/Debug:Usage: releaseres.py [--version | --help | --debug] <reservation name>
+        
+        releaseres.py: error: no such option: -p
         
         
     """
 
-    args      = """--down p1 p2 p3"""
-    exp_rs    = 0
+    args      = """-p p1"""
+    exp_rs    = 512
 
     user    = pwd.getpwuid(os.getuid())[0] 
     _args   = args.replace('<USER>',user)
 
-    results = testutils.run_cmd('nodeadm.py',_args,None) 
+    results = testutils.run_cmd('releaseres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -207,190 +189,111 @@ def test_nodeadm_down_1():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
-def test_nodeadm_down_2():
+def test_releaseres_arg_6():
     """
-    nodeadm test run: down_2
+    releaseres test run: arg_6
+
+        Command Output:
+        
+        Command Error/Debug:Usage: releaseres.py [--version | --help | --debug] <reservation name>
+        
+        releaseres.py: error: no such option: -p
+        
+        
+    """
+
+    args      = """-p p1 s1 s2 s3"""
+    exp_rs    = 512
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('releaseres.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_releaseres_arg_7():
+    """
+    releaseres test run: arg_7
+
+        Command Output:
+        
+        Command Error/Debug:Usage: releaseres.py [--version | --help | --debug] <reservation name>
+        
+        releaseres.py: error: no such option: -t
+        
+        
+    """
+
+    args      = """-t s1 s2 s3"""
+    exp_rs    = 512
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('releaseres.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_releaseres_arg_8():
+    """
+    releaseres test run: arg_8
 
         Command Output:
         
         Command Error/Debug:
-        nodeadm.py -d --down p1 p2 p3
+        releaseres.py -d p1 s1 s2 s3
         
-        component: "system.get_implementation", defer: False
-          get_implementation(
+        component: "scheduler.get_reservations", defer: False
+          get_reservations(
+             [{'name': 'p1'}, {'name': 's1'}, {'name': 's2'}, {'name': 's3'}],
              )
         
         
-        nodeadm is only supported on cluster systems.  Try partlist instead.
+        No Reservations matched
         
         
     """
 
-    args      = """-d --down p1 p2 p3"""
-    exp_rs    = 0
-
-    user    = pwd.getpwuid(os.getuid())[0] 
-    _args   = args.replace('<USER>',user)
-
-    results = testutils.run_cmd('nodeadm.py',_args,None) 
-    rs      = results[0]
-    cmd_out = results[1]
-    cmd_err = results[3]
-
-    # Test Pass Criterias
-    no_rs_err     = (rs == exp_rs)
-    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
-
-    result = no_rs_err and no_fatal_exc
-
-    errmsg  = "\n\nFailed Data:\n\n" \
-        "Return Status %s, Expected Return Status %s\n\n" \
-        "Command Output:\n%s\n\n" \
-        "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
-
-    assert result, errmsg
-
-# ---------------------------------------------------------------------------------
-def test_nodeadm_down_3():
-    """
-    nodeadm test run: down_3
-
-        Command Output:
-        
-        Command Error/Debug:nodeadm is only supported on cluster systems.  Try partlist instead.
-        
-        
-    """
-
-    args      = """--down D1 D2 D5 p1"""
-    exp_rs    = 0
-
-    user    = pwd.getpwuid(os.getuid())[0] 
-    _args   = args.replace('<USER>',user)
-
-    results = testutils.run_cmd('nodeadm.py',_args,None) 
-    rs      = results[0]
-    cmd_out = results[1]
-    cmd_err = results[3]
-
-    # Test Pass Criterias
-    no_rs_err     = (rs == exp_rs)
-    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
-
-    result = no_rs_err and no_fatal_exc
-
-    errmsg  = "\n\nFailed Data:\n\n" \
-        "Return Status %s, Expected Return Status %s\n\n" \
-        "Command Output:\n%s\n\n" \
-        "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
-
-    assert result, errmsg
-
-# ---------------------------------------------------------------------------------
-def test_nodeadm_list_1():
-    """
-    nodeadm test run: list_1
-
-        Command Output:
-        
-        Command Error/Debug:nodeadm is only supported on cluster systems.  Try partlist instead.
-        
-        
-    """
-
-    args      = """-l"""
-    exp_rs    = 0
-
-    user    = pwd.getpwuid(os.getuid())[0] 
-    _args   = args.replace('<USER>',user)
-
-    results = testutils.run_cmd('nodeadm.py',_args,None) 
-    rs      = results[0]
-    cmd_out = results[1]
-    cmd_err = results[3]
-
-    # Test Pass Criterias
-    no_rs_err     = (rs == exp_rs)
-    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
-
-    result = no_rs_err and no_fatal_exc
-
-    errmsg  = "\n\nFailed Data:\n\n" \
-        "Return Status %s, Expected Return Status %s\n\n" \
-        "Command Output:\n%s\n\n" \
-        "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
-
-    assert result, errmsg
-
-# ---------------------------------------------------------------------------------
-def test_nodeadm_list_2():
-    """
-    nodeadm test run: list_2
-
-        Command Output:
-        
-        Command Error/Debug:nodeadm is only supported on cluster systems.  Try partlist instead.
-        
-        
-    """
-
-    args      = """-l p1"""
-    exp_rs    = 0
-
-    user    = pwd.getpwuid(os.getuid())[0] 
-    _args   = args.replace('<USER>',user)
-
-    results = testutils.run_cmd('nodeadm.py',_args,None) 
-    rs      = results[0]
-    cmd_out = results[1]
-    cmd_err = results[3]
-
-    # Test Pass Criterias
-    no_rs_err     = (rs == exp_rs)
-    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
-
-    result = no_rs_err and no_fatal_exc
-
-    errmsg  = "\n\nFailed Data:\n\n" \
-        "Return Status %s, Expected Return Status %s\n\n" \
-        "Command Output:\n%s\n\n" \
-        "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
-
-    assert result, errmsg
-
-# ---------------------------------------------------------------------------------
-def test_nodeadm_queue_1():
-    """
-    nodeadm test run: queue_1
-
-        Command Output:
-        Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]"
-        
-        Options:
-          --version      show program's version number and exit
-          -h, --help     show this help message and exit
-          -d, --debug    turn on communication debugging
-          --down         mark nodes as down
-          --up           mark nodes as up (even if allocated)
-          --queue=QUEUE  set queue associations
-          -l, --list     list node states
-        
-        Command Error/Debug:No arguments provided
-        
-        
-    """
-
-    args      = """--queue QU1"""
+    args      = """-d p1 s1 s2 s3"""
     exp_rs    = 256
 
     user    = pwd.getpwuid(os.getuid())[0] 
     _args   = args.replace('<USER>',user)
 
-    results = testutils.run_cmd('nodeadm.py',_args,None) 
+    results = testutils.run_cmd('releaseres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -410,24 +313,154 @@ def test_nodeadm_queue_1():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
-def test_nodeadm_queue_2():
+def test_releaseres_arg_9():
     """
-    nodeadm test run: queue_2
+    releaseres test run: arg_9
 
         Command Output:
         
-        Command Error/Debug:nodeadm is only supported on cluster systems.  Try partlist instead.
+        Command Error/Debug:
+        releaseres.py --debug p1 s1 s2 s3
+        
+        component: "scheduler.get_reservations", defer: False
+          get_reservations(
+             [{'name': 'p1'}, {'name': 's1'}, {'name': 's2'}, {'name': 's3'}],
+             )
+        
+        
+        No Reservations matched
         
         
     """
 
-    args      = """--queue "QU1 QD1" U1 D1 P1"""
+    args      = """--debug p1 s1 s2 s3"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('releaseres.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_releaseres_help_1():
+    """
+    releaseres test run: help_1
+
+        Command Output:
+        Usage: releaseres.py [--version | --help | --debug] <reservation name>
+        
+        Options:
+          --version    show program's version number and exit
+          -h, --help   show this help message and exit
+          -d, --debug  turn on communication debugging
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--help"""
     exp_rs    = 0
 
     user    = pwd.getpwuid(os.getuid())[0] 
     _args   = args.replace('<USER>',user)
 
-    results = testutils.run_cmd('nodeadm.py',_args,None) 
+    results = testutils.run_cmd('releaseres.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_releaseres_help_2():
+    """
+    releaseres test run: help_2
+
+        Command Output:
+        Usage: releaseres.py [--version | --help | --debug] <reservation name>
+        
+        Options:
+          --version    show program's version number and exit
+          -h, --help   show this help message and exit
+          -d, --debug  turn on communication debugging
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """-h"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('releaseres.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_releaseres_version():
+    """
+    releaseres test run: version
+
+        Command Output:
+        version: "releaseres.py " + $Id: releaseres.py 2146 2011-04-29 16:19:22Z richp $ + , Cobalt  + $Version$
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--version"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('releaseres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
