@@ -1,5 +1,19 @@
 Changes from previous Cobalt Versions
 
+Changes for 0.99.26
+- Corrected a bug that was causing messages in the clients that used to go to
+  stdout to go to stderr instead
+
+Changes for 0.99.25
+- Fixes for clients that were causing erronious default values for proccount
+  have been fixed.
+- The setgid wrapper now calls a site-selectable python interperter with the
+  '-E' flag by default.
+- A bug that could cause TimeRemaining to show negative values has been fixed
+- Queues may be added or removed from blocks without overwriting the entire
+  list with new options in partadm using --rmq or --appq with the --queue option.
+
+
 Changes for 0.99.24
 * Reverting client changes.  Found some issues when deploying to test systems
 * --defer flag has been reverted with these as a casualty.
