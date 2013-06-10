@@ -46,22 +46,31 @@ def test_releaseres_arg_2():
 
     """
 
-    args      = """-p p1"""
+    args      = """s1"""
 
     cmdout    = \
-"""releaseres [--version] -p <partition> name
+"""Released reservation 's1', matched on 3 partitions
 """
 
-    cmderr    = \
-"""Need at least one reservation
-"""
+    cmderr    = ''
 
-    stubout   = ''
+    stubout   = \
+"""
+GET_RESERVATIONS
+
+name:s1
+name type: <type 'str'>
+\RELEASE_RESERVATIONS
+
+name:s1
+name type: <type 'str'>
+user: gooduser
+"""
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       256, # Expected return status 
+                       0, # Expected return status 
                        cmdout, # Expected command output
                        stubout, # Expected stub functions output
                        cmderr, # Expected command error output 
@@ -82,6 +91,58 @@ def test_releaseres_arg_2():
 def test_releaseres_arg_3():
     """
     releaseres test run: arg_3
+
+    """
+
+    args      = """s1 s2"""
+
+    cmdout    = \
+"""Released reservation 's1,s2', matched on 3 partitions
+"""
+
+    cmderr    = ''
+
+    stubout   = \
+"""
+GET_RESERVATIONS
+
+name:s1
+name type: <type 'str'>
+name:s2
+name type: <type 'str'>
+\RELEASE_RESERVATIONS
+
+name:s1
+name type: <type 'str'>
+name:s2
+name type: <type 'str'>
+user: gooduser
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('releaseres.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_releaseres_arg_4():
+    """
+    releaseres test run: arg_4
 
     """
 
@@ -135,105 +196,28 @@ user: gooduser
 
 
 # ---------------------------------------------------------------------------------
-def test_releaseres_arg_4():
-    """
-    releaseres test run: arg_4
-
-    """
-
-    args      = """s1 s2 s3 s4"""
-
-    cmdout    = \
-"""Released reservation 's1,s2,s3,s4', matched on 3 partitions
-"""
-
-    cmderr    = ''
-
-    stubout   = \
-"""
-GET_RESERVATIONS
-
-name:s1
-name type: <type 'str'>
-name:s2
-name type: <type 'str'>
-name:s3
-name type: <type 'str'>
-name:s4
-name type: <type 'str'>
-\RELEASE_RESERVATIONS
-
-name:s1
-name type: <type 'str'>
-name:s2
-name type: <type 'str'>
-name:s3
-name type: <type 'str'>
-name:s4
-name type: <type 'str'>
-user: gooduser
-"""
-
-    stubout_file = "stub.out"
-
-    expected_results = ( 
-                       0, # Expected return status 
-                       cmdout, # Expected command output
-                       stubout, # Expected stub functions output
-                       cmderr, # Expected command error output 
-                       ) 
-
-    testutils.save_testhook("")
-
-    results = testutils.run_cmd('releaseres.py',args,stubout_file) 
-    result  = testutils.validate_results(results,expected_results)
-
-    testutils.remove_testhook()
-
-    correct = 1
-    assert result == correct, "Result:\n%s" % result
-
-
-# ---------------------------------------------------------------------------------
 def test_releaseres_arg_5():
     """
     releaseres test run: arg_5
 
     """
 
-    args      = """-p p1 s1 s2 s3"""
+    args      = """-p p1"""
 
-    cmdout    = \
-"""Released reservation 's1,s2,s3', matched on 3 partitions
+    cmdout    = ''
+
+    cmderr    = \
+"""Usage: releaseres.py [--version | --help | --debug] <reservation name>
+
+releaseres.py: error: no such option: -p
 """
 
-    cmderr    = ''
-
-    stubout   = \
-"""
-GET_RESERVATIONS
-
-name:s1
-name type: <type 'str'>
-name:s2
-name type: <type 'str'>
-name:s3
-name type: <type 'str'>
-\RELEASE_RESERVATIONS
-
-name:s1
-name type: <type 'str'>
-name:s2
-name type: <type 'str'>
-name:s3
-name type: <type 'str'>
-user: gooduser
-"""
+    stubout   = ''
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       0, # Expected return status 
+                       512, # Expected return status 
                        cmdout, # Expected command output
                        stubout, # Expected stub functions output
                        cmderr, # Expected command error output 
@@ -257,7 +241,46 @@ def test_releaseres_arg_6():
 
     """
 
-    args      = """-t p1 s1 s2 s3"""
+    args      = """-p p1 s1 s2 s3"""
+
+    cmdout    = ''
+
+    cmderr    = \
+"""Usage: releaseres.py [--version | --help | --debug] <reservation name>
+
+releaseres.py: error: no such option: -p
+"""
+
+    stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       512, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('releaseres.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_releaseres_arg_7():
+    """
+    releaseres test run: arg_7
+
+    """
+
+    args      = """-t s1 s2 s3"""
 
     cmdout    = \
 """option -t not recognized
@@ -293,9 +316,9 @@ releaseres.py: error: no such option: -t
 
 
 # ---------------------------------------------------------------------------------
-def test_releaseres_arg_7():
+def test_releaseres_arg_8():
     """
-    releaseres test run: arg_7
+    releaseres test run: arg_8
 
     """
 
@@ -370,9 +393,9 @@ user: gooduser
 
 
 # ---------------------------------------------------------------------------------
-def test_releaseres_arg_8():
+def test_releaseres_arg_9():
     """
-    releaseres test run: arg_8
+    releaseres test run: arg_9
 
     """
 
@@ -459,11 +482,9 @@ def test_releaseres_help_1():
 """Usage: releaseres.py [--version | --help | --debug] <reservation name>
 
 Options:
-  --version             show program's version number and exit
-  -h, --help            show this help message and exit
-  -d, --debug           turn on communication debugging
-  -p PARTITION, --partition=PARTITION
-                        name of partion(s). Option currently not implemented.
+  --version    show program's version number and exit
+  -h, --help   show this help message and exit
+  -d, --debug  turn on communication debugging
 """
 
     cmderr    = ''
@@ -503,11 +524,9 @@ def test_releaseres_help_2():
 """Usage: releaseres.py [--version | --help | --debug] <reservation name>
 
 Options:
-  --version             show program's version number and exit
-  -h, --help            show this help message and exit
-  -d, --debug           turn on communication debugging
-  -p PARTITION, --partition=PARTITION
-                        name of partion(s). Option currently not implemented.
+  --version    show program's version number and exit
+  -h, --help   show this help message and exit
+  -d, --debug  turn on communication debugging
 """
 
     cmderr    = ''

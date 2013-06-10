@@ -10,7 +10,6 @@ version: "%prog " + __revision__ + , Cobalt  + __version__
 OPTIONS DEFINITIONS:
 
 '-d','--debug',dest='debug',help='turn on communication debugging',callback=cb_debug
-'-p', '--partition', dest='partition', help='name of partion(s). Option currently not implemented.'
 
 """
 import logging

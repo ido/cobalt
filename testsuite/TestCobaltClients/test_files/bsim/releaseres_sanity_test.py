@@ -45,12 +45,12 @@ def test_releaseres_arg_2():
 
         Command Output:
         
-        Command Error/Debug:Need at least one reservation
+        Command Error/Debug:No Reservations matched
         
         
     """
 
-    args      = """-p p1"""
+    args      = """s1"""
     exp_rs    = 256
 
     user    = pwd.getpwuid(os.getuid())[0] 
@@ -87,7 +87,7 @@ def test_releaseres_arg_3():
         
     """
 
-    args      = """s1 s2 s3"""
+    args      = """s1 s2"""
     exp_rs    = 256
 
     user    = pwd.getpwuid(os.getuid())[0] 
@@ -124,7 +124,7 @@ def test_releaseres_arg_4():
         
     """
 
-    args      = """s1 s2 s3 s4"""
+    args      = """s1 s2 s3"""
     exp_rs    = 256
 
     user    = pwd.getpwuid(os.getuid())[0] 
@@ -156,13 +156,15 @@ def test_releaseres_arg_5():
 
         Command Output:
         
-        Command Error/Debug:No Reservations matched
+        Command Error/Debug:Usage: releaseres.py [--version | --help | --debug] <reservation name>
+        
+        releaseres.py: error: no such option: -p
         
         
     """
 
-    args      = """-p p1 s1 s2 s3"""
-    exp_rs    = 256
+    args      = """-p p1"""
+    exp_rs    = 512
 
     user    = pwd.getpwuid(os.getuid())[0] 
     _args   = args.replace('<USER>',user)
@@ -195,12 +197,12 @@ def test_releaseres_arg_6():
         
         Command Error/Debug:Usage: releaseres.py [--version | --help | --debug] <reservation name>
         
-        releaseres.py: error: no such option: -t
+        releaseres.py: error: no such option: -p
         
         
     """
 
-    args      = """-t p1 s1 s2 s3"""
+    args      = """-p p1 s1 s2 s3"""
     exp_rs    = 512
 
     user    = pwd.getpwuid(os.getuid())[0] 
@@ -229,6 +231,45 @@ def test_releaseres_arg_6():
 def test_releaseres_arg_7():
     """
     releaseres test run: arg_7
+
+        Command Output:
+        
+        Command Error/Debug:Usage: releaseres.py [--version | --help | --debug] <reservation name>
+        
+        releaseres.py: error: no such option: -t
+        
+        
+    """
+
+    args      = """-t s1 s2 s3"""
+    exp_rs    = 512
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('releaseres.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_releaseres_arg_8():
+    """
+    releaseres test run: arg_8
 
         Command Output:
         
@@ -272,9 +313,9 @@ def test_releaseres_arg_7():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
-def test_releaseres_arg_8():
+def test_releaseres_arg_9():
     """
-    releaseres test run: arg_8
+    releaseres test run: arg_9
 
         Command Output:
         
@@ -326,11 +367,9 @@ def test_releaseres_help_1():
         Usage: releaseres.py [--version | --help | --debug] <reservation name>
         
         Options:
-          --version             show program's version number and exit
-          -h, --help            show this help message and exit
-          -d, --debug           turn on communication debugging
-          -p PARTITION, --partition=PARTITION
-                                name of partion(s). Option currently not implemented.
+          --version    show program's version number and exit
+          -h, --help   show this help message and exit
+          -d, --debug  turn on communication debugging
         
         Command Error/Debug:
         
@@ -370,11 +409,9 @@ def test_releaseres_help_2():
         Usage: releaseres.py [--version | --help | --debug] <reservation name>
         
         Options:
-          --version             show program's version number and exit
-          -h, --help            show this help message and exit
-          -d, --debug           turn on communication debugging
-          -p PARTITION, --partition=PARTITION
-                                name of partion(s). Option currently not implemented.
+          --version    show program's version number and exit
+          -h, --help   show this help message and exit
+          -d, --debug  turn on communication debugging
         
         Command Error/Debug:
         
