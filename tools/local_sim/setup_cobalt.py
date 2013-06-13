@@ -7,9 +7,9 @@ Usage: %prog [options]
 OPTIONS DEFINITIONS:
 
 '-r','--repo', dest='repo', default='git://git.mcs.anl.gov/cobalt.git',help='Cobalt Repo to clone from'
-'-c','--cobalt', dest='cobalt', default='cobalt', help='Name of the dir to clone the cobalt repo. 
-'-s','--sim-path', dest='sim_path', default='./', help='Path of the cobalt simulation environment.
-'-b','--branch',dest='branch', default='master', help='name of branch to clone from. 
+'-c','--cobalt', dest='cobalt', default='cobalt', help='Name of the dir to clone the cobalt repo.'
+'-s','--sim-path', dest='sim_path', default='./', help='Path of the cobalt simulation environment.'
+'-b','--branch',dest='branch', default='master', help='name of branch to clone from.'
 '--skip-clone', dest='skip_clone', action='store_true', help='if specified it will skip cloning the repo'
 """
 import os
