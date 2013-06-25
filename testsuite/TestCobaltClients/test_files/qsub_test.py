@@ -35,8 +35,6 @@ component: "queue-manager.add_jobs", defer: False
      )
 
 
-WARNING: failed to create cobalt log file at: /tmp/d
-         Permission denied
 """
 
     stubout   = \
@@ -209,10 +207,7 @@ def test_qsub_misc_1():
 """1
 """
 
-    cmderr    = \
-"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
-         Permission denied
-"""
+    cmderr    = ''
 
     stubout   = \
 """
@@ -674,10 +669,7 @@ def test_qsub_invalid_geometry_2():
 """1
 """
 
-    cmderr    = \
-"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
-         Permission denied
-"""
+    cmderr    = ''
 
     stubout   = \
 """
@@ -818,10 +810,7 @@ def test_qsub_invalid_geometry_3():
 """1
 """
 
-    cmderr    = \
-"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
-         Permission denied
-"""
+    cmderr    = ''
 
     stubout   = \
 """
@@ -962,10 +951,7 @@ def test_qsub_invalid_geometry_4():
 """1
 """
 
-    cmderr    = \
-"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
-         Permission denied
-"""
+    cmderr    = ''
 
     stubout   = \
 """
@@ -1143,10 +1129,7 @@ def test_qsub_invalid_geometry_6():
 """1
 """
 
-    cmderr    = \
-"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
-         Permission denied
-"""
+    cmderr    = ''
 
     stubout   = \
 """
@@ -1324,10 +1307,7 @@ def test_qsub_project_specified():
 """1
 """
 
-    cmderr    = \
-"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
-         Permission denied
-"""
+    cmderr    = ''
 
     stubout   = \
 """
@@ -1468,10 +1448,7 @@ def test_qsub_Check_attrs_1():
 """1
 """
 
-    cmderr    = \
-"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
-         Permission denied
-"""
+    cmderr    = ''
 
     stubout   = \
 """
@@ -1612,10 +1589,7 @@ def test_qsub_Check_attrs_2():
 """1
 """
 
-    cmderr    = \
-"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
-         Permission denied
-"""
+    cmderr    = ''
 
     stubout   = \
 """
@@ -1756,10 +1730,7 @@ def test_qsub_Check_attrs_3():
 """1
 """
 
-    cmderr    = \
-"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
-         Permission denied
-"""
+    cmderr    = ''
 
     stubout   = \
 """
@@ -1900,10 +1871,7 @@ def test_qsub_Check_attrs_4():
 """1
 """
 
-    cmderr    = \
-"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
-         Permission denied
-"""
+    cmderr    = ''
 
     stubout   = \
 """
@@ -2044,10 +2012,7 @@ def test_qsub_cwd_option_1():
 """1
 """
 
-    cmderr    = \
-"""WARNING: failed to create cobalt log file at: /tmp//1.cobaltlog
-         Permission denied
-"""
+    cmderr    = ''
 
     stubout   = \
 """
@@ -2188,10 +2153,7 @@ def test_qsub_cwd_option_2():
 """1
 """
 
-    cmderr    = \
-"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
-         Permission denied
-"""
+    cmderr    = ''
 
     stubout   = \
 """
@@ -2369,10 +2331,7 @@ def test_qsub_cwd_option_4():
 """1
 """
 
-    cmderr    = \
-"""WARNING: failed to create cobalt log file at: /tmp//1.cobaltlog
-         Permission denied
-"""
+    cmderr    = ''
 
     stubout   = \
 """
@@ -2515,10 +2474,7 @@ def test_qsub_cwd_option_5():
 """1
 """
 
-    cmderr    = \
-"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
-         Permission denied
-"""
+    cmderr    = ''
 
     stubout   = \
 """
@@ -2661,10 +2617,7 @@ def test_qsub_debuglog_option():
 """1
 """
 
-    cmderr    = \
-"""WARNING: failed to create cobalt log file at: /tmp/y
-         Permission denied
-"""
+    cmderr    = ''
 
     stubout   = \
 """
@@ -2846,10 +2799,7 @@ def test_qsub_inputfile_option_2():
 """1
 """
 
-    cmderr    = \
-"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
-         Permission denied
-"""
+    cmderr    = ''
 
     stubout   = \
 """
@@ -2990,10 +2940,7 @@ def test_qsub_email_option():
 """1
 """
 
-    cmderr    = \
-"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
-         Permission denied
-"""
+    cmderr    = ''
 
     stubout   = \
 """
@@ -3333,10 +3280,7 @@ def test_qsub_mode_option_1():
 """1
 """
 
-    cmderr    = \
-"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
-         Permission denied
-"""
+    cmderr    = ''
 
     stubout   = \
 """
@@ -3475,10 +3419,7 @@ def test_qsub_mode_option_2():
 """1
 """
 
-    cmderr    = \
-"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
-         Permission denied
-"""
+    cmderr    = ''
 
     stubout   = \
 """
@@ -3617,10 +3558,7 @@ def test_qsub_mode_option_3():
 """1
 """
 
-    cmderr    = \
-"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
-         Permission denied
-"""
+    cmderr    = ''
 
     stubout   = \
 """
@@ -3798,10 +3736,7 @@ def test_qsub_preboot_option():
 """1
 """
 
-    cmderr    = \
-"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
-         Permission denied
-"""
+    cmderr    = ''
 
     stubout   = \
 """

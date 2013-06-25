@@ -110,6 +110,10 @@ def validate_args(parser,spec,opt_count):
 
     else:
 
+        if parser.options.name is None:
+            client_utils.logger.error("Reservation name must be provided. Use -n <reservation name>")
+            sys.exit(1)
+
         if parser.no_args() and (parser.options.modify_res == None):
             client_utils.logging.error("Must supply either -p with value or partitions as arguments")
             sys.exit(1)
@@ -124,10 +128,6 @@ def validate_args(parser,spec,opt_count):
 
         if parser.options.defer != None and (parser.options.start != None or parser.options.cycle != None):
             client_utils.logger.error("Cannot use -D while changing start or cycle time")
-            sys.exit(1)
-
-        if parser.options.name == None and parser.options.modify_res != None:
-            client_utils.logger.error("-m must by called with -n <reservation name>")
             sys.exit(1)
 
         # if we have args then verify the args (partitions)
@@ -208,7 +208,7 @@ def add_reservation(parser,spec,user):
     spec['users']             = ':'.join(parser.options.users) if parser.options.users != None else None
     spec['cycle']             = parser.options.cycle 
     spec['project']           = parser.options.project
-    if parser.options.name              == None: spec['name']              = 'system'
+
     if parser.options.block_passthrough == None: spec['block_passthrough'] = False
 
     client_utils.logger.info(client_utils.component_call(SCHMGR, False, 'add_reservations', ([spec], user)))

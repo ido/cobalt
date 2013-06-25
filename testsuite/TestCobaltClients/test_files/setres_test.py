@@ -43,45 +43,6 @@ id: 8, type: <type 'int'>
 
 
 # ---------------------------------------------------------------------------------
-def test_setres_id_change_1():
-    """
-    setres test run: id_change_1
-
-    """
-
-    args      = """--debub --res_id 8"""
-
-    cmdout    = ''
-
-    cmderr    = \
-"""Usage: setres.py [options] <partition1> ... <partitionN>
-
-setres.py: error: no such option: --debub
-"""
-
-    stubout   = ''
-
-    stubout_file = "stub.out"
-
-    expected_results = ( 
-                       512, # Expected return status 
-                       cmdout, # Expected command output
-                       stubout, # Expected stub functions output
-                       cmderr, # Expected command error output 
-                       ) 
-
-    testutils.save_testhook("")
-
-    results = testutils.run_cmd('setres.py',args,stubout_file) 
-    result  = testutils.validate_results(results,expected_results)
-
-    testutils.remove_testhook()
-
-    correct = 1
-    assert result == correct, "Result:\n%s" % result
-
-
-# ---------------------------------------------------------------------------------
 def test_setres_id_change_2():
     """
     setres test run: id_change_2
@@ -367,6 +328,58 @@ cycle time, queue name, and user are optional
 
 
 # ---------------------------------------------------------------------------------
+def test_setres_id_change_8():
+    """
+    setres test run: id_change_8
+
+    """
+
+    args      = """--debug --res_id 8"""
+
+    cmdout    = \
+"""Setting res id to 8
+"""
+
+    cmderr    = \
+"""
+setres.py --debug --res_id 8
+
+component: "scheduler.set_res_id", defer: False
+  set_res_id(
+     8,
+     )
+
+
+"""
+
+    stubout   = \
+"""
+SET_RES_ID
+
+id: 8, type: <type 'int'>
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('setres.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
 def test_setres_force_1():
     """
     setres test run: force_1
@@ -542,7 +555,7 @@ def test_setres_modify_1():
 """
 
     cmderr    = \
-"""-m must by called with -n <reservation name>
+"""Reservation name must be provided. Use -n <reservation name>
 """
 
     stubout   = ''
@@ -1356,6 +1369,181 @@ CHECK_RESERVATIONS
 
 
 # ---------------------------------------------------------------------------------
+def test_setres_modify_15():
+    """
+    setres test run: modify_15
+
+    """
+
+    args      = """-m -n resname"""
+
+    cmdout    = \
+"""True
+"""
+
+    cmderr    = ''
+
+    stubout   = \
+"""
+GET_RESERVATIONS
+
+cycle:*
+cycle type: <type 'str'>
+duration:*
+duration type: <type 'str'>
+name:resname
+name type: <type 'str'>
+start:*
+start type: <type 'str'>
+
+SET_RESERVATIONS
+
+name:resname
+name type: <type 'str'>
+user: gooduser
+
+CHECK_RESERVATIONS
+
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('setres.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_setres_modify_16():
+    """
+    setres test run: modify_16
+
+    """
+
+    args      = """-m -n resname -A myproj --block_passthrough --debug ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
+
+    cmdout    = \
+"""True
+"""
+
+    cmderr    = \
+"""
+setres.py -m -n resname -A myproj --block_passthrough --debug ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024
+
+component: "system.verify_locations", defer: False
+  verify_locations(
+     ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024'],
+     )
+
+
+component: "system.verify_locations", defer: False
+  verify_locations(
+     ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024'],
+     )
+
+
+component: "system.verify_locations", defer: False
+  verify_locations(
+     ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024'],
+     )
+
+
+component: "scheduler.get_reservations", defer: False
+  get_reservations(
+     [{'duration': '*', 'start': '*', 'name': 'resname', 'cycle': '*'}],
+     )
+
+
+component: "scheduler.set_reservations", defer: False
+  set_reservations(
+     [{'name': 'resname'}],
+     {'project': 'myproj', 'block_passthrough': True, 'partitions': 'ANL-R00-R01-2048:ANL-R00-1024:ANL-R01-1024'},
+     gooduser,
+     )
+
+
+component: "scheduler.check_reservations", defer: False
+  check_reservations(
+     )
+
+
+"""
+
+    stubout   = \
+"""
+VERIFY_LOCATIONS
+
+location list: ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
+
+VERIFY_LOCATIONS
+
+location list: ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
+
+VERIFY_LOCATIONS
+
+location list: ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
+
+GET_RESERVATIONS
+
+cycle:*
+cycle type: <type 'str'>
+duration:*
+duration type: <type 'str'>
+name:resname
+name type: <type 'str'>
+start:*
+start type: <type 'str'>
+
+SET_RESERVATIONS
+
+name:resname
+name type: <type 'str'>
+block_passthrough:True
+block_passthrough type: <type 'bool'>
+partitions:ANL-R00-R01-2048:ANL-R00-1024:ANL-R01-1024
+partitions type: <type 'str'>
+project:myproj
+project type: <type 'str'>
+user: gooduser
+
+CHECK_RESERVATIONS
+
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('setres.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
 def test_setres_add_res_1():
     """
     setres test run: add_res_1
@@ -1652,7 +1840,7 @@ def test_setres_add_res_6():
 
     """
 
-    args      = """-s 2013_03_9-10:10 -d 50 -c 10:10:10 ANL-R00-R01-2048 ANL-R00-1024"""
+    args      = """-s 2013_03_9-10:10 -n resname -d 50 -c 10:10:10 ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
 """Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
@@ -1680,7 +1868,7 @@ cycle:36600
 cycle type: <type 'int'>
 duration:3000
 duration type: <type 'int'>
-name:system
+name:resname
 name type: <type 'str'>
 partitions:ANL-R00-R01-2048:ANL-R00-1024
 partitions type: <type 'str'>
@@ -1723,7 +1911,7 @@ def test_setres_add_res_7():
 
     """
 
-    args      = """-s 2013_03_9-10:10 -d 10:10:10 -p ANL-R00-R01-2048 --block_passthrough"""
+    args      = """-s 2013_03_9-10:10 -n resname -d 10:10:10 -p ANL-R00-R01-2048 --block_passthrough"""
 
     cmdout    = \
 """Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
@@ -1747,7 +1935,7 @@ cycle:None
 cycle type: <type 'NoneType'>
 duration:36600
 duration type: <type 'int'>
-name:system
+name:resname
 name type: <type 'str'>
 partitions:ANL-R00-R01-2048
 partitions type: <type 'str'>
@@ -1790,7 +1978,7 @@ def test_setres_add_res_8():
 
     """
 
-    args      = """-s 2013_03_9-10:10 -d 10:10:10 -p ANL-R00-R01-2048 --block_passthrough -q myq -A myproj"""
+    args      = """-s 2013_03_9-10:10 -n resname -d 10:10:10 -p ANL-R00-R01-2048 --block_passthrough -q myq -A myproj"""
 
     cmdout    = \
 """Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
@@ -1814,7 +2002,7 @@ cycle:None
 cycle type: <type 'NoneType'>
 duration:36600
 duration type: <type 'int'>
-name:system
+name:resname
 name type: <type 'str'>
 partitions:ANL-R00-R01-2048
 partitions type: <type 'str'>
@@ -1836,6 +2024,139 @@ CHECK_RESERVATIONS
 
     expected_results = ( 
                        0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('setres.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_setres_add_res_9():
+    """
+    setres test run: add_res_9
+
+    """
+
+    args      = """-s 2013_03_9-10:10 -n resname -d 10:10:10 -p ANL-R00-R01-2048 --block_passthrough -q myq -A myproj --debug"""
+
+    cmdout    = \
+"""Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
+True
+True
+"""
+
+    cmderr    = \
+"""
+setres.py -s 2013_03_9-10:10 -n resname -d 10:10:10 -p ANL-R00-R01-2048 --block_passthrough -q myq -A myproj --debug
+
+component: "system.verify_locations", defer: False
+  verify_locations(
+     ['ANL-R00-R01-2048'],
+     )
+
+
+component: "scheduler.add_reservations", defer: False
+  add_reservations(
+     [{'queue': 'myq', 'name': 'resname', 'block_passthrough': True, 'project': 'myproj', 'start': 1362845400.0, 'duration': 36600, 'users': None, 'cycle': None, 'partitions': 'ANL-R00-R01-2048'}],
+     gooduser,
+     )
+
+
+component: "scheduler.check_reservations", defer: False
+  check_reservations(
+     )
+
+
+"""
+
+    stubout   = \
+"""
+VERIFY_LOCATIONS
+
+location list: ['ANL-R00-R01-2048']
+
+ADD_RESERVATIONS
+
+block_passthrough:True
+block_passthrough type: <type 'bool'>
+cycle:None
+cycle type: <type 'NoneType'>
+duration:36600
+duration type: <type 'int'>
+name:resname
+name type: <type 'str'>
+partitions:ANL-R00-R01-2048
+partitions type: <type 'str'>
+project:myproj
+project type: <type 'str'>
+queue:myq
+queue type: <type 'str'>
+start:1362845400.0
+start type: <type 'float'>
+users:None
+users type: <type 'NoneType'>
+user: gooduser
+
+CHECK_RESERVATIONS
+
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('setres.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_setres_add_res_10():
+    """
+    setres test run: add_res_10
+
+    """
+
+    args      = """-s 2013_03_9-10:10 -d 10:10:10 -p ANL-R00-R01-2048 --block_passthrough -q myq -A myproj --debug"""
+
+    cmdout    = \
+"""Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
+"""
+
+    cmderr    = \
+"""
+setres.py -s 2013_03_9-10:10 -d 10:10:10 -p ANL-R00-R01-2048 --block_passthrough -q myq -A myproj --debug
+
+Reservation name must be provided. Use -n <reservation name>
+"""
+
+    stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
                        cmdout, # Expected command output
                        stubout, # Expected stub functions output
                        cmderr, # Expected command error output 
