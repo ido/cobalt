@@ -815,6 +815,8 @@ def cb_upd_dep(option,opt_str,value,parser,*args):
     """
     _check_dependencies(value)
     deps = value.split(":")
+    if deps[0].lower() == "none":
+        deps = []
     setattr(parser.values,option.dest,deps) # set the option 
 
 def cb_dep(option,opt_str,value,parser,*args):
