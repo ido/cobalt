@@ -3,7 +3,6 @@
 '''
 import logging
 import threading
-import pybgsched
 import Cobalt.ContextStateMachine
 import Cobalt.QueueThread
 import Cobalt.Util
@@ -16,7 +15,6 @@ from Cobalt.Util import get_config_option
 
 #FIXME: also make this handle cleanup
 
-import sys
 import Cobalt.Logging
 _logger = logging.getLogger()
 
@@ -42,7 +40,7 @@ class BootContext(object):
         else:
             self.subblock_parent = subblock_parent
 
-        self.max_reboot_attempts = get_config_option("bgsystem","max_reboots", "unlimited")
+        self.max_reboot_attempts = get_config_option("bgsystem", "max_reboots", "unlimited")
         #config options always come back as strings.  This will be converted to an int, however.
         if str(self.max_reboot_attempts).lower() == 'unlimited':
             self.max_reboot_attempts = None
@@ -90,6 +88,9 @@ class BGQBoot(Cobalt.ContextStateMachine.ContextStateMachine):
         self.tag = tag
         _logger.info("Boot %s initialized.", self.boot_id)
 
+    def __del__(self):
+        _logger.debug("Boot %s destroyed.", self.boot_id)
+
     #get/setstate not allowed.  Should not be used with this class due to the lock and block data reacquistion.  Must be
     #reconstructed at restart --PMR
 
@@ -103,10 +104,12 @@ class BGQBoot(Cobalt.ContextStateMachine.ContextStateMachine):
 
     @property
     def block_id(self):
+        '''Identifier of block being booted.'''
         return self.context.block_id
 
     @property
     def failure_string(self):
+        '''In the event of a failed boot, this will have a message about the nature of the failure.'''
         return self.context.failure_string
 
     def get_details(self):

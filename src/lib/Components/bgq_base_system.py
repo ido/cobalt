@@ -16,19 +16,19 @@ import Cobalt
 import re
 import logging
 import Cobalt.Util
+import thread
+import ConfigParser
 from Cobalt.Util import get_config_option
 from Cobalt.Data import Data, DataDict
-from Cobalt.Exceptions import JobValidationError, ComponentLookupError
+from Cobalt.Exceptions import JobValidationError
 from Cobalt.Components.base import Component, exposed, automatic, query, locking
-import thread, ConfigParser
-from Cobalt.Proxy import ComponentProxy
 from Cobalt.DataTypes.ProcessGroup import ProcessGroupDict
-from Cobalt.Components.bgq_io_block import IOBlock, IOBlockDict
-from Cobalt.Components.bgq_io_hardware import IODrawer, IONode
+from Cobalt.Components.bgq_io_block import IOBlockDict
+from Cobalt.Components.bgq_io_hardware import IONode
 
 
 __all__ = [
-    "Node"
+    "Node",
     "NodeCard",
     "Block",
     "BlockDict",
@@ -44,10 +44,8 @@ logger = logging.getLogger()
 #    sys.exit(1)
 CP = ConfigParser.ConfigParser()
 CP.read(Cobalt.CONFIG_FILES)
-try:
-    max_drain_hours = float(CP.get('bgsystem', 'max_drain_hours'))
-except:
-    max_drain_hours = float(sys.maxint)
+
+MAX_DRAIN_HOURS = float(get_config_option('bgsystem', 'max_drain_hours', float(sys.maxint)))
 
 #you'd think that this would be in the control system database somewhere, but it's not.
 #this generates the node locations for N00 in a midplane.  So far as I know (and I can 
@@ -423,9 +421,8 @@ class Block (Data):
         self.reserved_by = None
         self.used_by = None
         self.cleanup_pending = False
-        self.midplane_geometry = spec.get("midplane_geometry",[-1,-1,-1,-1])
-        self.node_geometry = spec.get("node_geometry",
-                [i*4 for i in self.midplane_geometry])
+        self.midplane_geometry = spec.get("midplane_geometry", [-1, -1, -1, -1])
+        self.node_geometry = spec.get("node_geometry", [i*4 for i in self.midplane_geometry])
         if len(self.node_geometry) == 4:
             self.node_geometry.extend([2])
 
@@ -441,7 +438,7 @@ class Block (Data):
         self._children = set() #relatives that are proper subsets of me
         self._passthrough_blocks = set() #blocks that contain this block's midplanes in their passthrough lists
 
-        self.wires = spec.pop('wires',set()) #list of (src, dst) tuples for cables linking midplanes
+        self.wires = spec.pop('wires', set()) #list of (src, dst) tuples for cables linking midplanes
         self.admin_failed = False #set this to true if a partadm --fail is issued
 
         self._update_node_cards()
@@ -487,6 +484,8 @@ class Block (Data):
                     raise RuntimeError("Invalid corner node for chosen block size.")
                 #pull in all nodenames by coords from nodecard.
                 nc = list(self.node_cards)[0] #only one node_card is in use in this case.
+        self.current_kernel = get_config_option('bgsystem', 'cn_default_kernel', 'default')
+        self.current_kernel_options = get_config_option('bgqsystem', 'cn_default_kernel_options', '')
 
     def _update_node_cards(self):
         if self.state == "busy":
@@ -1018,7 +1017,7 @@ class BGBaseSystem (Component):
                 ret += "failing %s\n" % b.name
                 b.admin_failed = True
             else:
-                ret += "%s is already marked as failing\n" % p.name
+                ret += "%s is already marked as failing\n" % b.name
 
         return ret
     fail_blocks = exposed(fail_blocks)
@@ -1173,7 +1172,7 @@ class BGBaseSystem (Component):
         if drain_block:
             # don't try to drain for an entire weekend 
             hours = (drain_block.backfill_time - time.time()) / 3600.0
-            if hours > max_drain_hours:
+            if hours > MAX_DRAIN_HOURS:
                 drain_block = None
 
         return drain_block
@@ -1546,7 +1545,6 @@ class BGBaseSystem (Component):
             self._blocks_lock.release()
         return rc
     reserve_resources_until = exposed(reserve_resources_until)
-
 
     def _auth_user_for_block(self, location, user, jobid, resid):
         '''Given a location, user, jobid, and/or resid, make sure the user is allowed to boot/free blocks associated with that location.

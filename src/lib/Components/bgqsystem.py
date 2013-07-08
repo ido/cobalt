@@ -24,25 +24,22 @@ import Cobalt.Data
 import Cobalt.Util
 from Cobalt.Util import get_config_option, disk_writer_thread 
 from Cobalt.Components.base import Component, exposed, automatic, query
-from Cobalt.Exceptions import ProcessGroupCreationError, ComponentLookupError
+from Cobalt.Exceptions import ComponentLookupError
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Statistics import Statistics
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
 
 from pybgsched import SWIG_vector_to_list
 
-
 from Cobalt.Components.BGQBooter import BGQBooter
-from Cobalt.Components.bgq_io_hardware import IONode, IODrawer
-from Cobalt.Components.bgq_io_block import IOBlock, IOBlockDict
-
-
-from Cobalt.Components.bgq_base_system import node_position_exp, nodecard_exp, midplane_exp, rack_exp, wire_exp
-from Cobalt.Components.bgq_base_system import NODECARD_A_DIM_MASK, NODECARD_B_DIM_MASK, NODECARD_C_DIM_MASK, NODECARD_D_DIM_MASK, NODECARD_E_DIM_MASK
+from Cobalt.Components.bgq_io_block import IOBlockDict
+from Cobalt.Components.bgq_base_system import nodecard_exp, midplane_exp, rack_exp, wire_exp
+from Cobalt.Components.bgq_base_system import NODECARD_A_DIM_MASK, NODECARD_B_DIM_MASK, NODECARD_C_DIM_MASK
+from Cobalt.Components.bgq_base_system import NODECARD_D_DIM_MASK
 from Cobalt.Components.bgq_base_system import A_DIM, B_DIM, C_DIM, D_DIM, E_DIM
 from Cobalt.Components.bgq_base_system import get_extents_from_size
 from Cobalt.Components.bgq_base_system import Wire
-from Cobalt.Components.bgq_base_system import NodeCard, BlockDict, BGProcessGroupDict, BGBaseSystem, JobValidationError
+from Cobalt.Components.bgq_base_system import NodeCard, BlockDict, BGProcessGroupDict, BGBaseSystem
 
 #try:
     ##compatibiilty for older pythons, Check to see if this even matters for >= 2.6
@@ -52,6 +49,7 @@ from xml.etree import ElementTree
 
 __all__ = [
     "BGProcessGroup",
+    "BGSystem"
 ]
 
 logger = logging.getLogger(__name__)
@@ -77,7 +75,7 @@ def cobalt_log_terminate():
     '''
     cobalt_log_writer.send(None)
 
-automatic_method_default_interval = get_config_option('system','automatic_method_default_interval', 10.0)
+automatic_method_default_interval = get_config_option('system', 'automatic_method_default_interval', 10.0)
 
 sw_char_to_dim_dict = {'A': pybgsched.Dimension(pybgsched.Dimension.A),
                        'B': pybgsched.Dimension(pybgsched.Dimension.B),
@@ -1393,6 +1391,7 @@ class BGSystem (BGBaseSystem):
             self.logger.info("Block %s: starting cleanup.", block.name)
             block.cleanup_pending = True
             block.reserved_until = False
+            block_reset_kernel.append(block)
             block.reserved_by = None
             block.used_by = None
             _set_block_cleanup_state(block)
@@ -1659,6 +1658,7 @@ class BGSystem (BGBaseSystem):
                 nc.used_by = ''
             self._blocks_lock.acquire()
             now = time.time()
+            block_reset_kernel = []
             self.bridge_partition_cache = {}
             self.offline_blocks = []
             missing_blocks = set(self._blocks.keys())
@@ -1818,6 +1818,16 @@ class BGSystem (BGBaseSystem):
                 self.logger.error("error in update_block_state", exc_info=True)
             self._blocks_lock.release()
 
+            # cleanup partitions and set their kernels back to the default (while _not_ holding the lock)
+            if block_reset_kernel:
+                self.logger.log(1, "update_block_state: clearing kernel settings")
+            for b in block_reset_kernel:
+                try:
+                    self._clear_kernel(b.name, 'cn')
+                    self.logger.info("Block %s: kernel settings cleared", b.name)
+                except:
+                    self.logger.error("Block %s: failed to clear kernel settings", b.name)
+
             Cobalt.Util.sleep(10)
         #End while(true)
 
@@ -1889,7 +1899,8 @@ class BGSystem (BGBaseSystem):
         if locking:
             self._blocks_lock.release()
 
-    def _validate_kernel(self, kernel):
+    @classmethod
+    def _validate_kernel(cls, kernel):
         '''Validate that we have alternate kernels to boot.'''
 
         if get_config_option('bgsystem', 'allow_alternate_kernels', 'false').lower() not in Cobalt.Util.config_true_values:
@@ -1912,18 +1923,18 @@ class BGSystem (BGBaseSystem):
 
         try:
             current = os.readlink(partition_link)
-        except OSError, e:
-            if e.errno == errno.ENOENT:
+        except OSError, err:
+            if err.errno == errno.ENOENT:
                 self.logger.warning("partition %s: partitionboot location %s does not exist; creating link",
                     partition, partition_link)
                 current = None
-            elif e.errno == errno.EINVAL:
+            elif err.errno == errno.EINVAL:
                 self.logger.warning("partition %s: partitionboot location %s is not a symlink; removing and resetting",
                     partition, partition_link)
                 current = None
             else:
                 self.logger.warning("partition %s: failed to read partitionboot location %s: %s",
-                    partition, partition_link, e.strerror)
+                    partition, partition_link, err.strerror)
                 raise
         if current != kernel_dir:
             if not self._validate_kernel(kernel):
@@ -1934,31 +1945,39 @@ class BGSystem (BGBaseSystem):
             try:
                 try:
                     os.unlink(partition_link)
-                except OSError, e:
-                    if e.errno != errno.ENOENT:
-                        self.logger.error("partition %s: unable to unlink \"%s\": %s", partition, partition_link, e.strerror)
+                except OSError, err:
+                    if err.errno != errno.ENOENT:
+                        self.logger.error("partition %s: unable to unlink \"%s\": %s", partition, partition_link, err.strerror)
                         raise
                 try:
                     os.symlink(kernel_dir, partition_link)
-                except OSError, e:
+                except OSError, err:
                     self.logger.error("partition %s: failed to reset boot location \"%s\" to \"%s\": %s" %
-                        (partition, partition_link, kernel_dir, e.strerror))
+                        (partition, partition_link, kernel_dir, err.strerror))
                     raise
             except OSError:
                 raise Exception("failed to reset boot location for partition", partition)
             self.logger.info("partition %s: boot image updated; now set to \"%s\"", partition, kernel)
 
-    def _clear_kernel(self, partition):
-        '''Set the kernel to be used by a partition to the default value'''
-        if get_config_option('bgsystem', 'kernel', 'false') in Cobalt.Util.config_true_values:
+    def _clear_kernel(self, block_name, kernel_type):
+        '''Set the kernel to be used by a block_name to the default value'''
+        if get_config_option('bgsystem', 'allow_alternate_kernels', 'false') in Cobalt.Util.config_true_values:
             try:
-                self._set_kernel(partition, "default")
+                default_kernel = get_config_option('bgsystem', '%s_default_kernel' % kernel_type, 'default')
+                default_kernel_options = get_config_option('bgsystem', '%s_default_kernel_options' % kernel_type, ' ')
+                self._set_kernel(block_name, get_config_option('bgsystem', '%s_default_kernel' % kernel_type, 'default'),
+                        kernel_type)
             except:
-                logger.error("partition %s: failed to reset boot location", partition)
+                logger.error("block_name %s: failed to reset boot location", block_name)
+            else:
+                self._blocks[block_name].current_kernel = default_kernel
+                self._blocks[block_name].current_kernel_options = default_kernel_options
+                logger.info("block %s: kernel and options reset", block_name)
 
     def generate_xml(self):
         """This method produces an XML file describing the managed partitions, suitable for use with the simulator."""
         ret = "<BG>\n"
+        ret += "<BGType>bgq</BGType>\n"
         ret += "<BlockList>\n"
         for b_name in self._managed_blocks:
             b = self._blocks[b_name]
@@ -2002,28 +2021,30 @@ class BGSystem (BGBaseSystem):
 
         start_apg_timer = time.time()
         process_groups = self.process_groups.q_add(specs)
+        #set the default kernel for this job.
         for pgroup in process_groups:
             pgroup.label = "Job %s/%s/%s" % (pgroup.jobid, pgroup.user, pgroup.id)
             pgroup.nodect = self._blocks[pgroup.location[0]].size
+            self.logger.debug("%s: job requesting kernel %s with options %s", pgroup.label, pgroup.kernel, pgroup.kerneloptions)
             self.logger.info("%s: process group %s created to track job status", pgroup.label, pgroup.id)
+            self._blocks[pgroup.location[0]].current_kernel = pgroup.kernel
+            self._blocks[pgroup.location[0]].current_kernel_options = pgroup.kerneloptions
+            #Change the kernel.  Default is specified in cobalt.conf.
             try:
-                self._set_kernel(pgroup.location[0], pgroup.kernel)
+                self._set_kernel(pgroup.location[0], pgroup.kernel, "cn")
+                self.logger.info("%s: now using kernel %s" % (pgroup.label, pgroup.kernel))
             except Exception, e:
-                self.logger.error("%s: failed to set the kernel; %s", 
-                        pgroup.label, e)
+                self.logger.error("%s: failed to set the kernel; %s", pgroup.label, e)
+                self.logger.error("%s: job abborted due to errors setting up kernel.", pgroup.label)
                 pgroup.exit_status = 255
             else:
-                if pgroup.kernel != "default":
-                    self.logger.info("%s: now using kernel %s", 
-                            pgroup.label, pgroup.kernel)
                 if pgroup.mode == "script":
                     pgroup.forker = 'user_script_forker'
                     if pgroup.script_preboot == False:
                         self.logger.info("%s: no preboot requested.  Starting job immediately. Block %s allocated for this job.",
                                 pgroup.label, pgroup.location[0])
                         #extend the resource resrevation to cover the job's runtime.
-                        reserve_status = self.reserve_resources_until(pgroup.location,
-                                float(pgroup.starttime) + 60*float(pgroup.walltime), pgroup.jobid)
+                        self.reserve_resources_until(pgroup.location, float(pgroup.starttime) + 60*float(pgroup.walltime), pgroup.jobid)
                         self._start_process_group(pgroup)
                     else:
                         self.booter.initiate_boot(pgroup.location[0], pgroup.jobid, pgroup.user,
@@ -2162,7 +2183,7 @@ class BGSystem (BGBaseSystem):
         return
 
     check_boot_status = automatic(check_boot_status, automatic_method_default_interval)
-    
+
     def get_process_groups (self, specs):
         return self.process_groups.q_get(specs)
     get_process_groups = exposed(query(get_process_groups))
@@ -2299,7 +2320,7 @@ class BGSystem (BGBaseSystem):
         spec -- job specification dictionary
         """
         spec = BGBaseSystem.validate_job(self, spec)
-        #No kernel stuff.  That will go here.
+        #FIXME: No kernel stuff.  That will go here.
         return spec
 
     @exposed
