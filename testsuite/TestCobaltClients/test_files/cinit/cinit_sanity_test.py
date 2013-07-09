@@ -3582,3 +3582,95 @@ def test_showres_showres_7():
         "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_setres_setres_11():
+    """
+    setres test run: setres_11
+
+        Command Output:
+        Got starttime Mon Jul  8 22:13:00 2013 +0000 (UTC)
+        [{'project': None, 'users': None, 'block_passthrough': False, 'name': 'r1', 'queue': 'q_1', 'start': 1373321580.0, 'duration': 3000, 'cycle': None, 'res_id': 10, 'partitions': 'ANL-R01-1024:ANL-R00-M0-512'}]
+        
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """-n r1 -s now -d 50 -q q_1 ANL-R01-1024 ANL-R00-M0-512"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('setres.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_releaseres_releaseres_4():
+    """
+    releaseres test run: releaseres_4
+
+        Command Output:
+        Released reservation 'r1', matched on 1 partitions
+        
+        Command Error/Debug:
+        releaseres.py -d r1
+        
+        component: "scheduler.get_reservations", defer: False
+          get_reservations(
+             [{'name': 'r1'}],
+             )
+        
+        
+        component: "scheduler.release_reservations", defer: False
+          release_reservations(
+             [{'name': 'r1'}],
+             georgerojas,
+             )
+        
+        
+        
+        
+    """
+
+    args      = """-d r1"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('releaseres.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg

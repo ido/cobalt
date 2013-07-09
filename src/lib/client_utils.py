@@ -15,6 +15,7 @@ import xmlrpclib
 import ConfigParser
 import re
 import logging
+import time
 
 import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
@@ -1052,11 +1053,22 @@ def cb_passthrough(option,opt_str,value,parser,*args):
         
 def cb_date(option,opt_str,value,parser,*args):
     """
-    parser date
+    parse date
     """
     try:
-        starttime = Cobalt.Util.parse_datetime(value)
+        _value = value
+
+        if args is not ():
+            allow_now = args[0]
+            if _value.lower() == 'now':
+                if not allow_now: 
+                    raise
+                nt        = time.localtime(time.time())
+                _value = "%04d_%02d_%02d-%02d:%02d" % (nt.tm_year,nt.tm_mon,nt.tm_mday,nt.tm_hour,nt.tm_min)
+
+        starttime = Cobalt.Util.parse_datetime(_value)
         logger.info("Got starttime %s" % (sec_to_str(starttime)))
+
     except:
         logger.error("start time '%s' is invalid" % value)
         logger.error("start time is expected to be in the format: YYYY_MM_DD-HH:MM")

@@ -27,7 +27,9 @@ if test -z "${PATH_BASIS}" ; then
     export PATH_BASIS="$PATH"
 fi
 export PATH="${COBALT_SOURCE_DIR}"/src/clients:"${COBALT_SOURCE_DIR}"/src/clients/POSIX:$PATH_BASIS
-export PYTHONPATH="$COBALT_SOURCE_DIR/src":$COBALT_SOURCE_DIR/testsuite
+export PYTHONPATH="$COBALT_SOURCE_DIR"/src:"$COBALT_SOURCE_DIR"/testsuite
+export PYTHONPATH=$PYTHONPATH:"$COBALT_SOURCE_DIR"/testsuite/TestCobaltClients
+export PYTHONPATH=$PYTHONPATH:"$COBALT_SOURCE_DIR"/testsuite/TestCobaltClients/testlib
 export COBALT_SIM="<SIMPATH>"
 
 alias cobalt-client-sim='source "<SIMPATH>"/cobalt_client_setup'

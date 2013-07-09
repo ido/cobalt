@@ -15,7 +15,7 @@ OPTIONS DEFINITIONS:
 '-n','--name',dest='name',type='string',help='reservation name to add or modify'
 '-p','--partition',dest='partitions',type='string',help='partition (now optional)'
 '-q','--queue',dest='queue',type='string',help='queue name'
-'-s','--starttime',dest='start',type='string',help='start date time: YYYY_MM_DD-HH:MM>',callback=cb_date
+'-s','--starttime',dest='start',type='string',help='start date time: YYYY_MM_DD-HH:MM, or now',callback=cb_date
 '-u','--user',dest='users',type='string',help='user id list (user1:user2:...)',callback=cb_user_list
 '--debug',dest='debug',help='turn on communication debugging',callback=cb_debug
 
@@ -229,7 +229,7 @@ def main():
     callbacks = [
         # <cb function>           <cb args>
         [ cb_time                , (False, True, True) ], # no delta time, Seconds, return int
-        [ cb_date                , () ],
+        [ cb_date                , (True,) ], # Allow to set the date to 'now'
         [ cb_passthrough         , () ],
         [ cb_debug               , () ],
         [ cb_user_list           , (opts, False) ]] # do not add current user
