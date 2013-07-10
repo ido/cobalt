@@ -123,6 +123,14 @@ class client_data(object):
         SCHMGR : {'conn' : None, 'defer' : True}, 
         SLPMGR : {'conn' : None, 'defer' : True} }
 
+def print_usage(parser, errmsg = "No arguments or options provided"):
+    """
+    Will print the usage and a specified error message if provided
+    """
+    parser.parser.print_usage()
+    if errmsg is not None:
+        logger.error(errmsg+'\n')
+
 def component_call(comp_name, defer, func_name, args, exit_on_error = True):
     """
     This function is calls a function on another component and handle XML RPC faults
@@ -325,7 +333,7 @@ def validate_jobid_args(parser):
     Validate jobids command line arguments.
     """
     if parser.no_args():
-        logger.error("No Jobid(s) given")
+        print_usage(parser, "No Jobid(s) given")
         sys.exit(1)
 
     # get jobids from the argument list

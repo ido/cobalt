@@ -140,19 +140,7 @@ def test_setres_id_change_4():
 
     args      = """--res_id 8 ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
 
-    cmdout    = \
-"""Usage: setres.py [--version] [-m] -n name -s <starttime> -d <duration> 
-                  -c <cycle time> -p <partition> -q <queue name> 
-                  -D -u <user> [-f] [partion1] .. [partionN]
-                  --res_id <new res_id>
-                  --cycle_id <new cycle_id>
-                  --block_passthrough
-starttime is in format: YYYY_MM_DD-HH:MM
-duration may be in minutes or HH:MM:SS
-cycle time may be in minutes or DD:HH:MM:SS
-queue name is only needed to specify a name other than the default
-cycle time, queue name, and user are optional
-"""
+    cmdout    = ''
 
     cmderr    = \
 """No partition arguments or other options allowed with id change options
@@ -189,19 +177,7 @@ def test_setres_id_change_5():
 
     args      = """--cycle_id 8 ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
 
-    cmdout    = \
-"""Usage: setres.py [--version] [-m] -n name -s <starttime> -d <duration> 
-                  -c <cycle time> -p <partition> -q <queue name> 
-                  -D -u <user> [-f] [partion1] .. [partionN]
-                  --res_id <new res_id>
-                  --cycle_id <new cycle_id>
-                  --block_passthrough
-starttime is in format: YYYY_MM_DD-HH:MM
-duration may be in minutes or HH:MM:SS
-cycle time may be in minutes or DD:HH:MM:SS
-queue name is only needed to specify a name other than the default
-cycle time, queue name, and user are optional
-"""
+    cmdout    = ''
 
     cmderr    = \
 """No partition arguments or other options allowed with id change options
@@ -238,19 +214,7 @@ def test_setres_id_change_6():
 
     args      = """--res_id 8 -m -n resname"""
 
-    cmdout    = \
-"""Usage: setres.py [--version] [-m] -n name -s <starttime> -d <duration> 
-                  -c <cycle time> -p <partition> -q <queue name> 
-                  -D -u <user> [-f] [partion1] .. [partionN]
-                  --res_id <new res_id>
-                  --cycle_id <new cycle_id>
-                  --block_passthrough
-starttime is in format: YYYY_MM_DD-HH:MM
-duration may be in minutes or HH:MM:SS
-cycle time may be in minutes or DD:HH:MM:SS
-queue name is only needed to specify a name other than the default
-cycle time, queue name, and user are optional
-"""
+    cmdout    = ''
 
     cmderr    = \
 """No partition arguments or other options allowed with id change options
@@ -287,19 +251,7 @@ def test_setres_id_change_7():
 
     args      = """--cycle_id 8 -p ANL-R00-R01-2048"""
 
-    cmdout    = \
-"""Usage: setres.py [--version] [-m] -n name -s <starttime> -d <duration> 
-                  -c <cycle time> -p <partition> -q <queue name> 
-                  -D -u <user> [-f] [partion1] .. [partionN]
-                  --res_id <new res_id>
-                  --cycle_id <new cycle_id>
-                  --block_passthrough
-starttime is in format: YYYY_MM_DD-HH:MM
-duration may be in minutes or HH:MM:SS
-cycle time may be in minutes or DD:HH:MM:SS
-queue name is only needed to specify a name other than the default
-cycle time, queue name, and user are optional
-"""
+    cmdout    = ''
 
     cmderr    = \
 """No partition arguments or other options allowed with id change options
@@ -438,7 +390,7 @@ def test_setres_force_2():
     cmdout    = ''
 
     cmderr    = \
-"""ERROR:root:--force_id can only be used with --cycle_id and/or --res_id.
+"""--force_id can only be used with --cycle_id and/or --res_id.
 """
 
     stubout   = ''
@@ -473,11 +425,11 @@ def test_setres_force_3():
     args      = """--force_id -p ANL-R00-R01-2048 -s 2013_03_09-10:30"""
 
     cmdout    = \
-"""--force_id can only be used with --cycle_id and/or --res_id.
+"""Got starttime Sat Mar  9 16:30:00 2013 +0000 (UTC)
 """
 
     cmderr    = \
-"""ERROR:root:--force_id can only be used with --cycle_id and/or --res_id.
+"""--force_id can only be used with --cycle_id and/or --res_id.
 """
 
     stubout   = ''
@@ -511,12 +463,10 @@ def test_setres_force_4():
 
     args      = """--force_id -m -n resname"""
 
-    cmdout    = \
-"""--force_id can only be used with --cycle_id and/or --res_id.
-"""
+    cmdout    = ''
 
     cmderr    = \
-"""ERROR:root:--force_id can only be used with --cycle_id and/or --res_id.
+"""--force_id can only be used with --cycle_id and/or --res_id.
 """
 
     stubout   = ''
@@ -551,11 +501,14 @@ def test_setres_modify_1():
     args      = """-m"""
 
     cmdout    = \
-"""-m must by called with -n <reservation name>
+"""Usage: setres.py --help
+Usage: setres.py [options] <partition1> ... <partitionN>
+
 """
 
     cmderr    = \
-"""Reservation name must be provided. Use -n <reservation name>
+"""No arguments or options provided
+
 """
 
     stubout   = ''
@@ -647,19 +600,7 @@ def test_setres_modify_3():
 
     args      = """-m -n resname -D -c 10:10:10"""
 
-    cmdout    = \
-"""Usage: setres.py [--version] [-m] -n name -s <starttime> -d <duration> 
-                  -c <cycle time> -p <partition> -q <queue name> 
-                  -D -u <user> [-f] [partion1] .. [partionN]
-                  --res_id <new res_id>
-                  --cycle_id <new cycle_id>
-                  --block_passthrough
-starttime is in format: YYYY_MM_DD-HH:MM
-duration may be in minutes or HH:MM:SS
-cycle time may be in minutes or DD:HH:MM:SS
-queue name is only needed to specify a name other than the default
-cycle time, queue name, and user are optional
-"""
+    cmdout    = ''
 
     cmderr    = \
 """Cannot use -D while changing start or cycle time
@@ -735,17 +676,7 @@ def test_setres_modify_5():
     args      = """-m -n resname -D -s 2013_03_9-10:10"""
 
     cmdout    = \
-"""Usage: setres.py [--version] [-m] -n name -s <starttime> -d <duration> 
-                  -c <cycle time> -p <partition> -q <queue name> 
-                  -D -u <user> [-f] [partion1] .. [partionN]
-                  --res_id <new res_id>
-                  --cycle_id <new cycle_id>
-                  --block_passthrough
-starttime is in format: YYYY_MM_DD-HH:MM
-duration may be in minutes or HH:MM:SS
-cycle time may be in minutes or DD:HH:MM:SS
-queue name is only needed to specify a name other than the default
-cycle time, queue name, and user are optional
+"""Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
 """
 
     cmderr    = \
@@ -1252,19 +1183,7 @@ def test_setres_modify_13():
 
     args      = """-m -n resname --allow_passthrough --block_passthrough"""
 
-    cmdout    = \
-"""Usage: setres.py [--version] [-m] -n name -s <starttime> -d <duration> 
-                  -c <cycle time> -p <partition> -q <queue name> 
-                  -D -u <user> [-f] [partion1] .. [partionN]
-                  --res_id <new res_id>
-                  --cycle_id <new cycle_id>
-                  --block_passthrough
-starttime is in format: YYYY_MM_DD-HH:MM
-duration may be in minutes or HH:MM:SS
-cycle time may be in minutes or DD:HH:MM:SS
-queue name is only needed to specify a name other than the default
-cycle time, queue name, and user are optional
-"""
+    cmdout    = ''
 
     cmderr    = \
 """Attribute block_passthrough already set
@@ -1674,23 +1593,10 @@ def test_setres_add_res_1():
 
     args      = """-n resname -D"""
 
-    cmdout    = \
-"""Must supply either -p with value or partitions as arguments
-Usage: setres.py [--version] [-m] -n name -s <starttime> -d <duration> 
-                  -c <cycle time> -p <partition> -q <queue name> 
-                  -D -u <user> [-f] [partion1] .. [partionN]
-                  --res_id <new res_id>
-                  --cycle_id <new cycle_id>
-                  --block_passthrough
-starttime is in format: YYYY_MM_DD-HH:MM
-duration may be in minutes or HH:MM:SS
-cycle time may be in minutes or DD:HH:MM:SS
-queue name is only needed to specify a name other than the default
-cycle time, queue name, and user are optional
-"""
+    cmdout    = ''
 
     cmderr    = \
-"""ERROR:root:Must supply either -p with value or partitions as arguments
+"""Must supply either -p with value or partitions as arguments
 """
 
     stubout   = ''
@@ -1724,19 +1630,7 @@ def test_setres_add_res_2():
 
     args      = """-n resname -D ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
 
-    cmdout    = \
-"""Usage: setres.py [--version] [-m] -n name -s <starttime> -d <duration> 
-                  -c <cycle time> -p <partition> -q <queue name> 
-                  -D -u <user> [-f] [partion1] .. [partionN]
-                  --res_id <new res_id>
-                  --cycle_id <new cycle_id>
-                  --block_passthrough
-starttime is in format: YYYY_MM_DD-HH:MM
-duration may be in minutes or HH:MM:SS
-cycle time may be in minutes or DD:HH:MM:SS
-queue name is only needed to specify a name other than the default
-cycle time, queue name, and user are optional
-"""
+    cmdout    = ''
 
     cmderr    = \
 """Must supply a start time for the reservation with -s
@@ -1774,17 +1668,7 @@ def test_setres_add_res_3():
     args      = """-n resname -s 2013_03_9-10:10 ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Usage: setres.py [--version] [-m] -n name -s <starttime> -d <duration> 
-                  -c <cycle time> -p <partition> -q <queue name> 
-                  -D -u <user> [-f] [partion1] .. [partionN]
-                  --res_id <new res_id>
-                  --cycle_id <new cycle_id>
-                  --block_passthrough
-starttime is in format: YYYY_MM_DD-HH:MM
-duration may be in minutes or HH:MM:SS
-cycle time may be in minutes or DD:HH:MM:SS
-queue name is only needed to specify a name other than the default
-cycle time, queue name, and user are optional
+"""Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
 """
 
     cmderr    = \
@@ -2264,13 +2148,17 @@ def test_setres_add_res_10():
 
     cmdout    = \
 """Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
+Usage: setres.py --help
+Usage: setres.py [options] <partition1> ... <partitionN>
+
 """
 
     cmderr    = \
 """
 setres.py -s 2013_03_9-10:10 -d 10:10:10 -p ANL-R00-R01-2048 --block_passthrough -q myq -A myproj --debug
 
-Reservation name must be provided. Use -n <reservation name>
+No arguments or options provided
+
 """
 
     stubout   = ''

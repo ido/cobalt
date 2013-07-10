@@ -35,6 +35,8 @@ component: "queue-manager.add_jobs", defer: False
      )
 
 
+WARNING: failed to create cobalt log file at: /tmp/d
+         Permission denied
 """
 
     stubout   = \
@@ -207,7 +209,10 @@ def test_qsub_misc_1():
 """1
 """
 
-    cmderr    = ''
+    cmderr    = \
+"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
+         Permission denied
+"""
 
     stubout   = \
 """
@@ -344,11 +349,15 @@ def test_qsub_no_options_passed():
 
     args      = """/bin/ls"""
 
-    cmdout    = ''
+    cmdout    = \
+"""Usage: qsub.py --help
+Usage: qsub.py [options] <executable> [<excutable options>]
+
+"""
 
     cmderr    = \
-"""No required options entered
-'time' not provided
+"""No required options provided
+
 """
 
     stubout   = ''
@@ -382,22 +391,11 @@ def test_qsub_non_existant_option():
 
     args      = """-z -t10 -n10 /bin/ls"""
 
-    cmdout    = \
-"""option -z not recognized
-
-Usage: qsub [-d] [-v] -A <project name> -q <queue> --cwd <working directory>
-             --dependencies <jobid1>:<jobid2> --preemptable
-             --env envvar1=value1:envvar2=value2 --kernel <kernel profile>
-             -K <kernel options> -O <outputprefix> -t time <in minutes>
-             -e <error file path> -o <output file path> -i <input file path>
-             -n <number of nodes> -h --proccount <processor count> -u <umask>
-             --mode <mode> --debuglog <cobaltlog file path> <command> <args>
-             --users <user1>:<user2> --run_project --disable_preboot
-
-"""
+    cmdout    = ''
 
     cmderr    = \
-"""Usage: qsub.py [options] <executable> [<excutable options>]
+"""Usage: qsub.py --help
+Usage: qsub.py [options] <executable> [<excutable options>]
 
 qsub.py: error: no such option: -z
 """
@@ -433,14 +431,18 @@ def test_qsub_debug_flag_only_1():
 
     args      = """-d"""
 
-    cmdout    = ''
+    cmdout    = \
+"""Usage: qsub.py --help
+Usage: qsub.py [options] <executable> [<excutable options>]
+
+"""
 
     cmderr    = \
 """
 qsub.py -d
 
-No required options entered
-'time' not provided
+No required options provided
+
 """
 
     stubout   = ''
@@ -474,13 +476,18 @@ def test_qsub_debug_flag_only_2():
 
     args      = """-debug"""
 
-    cmdout    = ''
+    cmdout    = \
+"""Usage: qsub.py --help
+Usage: qsub.py [options] <executable> [<excutable options>]
+
+"""
 
     cmderr    = \
 """
 qsub.py -debug
 
-'time' not provided
+No executable specified
+
 """
 
     stubout   = ''
@@ -514,11 +521,15 @@ def test_qsub_verbose_flag_only():
 
     args      = """-v"""
 
-    cmdout    = ''
+    cmdout    = \
+"""Usage: qsub.py --help
+Usage: qsub.py [options] <executable> [<excutable options>]
+
+"""
 
     cmderr    = \
-"""No required options entered
-'time' not provided
+"""No required options provided
+
 """
 
     stubout   = ''
@@ -555,7 +566,8 @@ def test_qsub_non_integer_nodecount():
     cmdout    = ''
 
     cmderr    = \
-"""Usage: qsub.py [options] <executable> [<excutable options>]
+"""Usage: qsub.py --help
+Usage: qsub.py [options] <executable> [<excutable options>]
 
 qsub.py: error: option -n: invalid integer value: 'five'
 """
@@ -669,7 +681,10 @@ def test_qsub_invalid_geometry_2():
 """1
 """
 
-    cmderr    = ''
+    cmderr    = \
+"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
+         Permission denied
+"""
 
     stubout   = \
 """
@@ -810,7 +825,10 @@ def test_qsub_invalid_geometry_3():
 """1
 """
 
-    cmderr    = ''
+    cmderr    = \
+"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
+         Permission denied
+"""
 
     stubout   = \
 """
@@ -951,7 +969,10 @@ def test_qsub_invalid_geometry_4():
 """1
 """
 
-    cmderr    = ''
+    cmderr    = \
+"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
+         Permission denied
+"""
 
     stubout   = \
 """
@@ -1129,7 +1150,10 @@ def test_qsub_invalid_geometry_6():
 """1
 """
 
-    cmderr    = ''
+    cmderr    = \
+"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
+         Permission denied
+"""
 
     stubout   = \
 """
@@ -1307,7 +1331,10 @@ def test_qsub_project_specified():
 """1
 """
 
-    cmderr    = ''
+    cmderr    = \
+"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
+         Permission denied
+"""
 
     stubout   = \
 """
@@ -1448,7 +1475,10 @@ def test_qsub_Check_attrs_1():
 """1
 """
 
-    cmderr    = ''
+    cmderr    = \
+"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
+         Permission denied
+"""
 
     stubout   = \
 """
@@ -1589,7 +1619,10 @@ def test_qsub_Check_attrs_2():
 """1
 """
 
-    cmderr    = ''
+    cmderr    = \
+"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
+         Permission denied
+"""
 
     stubout   = \
 """
@@ -1730,7 +1763,10 @@ def test_qsub_Check_attrs_3():
 """1
 """
 
-    cmderr    = ''
+    cmderr    = \
+"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
+         Permission denied
+"""
 
     stubout   = \
 """
@@ -1871,7 +1907,10 @@ def test_qsub_Check_attrs_4():
 """1
 """
 
-    cmderr    = ''
+    cmderr    = \
+"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
+         Permission denied
+"""
 
     stubout   = \
 """
@@ -2012,7 +2051,10 @@ def test_qsub_cwd_option_1():
 """1
 """
 
-    cmderr    = ''
+    cmderr    = \
+"""WARNING: failed to create cobalt log file at: /tmp//1.cobaltlog
+         Permission denied
+"""
 
     stubout   = \
 """
@@ -2153,7 +2195,10 @@ def test_qsub_cwd_option_2():
 """1
 """
 
-    cmderr    = ''
+    cmderr    = \
+"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
+         Permission denied
+"""
 
     stubout   = \
 """
@@ -2331,7 +2376,10 @@ def test_qsub_cwd_option_4():
 """1
 """
 
-    cmderr    = ''
+    cmderr    = \
+"""WARNING: failed to create cobalt log file at: /tmp//1.cobaltlog
+         Permission denied
+"""
 
     stubout   = \
 """
@@ -2474,7 +2522,10 @@ def test_qsub_cwd_option_5():
 """1
 """
 
-    cmderr    = ''
+    cmderr    = \
+"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
+         Permission denied
+"""
 
     stubout   = \
 """
@@ -2617,7 +2668,10 @@ def test_qsub_debuglog_option():
 """1
 """
 
-    cmderr    = ''
+    cmderr    = \
+"""WARNING: failed to create cobalt log file at: /tmp/y
+         Permission denied
+"""
 
     stubout   = \
 """
@@ -2799,7 +2853,10 @@ def test_qsub_inputfile_option_2():
 """1
 """
 
-    cmderr    = ''
+    cmderr    = \
+"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
+         Permission denied
+"""
 
     stubout   = \
 """
@@ -2940,7 +2997,10 @@ def test_qsub_email_option():
 """1
 """
 
-    cmderr    = ''
+    cmderr    = \
+"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
+         Permission denied
+"""
 
     stubout   = \
 """
@@ -3223,26 +3283,12 @@ def test_qsub_invalid_user():
 
     """
 
-    args      = """-run_users naughtyuser -t10 -n10 /bin/ls"""
+    args      = """--run_users naughtyuser -t10 -n10 /bin/ls"""
 
-    cmdout    = \
-"""option -r not recognized
-
-Usage: qsub [-d] [-v] -A <project name> -q <queue> --cwd <working directory>
-             --dependencies <jobid1>:<jobid2> --preemptable
-             --env envvar1=value1:envvar2=value2 --kernel <kernel profile>
-             -K <kernel options> -O <outputprefix> -t time <in minutes>
-             -e <error file path> -o <output file path> -i <input file path>
-             -n <number of nodes> -h --proccount <processor count> -u <umask>
-             --mode <mode> --debuglog <cobaltlog file path> <command> <args>
-             --users <user1>:<user2> --run_project --disable_preboot
-
-"""
+    cmdout    = ''
 
     cmderr    = \
-"""Usage: qsub.py [options] <executable> [<excutable options>]
-
-qsub.py: error: no such option: -r
+"""user naughtyuser does not exist.
 """
 
     stubout   = ''
@@ -3250,7 +3296,7 @@ qsub.py: error: no such option: -r
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       512, # Expected return status 
+                       256, # Expected return status 
                        cmdout, # Expected command output
                        stubout, # Expected stub functions output
                        cmderr, # Expected command error output 
@@ -3280,7 +3326,10 @@ def test_qsub_mode_option_1():
 """1
 """
 
-    cmderr    = ''
+    cmderr    = \
+"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
+         Permission denied
+"""
 
     stubout   = \
 """
@@ -3419,7 +3468,10 @@ def test_qsub_mode_option_2():
 """1
 """
 
-    cmderr    = ''
+    cmderr    = \
+"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
+         Permission denied
+"""
 
     stubout   = \
 """
@@ -3558,7 +3610,10 @@ def test_qsub_mode_option_3():
 """1
 """
 
-    cmderr    = ''
+    cmderr    = \
+"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
+         Permission denied
+"""
 
     stubout   = \
 """
@@ -3736,7 +3791,10 @@ def test_qsub_preboot_option():
 """1
 """
 
-    cmderr    = ''
+    cmderr    = \
+"""WARNING: failed to create cobalt log file at: /tmp/1.cobaltlog
+         Permission denied
+"""
 
     stubout   = \
 """

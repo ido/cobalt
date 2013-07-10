@@ -9,13 +9,7 @@ def test_qselect_invalid_option():
 
     args      = """-k"""
 
-    cmdout    = \
-"""option -k not recognized
-
-Usage: qselect [-d] [-v] -A <project name> -q <queue> -n <number of nodes> 
-               -t <time in minutes> -h <hold types> --mode <mode co/vn>
-
-"""
+    cmdout    = ''
 
     cmderr    = \
 """Usage: qselect.py [options]
@@ -54,12 +48,7 @@ def test_qselect_only_arg():
 
     args      = """1"""
 
-    cmdout    = \
-"""
-Usage: qselect [-d] [-v] -A <project name> -q <queue> -n <number of nodes> 
-               -t <time in minutes> -h <hold types> --mode <mode co/vn>
-
-"""
+    cmdout    = ''
 
     cmderr    = \
 """qselect takes no arguments

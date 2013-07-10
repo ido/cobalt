@@ -2,6 +2,7 @@
 """
 Partadm sets partition attributes in the scheduler
 
+Usage: partadm.py --help
 Usage: partadm.py [-a|-d] part1 part2 (add or del)
 Usage: partadm.py -l
 Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
@@ -101,9 +102,7 @@ def validate_args(parser):
     opt_count = client_utils.get_options(spec, opts, opt2spec, parser)
 
     if opt_count == 0:
-        errmsg = 'Must supply one of -a or -d or -l or -start or -stop or --queue or -b.\n'
-        errmsg += 'Adding "-r" or "--recursive" will add the children of the blocks passed in.\n'
-        client_utils.logger.error(errmsg)
+        client_utils.print_usage(parser)
         sys.exit(1)
 
     opts_wo_args = ['list_blocks', 'xml', 'dump', 'savestate', 'boot_stop', 'boot_start', 'boot_status', 'list_io',

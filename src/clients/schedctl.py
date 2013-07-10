@@ -46,8 +46,7 @@ def validate_args(parser, args):
     opt_count = client_utils.get_options(spec, opts, opt2spec, parser)
 
     if opt_count == 0:
-        parser.parser.print_help()
-        client_utils.logger.error("Need at least one option")
+        client_utils.print_usage(parser, "No required options provided")
         sys.exit(1)
 
     # Make sure jobid or queue is supplied for the appropriate commands

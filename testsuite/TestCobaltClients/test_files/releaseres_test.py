@@ -10,11 +10,13 @@ def test_releaseres_arg_1():
     args      = ''
 
     cmdout    = \
-"""releaseres [--version] -p <partition> name
+"""Usage: releaseres.py [--version | --help | --debug] <reservation name>
+
 """
 
     cmderr    = \
-"""Need at least one reservation
+"""No arguments or options provided
+
 """
 
     stubout   = ''
@@ -282,10 +284,7 @@ def test_releaseres_arg_7():
 
     args      = """-t s1 s2 s3"""
 
-    cmdout    = \
-"""option -t not recognized
-releaseres [--version] -p <partition> name
-"""
+    cmdout    = ''
 
     cmderr    = \
 """Usage: releaseres.py [--version | --help | --debug] <reservation name>

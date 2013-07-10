@@ -43,7 +43,7 @@ def main():
     args = parser.args
 
     if parser.no_args():
-        client_utils.logger.error("Need at least one reservation")
+        client_utils.print_usage(parser)
         sys.exit(1)
 
     # Check if reservation exists

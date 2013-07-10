@@ -240,7 +240,7 @@ def validate_results(results,expected_results,stubout_compare_func = None):
         result  = "*** STUB OUTPUT DOES NOT MATCH ***\n"
         result += diffs
 
-    elif int(exp_rs) == 0 and exp_cmdout != cmdout:
+    elif exp_cmdout != cmdout:
         line_sep = "\n--------------------------------------------\n"
         result   = "\n*** COMMAND OUTPUT DOES NOT MATCH ***\n\nExpected Output:\n%s%sActual Output:\n%s\n" % \
             (exp_cmdout, line_sep, cmdout)

@@ -9,8 +9,8 @@ test_argslist - is a list of dictionaries, each dictionary has all the necessary
 """
 
 test_argslist = [
-    { "tc_name" : "args_1", "args" : "", },
-    { "tc_name" : "args_2", "args" : """p1""", "old_args" : "", },
+    { "tc_name" : "args_1", "args" : "", 'new_only' : True },
+    { "tc_name" : "args_2", "args" : """p1""", "new_only" : True, },
     { "tc_name" : "combo_1", "args" : """--up --down p1""", 'skip_list' : ['not_bsim'], },
     { "tc_name" : "combo_2", "args" : """--up -l p1""", "new_only" : True,'skip_list' : ['not_bsim'], },
     { "tc_name" : "combo_3", "args" : """--list --queue q1 p1""", "new_only" : True,'skip_list' : ['not_bsim'], },
@@ -23,6 +23,6 @@ test_argslist = [
     { "tc_name" : "down_3", "args" : """--down D1 D2 D5 p1""", },
     { "tc_name" : "list_1", "args" : """-l""", },
     { "tc_name" : "list_2", "args" : """-l p1""", },
-    { "tc_name" : "queue_1", "args" : """--queue QU1""", "old_args" : "", },
+    { "tc_name" : "queue_1", "args" : """--queue QU1""", "new_only" : True, },
     { "tc_name" : "queue_2", "args" : """--queue "QU1 QD1" U1 D1 P1""", },
     ]

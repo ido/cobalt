@@ -3,6 +3,7 @@
 Administrative interface for queue manager. Allowsone to hold, run, kill, and set 
 the queue for jobs in the queue manager. Can also add/del queues and set queue properties.
 
+Usage: %prog --help
 Usage: %prog [options] <jobid> <jobid> OR <queue> <queue>
 version: "%prog " + __revision__ + , Cobalt  + __version__
 
@@ -113,7 +114,7 @@ def validate_args(parser, spec, opt_count):
     
     # Make sure jobid or queue is supplied for the appropriate commands
     if parser.no_args() and not [opt for opt in spec if opt in opts_wo_args]:
-        client_utils.logger.error("At least on jobid or queue name must be supplied")
+        client_utils.print_usage(parser)
         sys.exit(1)
 
     # Check required options

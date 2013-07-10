@@ -9,10 +9,14 @@ def test_get_bootable_blocks_arg_1():
 
     args      = ''
 
-    cmdout    = ''
+    cmdout    = \
+"""Usage: get-bootable-blocks.py [options] <block location>
+
+"""
 
     cmderr    = \
-"""Must specify a block location for search
+"""No arguments or options provided
+
 """
 
     stubout   = ''
@@ -89,10 +93,14 @@ def test_get_bootable_blocks_size_1():
 
     args      = """--size 1024"""
 
-    cmdout    = ''
+    cmdout    = \
+"""Usage: get-bootable-blocks.py [options] <block location>
+
+"""
 
     cmderr    = \
-"""Must specify a block location for search
+"""No arguments or options provided
+
 """
 
     stubout   = ''
@@ -983,13 +991,17 @@ def test_get_bootable_blocks_debug():
 
     args      = """--debug"""
 
-    cmdout    = ''
+    cmdout    = \
+"""Usage: get-bootable-blocks.py [options] <block location>
+
+"""
 
     cmderr    = \
 """
 get-bootable-blocks.py --debug
 
-Must specify a block location for search
+No arguments or options provided
+
 """
 
     stubout   = ''

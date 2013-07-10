@@ -10,18 +10,13 @@ def test_userres_arg_1():
     args      = ''
 
     cmdout    = \
-"""Usage: userres.py <reservation name>
+"""Usage: userres.py [--version | --help | --debug]  <reservation name(s)>
 
-This program does things to reservations you are done using.  Cyclic
-reservations are deferred until the next time they repeat, while one time
-reservations are released.
-
-Options:
-  -h, --help  show this help message and exit
 """
 
     cmderr    = \
-"""Need at least one reservation
+"""No arguments or options provided
+
 """
 
     stubout   = ''

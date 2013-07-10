@@ -2,6 +2,7 @@
 """
 Cobalt qalter command
 
+Usage: %prog --help
 Usage: %prog [options] <jobid1> ... <jobidN>
 version: "%prog " + __revision__ + , Cobalt  + __version__
 
@@ -60,7 +61,7 @@ def validate_args(parser, opt_count):
     """
     # Check if any altering options entered
     if opt_count == 0:
-        client_utils.logger.error("No job altering options entered")
+        client_utils.print_usage(parser, "No required options provided")
         sys.exit(1)
 
     # get jobids from the argument list

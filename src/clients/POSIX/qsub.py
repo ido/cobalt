@@ -2,6 +2,7 @@
 """
 Submit jobs to the queue manager for execution.
 
+Usage: %prog --help
 Usage: %prog [options] <executable> [<excutable options>]
 version: "%prog " + __revision__ + , Cobalt  + __version__
 
@@ -68,7 +69,13 @@ def validate_args(parser, spec, opt_count):
 
     # Check if any required option entered
     if opt_count == 0:
-        client_utils.logger.error("No required options entered")
+        client_utils.print_usage(parser, "No required options provided")
+        sys.exit(1)
+
+    # if no excecutable specified then flag it an exit
+    if parser.no_args():
+        client_utils.print_usage(parser, "No executable specified")
+        sys.exit(1)
 
     # If no time supplied flag it and exit
     if parser.options.walltime == None:
@@ -78,11 +85,6 @@ def validate_args(parser, spec, opt_count):
     # If no nodecount give then flag it an exit
     if parser.options.nodes == None:
         client_utils.logger.error("'nodecount' not provided")
-        sys.exit(1)
-
-    # if no excecutable specified then flag it an exit
-    if parser.no_args():
-        client_utils.logger.error("No executable specified")
         sys.exit(1)
 
     # Check if it is a valid executable/file

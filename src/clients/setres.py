@@ -2,6 +2,7 @@
 """
 Setup reservations in the scheduler
 
+Usage: %prog --help
 Usage: %prog [options] <partition1> ... <partitionN>
 version: "%prog " + __revision__ + , Cobalt  + __version__
 
@@ -94,7 +95,7 @@ def validate_args(parser,spec,opt_count):
         only_id_change = False
 
     if parser.options.force_id and not only_id_change:
-        client_utils.logging.error("--force_id can only be used with --cycle_id and/or --res_id.")
+        client_utils.logger.error("--force_id can only be used with --cycle_id and/or --res_id.")
         sys.exit(1)
 
     if only_id_change:
@@ -111,11 +112,11 @@ def validate_args(parser,spec,opt_count):
     else:
 
         if parser.options.name is None:
-            client_utils.logger.error("Reservation name must be provided. Use -n <reservation name>")
+            client_utils.print_usage(parser)
             sys.exit(1)
 
         if parser.no_args() and (parser.options.modify_res == None):
-            client_utils.logging.error("Must supply either -p with value or partitions as arguments")
+            client_utils.logger.error("Must supply either -p with value or partitions as arguments")
             sys.exit(1)
 
         if parser.options.start == None and parser.options.modify_res == None:

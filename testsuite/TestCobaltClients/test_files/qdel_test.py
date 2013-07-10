@@ -9,11 +9,7 @@ def test_qdel_invalid_option():
 
     args      = """-k 1"""
 
-    cmdout    = \
-"""option -k not recognized
-Usage:
-qdel [--version] [-f] <jobid> <jobid>
-"""
+    cmdout    = ''
 
     cmderr    = \
 """Usage: qdel.py [options] <jobid1> [ ... <jobidN>]

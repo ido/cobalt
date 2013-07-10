@@ -9,7 +9,7 @@ test_argslist - is a list of dictionaries, each dictionary has all the necessary
 """
 
 test_argslist = [
-    { "tc_name" : "arg_1", "args" : "", },
+    { "tc_name" : "arg_1", "args" : "", 'new_only' : True, },
     { "tc_name" : "arg_2", "args" : """-p p1""",},
     { "tc_name" : "arg_2", "args" : """s1""",},
     { "tc_name" : "arg_3", "args" : """s1 s2 s3""",},

@@ -10,23 +10,15 @@ def test_schedctl_args_1():
     args      = ''
 
     cmdout    = \
-"""Usage: schedctl.py [options]
+"""Usage: schedctl.py [--stop | --start | --status | --reread-policy | --savestate]
+Usage: schedctl.py [--score | --inherit] jobid1 .. jobidN
 
-Options:
-  -h, --help            show this help message and exit
-  --stop                stop scheduling jobs
-  --start               resume scheduling jobs
-  --status              query scheduling status
-  --reread-policy       reread the utility function definition file
-  --savestate=SAVESTATE
-                        write the current state to the specified file
-  --score=ADJUST        <jobid> <jobid> adjust the scores of the arguments
-  --inherit=DEP_FRAC    <jobid> <jobid> control the fraction of the score
-                        inherited by jobs which depend on the arguments
+
 """
 
     cmderr    = \
-"""Need at least one option
+"""No required options provided
+
 """
 
     stubout   = ''
@@ -60,10 +52,16 @@ def test_schedctl_args_2():
 
     args      = """1"""
 
-    cmdout    = ''
+    cmdout    = \
+"""Usage: schedctl.py [--stop | --start | --status | --reread-policy | --savestate]
+Usage: schedctl.py [--score | --inherit] jobid1 .. jobidN
+
+
+"""
 
     cmderr    = \
-"""Need at least one option
+"""No required options provided
+
 """
 
     stubout   = ''
@@ -97,21 +95,7 @@ def test_schedctl_combo_1():
 
     args      = """--start --stop"""
 
-    cmdout    = \
-"""Usage: schedctl.py [options]
-
-Options:
-  -h, --help            show this help message and exit
-  --stop                stop scheduling jobs
-  --start               resume scheduling jobs
-  --status              query scheduling status
-  --reread-policy       reread the utility function definition file
-  --savestate=SAVESTATE
-                        write the current state to the specified file
-  --score=ADJUST        <jobid> <jobid> adjust the scores of the arguments
-  --inherit=DEP_FRAC    <jobid> <jobid> control the fraction of the score
-                        inherited by jobs which depend on the arguments
-"""
+    cmdout    = ''
 
     cmderr    = \
 """Option combinations not allowed with: start option(s)
@@ -148,21 +132,7 @@ def test_schedctl_combo_2():
 
     args      = """--stop --status"""
 
-    cmdout    = \
-"""Usage: schedctl.py [options]
-
-Options:
-  -h, --help            show this help message and exit
-  --stop                stop scheduling jobs
-  --start               resume scheduling jobs
-  --status              query scheduling status
-  --reread-policy       reread the utility function definition file
-  --savestate=SAVESTATE
-                        write the current state to the specified file
-  --score=ADJUST        <jobid> <jobid> adjust the scores of the arguments
-  --inherit=DEP_FRAC    <jobid> <jobid> control the fraction of the score
-                        inherited by jobs which depend on the arguments
-"""
+    cmdout    = ''
 
     cmderr    = \
 """Option combinations not allowed with: stat option(s)
@@ -199,21 +169,7 @@ def test_schedctl_combo_3():
 
     args      = """--start --status"""
 
-    cmdout    = \
-"""Usage: schedctl.py [options]
-
-Options:
-  -h, --help            show this help message and exit
-  --stop                stop scheduling jobs
-  --start               resume scheduling jobs
-  --status              query scheduling status
-  --reread-policy       reread the utility function definition file
-  --savestate=SAVESTATE
-                        write the current state to the specified file
-  --score=ADJUST        <jobid> <jobid> adjust the scores of the arguments
-  --inherit=DEP_FRAC    <jobid> <jobid> control the fraction of the score
-                        inherited by jobs which depend on the arguments
-"""
+    cmdout    = ''
 
     cmderr    = \
 """Option combinations not allowed with: stat option(s)
@@ -250,21 +206,7 @@ def test_schedctl_combo_4():
 
     args      = """--reread-policy --status"""
 
-    cmdout    = \
-"""Usage: schedctl.py [options]
-
-Options:
-  -h, --help            show this help message and exit
-  --stop                stop scheduling jobs
-  --start               resume scheduling jobs
-  --status              query scheduling status
-  --reread-policy       reread the utility function definition file
-  --savestate=SAVESTATE
-                        write the current state to the specified file
-  --score=ADJUST        <jobid> <jobid> adjust the scores of the arguments
-  --inherit=DEP_FRAC    <jobid> <jobid> control the fraction of the score
-                        inherited by jobs which depend on the arguments
-"""
+    cmdout    = ''
 
     cmderr    = \
 """Option combinations not allowed with: reread option(s)
@@ -301,21 +243,7 @@ def test_schedctl_combo_5():
 
     args      = """--score 1.1 --stop 1 2 3 4"""
 
-    cmdout    = \
-"""Usage: schedctl.py [options]
-
-Options:
-  -h, --help            show this help message and exit
-  --stop                stop scheduling jobs
-  --start               resume scheduling jobs
-  --status              query scheduling status
-  --reread-policy       reread the utility function definition file
-  --savestate=SAVESTATE
-                        write the current state to the specified file
-  --score=ADJUST        <jobid> <jobid> adjust the scores of the arguments
-  --inherit=DEP_FRAC    <jobid> <jobid> control the fraction of the score
-                        inherited by jobs which depend on the arguments
-"""
+    cmdout    = ''
 
     cmderr    = \
 """Option combinations not allowed with: adjust option(s)
@@ -352,21 +280,7 @@ def test_schedctl_combo_6():
 
     args      = """--inherit 1.1 --start 1 2 3 4"""
 
-    cmdout    = \
-"""Usage: schedctl.py [options]
-
-Options:
-  -h, --help            show this help message and exit
-  --stop                stop scheduling jobs
-  --start               resume scheduling jobs
-  --status              query scheduling status
-  --reread-policy       reread the utility function definition file
-  --savestate=SAVESTATE
-                        write the current state to the specified file
-  --score=ADJUST        <jobid> <jobid> adjust the scores of the arguments
-  --inherit=DEP_FRAC    <jobid> <jobid> control the fraction of the score
-                        inherited by jobs which depend on the arguments
-"""
+    cmdout    = ''
 
     cmderr    = \
 """Option combinations not allowed with: start, dep_frac option(s)
@@ -403,21 +317,7 @@ def test_schedctl_combo_7():
 
     args      = """--start --savestate /tmp/s"""
 
-    cmdout    = \
-"""Usage: schedctl.py [options]
-
-Options:
-  -h, --help            show this help message and exit
-  --stop                stop scheduling jobs
-  --start               resume scheduling jobs
-  --status              query scheduling status
-  --reread-policy       reread the utility function definition file
-  --savestate=SAVESTATE
-                        write the current state to the specified file
-  --score=ADJUST        <jobid> <jobid> adjust the scores of the arguments
-  --inherit=DEP_FRAC    <jobid> <jobid> control the fraction of the score
-                        inherited by jobs which depend on the arguments
-"""
+    cmdout    = ''
 
     cmderr    = \
 """Option combinations not allowed with: savestate option(s)
