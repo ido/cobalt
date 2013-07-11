@@ -7,14 +7,14 @@ def test_slpstat_arg_1():
     slpstat test run: arg_1
 
         Command Output:
-        Name                  Location                                 Update Time               
-        =========================================================================================
-        system                https://Georges-MacBook-Pro.local:63045  Sun Jun  9 15:46:47 2013  
-        queue-manager         https://Georges-MacBook-Pro.local:63033  Sun Jun  9 15:46:45 2013  
-        system_script_forker  https://Georges-MacBook-Pro.local:63028  Sun Jun  9 15:46:59 2013  
-        scheduler             https://Georges-MacBook-Pro.local:63031  Sun Jun  9 15:46:45 2013  
-        user_script_forker    https://Georges-MacBook-Pro.local:63024  Sun Jun  9 15:46:50 2013  
-        bg_mpirun_forker      https://Georges-MacBook-Pro.local:63026  Sun Jun  9 15:46:50 2013  
+        Name                  Location                           Update Time               
+        ===================================================================================
+        system                https://acheron.mcs.anl.gov:52192  Thu Jul 11 13:30:58 2013  
+        queue-manager         https://acheron.mcs.anl.gov:52178  Thu Jul 11 13:30:56 2013  
+        user_script_forker    https://acheron.mcs.anl.gov:52170  Thu Jul 11 13:31:00 2013  
+        scheduler             https://acheron.mcs.anl.gov:52176  Thu Jul 11 13:30:56 2013  
+        bg_mpirun_forker      https://acheron.mcs.anl.gov:52171  Thu Jul 11 13:31:00 2013  
+        system_script_forker  https://acheron.mcs.anl.gov:52174  Thu Jul 11 13:31:09 2013  
         
         Command Error/Debug:
         
@@ -51,14 +51,14 @@ def test_slpstat_arg_2():
     slpstat test run: arg_2
 
         Command Output:
-        Name                  Location                                 Update Time               
-        =========================================================================================
-        system                https://Georges-MacBook-Pro.local:63045  Sun Jun  9 15:46:47 2013  
-        queue-manager         https://Georges-MacBook-Pro.local:63033  Sun Jun  9 15:46:45 2013  
-        system_script_forker  https://Georges-MacBook-Pro.local:63028  Sun Jun  9 15:46:59 2013  
-        scheduler             https://Georges-MacBook-Pro.local:63031  Sun Jun  9 15:46:45 2013  
-        user_script_forker    https://Georges-MacBook-Pro.local:63024  Sun Jun  9 15:46:50 2013  
-        bg_mpirun_forker      https://Georges-MacBook-Pro.local:63026  Sun Jun  9 15:46:50 2013  
+        Name                  Location                           Update Time               
+        ===================================================================================
+        system                https://acheron.mcs.anl.gov:52192  Thu Jul 11 13:30:58 2013  
+        queue-manager         https://acheron.mcs.anl.gov:52178  Thu Jul 11 13:30:56 2013  
+        user_script_forker    https://acheron.mcs.anl.gov:52170  Thu Jul 11 13:31:00 2013  
+        scheduler             https://acheron.mcs.anl.gov:52176  Thu Jul 11 13:30:56 2013  
+        bg_mpirun_forker      https://acheron.mcs.anl.gov:52171  Thu Jul 11 13:31:00 2013  
+        system_script_forker  https://acheron.mcs.anl.gov:52174  Thu Jul 11 13:31:09 2013  
         
         Command Error/Debug:
         
@@ -95,14 +95,14 @@ def test_slpstat_arg_3():
     slpstat test run: arg_3
 
         Command Output:
-        Name                  Location                                 Update Time               
-        =========================================================================================
-        system                https://Georges-MacBook-Pro.local:63045  Sun Jun  9 15:46:47 2013  
-        queue-manager         https://Georges-MacBook-Pro.local:63033  Sun Jun  9 15:46:45 2013  
-        system_script_forker  https://Georges-MacBook-Pro.local:63028  Sun Jun  9 15:46:59 2013  
-        scheduler             https://Georges-MacBook-Pro.local:63031  Sun Jun  9 15:46:45 2013  
-        user_script_forker    https://Georges-MacBook-Pro.local:63024  Sun Jun  9 15:46:50 2013  
-        bg_mpirun_forker      https://Georges-MacBook-Pro.local:63026  Sun Jun  9 15:46:50 2013  
+        Name                  Location                           Update Time               
+        ===================================================================================
+        system                https://acheron.mcs.anl.gov:52192  Thu Jul 11 13:30:58 2013  
+        queue-manager         https://acheron.mcs.anl.gov:52178  Thu Jul 11 13:30:56 2013  
+        user_script_forker    https://acheron.mcs.anl.gov:52170  Thu Jul 11 13:31:00 2013  
+        scheduler             https://acheron.mcs.anl.gov:52176  Thu Jul 11 13:30:56 2013  
+        bg_mpirun_forker      https://acheron.mcs.anl.gov:52171  Thu Jul 11 13:31:00 2013  
+        system_script_forker  https://acheron.mcs.anl.gov:52174  Thu Jul 11 13:31:09 2013  
         
         Command Error/Debug:No arguments needed
         
@@ -140,14 +140,14 @@ def test_slpstat_debug_1():
     slpstat test run: debug_1
 
         Command Output:
-        Name                  Location                                 Update Time               
-        =========================================================================================
-        system                https://Georges-MacBook-Pro.local:63045  Sun Jun  9 15:46:47 2013  
-        queue-manager         https://Georges-MacBook-Pro.local:63033  Sun Jun  9 15:46:45 2013  
-        system_script_forker  https://Georges-MacBook-Pro.local:63028  Sun Jun  9 15:46:59 2013  
-        scheduler             https://Georges-MacBook-Pro.local:63031  Sun Jun  9 15:46:45 2013  
-        user_script_forker    https://Georges-MacBook-Pro.local:63024  Sun Jun  9 15:46:50 2013  
-        bg_mpirun_forker      https://Georges-MacBook-Pro.local:63026  Sun Jun  9 15:46:50 2013  
+        Name                  Location                           Update Time               
+        ===================================================================================
+        system                https://acheron.mcs.anl.gov:52192  Thu Jul 11 13:30:58 2013  
+        queue-manager         https://acheron.mcs.anl.gov:52178  Thu Jul 11 13:30:56 2013  
+        user_script_forker    https://acheron.mcs.anl.gov:52170  Thu Jul 11 13:31:00 2013  
+        scheduler             https://acheron.mcs.anl.gov:52176  Thu Jul 11 13:30:56 2013  
+        bg_mpirun_forker      https://acheron.mcs.anl.gov:52171  Thu Jul 11 13:31:00 2013  
+        system_script_forker  https://acheron.mcs.anl.gov:52174  Thu Jul 11 13:31:09 2013  
         
         Command Error/Debug:
         slpstat.py -d
@@ -193,14 +193,14 @@ def test_slpstat_debug_2():
     slpstat test run: debug_2
 
         Command Output:
-        Name                  Location                                 Update Time               
-        =========================================================================================
-        system                https://Georges-MacBook-Pro.local:63045  Sun Jun  9 15:46:47 2013  
-        queue-manager         https://Georges-MacBook-Pro.local:63033  Sun Jun  9 15:46:45 2013  
-        system_script_forker  https://Georges-MacBook-Pro.local:63028  Sun Jun  9 15:46:59 2013  
-        scheduler             https://Georges-MacBook-Pro.local:63031  Sun Jun  9 15:46:45 2013  
-        user_script_forker    https://Georges-MacBook-Pro.local:63024  Sun Jun  9 15:46:50 2013  
-        bg_mpirun_forker      https://Georges-MacBook-Pro.local:63026  Sun Jun  9 15:46:50 2013  
+        Name                  Location                           Update Time               
+        ===================================================================================
+        system                https://acheron.mcs.anl.gov:52192  Thu Jul 11 13:30:58 2013  
+        queue-manager         https://acheron.mcs.anl.gov:52178  Thu Jul 11 13:30:56 2013  
+        user_script_forker    https://acheron.mcs.anl.gov:52170  Thu Jul 11 13:31:00 2013  
+        scheduler             https://acheron.mcs.anl.gov:52176  Thu Jul 11 13:30:56 2013  
+        bg_mpirun_forker      https://acheron.mcs.anl.gov:52171  Thu Jul 11 13:31:00 2013  
+        system_script_forker  https://acheron.mcs.anl.gov:52174  Thu Jul 11 13:31:09 2013  
         
         Command Error/Debug:
         slpstat.py -d

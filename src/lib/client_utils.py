@@ -33,6 +33,13 @@ QUEMGR      = 'queue-manager'
 SLPMGR      = 'service-location'
 SCHMGR      = 'scheduler'
 
+#
+# env Tags
+COL_TAG = "<<*COL*>>"
+EQL_TAG = "<<*EQL*>>"
+ESC_COL = "\:"
+ESC_EQL = "\="
+
 class Logger(object):
     """
     This class will handle logging to standard error or standard out
@@ -848,15 +855,17 @@ def cb_env(option,opt_str,value,parser,*args):
     """
     This callback will validate the env variables and store them.
     """
-    opts = args[0]
-    _env = {}
-    key_value_pairs = [item.split('=', 1) for item in re.split(r':(?=\w+\b=)', value)]
+    opts   = args[0]
+    _env   = {}
+    _value = value.replace(ESC_COL, COL_TAG).replace(ESC_EQL, EQL_TAG)
+    key_value_pairs = [item.split('=', 1) for item in re.split(r':(?=\w+\b=)', _value)]
     for kv in key_value_pairs:
         if len(kv) != 2:
             logger.error( "Improperly formatted argument to env : %r" % kv)
             sys.exit(1)
     for key, val in key_value_pairs:
-        _env.update({key:val})
+        _env.update({key:val.replace(COL_TAG,':').replace(EQL_TAG,'=')})
+    
     setattr(parser.values,option.dest,_env) # set the option
     opts['env'] = value
  

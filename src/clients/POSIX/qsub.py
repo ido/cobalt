@@ -25,7 +25,9 @@ Option with values:
 '--cwd',dest='cwd',type='string',help='set current working directory'
 '-q','--queue',dest='queue',type='string',help='set queue name'
 '-M','--notify',dest='notify',type='string',help='set notification email address'
-'--env',dest='envs',type='string',help='set env variables (envvar1=val1:envvar2=val2:...:envvarN=valN)',callback=cb_env
+'--env',dest='envs',type='string', help='Set env variables. Format: var1=val1:var2=val2:...:varN=valN, if the characters /
+   ":" and "=" are within the value portion then need to precede them with \ character as follows \: or \=, also /
+   the entire string should be in quotes.' , callback=cb_env
 '-t','--time',dest='walltime',type='string',help='set walltime (minutes or HH:MM:SS)',callback=cb_time
 '-u','--umask',dest='umask',type='string',help='set umask: octal number default(022)',callback=cb_umask
 '-O','--outputprefix',dest='outputprefix',type='string',help='output prefix for error,output or debuglog files',callback=cb_path
@@ -252,6 +254,8 @@ def main():
     client_utils.process_filters(filters,spec)
     update_spec(opts,spec,opt2spec)
     jobs = client_utils.component_call(QUEMGR, False, 'add_jobs',([spec],))
+    if parser.options.envs:
+        client_utils.logger.debug("Environment Vars: %s",parser.options.envs)
     logjob(jobs[0],spec)
     
 

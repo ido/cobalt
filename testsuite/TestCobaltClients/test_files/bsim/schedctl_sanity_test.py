@@ -11,21 +11,9 @@ def test_schedctl_args_1():
         Usage: schedctl.py [--score | --inherit] jobid1 .. jobidN
         
         
-        Options:
-          --version             show program's version number and exit
-          -h, --help            show this help message and exit
-          -d, --debug           turn on communication debugging
-          --stop                stop scheduling jobs
-          --start               resume scheduling jobs
-          --status              query scheduling status
-          --reread-policy       reread the utility function definition file
-          --savestate=SAVESTATE
-                                write the current state to the specified file
-          --score=ADJUST        <jobid> <jobid> adjust the scores of the arguments
-          --inherit=DEP_FRAC    <jobid> <jobid> control the fraction of the score
-                                inherited by jobs which depend on the arguments
         
-        Command Error/Debug:Need at least one option
+        Command Error/Debug:No required options provided
+        
         
         
     """
@@ -65,21 +53,9 @@ def test_schedctl_args_2():
         Usage: schedctl.py [--score | --inherit] jobid1 .. jobidN
         
         
-        Options:
-          --version             show program's version number and exit
-          -h, --help            show this help message and exit
-          -d, --debug           turn on communication debugging
-          --stop                stop scheduling jobs
-          --start               resume scheduling jobs
-          --status              query scheduling status
-          --reread-policy       reread the utility function definition file
-          --savestate=SAVESTATE
-                                write the current state to the specified file
-          --score=ADJUST        <jobid> <jobid> adjust the scores of the arguments
-          --inherit=DEP_FRAC    <jobid> <jobid> control the fraction of the score
-                                inherited by jobs which depend on the arguments
         
-        Command Error/Debug:Need at least one option
+        Command Error/Debug:No required options provided
+        
         
         
     """

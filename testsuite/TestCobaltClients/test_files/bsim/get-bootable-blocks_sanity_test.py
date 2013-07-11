@@ -7,8 +7,11 @@ def test_get_bootable_blocks_arg_1():
     get-bootable-blocks test run: arg_1
 
         Command Output:
+        Usage: get-bootable-blocks.py [options] <block location>
         
-        Command Error/Debug:Must specify a block location for search
+        
+        Command Error/Debug:No arguments or options provided
+        
         
         
     """
@@ -44,8 +47,11 @@ def test_get_bootable_blocks_size_1():
     get-bootable-blocks test run: size_1
 
         Command Output:
+        Usage: get-bootable-blocks.py [options] <block location>
         
-        Command Error/Debug:Must specify a block location for search
+        
+        Command Error/Debug:No arguments or options provided
+        
         
         
     """
@@ -465,11 +471,14 @@ def test_get_bootable_blocks_debug():
     get-bootable-blocks test run: debug
 
         Command Output:
+        Usage: get-bootable-blocks.py [options] <block location>
+        
         
         Command Error/Debug:
         get-bootable-blocks.py --debug
         
-        Must specify a block location for search
+        No arguments or options provided
+        
         
         
     """

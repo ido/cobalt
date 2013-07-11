@@ -67,7 +67,7 @@ def test_cqadm_getq_option_2():
              )
         
         
-        [{'maxuserjobs': None, 'priority': 0, 'name': 'default', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_4', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_2', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_3', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_1', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}]
+        [{'maxuserjobs': None, 'priority': 0, 'name': 'default', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_4', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_3', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_1', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_2', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}]
         
         
     """
@@ -403,8 +403,12 @@ def test_cqadm_addq_option_1():
     cqadm test run: addq_option_1
 
         Command Output:
+        Usage: cqadm.py --help
+        Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
         
-        Command Error/Debug:At least on jobid or queue name must be supplied
+        
+        Command Error/Debug:No arguments or options provided
+        
         
         
     """
@@ -481,8 +485,12 @@ def test_cqadm_delq_option_1():
     cqadm test run: delq_option_1
 
         Command Output:
+        Usage: cqadm.py --help
+        Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
         
-        Command Error/Debug:At least on jobid or queue name must be supplied
+        
+        Command Error/Debug:No arguments or options provided
+        
         
         
     """
@@ -559,8 +567,12 @@ def test_cqadm_stopq_option_1():
     cqadm test run: stopq_option_1
 
         Command Output:
+        Usage: cqadm.py --help
+        Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
         
-        Command Error/Debug:At least on jobid or queue name must be supplied
+        
+        Command Error/Debug:No arguments or options provided
+        
         
         
     """
@@ -633,8 +645,12 @@ def test_cqadm_startq_option_1():
     cqadm test run: startq_option_1
 
         Command Output:
+        Usage: cqadm.py --help
+        Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
         
-        Command Error/Debug:At least on jobid or queue name must be supplied
+        
+        Command Error/Debug:No arguments or options provided
+        
         
         
     """
@@ -707,8 +723,12 @@ def test_cqadm_drainq_option_1():
     cqadm test run: drainq_option_1
 
         Command Output:
+        Usage: cqadm.py --help
+        Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
         
-        Command Error/Debug:At least on jobid or queue name must be supplied
+        
+        Command Error/Debug:No arguments or options provided
+        
         
         
     """
@@ -781,8 +801,12 @@ def test_cqadm_killq_option_1():
     cqadm test run: killq_option_1
 
         Command Output:
+        Usage: cqadm.py --help
+        Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
         
-        Command Error/Debug:At least on jobid or queue name must be supplied
+        
+        Command Error/Debug:No arguments or options provided
+        
         
         
     """
@@ -856,7 +880,8 @@ def test_cqadm_policy_option_1():
 
         Command Output:
         
-        Command Error/Debug:Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+        Command Error/Debug:Usage: cqadm.py --help
+        Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
         
         cqadm.py: error: --policy option requires an argument
         
@@ -894,8 +919,12 @@ def test_cqadm_policy_option_2():
     cqadm test run: policy_option_2
 
         Command Output:
+        Usage: cqadm.py --help
+        Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
         
-        Command Error/Debug:At least on jobid or queue name must be supplied
+        
+        Command Error/Debug:No arguments or options provided
+        
         
         
     """
@@ -969,7 +998,8 @@ def test_cqadm_setq_option_1():
 
         Command Output:
         
-        Command Error/Debug:Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+        Command Error/Debug:Usage: cqadm.py --help
+        Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
         
         cqadm.py: error: --setq option requires an argument
         
@@ -1007,8 +1037,12 @@ def test_cqadm_setq_option_2():
     cqadm test run: setq_option_2
 
         Command Output:
+        Usage: cqadm.py --help
+        Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
         
-        Command Error/Debug:At least on jobid or queue name must be supplied
+        
+        Command Error/Debug:No arguments or options provided
+        
         
         
     """
@@ -1082,7 +1116,8 @@ def test_cqadm_unsetq_option_1():
 
         Command Output:
         
-        Command Error/Debug:Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+        Command Error/Debug:Usage: cqadm.py --help
+        Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
         
         cqadm.py: error: --unsetq option requires an argument
         
@@ -1120,8 +1155,12 @@ def test_cqadm_unsetq_option_2():
     cqadm test run: unsetq_option_2
 
         Command Output:
+        Usage: cqadm.py --help
+        Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
         
-        Command Error/Debug:At least on jobid or queue name must be supplied
+        
+        Command Error/Debug:No arguments or options provided
+        
         
         
     """
@@ -1195,7 +1234,8 @@ def test_cqadm_setjobid_option_1():
 
         Command Output:
         
-        Command Error/Debug:Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+        Command Error/Debug:Usage: cqadm.py --help
+        Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
         
         cqadm.py: error: -j option requires an argument
         
@@ -1234,7 +1274,8 @@ def test_cqadm_setjobid_option_2():
 
         Command Output:
         
-        Command Error/Debug:Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+        Command Error/Debug:Usage: cqadm.py --help
+        Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
         
         cqadm.py: error: --setjobid option requires an argument
         
@@ -1273,7 +1314,7 @@ def test_cqadm_setjobid_option_3():
 
         Command Output:
         
-        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'The new jobid must be greater than the next jobid (8)'> in queue-manager.set_jobid
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'The new jobid must be greater than the next jobid (9)'> in queue-manager.set_jobid
         
         
         
@@ -1311,7 +1352,7 @@ def test_cqadm_setjobid_option_4():
 
         Command Output:
         
-        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'The new jobid must be greater than the next jobid (8)'> in queue-manager.set_jobid
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'The new jobid must be greater than the next jobid (9)'> in queue-manager.set_jobid
         
         
         
@@ -1349,7 +1390,7 @@ def test_cqadm_setjobid_option_5():
 
         Command Output:
         
-        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'The new jobid must be greater than the next jobid (8)'> in queue-manager.set_jobid
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'The new jobid must be greater than the next jobid (9)'> in queue-manager.set_jobid
         
         
         
@@ -1387,7 +1428,8 @@ def test_cqadm_run_option_1():
 
         Command Output:
         
-        Command Error/Debug:Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+        Command Error/Debug:Usage: cqadm.py --help
+        Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
         
         cqadm.py: error: --run option requires an argument
         
@@ -1425,8 +1467,12 @@ def test_cqadm_run_option_2():
     cqadm test run: run_option_2
 
         Command Output:
+        Usage: cqadm.py --help
+        Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
         
-        Command Error/Debug:At least on jobid or queue name must be supplied
+        
+        Command Error/Debug:No arguments or options provided
+        
         
         
     """
@@ -1462,8 +1508,12 @@ def test_cqadm_hold_option_1():
     cqadm test run: hold_option_1
 
         Command Output:
+        Usage: cqadm.py --help
+        Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
         
-        Command Error/Debug:At least on jobid or queue name must be supplied
+        
+        Command Error/Debug:No arguments or options provided
+        
         
         
     """
@@ -1621,8 +1671,12 @@ def test_cqadm_release_option_1():
     cqadm test run: release_option_1
 
         Command Output:
+        Usage: cqadm.py --help
+        Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
         
-        Command Error/Debug:At least on jobid or queue name must be supplied
+        
+        Command Error/Debug:No arguments or options provided
+        
         
         
     """
@@ -1818,7 +1872,8 @@ def test_cqadm_queue_option_1():
 
         Command Output:
         
-        Command Error/Debug:Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+        Command Error/Debug:Usage: cqadm.py --help
+        Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
         
         cqadm.py: error: --queue option requires an argument
         
@@ -1856,8 +1911,12 @@ def test_cqadm_queue_option_2():
     cqadm test run: queue_option_2
 
         Command Output:
+        Usage: cqadm.py --help
+        Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
         
-        Command Error/Debug:At least on jobid or queue name must be supplied
+        
+        Command Error/Debug:No arguments or options provided
+        
         
         
     """
@@ -1894,7 +1953,8 @@ def test_cqadm_time_option_1():
 
         Command Output:
         
-        Command Error/Debug:Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+        Command Error/Debug:Usage: cqadm.py --help
+        Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
         
         cqadm.py: error: --time option requires an argument
         
@@ -1932,8 +1992,12 @@ def test_cqadm_time_option_2():
     cqadm test run: time_option_2
 
         Command Output:
+        Usage: cqadm.py --help
+        Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
         
-        Command Error/Debug:At least on jobid or queue name must be supplied
+        
+        Command Error/Debug:No arguments or options provided
+        
         
         
     """

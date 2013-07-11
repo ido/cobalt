@@ -7,8 +7,11 @@ def test_releaseres_arg_1():
     releaseres test run: arg_1
 
         Command Output:
+        Usage: releaseres.py [--version | --help | --debug] <reservation name>
         
-        Command Error/Debug:Need at least one reservation
+        
+        Command Error/Debug:No arguments or options provided
+        
         
         
     """

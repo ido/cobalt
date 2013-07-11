@@ -86,6 +86,7 @@ def test_qselect_no_args_opts():
            The following jobs matched your query:
               5
               6
+              8
               7
         
         Command Error/Debug:
@@ -126,6 +127,7 @@ def test_qselect_debug_flag():
            The following jobs matched your query:
               5
               6
+              8
               7
         
         Command Error/Debug:
@@ -137,7 +139,7 @@ def test_qselect_debug_flag():
              )
         
         
-        [{'project': None, 'jobid': 5, 'queue': 'default', 'state': 'queued', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 165}, {'project': None, 'jobid': 6, 'queue': 'default', 'state': 'queued', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 150}, {'project': None, 'jobid': 7, 'queue': 'default', 'state': 'queued', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 150}]
+        [{'project': None, 'jobid': 5, 'queue': 'default', 'state': 'queued', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 165}, {'project': None, 'jobid': 6, 'queue': 'default', 'state': 'queued', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 150}, {'project': None, 'jobid': 8, 'queue': 'default', 'state': 'queued', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 150}, {'project': None, 'jobid': 7, 'queue': 'default', 'state': 'queued', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 150}]
         
         
     """
@@ -361,6 +363,7 @@ def test_qselect_verbose():
            The following jobs matched your query:
               5
               6
+              8
               7
         
         Command Error/Debug:

@@ -48,7 +48,18 @@ Send job stderr to file specified.
 .TP
 .B \-\-env [<var1=value1>:<var=value2>]
 Set environment variables that will be passed into the job's environment at 
-runtime.
+runtime. 
+
+If the the characters ":" and "=" are within the value, right hand side (rhs) of a environment variable assignment,
+then need to quote the entire string and precede any ":" and "=" characters that are in the rhs with "\\". 
+
+e.g. qsub ... --env "A=B:C=x\\=1\\:y\\=2\\:z\\=3:D=ABC" ...
+
+A would equal B
+
+C would equal x=1:y=2:z=3
+
+D would equal ABC
 .TP
 .B \-\-geometry <geometry_spec>
 Sets the geometry of the block that the jobs should run on.  This is in

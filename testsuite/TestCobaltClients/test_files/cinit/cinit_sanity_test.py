@@ -2071,21 +2071,21 @@ def test_qalter_qalter_1():
         
         component: "queue-manager.set_jobs", defer: False
           set_jobs(
-             [{'project': None, 'user': 'georgerojas', 'jobid': 3, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 150, 'procs': 30, 'notify': None}],
-             {'queue': 'default', 'mode': 'smp', 'jobid': 3, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '160.0', 'procs': 30, 'user': 'georgerojas'},
-             georgerojas,
-             )
-        
-        
-        component: "queue-manager.set_jobs", defer: False
-          set_jobs(
              [{'project': None, 'user': 'georgerojas', 'jobid': 4, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 150, 'procs': 30, 'notify': None}],
              {'queue': 'default', 'mode': 'smp', 'jobid': 4, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '160.0', 'procs': 30, 'user': 'georgerojas'},
              georgerojas,
              )
         
         
-        [{'project': None, 'user': 'georgerojas', 'jobid': 4, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 160, 'procs': 30, 'notify': None}]
+        component: "queue-manager.set_jobs", defer: False
+          set_jobs(
+             [{'project': None, 'user': 'georgerojas', 'jobid': 3, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 150, 'procs': 30, 'notify': None}],
+             {'queue': 'default', 'mode': 'smp', 'jobid': 3, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '160.0', 'procs': 30, 'user': 'georgerojas'},
+             georgerojas,
+             )
+        
+        
+        [{'project': None, 'user': 'georgerojas', 'jobid': 3, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 160, 'procs': 30, 'notify': None}]
         
         
     """
@@ -2205,21 +2205,21 @@ def test_qalter_qalter_2():
         
         component: "queue-manager.set_jobs", defer: False
           set_jobs(
-             [{'project': None, 'user': 'georgerojas', 'jobid': 3, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 160, 'procs': 30, 'notify': None}],
-             {'queue': 'default', 'mode': 'smp', 'jobid': 3, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '155.0', 'procs': 30, 'user': 'georgerojas'},
-             georgerojas,
-             )
-        
-        
-        component: "queue-manager.set_jobs", defer: False
-          set_jobs(
              [{'project': None, 'user': 'georgerojas', 'jobid': 4, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 160, 'procs': 30, 'notify': None}],
              {'queue': 'default', 'mode': 'smp', 'jobid': 4, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '155.0', 'procs': 30, 'user': 'georgerojas'},
              georgerojas,
              )
         
         
-        [{'project': None, 'user': 'georgerojas', 'jobid': 4, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 155, 'procs': 30, 'notify': None}]
+        component: "queue-manager.set_jobs", defer: False
+          set_jobs(
+             [{'project': None, 'user': 'georgerojas', 'jobid': 3, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 160, 'procs': 30, 'notify': None}],
+             {'queue': 'default', 'mode': 'smp', 'jobid': 3, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '155.0', 'procs': 30, 'user': 'georgerojas'},
+             georgerojas,
+             )
+        
+        
+        [{'project': None, 'user': 'georgerojas', 'jobid': 3, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 155, 'procs': 30, 'notify': None}]
         
         
     """
@@ -2339,21 +2339,21 @@ def test_qalter_qalter_3():
         
         component: "queue-manager.set_jobs", defer: False
           set_jobs(
-             [{'project': None, 'user': 'georgerojas', 'jobid': 3, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 155, 'procs': 30, 'notify': None}],
-             {'queue': 'default', 'mode': 'smp', 'jobid': 3, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '165.0', 'procs': 30, 'user': 'georgerojas'},
-             georgerojas,
-             )
-        
-        
-        component: "queue-manager.set_jobs", defer: False
-          set_jobs(
              [{'project': None, 'user': 'georgerojas', 'jobid': 4, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 155, 'procs': 30, 'notify': None}],
              {'queue': 'default', 'mode': 'smp', 'jobid': 4, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '165.0', 'procs': 30, 'user': 'georgerojas'},
              georgerojas,
              )
         
         
-        [{'project': None, 'user': 'georgerojas', 'jobid': 4, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 165, 'procs': 30, 'notify': None}]
+        component: "queue-manager.set_jobs", defer: False
+          set_jobs(
+             [{'project': None, 'user': 'georgerojas', 'jobid': 3, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 155, 'procs': 30, 'notify': None}],
+             {'queue': 'default', 'mode': 'smp', 'jobid': 3, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '165.0', 'procs': 30, 'user': 'georgerojas'},
+             georgerojas,
+             )
+        
+        
+        [{'project': None, 'user': 'georgerojas', 'jobid': 3, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 165, 'procs': 30, 'notify': None}]
         
         
     """
@@ -2451,13 +2451,13 @@ def test_qrls_qrls_1():
         
         component: "queue-manager.set_jobs", defer: False
           set_jobs(
-             [{'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'georgerojas', 'jobid': 1}, {'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'georgerojas', 'jobid': 2}, {'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'georgerojas', 'jobid': 5}, {'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'georgerojas', 'jobid': 3}, {'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'georgerojas', 'jobid': 4}],
+             [{'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'georgerojas', 'jobid': 1}, {'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'georgerojas', 'jobid': 2}, {'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'georgerojas', 'jobid': 5}, {'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'georgerojas', 'jobid': 4}, {'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'georgerojas', 'jobid': 3}],
              {'user_hold': False},
              georgerojas,
              )
         
         
-        Response: [{'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'georgerojas', 'jobid': 1}, {'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'georgerojas', 'jobid': 2}, {'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'georgerojas', 'jobid': 5}, {'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'georgerojas', 'jobid': 3}, {'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'georgerojas', 'jobid': 4}]
+        Response: [{'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'georgerojas', 'jobid': 1}, {'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'georgerojas', 'jobid': 2}, {'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'georgerojas', 'jobid': 5}, {'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'georgerojas', 'jobid': 4}, {'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'georgerojas', 'jobid': 3}]
         
         
     """
@@ -3589,8 +3589,8 @@ def test_setres_setres_11():
     setres test run: setres_11
 
         Command Output:
-        Got starttime Mon Jul  8 22:13:00 2013 +0000 (UTC)
-        [{'project': None, 'users': None, 'block_passthrough': False, 'name': 'r1', 'queue': 'q_1', 'start': 1373321580.0, 'duration': 3000, 'cycle': None, 'res_id': 10, 'partitions': 'ANL-R01-1024:ANL-R00-M0-512'}]
+        Got starttime Thu Jul 11 18:24:00 2013 +0000 (UTC)
+        [{'project': None, 'users': None, 'block_passthrough': False, 'name': 'r1', 'queue': 'q_1', 'start': 1373567040.0, 'duration': 3000, 'cycle': None, 'res_id': 10, 'partitions': 'ANL-R01-1024:ANL-R00-M0-512'}]
         
         
         Command Error/Debug:
@@ -3657,6 +3657,59 @@ def test_releaseres_releaseres_4():
     _args   = args.replace('<USER>',user)
 
     results = testutils.run_cmd('releaseres.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_qsub_qsub_8():
+    """
+    qsub test run: qsub_8
+
+        Command Output:
+        8
+        
+        Command Error/Debug:
+        qsub.py --env A=one:B=two:C=x\=1\:y\=2\:z\=3:D=four -t 150 -n 30 -d /bin/ls
+        
+        component: "system.validate_job", defer: False
+          validate_job(
+             {'kernel': 'default', 'verbose': False, 'held': False, 'notify': False, 'project': False, 'preemptable': False, 'outputprefix': False, 'umask': False, 'version': False, 'env': 'A=one:B=two:C=x\\=1\\:y\\=2\\:z\\=3:D=four', 'cwd': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'run_project': False, 'forcenoval': False, 'kerneloptions': False, 'time': '150', 'debug': True, 'dependencies': False, 'debuglog': False, 'proccount': False, 'disable_preboot': False, 'geometry': False, 'queue': 'default', 'mode': False, 'error': False, 'nodecount': '30', 'output': False, 'attrs': {}, 'user_list': False, 'inputfile': False},
+             )
+        
+        
+        component: "queue-manager.add_jobs", defer: False
+          add_jobs(
+             [{'cwd': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'args': [], 'kernel': 'default', 'envs': {'A': 'one', 'C': 'x=1:y=2:z=3', 'B': 'two', 'D': 'four'}, 'user_list': ['georgerojas'], 'umask': 18, 'jobid': '*', 'queue': 'default', 'script_preboot': True, 'tag': 'job', 'command': '/bin/ls', 'mode': 'smp', 'path': '/Users/georgerojas/p/Cobalt/cobalt/src/clients:/Users/georgerojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin:/usr/local/git/bin:~/bin', 'nodes': 30, 'walltime': '150', 'procs': 30, 'outputdir': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'run_project': False, 'user': 'georgerojas'}],
+             )
+        
+        
+        Environment Vars: {'A': 'one', 'C': 'x=1:y=2:z=3', 'B': 'two', 'D': 'four'}
+        
+        
+    """
+
+    args      = """--env "A=one:B=two:C=x\=1\:y\=2\:z\=3:D=four" -t 150 -n 30 -d /bin/ls"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qsub.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]

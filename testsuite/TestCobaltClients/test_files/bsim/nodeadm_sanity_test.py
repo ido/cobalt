@@ -9,16 +9,9 @@ def test_nodeadm_args_1():
         Command Output:
         Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]"
         
-        Options:
-          --version      show program's version number and exit
-          -h, --help     show this help message and exit
-          -d, --debug    turn on communication debugging
-          --down         mark nodes as down
-          --up           mark nodes as up (even if allocated)
-          --queue=QUEUE  set queue associations
-          -l, --list     list node states
         
-        Command Error/Debug:No arguments provided
+        Command Error/Debug:No arguments or options provided
+        
         
         
     """
@@ -56,16 +49,9 @@ def test_nodeadm_args_2():
         Command Output:
         Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]"
         
-        Options:
-          --version      show program's version number and exit
-          -h, --help     show this help message and exit
-          -d, --debug    turn on communication debugging
-          --down         mark nodes as down
-          --up           mark nodes as up (even if allocated)
-          --queue=QUEUE  set queue associations
-          -l, --list     list node states
         
-        Command Error/Debug:Need at least one option
+        Command Error/Debug:No arguments or options provided
+        
         
         
     """
@@ -370,16 +356,9 @@ def test_nodeadm_queue_1():
         Command Output:
         Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]"
         
-        Options:
-          --version      show program's version number and exit
-          -h, --help     show this help message and exit
-          -d, --debug    turn on communication debugging
-          --down         mark nodes as down
-          --up           mark nodes as up (even if allocated)
-          --queue=QUEUE  set queue associations
-          -l, --list     list node states
         
-        Command Error/Debug:No arguments provided
+        Command Error/Debug:No arguments or options provided
+        
         
         
     """

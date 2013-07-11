@@ -8,7 +8,7 @@ def test_setres_id_change_1():
 
         Command Output:
         
-        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'The new jobid must be greater than the next jobid (10)'> in scheduler.set_res_id
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'The new jobid must be greater than the next jobid (11)'> in scheduler.set_res_id
         
         
         
@@ -16,45 +16,6 @@ def test_setres_id_change_1():
 
     args      = """--res_id 8"""
     exp_rs    = 256
-
-    user    = pwd.getpwuid(os.getuid())[0] 
-    _args   = args.replace('<USER>',user)
-
-    results = testutils.run_cmd('setres.py',_args,None) 
-    rs      = results[0]
-    cmd_out = results[1]
-    cmd_err = results[3]
-
-    # Test Pass Criterias
-    no_rs_err     = (rs == exp_rs)
-    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
-
-    result = no_rs_err and no_fatal_exc
-
-    errmsg  = "\n\nFailed Data:\n\n" \
-        "Return Status %s, Expected Return Status %s\n\n" \
-        "Command Output:\n%s\n\n" \
-        "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
-
-    assert result, errmsg
-
-# ---------------------------------------------------------------------------------
-def test_setres_id_change_1():
-    """
-    setres test run: id_change_1
-
-        Command Output:
-        
-        Command Error/Debug:Usage: setres.py [options] <partition1> ... <partitionN>
-        
-        setres.py: error: no such option: --debub
-        
-        
-    """
-
-    args      = """--debub --res_id 8"""
-    exp_rs    = 512
 
     user    = pwd.getpwuid(os.getuid())[0] 
     _args   = args.replace('<USER>',user)
@@ -122,7 +83,7 @@ def test_setres_id_change_3():
 
         Command Output:
         
-        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'The new jobid must be greater than the next jobid (10)'> in scheduler.set_res_id
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'The new jobid must be greater than the next jobid (11)'> in scheduler.set_res_id
         
         
         
@@ -302,6 +263,53 @@ def test_setres_id_change_7():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
+def test_setres_id_change_8():
+    """
+    setres test run: id_change_8
+
+        Command Output:
+        
+        Command Error/Debug:
+        setres.py --debug --res_id 8
+        
+        component: "scheduler.set_res_id", defer: False
+          set_res_id(
+             8,
+             )
+        
+        
+        component error: XMLRPC failure <Fault 1: 'The new jobid must be greater than the next jobid (11)'> in scheduler.set_res_id
+        
+        
+        
+    """
+
+    args      = """--debug --res_id 8"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('setres.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
 def test_setres_force_1():
     """
     setres test run: force_1
@@ -346,7 +354,7 @@ def test_setres_force_2():
 
         Command Output:
         
-        Command Error/Debug:ERROR:root:--force_id can only be used with --cycle_id and/or --res_id.
+        Command Error/Debug:--force_id can only be used with --cycle_id and/or --res_id.
         
         
     """
@@ -384,7 +392,7 @@ def test_setres_force_3():
         Command Output:
         Got starttime Sat Mar  9 16:30:00 2013 +0000 (UTC)
         
-        Command Error/Debug:ERROR:root:--force_id can only be used with --cycle_id and/or --res_id.
+        Command Error/Debug:--force_id can only be used with --cycle_id and/or --res_id.
         
         
     """
@@ -421,7 +429,7 @@ def test_setres_force_4():
 
         Command Output:
         
-        Command Error/Debug:ERROR:root:--force_id can only be used with --cycle_id and/or --res_id.
+        Command Error/Debug:--force_id can only be used with --cycle_id and/or --res_id.
         
         
     """
@@ -457,8 +465,12 @@ def test_setres_modify_1():
     setres test run: modify_1
 
         Command Output:
+        Usage: setres.py --help
+        Usage: setres.py [options] <partition1> ... <partitionN>
         
-        Command Error/Debug:-m must by called with -n <reservation name>
+        
+        Command Error/Debug:No arguments or options provided
+        
         
         
     """
@@ -639,13 +651,50 @@ def test_setres_modify_13():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
+def test_setres_modify_15():
+    """
+    setres test run: modify_15
+
+        Command Output:
+        
+        Command Error/Debug:cannot find reservation named 'resname'
+        
+        
+    """
+
+    args      = """-m -n resname"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('setres.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
 def test_setres_add_res_1():
     """
     setres test run: add_res_1
 
         Command Output:
         
-        Command Error/Debug:ERROR:root:Must supply either -p with value or partitions as arguments
+        Command Error/Debug:Must supply either -p with value or partitions as arguments
         
         
     """

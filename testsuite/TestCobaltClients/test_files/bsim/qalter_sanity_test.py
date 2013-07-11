@@ -7,11 +7,15 @@ def test_qalter_simple_1():
     qalter test run: simple_1
 
         Command Output:
+        Usage: qalter.py --help
+        Usage: qalter.py [options] <jobid1> ... <jobidN>
+        
         
         Command Error/Debug:
         qalter.py -d -n30
         
         No Jobid(s) given
+        
         
         
     """
@@ -130,8 +134,12 @@ def test_qalter_time_1():
     qalter test run: time_1
 
         Command Output:
+        Usage: qalter.py --help
+        Usage: qalter.py [options] <jobid1> ... <jobidN>
         
-        Command Error/Debug:No job altering options entered
+        
+        Command Error/Debug:No required options provided
+        
         
         
     """
@@ -353,7 +361,8 @@ def test_qalter_invalid_option():
 
         Command Output:
         
-        Command Error/Debug:Usage: qalter.py [options] <jobid1> ... <jobidN>
+        Command Error/Debug:Usage: qalter.py --help
+        Usage: qalter.py [options] <jobid1> ... <jobidN>
         
         qalter.py: error: no such option: -m
         
@@ -850,8 +859,12 @@ def test_qalter_defer_1():
     qalter test run: defer_1
 
         Command Output:
+        Usage: qalter.py --help
+        Usage: qalter.py [options] <jobid1> ... <jobidN>
+        
         
         Command Error/Debug:No Jobid(s) given
+        
         
         
     """

@@ -91,4 +91,5 @@ test_argslist = [
     {"tc_name" : "showres_7"                           , "command" : "showres", "args" : "-x"},
     {"tc_name" : "setres_11"                           , "command" : "setres" , "args" : "-n r1 -s now -d 50 -q q_1 ANL-R01-1024 ANL-R00-M0-512"},
     {"tc_name" : "releaseres_4"                        , "command" : "releaseres" , "args" : "-d r1", },
+    {"tc_name" : "qsub_8"                              , "command" : "qsub"   , "args" : """--env "A=one:B=two:C=x\=1\:y\=2\:z\=3:D=four" -t 150 -n 30 -d /bin/ls"""},
     ]

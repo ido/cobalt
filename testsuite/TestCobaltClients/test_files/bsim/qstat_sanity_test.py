@@ -98,6 +98,7 @@ def test_qstat_debug_only():
         5      georgerojas  02:45:00  30     queued  None      
         6      georgerojas  02:30:00  30     queued  None      
         7      georgerojas  02:30:00  30     queued  None      
+        8      georgerojas  02:30:00  30     queued  None      
         
         Command Error/Debug:
         qstat.py -d
@@ -151,9 +152,10 @@ def test_qstat_full_option_10():
         Command Output:
         JobID  JobName  User         Score    WallTime  QueuedTime  RunTime  Nodes  State   Location  Mode  Procs  Queue    StartTime  
         ===============================================================================================================================
-        5      -        georgerojas    1.2    02:45:00  00:02:09    N/A      30     queued  None      smp   30     default  N/A        
-        6      -        georgerojas    1.2    02:30:00  00:02:05    N/A      30     queued  None      smp   30     default  N/A        
-        7      -        georgerojas    1.2    02:30:00  00:02:05    N/A      30     queued  None      smp   30     default  N/A        
+        6      -        georgerojas    0.9    02:30:00  00:01:39    N/A      30     queued  None      smp   30     default  N/A        
+        8      -        georgerojas    0.9    02:30:00  00:01:29    N/A      30     queued  None      smp   30     default  N/A        
+        7      -        georgerojas    0.9    02:30:00  00:01:38    N/A      30     queued  None      smp   30     default  N/A        
+        5      -        georgerojas    1.0    02:45:00  00:01:43    N/A      30     queued  None      smp   30     default  N/A        
         
         Command Error/Debug:
         
@@ -211,6 +213,13 @@ def test_qstat_long_option_1():
             State    : queued
             Location : None
         
+        JobID: 8
+            User     : georgerojas
+            WallTime : 02:30:00
+            Nodes    : 30
+            State    : queued
+            Location : None
+        
         
         Command Error/Debug:
         
@@ -251,9 +260,9 @@ def test_qstat_queue_option_3():
         ==========================================================================================================
         default  None   None     None     None        None       None          None          None        running  
         q_4      None   None     None     None        None       None          None          None        running  
-        q_2      None   None     None     None        None       None          None          None        running  
         q_3      None   None     None     None        None       None          None          None        running  
         q_1      None   None     None     None        None       None          None          None        running  
+        q_2      None   None     None     None        None       None          None          None        running  
         
         Command Error/Debug:
         
@@ -380,9 +389,9 @@ def test_qstat_queue_option_6():
         ==========================================================================================================
         default  None   None     None     None        None       None          None          None        running  
         q_4      None   None     None     None        None       None          None          None        running  
-        q_2      None   None     None     None        None       None          None          None        running  
         q_3      None   None     None     None        None       None          None          None        running  
         q_1      None   None     None     None        None       None          None          None        running  
+        q_2      None   None     None     None        None       None          None          None        running  
         
         Command Error/Debug:
         
@@ -421,9 +430,9 @@ def test_qstat_queue_option_7():
         Command Output:
         Name     Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
         ==========================================================================================================
+        q_2      None   None     None     None        None       None          None          None        running  
         q_1      None   None     None     None        None       None          None          None        running  
         q_3      None   None     None     None        None       None          None          None        running  
-        q_2      None   None     None     None        None       None          None          None        running  
         q_4      None   None     None     None        None       None          None          None        running  
         default  None   None     None     None        None       None          None          None        running  
         
@@ -666,17 +675,6 @@ def test_qstat_queue_option_10():
             TotalNodes   : None
             State        : running
         
-        Name: q_2
-            Users        : None
-            MinTime      : None
-            MaxTime      : None
-            MaxRunning   : None
-            MaxQueued    : None
-            MaxUserNodes : None
-            MaxNodeHours : None
-            TotalNodes   : None
-            State        : running
-        
         Name: q_3
             Users        : None
             MinTime      : None
@@ -689,6 +687,17 @@ def test_qstat_queue_option_10():
             State        : running
         
         Name: q_1
+            Users        : None
+            MinTime      : None
+            MaxTime      : None
+            MaxRunning   : None
+            MaxQueued    : None
+            MaxUserNodes : None
+            MaxNodeHours : None
+            TotalNodes   : None
+            State        : running
+        
+        Name: q_2
             Users        : None
             MinTime      : None
             MaxTime      : None
@@ -735,6 +744,17 @@ def test_qstat_queue_option_11():
     qstat test run: queue_option_11
 
         Command Output:
+        Name: q_2
+            Users        : None
+            MinTime      : None
+            MaxTime      : None
+            MaxRunning   : None
+            MaxQueued    : None
+            MaxUserNodes : None
+            MaxNodeHours : None
+            TotalNodes   : None
+            State        : running
+        
         Name: q_1
             Users        : None
             MinTime      : None
@@ -747,17 +767,6 @@ def test_qstat_queue_option_11():
             State        : running
         
         Name: q_3
-            Users        : None
-            MinTime      : None
-            MaxTime      : None
-            MaxRunning   : None
-            MaxQueued    : None
-            MaxUserNodes : None
-            MaxNodeHours : None
-            TotalNodes   : None
-            State        : running
-        
-        Name: q_2
             Users        : None
             MinTime      : None
             MaxTime      : None
@@ -874,6 +883,7 @@ def test_qstat_no_arguments_or_options():
         5      georgerojas  02:45:00  30     queued  None      
         6      georgerojas  02:30:00  30     queued  None      
         7      georgerojas  02:30:00  30     queued  None      
+        8      georgerojas  02:30:00  30     queued  None      
         
         Command Error/Debug:
         

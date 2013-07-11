@@ -7,8 +7,11 @@ def test_userres_arg_1():
     userres test run: arg_1
 
         Command Output:
+        Usage: userres.py [--version | --help | --debug]  <reservation name(s)>
         
-        Command Error/Debug:Need at least one reservation
+        
+        Command Error/Debug:No arguments or options provided
+        
         
         
     """

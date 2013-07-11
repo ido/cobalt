@@ -44,6 +44,7 @@ def test_partadm_help_option_1():
     partadm test run: help_option_1
 
         Command Output:
+        Usage: partadm.py --help
         Usage: partadm.py [-a|-d] part1 part2 (add or del)
         Usage: partadm.py -l
         Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
@@ -144,6 +145,7 @@ def test_partadm_help_option_2():
     partadm test run: help_option_2
 
         Command Output:
+        Usage: partadm.py --help
         Usage: partadm.py [-a|-d] part1 part2 (add or del)
         Usage: partadm.py -l
         Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
@@ -244,9 +246,26 @@ def test_partadm_no_arg_1():
     partadm test run: no_arg_1
 
         Command Output:
+        Usage: partadm.py --help
+        Usage: partadm.py [-a|-d] part1 part2 (add or del)
+        Usage: partadm.py -l
+        Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
+        Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
+        Usage: partadm.py --queue=queue1:queue2 part1 part2
+        Usage: partadm.py --fail part1 part2
+        Usage: partadm.py --unfail part1 part2
+        Usage: partadm.py --dump
+        Usage: partadm.py --xml
+        Usage: partadm.py --version
+        Usage: partadm.py --savestate filename
+        Usage: partadm.py [--boot-stop|--boot-start|--boot-status]
         
-        Command Error/Debug:Must supply one of -a or -d or -l or -start or -stop or --queue or -b.
+        Must supply one of -a or -d or -l or -start or -stop or --queue or -b
         Adding "-r" or "--recursive" will add the children of the blocks passed in.
+        
+        
+        
+        Command Error/Debug:No arguments or options provided
         
         
         
@@ -320,12 +339,29 @@ def test_partadm_debug():
     partadm test run: debug
 
         Command Output:
+        Usage: partadm.py --help
+        Usage: partadm.py [-a|-d] part1 part2 (add or del)
+        Usage: partadm.py -l
+        Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
+        Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
+        Usage: partadm.py --queue=queue1:queue2 part1 part2
+        Usage: partadm.py --fail part1 part2
+        Usage: partadm.py --unfail part1 part2
+        Usage: partadm.py --dump
+        Usage: partadm.py --xml
+        Usage: partadm.py --version
+        Usage: partadm.py --savestate filename
+        Usage: partadm.py [--boot-stop|--boot-start|--boot-status]
+        
+        Must supply one of -a or -d or -l or -start or -stop or --queue or -b
+        Adding "-r" or "--recursive" will add the children of the blocks passed in.
+        
+        
         
         Command Error/Debug:
         partadm.py --debug
         
-        Must supply one of -a or -d or -l or -start or -stop or --queue or -b.
-        Adding "-r" or "--recursive" will add the children of the blocks passed in.
+        No arguments or options provided
         
         
         
@@ -1960,7 +1996,8 @@ def test_partadm_savestate_option_3():
 
         Command Output:
         
-        Command Error/Debug:Usage: partadm.py [-a|-d] part1 part2 (add or del)
+        Command Error/Debug:Usage: partadm.py --help
+        Usage: partadm.py [-a|-d] part1 part2 (add or del)
         Usage: partadm.py -l
         Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
         Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
@@ -2014,7 +2051,8 @@ def test_partadm_queue_option_1():
 
         Command Output:
         
-        Command Error/Debug:Usage: partadm.py [-a|-d] part1 part2 (add or del)
+        Command Error/Debug:Usage: partadm.py --help
+        Usage: partadm.py [-a|-d] part1 part2 (add or del)
         Usage: partadm.py -l
         Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
         Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
