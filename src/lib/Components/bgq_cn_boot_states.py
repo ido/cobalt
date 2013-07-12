@@ -113,7 +113,6 @@ class BootPending(BaseTriremeState):
             return BootFailed(self.context)
         raise RuntimeError, "Unable to return a valid state"
 
-
 class BootInitiating(BaseTriremeState):
     '''Check to determine if our boot is still continuing or has completed.
     Problems contacting the control system at this point are considered fatal to the ongoing boot.

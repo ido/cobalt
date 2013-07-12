@@ -36,6 +36,11 @@ class ProcessGroup(Data):
     stdout -- file to use for stdout of script
     umask -- permissions to set
     user -- the user the process group is running under
+
+    Only used by BlueGene/Q systems:
+    ion_kernel -- alternatve ION kernel to boot
+    ion_kerneloptions -- boot options to pass the ION kernel
+
     """
 
     fields = Data.fields + ["args", "cobalt_log_file", "cwd", "env",
@@ -63,6 +68,8 @@ class ProcessGroup(Data):
         self.jobid = spec.get("jobid")
         self.kernel = spec.get("kernel")
         self.kerneloptions = spec.get("kerneloptions")
+        self.ion_kernel = spec.get("ion_kernel", "default")
+        self.ion_kerneloptions = spec.get("ion_kerneloptions", None)
         self.location = spec.get("location", [])
         self.mode = spec.get("mode")
         self.nodefile = None

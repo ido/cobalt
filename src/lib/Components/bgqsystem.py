@@ -99,6 +99,10 @@ class BGProcessGroup(ProcessGroup):
         self.extents = None
         self.script_preboot = spec.get('script_preboot', True)
 
+        #for ION kernel reboots:
+        self.ions_pending_reboot = None
+        self.ion_boot_failed = False
+
     def __repr__(self):
         return "<BGProcessGroup id=%s, jobid=%s, location=%s>" % (self.id, self.jobid, self.location)
 
@@ -1831,8 +1835,6 @@ class BGSystem (BGBaseSystem):
             Cobalt.Util.sleep(10)
         #End while(true)
 
-
-
     def check_subblock_blocked(self, block):
         '''mark a subblock as blocked based on relative's activities.
            return true if we are blocked (don't really have to update status beyond that.
@@ -1865,8 +1867,6 @@ class BGSystem (BGBaseSystem):
                         break
 
         return retval
-
-
 
     def _mark_block_for_cleaning(self, block_name, jobid, locking=True):
         '''Mark a partition as needing to have cleanup code run on it.
@@ -1912,6 +1912,7 @@ class BGSystem (BGBaseSystem):
         '''Set the kernel to be used by jobs run on the specified partition
         Kernel type one of 'CN' or 'ION'
 
+        'partition' can be either an ION block or a CN block.
         '''
 
         if get_config_option('bgsystem', 'allow_alternate_kernels', 'false') not in Cobalt.Util.config_true_values:
@@ -1960,8 +1961,15 @@ class BGSystem (BGBaseSystem):
             self.logger.info("partition %s: boot image updated; now set to \"%s\"", partition, kernel)
 
     def _clear_kernel(self, block_name, kernel_type):
-        '''Set the kernel to be used by a block_name to the default value'''
+        '''Set the kernel to be used by a block_name to the default value
+        The block_name may be either an IO Block or a CN block.
+        kernel type must be one of 'cn' or 'ion'.
+
+        '''
         if get_config_option('bgsystem', 'allow_alternate_kernels', 'false') in Cobalt.Util.config_true_values:
+            if kernel_type not in ['cn', 'ion']:
+                self.logger.error("")
+                raise ValueError, "ERROR: kernel_type must be one of 'cn' or 'ion'."
             try:
                 default_kernel = get_config_option('bgsystem', '%s_default_kernel' % kernel_type, 'default')
                 default_kernel_options = get_config_option('bgsystem', '%s_default_kernel_options' % kernel_type, ' ')
@@ -1970,8 +1978,13 @@ class BGSystem (BGBaseSystem):
             except:
                 logger.error("block_name %s: failed to reset boot location", block_name)
             else:
-                self._blocks[block_name].current_kernel = default_kernel
-                self._blocks[block_name].current_kernel_options = default_kernel_options
+                if kernel_type == 'cn':
+                    self._blocks[block_name].current_kernel = default_kernel
+                    self._blocks[block_name].current_kernel_options = default_kernel_options
+                elif kernel_type == 'ion':
+                    self._io_blocks[block_name].current_kernel = default_kernel
+                    self._io_blocks[block_name].current_kernel_options = default_kernel_options
+
                 logger.info("block %s: kernel and options reset", block_name)
 
     def generate_xml(self):
@@ -1996,10 +2009,32 @@ class BGSystem (BGBaseSystem):
         return ret
     generate_xml = exposed(generate_xml)
 
+
+    def set_kernel_for_io_blocks(self, cn_block_name, ion_kernel, ion_kerneloptions, label="LABEL UNSET"):
+        '''Given a comptute block, reset the kernels on the associated io blocks
+
+        Returns a list of IO Blocks to reboot due to changed kernels.
+        '''
+        cn_block_io_nodes = self._blocks[cn_block_name].io_nodes
+        io_blocks_to_reboot = []
+        for io_block in self._io_blocks.values():
+            if (io_block.io_nodes.is_subset(cn_block_io_nodes) and (ion_kernel != io_block.current_kernel or
+                    ion_kerneloptions != io_block.current_kernel_options)):
+                try:
+                    io_block.current_kernel = ion_kernel
+                    io_block.current_kernel_options = ion_kerneloptions
+                    self._set_kernel(io_block.name, ion_kernel, 'ion')
+                    io_blocks_to_reboot.append(io_block.name)
+                except Exception, e:
+                    self.logger.error('%s: failed to set kernel %s on %s', label, ion_kernel, io_block.name)
+                    raise
+                else:
+                    self.logger.info('%s: Kernel on %s set to %s with options: %s', label, io_block.name, ion_kernel, ion_kerneloptions)
+        return io_blocks_to_reboot
+
     @exposed
     @query
     def add_process_groups (self, specs):
-
         """Create a process group.
 
         Arguments:
@@ -2029,34 +2064,55 @@ class BGSystem (BGBaseSystem):
             self.logger.info("%s: process group %s created to track job status", pgroup.label, pgroup.id)
             self._blocks[pgroup.location[0]].current_kernel = pgroup.kernel
             self._blocks[pgroup.location[0]].current_kernel_options = pgroup.kerneloptions
-            #Change the kernel.  Default is specified in cobalt.conf.
             try:
-                self._set_kernel(pgroup.location[0], pgroup.kernel, "cn")
-                self.logger.info("%s: now using kernel %s" % (pgroup.label, pgroup.kernel))
+                pgroup.ions_pending_reboot = self.set_kernel_for_io_blocks(pgroup.location[0], pgroup.ion_kernel,
+                            pgroup.ion_kerneloptions, pgroup.label)
             except Exception, e:
-                self.logger.error("%s: failed to set the kernel; %s", pgroup.label, e)
+                self.logger.error("%s: failed to set the ion_kernel; %s", pgroup.label, e)
                 self.logger.error("%s: job abborted due to errors setting up kernel.", pgroup.label)
                 pgroup.exit_status = 255
             else:
-                if pgroup.mode == "script":
-                    pgroup.forker = 'user_script_forker'
-                    if pgroup.script_preboot == False:
-                        self.logger.info("%s: no preboot requested.  Starting job immediately. Block %s allocated for this job.",
-                                pgroup.label, pgroup.location[0])
-                        #extend the resource resrevation to cover the job's runtime.
-                        self.reserve_resources_until(pgroup.location, float(pgroup.starttime) + 60*float(pgroup.walltime), pgroup.jobid)
-                        self._start_process_group(pgroup)
-                    else:
-                        self.booter.initiate_boot(pgroup.location[0], pgroup.jobid, pgroup.user,
-                                self._blocks[pgroup.location[0]].subblock_parent, tag='internal')
+                #Change the kernel.  Default is specified in cobalt.conf.
+                try:
+                    self._set_kernel(pgroup.location[0], pgroup.kernel, "cn")
+                    self.logger.info("%s: now using kernel %s" % (pgroup.label, pgroup.kernel))
+                except Exception, e:
+                    self.logger.error("%s: failed to set the kernel; %s", pgroup.label, e)
+                    self.logger.error("%s: job abborted due to errors setting up kernel.", pgroup.label)
+                    pgroup.exit_status = 255
                 else:
-                    pgroup.forker = 'bg_runjob_forker'
-                    self.booter.initiate_boot(pgroup.location[0], pgroup.jobid, pgroup.user,
-                            self._blocks[pgroup.location[0]].subblock_parent, tag='internal')
+                    if (pgroup.ion_kernel != get_config_option('bgsystem', 'ion_default_kernel', 'default') or
+                        pgroup.ion_kerneloptions != get_config_option('bgsystem', 'ion_default_kernel_options', 'default')
+                        and pgroup.ions_pending_reboot is not None):
+                        #we need to kick the IONs, delay job startup until all ION blocks have completed in check_boot_status
+                        for io_block_name in pgroup.ions_pending_reboot:
+                            self.free_io_block(io_block_name, False, pgroup.user)
+                            self.booter.initiate_io_boot(io_block_name, pgroup.jobid, 'ion-kernel', True)
+                    else:
+                        self._start_compute_nodes(pgroup)
         end_apg_timer = time.time()
         self.logger.debug("add_process_groups startup time: %s sec", (end_apg_timer - start_apg_timer))
         return process_groups
 
+    def _start_compute_nodes(self, pgroup):
+        '''Start booting compute nodes, or if prebooting is disabled on this pgroup, start the user's script.
+
+        '''
+        if pgroup.mode == "script":
+            pgroup.forker = 'user_script_forker'
+            if pgroup.script_preboot == False:
+                self.logger.info("%s: no preboot requested.  Starting job immediately. Block %s allocated for this job.",
+                        pgroup.label, pgroup.location[0])
+                #extend the resource resrevation to cover the job's runtime.
+                self.reserve_resources_until(pgroup.location, float(pgroup.starttime) + 60*float(pgroup.walltime), pgroup.jobid)
+                self._start_process_group(pgroup)
+            else:
+                self.booter.initiate_boot(pgroup.location[0], pgroup.jobid, pgroup.user,
+                        self._blocks[pgroup.location[0]].subblock_parent, tag='internal')
+        else:
+            pgroup.forker = 'bg_runjob_forker'
+            self.booter.initiate_boot(pgroup.location[0], pgroup.jobid, pgroup.user,
+                    self._blocks[pgroup.location[0]].subblock_parent, tag='internal')
 
     def _log_boot_messages(self, pgroup):
         '''log messages from the booter to logfiles appropriate to the ongoing boot.
@@ -2087,7 +2143,7 @@ class BGSystem (BGBaseSystem):
 
 
     def subblock_parent_cleaning(self, block_name):
-        '''determine if a subblock parent is in cleanup.
+        ''' determine if a subblock parent is in cleanup.
 
         '''
         self._blocks_lock.acquire()
@@ -2106,10 +2162,37 @@ class BGSystem (BGBaseSystem):
         #if failed then reap (if boot not found for query assume boot failed and reaped)
         boots = self.booter.stat()
         for boot in boots:
-            self.logger.info("boot tag %s", boot.tag)
+            self.logger.debug("boot tag %s", boot.tag)
             if boot.tag == 'io_boot':
                 #Gives us a chance to clear IO Boots
                 if boot.state in ['complete', 'failed']:
+                    self.booter.reap(boot.block_id)
+                continue
+            elif boot.tag == 'ion-kernel':
+                #Check to see if a kernel boot has completed, and if computes need to be kicked off.
+                #we're going to need the associated process group
+                pgroups = self.process_groups.q_get([{'jobid':boot.context.job_id}])
+                pgroup = None
+                if pgroups != []:
+                    #only one pgroup per job at a time.  Also, the pgroup may already be gone
+                    #if the job has already terminated.
+                    pgroup = pgroups[0]
+                    self._log_boot_messages(pgroup)
+                else:
+                    self.logger.warning('Failed to find process group associated with boot on %s', boot.context.block_id)
+                if boot.state in ['complete', 'failed']:
+                    pgroup.ions_pending_reboot.remove(boot.block_id)
+                    if boot.state == 'failed':
+                        self.logger.warning("%s: IO Boot failed on IO Block %s.", pgroup.label, boot.block_id)
+                        pgroup.ion_boot_failed = True
+                    if len(pgroup.ions_pending_reboot) == 0 and not pgroup.ion_boot_failed:
+                        self.logger.info("%s: IO Nodes have been rebooted successfully.", pgroup.label)
+                        self._start_compute_nodes(pgroup)
+                    else:
+                        self.logger.warning("%s: terminating process group due to failed IO Node reboot(s).", pgroup.label)
+                        self.reserve_resources_until(pgroup.location[0], None, pgroup.jobid)
+                        self._mark_block_for_cleaning(pgroup.locatin[0], pgroup.jobid)
+                        pgroup.exit_status = 255
                     self.booter.reap(boot.block_id)
                 continue
             elif boot.tag != 'internal':
@@ -2134,7 +2217,7 @@ class BGSystem (BGBaseSystem):
                     else:
                         self._start_process_group(pgroup)
                 self.booter.reap(boot.context.block_id)
-    check_boot_status = automatic(check_boot_status, 1.0)#automatic_method_default_interval)
+    check_boot_status = automatic(check_boot_status, automatic_method_default_interval)
 
     def _start_process_group(self, pgroup, block_loc=None):
         '''Start a process group at a specified location.
@@ -2182,9 +2265,8 @@ class BGSystem (BGBaseSystem):
 
         return
 
-    check_boot_status = automatic(check_boot_status, automatic_method_default_interval)
-
     def get_process_groups (self, specs):
+        '''Fetch the dictionary of the current process groups indexed by the process group id.'''
         return self.process_groups.q_get(specs)
     get_process_groups = exposed(query(get_process_groups))
 
@@ -2272,8 +2354,8 @@ class BGSystem (BGBaseSystem):
                 except:
                     self.logger.error("unexpected exception while requesting that the %s component perform cleanup",
                         forker, exc_info=True)
-    _get_exit_status = automatic(_get_exit_status, 0.1)#float(get_config_option('bgsystem', 'get_exit_status_interval', automatic_method_default_interval)))
-
+    _get_exit_status = automatic(_get_exit_status,
+            float(get_config_option('bgsystem', 'get_exit_status_interval', automatic_method_default_interval)))
 
     def wait_process_groups (self, specs):
         """Get the exit status of any completed process groups.  If completed,
@@ -2416,7 +2498,6 @@ class BGSystem (BGBaseSystem):
             retval = True
         return retval
 
-
     @exposed
     def get_boot_statuses_and_strings(self, location=None):
         '''Allow a client to fetch the status of ongoing boots.  Returns a tuple of a boot id, status dict, and status strings.
@@ -2441,7 +2522,6 @@ class BGSystem (BGBaseSystem):
         '''
         self.booter.reap(boot_id)
         return
-
 
     @exposed
     def get_idle_blocks(self, parent_block, size=None, geometry=None):
@@ -2544,8 +2624,7 @@ class BGSystem (BGBaseSystem):
                 self._blocks_lock.release()
         return True
 
-    def free_io_block(self, io_location, force=False, user=None):
-
+    def free_io_block(self, io_location, force=False, user=None, reboot=False):
         '''Free an IO block.  Also mark that rebooting is occuring.
 
         '''
@@ -2597,12 +2676,15 @@ class BGSystem (BGBaseSystem):
 
     @exposed
     def enable_io_autoreboot(self):
+        '''Enable automatic rebooting of IO nodes.'''
         self.io_autoreboot_enabled = True
 
     @exposed
     def disable_io_autoreboot(self):
+        '''Disable automatic rebooting of IO nodes.'''
         self.io_autoreboot_enabled = False
 
     @exposed
     def get_io_autoreboot_status(self):
+        '''Query whether or not the automatic rebooting of IO Nodes is currently enabled'''
         return self.io_autoreboot_enabled

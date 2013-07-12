@@ -9,6 +9,7 @@ This is a hashable object, suitable for use with sets
 import Cobalt.Data
 import pybgsched
 import logging
+import Cobalt.Util
 
 _logger = logging.getLogger()
 
@@ -41,6 +42,8 @@ class IOBlock(Cobalt.Data.Data):
         self.block_computes_for_reboot = False
         self.ions_in_soft_failure = False
         self.autoreboot = False
+        self.current_kernel = Cobalt.Util.get_config_option('bgsystem', 'ion_default_kernel', 'default')
+        self.current_kernel_options = Cobalt.Util.get_config_option('bgsystem', 'ion_default_kernel_options', 'default')
 
     io_drawer_list = property(lambda self: list(self.io_drawers))
     io_node_list = property(lambda self: list(self.io_nodes))

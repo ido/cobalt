@@ -44,7 +44,7 @@ class IOBootPending(BaseTriremeState):
 
     def __init__(self, context):
         super(IOBootPending, self).__init__(context)
-        self._destination_states = frozenset([IOBootInitiating, IOBootFailed])
+        self._destination_states = frozenset([IOBootPending, IOBootInitiating, IOBootFailed])
 
     def progress(self):
         io_block = _fetch_io_block(self.context.io_block_name)
@@ -75,9 +75,12 @@ class IOBootPending(BaseTriremeState):
             return IOBootInitiating(self.context)
         else:
             #we can only boot a free block.  Otherwise this is an error
-            _logger.error("Attempted to boot IOBlock %s in non-free status or pending action.  Boot Failed." % \
-                    (self.context.io_block_name ))
-            return IOBootFailed(self.context)
+            #Unless this is a kernel reboot, wait for the block to transition to the free state instead.
+            if not self.context.pending_kernel_reboot:
+                _logger.error("Attempted to boot IOBlock %s in non-free status or pending action.  Boot Failed." % \
+                        (self.context.io_block_name ))
+                return IOBootFailed(self.context)
+        return self
 
 class IOBootInitiating(BaseTriremeState):
     '''Track a boot that has been initiated and progress to completed or failed as appropriate.

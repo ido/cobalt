@@ -395,7 +395,7 @@ class Block (Data):
         "backfill_time", "node_cards", "nodes", "switches", "io_nodes",
         "reserved_until", "reserved_by", "used_by", "cleanup_pending",
         "freeing", "backfill_time", "draining", "subblock_parent",
-        "block_type", "corner_node", "extents", 'wire_list', 'io_node_list',
+        "block_type", "corner_node", "extents", "wire_list", "io_node_list",
     ]
 
     def __init__ (self, spec):
@@ -486,6 +486,7 @@ class Block (Data):
                 nc = list(self.node_cards)[0] #only one node_card is in use in this case.
         self.current_kernel = get_config_option('bgsystem', 'cn_default_kernel', 'default')
         self.current_kernel_options = get_config_option('bgqsystem', 'cn_default_kernel_options', '')
+        self.reboot_ions_for_kernel = False
 
     def _update_node_cards(self):
         if self.state == "busy":
