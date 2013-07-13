@@ -200,6 +200,10 @@ def modify_reservation(parser):
 
     comp_args = ([{'name':parser.options.name}], updates, client_utils.getuid())
     client_utils.component_call(SCHMGR, False, 'set_reservations', comp_args)
+    reservations = client_utils.component_call(SCHMGR, False, 'get_reservations', 
+                                               ([{'name':parser.options.name, 'users':'*','start':'*', 'duration':'*', 'partitions':'*', 
+                                                  'cycle': '*', 'res_id': '*', 'project':'*', 'block_passthrough':'*'}], ))
+    client_utils.logger.info(reservations)
     client_utils.logger.info(client_utils.component_call(SCHMGR, False, 'check_reservations', ()))
 
 def add_reservation(parser,spec,user):

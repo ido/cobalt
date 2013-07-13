@@ -543,7 +543,8 @@ def test_setres_modify_2():
     args      = """-m -n resname"""
 
     cmdout    = \
-"""True
+"""[{'users': 'gooduser', 'block_passthrough': True, 'active': True, 'duration': 500, 'partitions': 'P1:P2:P3:P4:P5:P6:P7:P8:P9:P10', 'project': 'proj', 'cycle_id': 10, 'name': 'resname', 'queue': 'kebra', 'start': 1000000, 'cycle': 300, 'res_id': 'id'}]
+True
 """
 
     cmderr    = ''
@@ -566,6 +567,27 @@ SET_RESERVATIONS
 name:resname
 name type: <type 'str'>
 user: gooduser
+
+GET_RESERVATIONS
+
+block_passthrough:*
+block_passthrough type: <type 'str'>
+cycle:*
+cycle type: <type 'str'>
+duration:*
+duration type: <type 'str'>
+name:resname
+name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
+project:*
+project type: <type 'str'>
+res_id:*
+res_id type: <type 'str'>
+start:*
+start type: <type 'str'>
+users:*
+users type: <type 'str'>
 
 CHECK_RESERVATIONS
 
@@ -716,6 +738,7 @@ def test_setres_modify_6():
 
     cmdout    = \
 """Setting new start time for for reservation 'resname': Tue Mar 26 17:01:40 2013
+[{'users': 'gooduser', 'block_passthrough': True, 'active': True, 'duration': 500, 'partitions': 'P1:P2:P3:P4:P5:P6:P7:P8:P9:P10', 'project': 'proj', 'cycle_id': 10, 'name': 'resname', 'queue': 'kebra', 'start': 1000000, 'cycle': 300, 'res_id': 'id'}]
 True
 """
 
@@ -743,6 +766,27 @@ defer type: <type 'bool'>
 start:1364335300.0
 start type: <type 'float'>
 user: gooduser
+
+GET_RESERVATIONS
+
+block_passthrough:*
+block_passthrough type: <type 'str'>
+cycle:*
+cycle type: <type 'str'>
+duration:*
+duration type: <type 'str'>
+name:resname
+name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
+project:*
+project type: <type 'str'>
+res_id:*
+res_id type: <type 'str'>
+start:*
+start type: <type 'str'>
+users:*
+users type: <type 'str'>
 
 CHECK_RESERVATIONS
 
@@ -779,6 +823,7 @@ def test_setres_modify_7():
 
     cmdout    = \
 """Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
+[{'users': 'gooduser', 'block_passthrough': True, 'active': True, 'duration': 500, 'partitions': 'P1:P2:P3:P4:P5:P6:P7:P8:P9:P10', 'project': 'proj', 'cycle_id': 10, 'name': 'resname', 'queue': 'kebra', 'start': 1000000, 'cycle': 300, 'res_id': 'id'}]
 True
 """
 
@@ -808,6 +853,27 @@ duration type: <type 'int'>
 start:1362845400.0
 start type: <type 'float'>
 user: gooduser
+
+GET_RESERVATIONS
+
+block_passthrough:*
+block_passthrough type: <type 'str'>
+cycle:*
+cycle type: <type 'str'>
+duration:*
+duration type: <type 'str'>
+name:resname
+name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
+project:*
+project type: <type 'str'>
+res_id:*
+res_id type: <type 'str'>
+start:*
+start type: <type 'str'>
+users:*
+users type: <type 'str'>
 
 CHECK_RESERVATIONS
 
@@ -844,6 +910,7 @@ def test_setres_modify_8():
 
     cmdout    = \
 """Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
+[{'users': 'gooduser', 'block_passthrough': True, 'active': True, 'duration': 500, 'partitions': 'P1:P2:P3:P4:P5:P6:P7:P8:P9:P10', 'project': 'proj', 'cycle_id': 10, 'name': 'resname', 'queue': 'kebra', 'start': 1000000, 'cycle': 300, 'res_id': 'id'}]
 True
 """
 
@@ -875,6 +942,27 @@ start type: <type 'float'>
 users:user1
 users type: <type 'str'>
 user: gooduser
+
+GET_RESERVATIONS
+
+block_passthrough:*
+block_passthrough type: <type 'str'>
+cycle:*
+cycle type: <type 'str'>
+duration:*
+duration type: <type 'str'>
+name:resname
+name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
+project:*
+project type: <type 'str'>
+res_id:*
+res_id type: <type 'str'>
+start:*
+start type: <type 'str'>
+users:*
+users type: <type 'str'>
 
 CHECK_RESERVATIONS
 
@@ -911,6 +999,7 @@ def test_setres_modify_9():
 
     cmdout    = \
 """Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
+[{'users': 'gooduser', 'block_passthrough': True, 'active': True, 'duration': 500, 'partitions': 'P1:P2:P3:P4:P5:P6:P7:P8:P9:P10', 'project': 'proj', 'cycle_id': 10, 'name': 'resname', 'queue': 'kebra', 'start': 1000000, 'cycle': 300, 'res_id': 'id'}]
 True
 """
 
@@ -942,6 +1031,27 @@ start type: <type 'float'>
 users:user1:user2
 users type: <type 'str'>
 user: gooduser
+
+GET_RESERVATIONS
+
+block_passthrough:*
+block_passthrough type: <type 'str'>
+cycle:*
+cycle type: <type 'str'>
+duration:*
+duration type: <type 'str'>
+name:resname
+name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
+project:*
+project type: <type 'str'>
+res_id:*
+res_id type: <type 'str'>
+start:*
+start type: <type 'str'>
+users:*
+users type: <type 'str'>
 
 CHECK_RESERVATIONS
 
@@ -978,6 +1088,7 @@ def test_setres_modify_10():
 
     cmdout    = \
 """Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
+[{'users': 'gooduser', 'block_passthrough': True, 'active': True, 'duration': 500, 'partitions': 'P1:P2:P3:P4:P5:P6:P7:P8:P9:P10', 'project': 'proj', 'cycle_id': 10, 'name': 'resname', 'queue': 'kebra', 'start': 1000000, 'cycle': 300, 'res_id': 'id'}]
 True
 """
 
@@ -1011,6 +1122,27 @@ start type: <type 'float'>
 users:user1
 users type: <type 'str'>
 user: gooduser
+
+GET_RESERVATIONS
+
+block_passthrough:*
+block_passthrough type: <type 'str'>
+cycle:*
+cycle type: <type 'str'>
+duration:*
+duration type: <type 'str'>
+name:resname
+name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
+project:*
+project type: <type 'str'>
+res_id:*
+res_id type: <type 'str'>
+start:*
+start type: <type 'str'>
+users:*
+users type: <type 'str'>
 
 CHECK_RESERVATIONS
 
@@ -1047,6 +1179,7 @@ def test_setres_modify_11():
 
     cmdout    = \
 """Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
+[{'users': 'gooduser', 'block_passthrough': True, 'active': True, 'duration': 500, 'partitions': 'P1:P2:P3:P4:P5:P6:P7:P8:P9:P10', 'project': 'proj', 'cycle_id': 10, 'name': 'resname', 'queue': 'kebra', 'start': 1000000, 'cycle': 300, 'res_id': 'id'}]
 True
 """
 
@@ -1080,6 +1213,27 @@ project type: <type 'str'>
 start:1362845400.0
 start type: <type 'float'>
 user: gooduser
+
+GET_RESERVATIONS
+
+block_passthrough:*
+block_passthrough type: <type 'str'>
+cycle:*
+cycle type: <type 'str'>
+duration:*
+duration type: <type 'str'>
+name:resname
+name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
+project:*
+project type: <type 'str'>
+res_id:*
+res_id type: <type 'str'>
+start:*
+start type: <type 'str'>
+users:*
+users type: <type 'str'>
 
 CHECK_RESERVATIONS
 
@@ -1116,6 +1270,7 @@ def test_setres_modify_12():
 
     cmdout    = \
 """Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
+[{'users': 'gooduser', 'block_passthrough': True, 'active': True, 'duration': 500, 'partitions': 'P1:P2:P3:P4:P5:P6:P7:P8:P9:P10', 'project': 'proj', 'cycle_id': 10, 'name': 'resname', 'queue': 'kebra', 'start': 1000000, 'cycle': 300, 'res_id': 'id'}]
 True
 """
 
@@ -1149,6 +1304,27 @@ project type: <type 'str'>
 start:1362845400.0
 start type: <type 'float'>
 user: gooduser
+
+GET_RESERVATIONS
+
+block_passthrough:*
+block_passthrough type: <type 'str'>
+cycle:*
+cycle type: <type 'str'>
+duration:*
+duration type: <type 'str'>
+name:resname
+name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
+project:*
+project type: <type 'str'>
+res_id:*
+res_id type: <type 'str'>
+start:*
+start type: <type 'str'>
+users:*
+users type: <type 'str'>
 
 CHECK_RESERVATIONS
 
@@ -1221,7 +1397,8 @@ def test_setres_modify_14():
     args      = """-m -n resname -A myproj --block_passthrough ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
 
     cmdout    = \
-"""True
+"""[{'users': 'gooduser', 'block_passthrough': True, 'active': True, 'duration': 500, 'partitions': 'P1:P2:P3:P4:P5:P6:P7:P8:P9:P10', 'project': 'proj', 'cycle_id': 10, 'name': 'resname', 'queue': 'kebra', 'start': 1000000, 'cycle': 300, 'res_id': 'id'}]
+True
 """
 
     cmderr    = ''
@@ -1263,6 +1440,27 @@ project:myproj
 project type: <type 'str'>
 user: gooduser
 
+GET_RESERVATIONS
+
+block_passthrough:*
+block_passthrough type: <type 'str'>
+cycle:*
+cycle type: <type 'str'>
+duration:*
+duration type: <type 'str'>
+name:resname
+name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
+project:*
+project type: <type 'str'>
+res_id:*
+res_id type: <type 'str'>
+start:*
+start type: <type 'str'>
+users:*
+users type: <type 'str'>
+
 CHECK_RESERVATIONS
 
 """
@@ -1297,7 +1495,8 @@ def test_setres_modify_15():
     args      = """-m -n resname"""
 
     cmdout    = \
-"""True
+"""[{'users': 'gooduser', 'block_passthrough': True, 'active': True, 'duration': 500, 'partitions': 'P1:P2:P3:P4:P5:P6:P7:P8:P9:P10', 'project': 'proj', 'cycle_id': 10, 'name': 'resname', 'queue': 'kebra', 'start': 1000000, 'cycle': 300, 'res_id': 'id'}]
+True
 """
 
     cmderr    = ''
@@ -1320,6 +1519,27 @@ SET_RESERVATIONS
 name:resname
 name type: <type 'str'>
 user: gooduser
+
+GET_RESERVATIONS
+
+block_passthrough:*
+block_passthrough type: <type 'str'>
+cycle:*
+cycle type: <type 'str'>
+duration:*
+duration type: <type 'str'>
+name:resname
+name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
+project:*
+project type: <type 'str'>
+res_id:*
+res_id type: <type 'str'>
+start:*
+start type: <type 'str'>
+users:*
+users type: <type 'str'>
 
 CHECK_RESERVATIONS
 
@@ -1355,7 +1575,8 @@ def test_setres_modify_16():
     args      = """-m -n resname -A myproj --block_passthrough --debug ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
 
     cmdout    = \
-"""True
+"""[{'users': 'gooduser', 'block_passthrough': True, 'active': True, 'duration': 500, 'partitions': 'P1:P2:P3:P4:P5:P6:P7:P8:P9:P10', 'project': 'proj', 'cycle_id': 10, 'name': 'resname', 'queue': 'kebra', 'start': 1000000, 'cycle': 300, 'res_id': 'id'}]
+True
 """
 
     cmderr    = \
@@ -1391,6 +1612,12 @@ component: "scheduler.set_reservations", defer: False
      [{'name': 'resname'}],
      {'project': 'myproj', 'block_passthrough': True, 'partitions': 'ANL-R00-R01-2048:ANL-R00-1024:ANL-R01-1024'},
      gooduser,
+     )
+
+
+component: "scheduler.get_reservations", defer: False
+  get_reservations(
+     [{'project': '*', 'start': '*', 'name': 'resname', 'cycle': '*', 'duration': '*', 'block_passthrough': '*', 'partitions': '*', 'res_id': '*', 'users': '*'}],
      )
 
 
@@ -1438,6 +1665,27 @@ project:myproj
 project type: <type 'str'>
 user: gooduser
 
+GET_RESERVATIONS
+
+block_passthrough:*
+block_passthrough type: <type 'str'>
+cycle:*
+cycle type: <type 'str'>
+duration:*
+duration type: <type 'str'>
+name:resname
+name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
+project:*
+project type: <type 'str'>
+res_id:*
+res_id type: <type 'str'>
+start:*
+start type: <type 'str'>
+users:*
+users type: <type 'str'>
+
 CHECK_RESERVATIONS
 
 """
@@ -1473,6 +1721,7 @@ def test_setres_modify_17():
 
     cmdout    = \
 """Got starttime Tue Mar 26 21:58:00 2013 +0000 (UTC)
+[{'users': 'gooduser', 'block_passthrough': True, 'active': True, 'duration': 500, 'partitions': 'P1:P2:P3:P4:P5:P6:P7:P8:P9:P10', 'project': 'proj', 'cycle_id': 10, 'name': 'resname', 'queue': 'kebra', 'start': 1000000, 'cycle': 300, 'res_id': 'id'}]
 True
 """
 
@@ -1498,6 +1747,27 @@ name type: <type 'str'>
 start:1364335080.0
 start type: <type 'float'>
 user: gooduser
+
+GET_RESERVATIONS
+
+block_passthrough:*
+block_passthrough type: <type 'str'>
+cycle:*
+cycle type: <type 'str'>
+duration:*
+duration type: <type 'str'>
+name:resname
+name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
+project:*
+project type: <type 'str'>
+res_id:*
+res_id type: <type 'str'>
+start:*
+start type: <type 'str'>
+users:*
+users type: <type 'str'>
 
 CHECK_RESERVATIONS
 
@@ -1534,6 +1804,7 @@ def test_setres_modify_18():
 
     cmdout    = \
 """Got starttime Tue Mar 26 21:58:00 2013 +0000 (UTC)
+[{'users': 'gooduser', 'block_passthrough': True, 'active': True, 'duration': 500, 'partitions': 'P1:P2:P3:P4:P5:P6:P7:P8:P9:P10', 'project': 'proj', 'cycle_id': 10, 'name': 'resname', 'queue': 'kebra', 'start': 1000000, 'cycle': 300, 'res_id': 'id'}]
 True
 """
 
@@ -1559,6 +1830,27 @@ name type: <type 'str'>
 start:1364335080.0
 start type: <type 'float'>
 user: gooduser
+
+GET_RESERVATIONS
+
+block_passthrough:*
+block_passthrough type: <type 'str'>
+cycle:*
+cycle type: <type 'str'>
+duration:*
+duration type: <type 'str'>
+name:resname
+name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
+project:*
+project type: <type 'str'>
+res_id:*
+res_id type: <type 'str'>
+start:*
+start type: <type 'str'>
+users:*
+users type: <type 'str'>
 
 CHECK_RESERVATIONS
 
