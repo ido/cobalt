@@ -7,8 +7,9 @@ def test_showres_arg_1():
     showres test run: arg_1
 
         Command Output:
-        Reservation  Queue  User  Start  Duration  Passthrough  Partitions  
-        ====================================================================
+        Reservation  Queue  User      Start                                 Duration  Passthrough  Partitions  Lapse Time (sec)  
+        =========================================================================================================================
+        *            kebra  gooduser  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Blocked      [P1-10]     -1363334599       
         
         Command Error/Debug:
         
@@ -45,8 +46,9 @@ def test_showres_arg_2():
     showres test run: arg_2
 
         Command Output:
-        Reservation  Queue  User  Start  Duration  Passthrough  Partitions  
-        ====================================================================
+        Reservation  Queue  User      Start                     Duration  Passthrough  Partitions  Lapse Time (sec)  
+        =============================================================================================================
+        *            kebra  gooduser  Tue Mar 26 16:56:40 2013  00:08     Blocked      [P1-10]     -1363334599       
         
         Command Error/Debug:
         
@@ -83,8 +85,9 @@ def test_showres_arg_3():
     showres test run: arg_3
 
         Command Output:
-        Reservation  Queue  User  Start  Duration  Passthrough  Partitions  
-        ====================================================================
+        Reservation  Queue  User      Start                                 Duration  Passthrough  Partitions  Lapse Time (sec)  
+        =========================================================================================================================
+        *            kebra  gooduser  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Blocked      [P1-10]     -1363334599       
         
         Command Error/Debug:No arguments needed
         
@@ -122,8 +125,9 @@ def test_showres_l_option_1():
     showres test run: l_option_1
 
         Command Output:
-        Reservation  Queue  User  Start  Duration  End Time  Cycle Time  Passthrough  Partitions  
-        ==========================================================================================
+        Reservation  Queue  User      Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions  Lapse Time (sec)  
+        ===========================================================================================================================================================================
+        *            kebra  gooduser  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Tue Mar 26 22:05:00 2013 +0000 (UTC)  00:05       Blocked      [P1-10]     -1363334599       
         
         Command Error/Debug:
         
@@ -160,8 +164,9 @@ def test_showres_l_option_2():
     showres test run: l_option_2
 
         Command Output:
-        Reservation  Queue  User  Start  Duration  End Time  Cycle Time  Passthrough  Partitions  
-        ==========================================================================================
+        Reservation  Queue  User      Start                     Duration  End Time                  Cycle Time  Passthrough  Partitions  Lapse Time (sec)  
+        ===================================================================================================================================================
+        *            kebra  gooduser  Tue Mar 26 16:56:40 2013  00:08     Tue Mar 26 17:05:00 2013  00:05       Blocked      [P1-10]     -1363334599       
         
         Command Error/Debug:
         
@@ -198,8 +203,9 @@ def test_showres_x_option_1():
     showres test run: x_option_1
 
         Command Output:
-        Reservation  Queue  User  Start  Duration  End Time  Cycle Time  Passthrough  Partitions  Project  ResID  CycleID  
-        ===================================================================================================================
+        Reservation  Queue  User      Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions  Project  ResID  CycleID  Lapse Time (sec)  
+        ====================================================================================================================================================================================================
+        *            kebra  gooduser  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Tue Mar 26 22:05:00 2013 +0000 (UTC)  00:05       Blocked      [P1-10]     proj     id     10       -1363334599       
         
         Command Error/Debug:
         
@@ -231,13 +237,14 @@ def test_showres_x_option_1():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
-def test_showres_x_option_1():
+def test_showres_x_option_2():
     """
-    showres test run: x_option_1
+    showres test run: x_option_2
 
         Command Output:
-        Reservation  Queue  User  Start  Duration  End Time  Cycle Time  Passthrough  Partitions  Project  ResID  CycleID  
-        ===================================================================================================================
+        Reservation  Queue  User      Start                     Duration  End Time                  Cycle Time  Passthrough  Partitions  Project  ResID  CycleID  Lapse Time (sec)  
+        ============================================================================================================================================================================
+        *            kebra  gooduser  Tue Mar 26 16:56:40 2013  00:08     Tue Mar 26 17:05:00 2013  00:05       Blocked      [P1-10]     proj     id     10       -1363334599       
         
         Command Error/Debug:
         
@@ -438,8 +445,9 @@ def test_showres_debug():
     showres test run: debug
 
         Command Output:
-        Reservation  Queue  User  Start  Duration  Passthrough  Partitions  
-        ====================================================================
+        Reservation  Queue  User      Start                                 Duration  Passthrough  Partitions  Lapse Time (sec)  
+        =========================================================================================================================
+        *            kebra  gooduser  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Blocked      [P1-10]     -1363334599       
         
         Command Error/Debug:
         showres.py --debug
