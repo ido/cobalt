@@ -76,16 +76,16 @@ def main():
 
     verbose        = False
     really_verbose = False
-    header = [('Reservation', 'Queue', 'User', 'Start', 'Duration','Passthrough', 'Partitions', 'Time Left')]
+    header = [('Reservation', 'Queue', 'User', 'Start', 'Duration','Passthrough', 'Partitions', 'Time Remaining')]
 
     if parser.options.verbose:
         verbose = True
         header = [('Reservation', 'Queue', 'User', 'Start', 'Duration',
-                   'End Time', 'Cycle Time', 'Passthrough', 'Partitions', 'Time Left')]
+                   'End Time', 'Cycle Time', 'Passthrough', 'Partitions', 'Time Remaining')]
     elif parser.options.really_verbose:
         really_verbose = True
         header = [('Reservation', 'Queue', 'User', 'Start', 'Duration','End Time', 'Cycle Time','Passthrough','Partitions', 
-                   'Project', 'ResID', 'CycleID', 'Time Left' )]
+                   'Project', 'ResID', 'CycleID', 'Time Remaining' )]
 
     for res in reservations:
 
