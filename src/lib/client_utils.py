@@ -310,6 +310,15 @@ def sec_to_str(t):
     """
     return Cobalt.Util.sec_to_str(t)
 
+def get_elapsed_time(starttime, endtime):
+    """
+    returns hh:mm:ss elapsed time string from start and end timestamps
+    """
+    runtime = endtime - starttime
+    minutes, seconds = divmod(runtime, 60)
+    hours, minutes = divmod(minutes, 60)
+    return ( "%02d:%02d:%02d" % (hours, minutes, seconds) )
+
 def print_tabular(rows):
     """
     print tabular abstract the util verion incase we want to modify it.

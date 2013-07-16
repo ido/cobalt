@@ -76,16 +76,16 @@ def main():
 
     verbose        = False
     really_verbose = False
-    header = [('Reservation', 'Queue', 'User', 'Start', 'Duration','Passthrough', 'Partitions', 'Lapse Time (sec)')]
+    header = [('Reservation', 'Queue', 'User', 'Start', 'Duration','Passthrough', 'Partitions', 'Time Left')]
 
     if parser.options.verbose:
         verbose = True
         header = [('Reservation', 'Queue', 'User', 'Start', 'Duration',
-                   'End Time', 'Cycle Time', 'Passthrough', 'Partitions', 'Lapse Time (sec)')]
+                   'End Time', 'Cycle Time', 'Passthrough', 'Partitions', 'Time Left')]
     elif parser.options.really_verbose:
         really_verbose = True
         header = [('Reservation', 'Queue', 'User', 'Start', 'Duration','End Time', 'Cycle Time','Passthrough','Partitions', 
-                   'Project', 'ResID', 'CycleID', 'Lapse Time (sec)' )]
+                   'Project', 'ResID', 'CycleID', 'Time Left' )]
 
     for res in reservations:
 
@@ -98,7 +98,8 @@ def main():
         now       = time.time()
 
         deltatime = now - start
-        lapsetime = "-" if deltatime < 0.0 else int(duration - deltatime)
+        timeleft = "Not Started" if deltatime < 0.0 else client_utils.get_elapsed_time(deltatime, duration)
+        timeleft = "00:00:00" if '-' in timeleft else timeleft
 
         # do some crazy stuff to make reservations which cycle display the 
         # "next" start time
@@ -144,18 +145,18 @@ def main():
                            starttime,"%02d:%02d" % (dhour, dmin),
                            endtime, cycle, passthrough,
                            mergelist(res['partitions'], cluster), 
-                           res['project'], res['res_id'], res['cycle_id'], lapsetime))
+                           res['project'], res['res_id'], res['cycle_id'], timeleft))
         elif verbose:
             output.append((res['name'], res['queue'], res['users'], 
                            starttime,"%02d:%02d" % (dhour, dmin),
                            endtime, cycle, passthrough,
                            mergelist(res['partitions'], cluster), 
-                           lapsetime))
+                           timeleft))
         else:
             output.append((res['name'], res['queue'], res['users'], 
                            starttime,"%02d:%02d" % (dhour, dmin), passthrough,
                            mergelist(res['partitions'], cluster), 
-                           lapsetime))
+                           timeleft))
 
     output.sort( (lambda x,y: cmp( time.mktime(time.strptime(x[3].split('+')[0].split('-')[0].strip(), time_fmt)), 
                                    time.mktime(time.strptime(y[3].split('+')[0].split('-')[0].strip(), time_fmt))) ) )
