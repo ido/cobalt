@@ -1144,7 +1144,7 @@ class BGSystem (BGBaseSystem):
                         cached_io_block.getStatus() == pybgsched.IOBlock.Free and cached_io_block.getAction() == pybgsched.Action._None):
                     self.logger.warning("IO Block %s: Autoreboot block reporting Free.  System initiating boot.",
                             cobalt_io_block.name)
-                    self.booter.initiate_io_boot(cobalt_io_block.name, None)
+                    self.booter.initiate_io_boot(cobalt_io_block.name)
 
         for io_block_name, new_state in io_block_updates:
             self._io_blocks[io_block_name].state = new_state
@@ -1826,11 +1826,23 @@ class BGSystem (BGBaseSystem):
             if block_reset_kernel:
                 self.logger.log(1, "update_block_state: clearing kernel settings")
             for b in block_reset_kernel:
+                #Compute Kernel reset
                 try:
                     self._clear_kernel(b.name, 'cn')
                     self.logger.info("Block %s: kernel settings cleared", b.name)
                 except:
                     self.logger.error("Block %s: failed to clear kernel settings", b.name)
+                #ION kernel reset
+                cn_block_io_nodes = self._blocks[b.name].io_nodes
+                io_blocks_to_reboot = []
+                for io_block in self._io_blocks.values():
+                    if (io_block.io_nodes.issubset(b.name)):
+                        self.logger.info('IO Block %s: initiating kernel reset and cleanup.', io_block_name)
+                        self._clear_kernel(io_block.name, 'ion')
+                        #should not have to force this, the compute blocks should also be cleaning.
+                        self.free_io_block(io_block.name)
+                        self.booter.initiate_io_boot(io_block_name, tag='ion-kernel', reboot=True)
+
 
             Cobalt.Util.sleep(10)
         #End while(true)
@@ -1899,8 +1911,7 @@ class BGSystem (BGBaseSystem):
         if locking:
             self._blocks_lock.release()
 
-    @classmethod
-    def _validate_kernel(cls, kernel):
+    def _validate_kernel(self, kernel):
         '''Validate that we have alternate kernels to boot.'''
 
         if get_config_option('bgsystem', 'allow_alternate_kernels', 'false').lower() not in Cobalt.Util.config_true_values:
@@ -2010,6 +2021,7 @@ class BGSystem (BGBaseSystem):
     generate_xml = exposed(generate_xml)
 
 
+
     def set_kernel_for_io_blocks(self, cn_block_name, ion_kernel, ion_kerneloptions, label="LABEL UNSET"):
         '''Given a comptute block, reset the kernels on the associated io blocks
 
@@ -2018,7 +2030,7 @@ class BGSystem (BGBaseSystem):
         cn_block_io_nodes = self._blocks[cn_block_name].io_nodes
         io_blocks_to_reboot = []
         for io_block in self._io_blocks.values():
-            if (io_block.io_nodes.is_subset(cn_block_io_nodes) and (ion_kernel != io_block.current_kernel or
+            if (io_block.io_nodes.issubset(cn_block_io_nodes) and (ion_kernel != io_block.current_kernel or
                     ion_kerneloptions != io_block.current_kernel_options)):
                 try:
                     io_block.current_kernel = ion_kernel
@@ -2087,7 +2099,7 @@ class BGSystem (BGBaseSystem):
                         #we need to kick the IONs, delay job startup until all ION blocks have completed in check_boot_status
                         for io_block_name in pgroup.ions_pending_reboot:
                             self.free_io_block(io_block_name, False, pgroup.user)
-                            self.booter.initiate_io_boot(io_block_name, pgroup.jobid, 'ion-kernel', True)
+                            self.booter.initiate_io_boot(io_block_name, pgroup.jobid, pgroup.user, 'ion-kernel', True)
                     else:
                         self._start_compute_nodes(pgroup)
         end_apg_timer = time.time()
@@ -2162,7 +2174,7 @@ class BGSystem (BGBaseSystem):
         #if failed then reap (if boot not found for query assume boot failed and reaped)
         boots = self.booter.stat()
         for boot in boots:
-            self.logger.debug("boot tag %s", boot.tag)
+            self.logger.debug("boot %s, tag %s, blockid: %s", boot.boot_id, boot.tag, boot.block_id)
             if boot.tag == 'io_boot':
                 #Gives us a chance to clear IO Boots
                 if boot.state in ['complete', 'failed']:
@@ -2188,10 +2200,13 @@ class BGSystem (BGBaseSystem):
                     if len(pgroup.ions_pending_reboot) == 0 and not pgroup.ion_boot_failed:
                         self.logger.info("%s: IO Nodes have been rebooted successfully.", pgroup.label)
                         self._start_compute_nodes(pgroup)
+                    elif len(pgroup.ions_pending_reboot) != 0:
+                        #just wait for all of the outstanding boots to complete.
+                        pass
                     else:
                         self.logger.warning("%s: terminating process group due to failed IO Node reboot(s).", pgroup.label)
-                        self.reserve_resources_until(pgroup.location[0], None, pgroup.jobid)
-                        self._mark_block_for_cleaning(pgroup.locatin[0], pgroup.jobid)
+                        self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
+                        self._mark_block_for_cleaning(pgroup.location[0], pgroup.jobid)
                         pgroup.exit_status = 255
                     self.booter.reap(boot.block_id)
                 continue

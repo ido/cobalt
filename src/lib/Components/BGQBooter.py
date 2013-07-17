@@ -62,7 +62,7 @@ class IOBlockBootContext(object):
     '''Context for IO Block boots. 
 
     '''
-    def __init__(self, io_block_name, job_id=None, user=None, pending_kernel_reboot=None):
+    def __init__(self, io_block_name, job_id=None, user=None, pending_kernel_reboot=False):
         self.io_block_name = io_block_name
         self.job_id = job_id
         self.user = user
@@ -138,11 +138,11 @@ class BGQIOBlockBoot(Cobalt.ContextStateMachine.ContextStateMachine):
     _state_list = [IOBootPending, IOBootInitiating, IOBootComplete, IOBootFailed]
     _state_instances = []
 
-    def __init__(self, io_block_name, job_id, user, tag, reboot=False):
+    def __init__(self, io_block_name, job_id, user, tag='io_boot', reboot=False):
         super(BGQIOBlockBoot, self).__init__(context=IOBlockBootContext(io_block_name, job_id, user, reboot), initialstate='pending',
                 exceptionstate='failed')
         self.io_boot_id = _boot_id_gen.next()
-        self.tag = 'io_boot'
+        self.tag = tag
         _logger.info("IO Block Boot on %s initialized.", self.io_boot_id)
 
     @property
