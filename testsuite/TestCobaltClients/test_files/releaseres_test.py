@@ -51,7 +51,7 @@ def test_releaseres_arg_2():
     args      = """s1"""
 
     cmdout    = \
-"""Released reservation 's1', matched on 3 partitions
+"""Released reservation 's1' for partitions: ['p1', 'p2']
 """
 
     cmderr    = ''
@@ -62,10 +62,14 @@ GET_RESERVATIONS
 
 name:s1
 name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
 \RELEASE_RESERVATIONS
 
 name:s1
 name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
 user: gooduser
 """
 
@@ -99,7 +103,8 @@ def test_releaseres_arg_3():
     args      = """s1 s2"""
 
     cmdout    = \
-"""Released reservation 's1,s2', matched on 3 partitions
+"""Released reservation 's1' for partitions: ['p1', 'p2']
+Released reservation 's2' for partitions: ['p1', 'p2']
 """
 
     cmderr    = ''
@@ -110,14 +115,22 @@ GET_RESERVATIONS
 
 name:s1
 name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
 name:s2
 name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
 \RELEASE_RESERVATIONS
 
 name:s1
 name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
 name:s2
 name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
 user: gooduser
 """
 
@@ -151,7 +164,9 @@ def test_releaseres_arg_4():
     args      = """s1 s2 s3"""
 
     cmdout    = \
-"""Released reservation 's1,s2,s3', matched on 3 partitions
+"""Released reservation 's1' for partitions: ['p1', 'p2']
+Released reservation 's2' for partitions: ['p1', 'p2']
+Released reservation 's3' for partitions: ['p1', 'p2']
 """
 
     cmderr    = ''
@@ -162,18 +177,30 @@ GET_RESERVATIONS
 
 name:s1
 name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
 name:s2
 name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
 name:s3
 name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
 \RELEASE_RESERVATIONS
 
 name:s1
 name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
 name:s2
 name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
 name:s3
 name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
 user: gooduser
 """
 
@@ -324,7 +351,10 @@ def test_releaseres_arg_8():
     args      = """-d p1 s1 s2 s3"""
 
     cmdout    = \
-"""Released reservation 'p1,s1,s2,s3', matched on 3 partitions
+"""Released reservation 'p1' for partitions: ['p1', 'p2']
+Released reservation 's1' for partitions: ['p1', 'p2']
+Released reservation 's2' for partitions: ['p1', 'p2']
+Released reservation 's3' for partitions: ['p1', 'p2']
 """
 
     cmderr    = \
@@ -333,13 +363,13 @@ releaseres.py -d p1 s1 s2 s3
 
 component: "scheduler.get_reservations", defer: False
   get_reservations(
-     [{'name': 'p1'}, {'name': 's1'}, {'name': 's2'}, {'name': 's3'}],
+     [{'name': 'p1', 'partitions': '*'}, {'name': 's1', 'partitions': '*'}, {'name': 's2', 'partitions': '*'}, {'name': 's3', 'partitions': '*'}],
      )
 
 
 component: "scheduler.release_reservations", defer: False
   release_reservations(
-     [{'name': 'p1'}, {'name': 's1'}, {'name': 's2'}, {'name': 's3'}],
+     [{'name': 'p1', 'partitions': '*'}, {'name': 's1', 'partitions': '*'}, {'name': 's2', 'partitions': '*'}, {'name': 's3', 'partitions': '*'}],
      gooduser,
      )
 
@@ -352,22 +382,38 @@ GET_RESERVATIONS
 
 name:p1
 name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
 name:s1
 name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
 name:s2
 name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
 name:s3
 name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
 \RELEASE_RESERVATIONS
 
 name:p1
 name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
 name:s1
 name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
 name:s2
 name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
 name:s3
 name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
 user: gooduser
 """
 
@@ -401,7 +447,10 @@ def test_releaseres_arg_9():
     args      = """--debug p1 s1 s2 s3"""
 
     cmdout    = \
-"""Released reservation 'p1,s1,s2,s3', matched on 3 partitions
+"""Released reservation 'p1' for partitions: ['p1', 'p2']
+Released reservation 's1' for partitions: ['p1', 'p2']
+Released reservation 's2' for partitions: ['p1', 'p2']
+Released reservation 's3' for partitions: ['p1', 'p2']
 """
 
     cmderr    = \
@@ -410,13 +459,13 @@ releaseres.py --debug p1 s1 s2 s3
 
 component: "scheduler.get_reservations", defer: False
   get_reservations(
-     [{'name': 'p1'}, {'name': 's1'}, {'name': 's2'}, {'name': 's3'}],
+     [{'name': 'p1', 'partitions': '*'}, {'name': 's1', 'partitions': '*'}, {'name': 's2', 'partitions': '*'}, {'name': 's3', 'partitions': '*'}],
      )
 
 
 component: "scheduler.release_reservations", defer: False
   release_reservations(
-     [{'name': 'p1'}, {'name': 's1'}, {'name': 's2'}, {'name': 's3'}],
+     [{'name': 'p1', 'partitions': '*'}, {'name': 's1', 'partitions': '*'}, {'name': 's2', 'partitions': '*'}, {'name': 's3', 'partitions': '*'}],
      gooduser,
      )
 
@@ -429,22 +478,38 @@ GET_RESERVATIONS
 
 name:p1
 name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
 name:s1
 name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
 name:s2
 name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
 name:s3
 name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
 \RELEASE_RESERVATIONS
 
 name:p1
 name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
 name:s1
 name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
 name:s2
 name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
 name:s3
 name type: <type 'str'>
+partitions:*
+partitions type: <type 'str'>
 user: gooduser
 """
 

@@ -645,7 +645,7 @@ class SchedStub(object):
         logmsg("\RELEASE_RESERVATIONS\n")
         logdiclist(spec)
         logmsg('user: '     + str(user))
-        return ['one','two','three']
+        return [{'name': r['name'], 'partitions': 'p1:p2' } for r in spec]
 
     def del_reservations(self,spec,user):
         logmsg("\RELEASE_RESERVATIONS\n")

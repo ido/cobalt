@@ -47,7 +47,7 @@ def main():
         sys.exit(1)
 
     # Check if reservation exists
-    spec = [{'name': arg} for arg in args]
+    spec = [{'name': arg,'partitions': '*'} for arg in args]
     result = client_utils.component_call(SCHMGR, False, 'get_reservations', (spec,))
 
     if len(result) and len(result) != len(args):
@@ -57,8 +57,9 @@ def main():
         sys.exit(1)
 
     result = client_utils.component_call(SCHMGR, False, 'release_reservations', (spec, client_utils.getuid()))
-
-    client_utils.logger.info("Released reservation '%s', matched on %d partitions", ','.join(args), len(result))
+    for resinfo in result:
+        partitions = resinfo['partitions'].split(':')
+        client_utils.logger.info("Released reservation '%s' for partitions: %s", resinfo['name'], str(partitions))
 
 if __name__ == '__main__':
     try:
