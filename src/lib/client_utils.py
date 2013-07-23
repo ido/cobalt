@@ -243,6 +243,30 @@ def set_scores(score, jobids, user):
         dumb = [str(_id) for _id in response]
         logger.info("updating scores for jobs: %s" % ", ".join(dumb))
 
+def get_cp_option(section, option):
+    """
+    get a config parser option from the config parser 
+    """
+    try:
+        CP = read_config()
+        opt = CP.get(section, option)
+    except ConfigParser.NoOptionError:
+        opt = None
+    except ConfigParser.NoSectionError:
+        logger.error("No section %s in Cobalt config" % section)
+        sys.exit(1)
+    except:
+        logger.error("Unknown error when getting config option")
+        sys.exit(1)
+    return opt
+
+def get_cqm_option(cqm_option):
+    """
+    get a cqm option from the config parser 
+    """
+    cqm_opt = get_cp_option('cqm', cqm_option)
+    return cqm_opt.split(":") if cqm_opt else None
+
 class header_info(object):
     """
     Class to organize the header type information
@@ -655,23 +679,6 @@ def get_jobids(args):
         jobids.add(jobid)
     return jobids
 
-def get_cqm_option(cqm_option):
-    """
-    get a cqm option from the config parser 
-    """
-    try:
-        CP = read_config()
-        opt = CP.get('cqm',cqm_option).split(':')
-    except ConfigParser.NoOptionError:
-        opt = None
-    except ConfigParser.NoSectionError:
-        logger.error("No section 'cqm' in Cobalt config")
-        sys.exit(1)
-    except:
-        logger.error("Unknown error when getting config option")
-        sys.exit(1)
-    return opt
-
 def get_filters():
     """
     This function current filters
@@ -1049,7 +1056,7 @@ def cb_setqueues(option,opt_str,value,parser,*args):
     parser.values.setq_opt = optstr
 
 
-def _setbool_attr(parser,opt_str,attr,true_opt_list):
+def _setbool_attr(parser, opt_str, attr, true_opt_list):
     """
     Set the specified attr to true if opt string in the true option list.
     Will generate an error if the attr is already set.
@@ -1066,9 +1073,25 @@ def _setbool_attr(parser,opt_str,attr,true_opt_list):
 
 def cb_hold(option,opt_str,value,parser,*args):
     """
-    handles the admin hold attribute
+    handles the (user | admin) hold and release attributes
     """
-    _setbool_attr(parser,opt_str,'admin_hold',['--hold'])
+    hold_str = 'admin_hold'
+
+    if opt_str.find('user') != -1:
+        hold_str = 'user_hold'
+
+    elif opt_str.find('admin') == -1:
+        cp_opt = get_cp_option('client', 'allow_cqadm_hold_and_release_options')
+        if cp_opt is None:
+            allow = False
+        else:
+            allow = True if cp_opt.lower() == 'true' else False
+
+        if not allow:
+            logger.error('Options --hold and --release have been deprecated')
+            sys.exit(1)
+
+    _setbool_attr(parser, opt_str, hold_str, ['--hold', '--user-hold', '--admin-hold'])
 
 def cb_passthrough(option,opt_str,value,parser,*args):
     """

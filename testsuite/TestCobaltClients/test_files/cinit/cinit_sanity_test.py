@@ -1607,9 +1607,9 @@ def test_showres_showres_1():
     showres test run: showres_1
 
         Command Output:
-        Reservation  Queue  User  Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions        Project  ResID  CycleID  
-        ====================================================================================================================================================================================
-        george       q_1    None  Thu Jun 30 15:30:00 2022 +0000 (UTC)  00:50     Thu Jun 30 16:20:00 2022 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  None     1      -        
+        Reservation  Queue  User  Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions        Project  ResID  CycleID  Time Remaining  
+        ====================================================================================================================================================================================================
+        george       q_1    None  Thu Jun 30 15:30:00 2022 +0000 (UTC)  00:50     Thu Jun 30 16:20:00 2022 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  None     1      -        Not Started     
         
         Command Error/Debug:
         
@@ -1646,6 +1646,7 @@ def test_setres_setres_2():
     setres test run: setres_2
 
         Command Output:
+        [{'users': None, 'block_passthrough': False, 'project': None, 'start': 1656603000.0, 'cycle': None, 'duration': 18000, 'partitions': 'ANL-R00-R01-2048', 'res_id': 1, 'name': 'george'}]
         
         
         Command Error/Debug:
@@ -1683,9 +1684,9 @@ def test_showres_showres_2():
     showres test run: showres_2
 
         Command Output:
-        Reservation  Queue  User  Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions        Project  ResID  CycleID  
-        ====================================================================================================================================================================================
-        george       q_1    None  Thu Jun 30 15:30:00 2022 +0000 (UTC)  05:00     Thu Jun 30 20:30:00 2022 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  None     1      -        
+        Reservation  Queue  User  Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions        Project  ResID  CycleID  Time Remaining  
+        ====================================================================================================================================================================================================
+        george       q_1    None  Thu Jun 30 15:30:00 2022 +0000 (UTC)  05:00     Thu Jun 30 20:30:00 2022 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  None     1      -        Not Started     
         
         Command Error/Debug:
         
@@ -1761,10 +1762,10 @@ def test_showres_showres_3():
     showres test run: showres_3
 
         Command Output:
-        Reservation  Queue  User  Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions        Project  ResID  CycleID  
-        ====================================================================================================================================================================================
-        res_passed   q_1    None  Wed Dec  1 16:30:00 2010 +0000 (UTC)  00:50     Wed Dec  1 17:20:00 2010 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  None     2      -        
-        george       q_1    None  Thu Jun 30 15:30:00 2022 +0000 (UTC)  05:00     Thu Jun 30 20:30:00 2022 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  None     1      -        
+        Reservation  Queue  User  Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions        Project  ResID  CycleID  Time Remaining  
+        ====================================================================================================================================================================================================
+        res_passed   q_1    None  Wed Dec  1 16:30:00 2010 +0000 (UTC)  00:50     Wed Dec  1 17:20:00 2010 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  None     2      -        00:00:00        
+        george       q_1    None  Thu Jun 30 15:30:00 2022 +0000 (UTC)  05:00     Thu Jun 30 20:30:00 2022 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  None     1      -        Not Started     
         
         Command Error/Debug:
         
@@ -2961,11 +2962,12 @@ def test_showres_showres_4():
     showres test run: showres_4
 
         Command Output:
-        Reservation  Queue  User  Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions                     Project  ResID  CycleID  
-        =================================================================================================================================================================================================
-        george       q_1    None  Thu Jun 30 15:30:00 2022 +0000 (UTC)  05:00     Thu Jun 30 20:30:00 2022 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048               None     1      -        
-        res1         q_1    None  Wed Dec  1 16:30:00 2032 +0000 (UTC)  00:50     Wed Dec  1 17:20:00 2032 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048:ANL-R00-1024  None     3      -        
-        res2         q_1    None  Thu Dec  1 16:30:00 2033 +0000 (UTC)  00:50     Thu Dec  1 17:20:00 2033 +0000 (UTC)  None        Allowed      ANL-R01-1024:ANL-R00-M0-512    None     4      -        
+        Reservation  Queue  User  Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions                     Project  ResID  CycleID  Time Remaining  
+        =================================================================================================================================================================================================================
+        res_passed   q_1    None  Wed Dec  1 16:30:00 2010 +0000 (UTC)  00:50     Wed Dec  1 17:20:00 2010 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048               None     2      -        00:00:00        
+        george       q_1    None  Thu Jun 30 15:30:00 2022 +0000 (UTC)  05:00     Thu Jun 30 20:30:00 2022 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048               None     1      -        Not Started     
+        res1         q_1    None  Wed Dec  1 16:30:00 2032 +0000 (UTC)  00:50     Wed Dec  1 17:20:00 2032 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048:ANL-R00-1024  None     3      -        Not Started     
+        res2         q_1    None  Thu Dec  1 16:30:00 2033 +0000 (UTC)  00:50     Thu Dec  1 17:20:00 2033 +0000 (UTC)  None        Allowed      ANL-R01-1024:ANL-R00-M0-512    None     4      -        Not Started     
         
         Command Error/Debug:
         
@@ -3002,20 +3004,22 @@ def test_releaseres_releaseres_1():
     releaseres test run: releaseres_1
 
         Command Output:
-        Released reservation 'res1,res2,george', matched on 3 partitions
+        Released reservation 'res2' for partitions: ['ANL-R01-1024', 'ANL-R00-M0-512']
+        Released reservation 'res1' for partitions: ['ANL-R00-R01-2048', 'ANL-R00-1024']
+        Released reservation 'george' for partitions: ['ANL-R00-R01-2048']
         
         Command Error/Debug:
         releaseres.py -d res1 res2 george
         
         component: "scheduler.get_reservations", defer: False
           get_reservations(
-             [{'name': 'res1'}, {'name': 'res2'}, {'name': 'george'}],
+             [{'name': 'res1', 'partitions': '*'}, {'name': 'res2', 'partitions': '*'}, {'name': 'george', 'partitions': '*'}],
              )
         
         
         component: "scheduler.release_reservations", defer: False
           release_reservations(
-             [{'name': 'res1'}, {'name': 'res2'}, {'name': 'george'}],
+             [{'name': 'res1', 'partitions': '*'}, {'name': 'res2', 'partitions': '*'}, {'name': 'george', 'partitions': '*'}],
              georgerojas,
              )
         
@@ -3211,12 +3215,12 @@ def test_showres_showres_5():
     showres test run: showres_5
 
         Command Output:
-        Reservation  Queue  User         Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions                   Project  ResID  CycleID  
-        ======================================================================================================================================================================================================
-        r1           q_1    georgerojas  Thu Dec  1 16:30:00 2033 +0000 (UTC)  00:50     Thu Dec  1 17:20:00 2033 +0000 (UTC)  None        Allowed      ANL-R01-1024:ANL-R00-M0-512  None     5      -        
-        r2           q_1    georgerojas  Fri Dec  2 16:30:00 2033 +0000 (UTC)  00:50     Fri Dec  2 17:20:00 2033 +0000 (UTC)  None        Allowed      ANL-R01-1024:ANL-R00-M0-512  None     6      -        
-        rc1          q_1    georgerojas  Sat Dec  3 16:30:00 2033 +0000 (UTC)  00:50     Sat Dec  3 17:20:00 2033 +0000 (UTC)  01:12       Allowed      ANL-R01-1024:ANL-R00-M0-512  None     7      1        
-        rc2          q_1    georgerojas  Sun Dec  4 16:30:00 2033 +0000 (UTC)  00:50     Sun Dec  4 17:20:00 2033 +0000 (UTC)  01:12       Allowed      ANL-R01-1024:ANL-R00-M0-512  None     8      2        
+        Reservation  Queue  User         Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions                   Project  ResID  CycleID  Time Remaining  
+        ======================================================================================================================================================================================================================
+        r1           q_1    georgerojas  Thu Dec  1 16:30:00 2033 +0000 (UTC)  00:50     Thu Dec  1 17:20:00 2033 +0000 (UTC)  None        Allowed      ANL-R01-1024:ANL-R00-M0-512  None     5      -        Not Started     
+        r2           q_1    georgerojas  Fri Dec  2 16:30:00 2033 +0000 (UTC)  00:50     Fri Dec  2 17:20:00 2033 +0000 (UTC)  None        Allowed      ANL-R01-1024:ANL-R00-M0-512  None     6      -        Not Started     
+        rc1          q_1    georgerojas  Sat Dec  3 16:30:00 2033 +0000 (UTC)  00:50     Sat Dec  3 17:20:00 2033 +0000 (UTC)  01:12       Allowed      ANL-R01-1024:ANL-R00-M0-512  None     7      1        Not Started     
+        rc2          q_1    georgerojas  Sun Dec  4 16:30:00 2033 +0000 (UTC)  00:50     Sun Dec  4 17:20:00 2033 +0000 (UTC)  01:12       Allowed      ANL-R01-1024:ANL-R00-M0-512  None     8      2        Not Started     
         
         Command Error/Debug:
         
@@ -3329,20 +3333,21 @@ def test_releaseres_releaseres_2():
     releaseres test run: releaseres_2
 
         Command Output:
-        Released reservation 'rc1,rc2', matched on 2 partitions
+        Released reservation 'rc2' for partitions: ['ANL-R01-1024', 'ANL-R00-M0-512']
+        Released reservation 'rc1' for partitions: ['ANL-R01-1024', 'ANL-R00-M0-512']
         
         Command Error/Debug:
         releaseres.py -d rc1 rc2
         
         component: "scheduler.get_reservations", defer: False
           get_reservations(
-             [{'name': 'rc1'}, {'name': 'rc2'}],
+             [{'name': 'rc1', 'partitions': '*'}, {'name': 'rc2', 'partitions': '*'}],
              )
         
         
         component: "scheduler.release_reservations", defer: False
           release_reservations(
-             [{'name': 'rc1'}, {'name': 'rc2'}],
+             [{'name': 'rc1', 'partitions': '*'}, {'name': 'rc2', 'partitions': '*'}],
              georgerojas,
              )
         
@@ -3459,9 +3464,9 @@ def test_showres_showres_6():
     showres test run: showres_6
 
         Command Output:
-        Reservation  Queue  User  Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions                   Project  ResID  CycleID  
-        ===============================================================================================================================================================================================
-        r1           q_1    None  Thu Dec  1 16:30:00 2033 +0000 (UTC)  00:50     Thu Dec  1 17:20:00 2033 +0000 (UTC)  None        Allowed      ANL-R01-1024:ANL-R00-M0-512  None     9      -        
+        Reservation  Queue  User  Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions                   Project  ResID  CycleID  Time Remaining  
+        ===============================================================================================================================================================================================================
+        r1           q_1    None  Thu Dec  1 16:30:00 2033 +0000 (UTC)  00:50     Thu Dec  1 17:20:00 2033 +0000 (UTC)  None        Allowed      ANL-R01-1024:ANL-R00-M0-512  None     9      -        Not Started     
         
         Command Error/Debug:
         
@@ -3498,20 +3503,20 @@ def test_releaseres_releaseres_3():
     releaseres test run: releaseres_3
 
         Command Output:
-        Released reservation 'r1', matched on 1 partitions
+        Released reservation 'r1' for partitions: ['ANL-R01-1024', 'ANL-R00-M0-512']
         
         Command Error/Debug:
         releaseres.py -d r1
         
         component: "scheduler.get_reservations", defer: False
           get_reservations(
-             [{'name': 'r1'}],
+             [{'name': 'r1', 'partitions': '*'}],
              )
         
         
         component: "scheduler.release_reservations", defer: False
           release_reservations(
-             [{'name': 'r1'}],
+             [{'name': 'r1', 'partitions': '*'}],
              georgerojas,
              )
         
@@ -3551,8 +3556,8 @@ def test_showres_showres_7():
     showres test run: showres_7
 
         Command Output:
-        Reservation  Queue  User  Start  Duration  End Time  Cycle Time  Passthrough  Partitions  Project  ResID  CycleID  
-        ===================================================================================================================
+        Reservation  Queue  User  Start  Duration  End Time  Cycle Time  Passthrough  Partitions  Project  ResID  CycleID  Time Remaining  
+        ===================================================================================================================================
         
         Command Error/Debug:
         
@@ -3589,8 +3594,8 @@ def test_setres_setres_11():
     setres test run: setres_11
 
         Command Output:
-        Got starttime Thu Jul 11 18:24:00 2013 +0000 (UTC)
-        [{'project': None, 'users': None, 'block_passthrough': False, 'name': 'r1', 'queue': 'q_1', 'start': 1373567040.0, 'duration': 3000, 'cycle': None, 'res_id': 10, 'partitions': 'ANL-R01-1024:ANL-R00-M0-512'}]
+        Got starttime Tue Jul 23 20:38:00 2013 +0000 (UTC)
+        [{'project': None, 'users': None, 'block_passthrough': False, 'name': 'r1', 'queue': 'q_1', 'start': 1374611880.0, 'duration': 3000, 'cycle': None, 'res_id': 10, 'partitions': 'ANL-R01-1024:ANL-R00-M0-512'}]
         
         
         Command Error/Debug:
@@ -3628,20 +3633,20 @@ def test_releaseres_releaseres_4():
     releaseres test run: releaseres_4
 
         Command Output:
-        Released reservation 'r1', matched on 1 partitions
+        Released reservation 'r1' for partitions: ['ANL-R01-1024', 'ANL-R00-M0-512']
         
         Command Error/Debug:
         releaseres.py -d r1
         
         component: "scheduler.get_reservations", defer: False
           get_reservations(
-             [{'name': 'r1'}],
+             [{'name': 'r1', 'partitions': '*'}],
              )
         
         
         component: "scheduler.release_reservations", defer: False
           release_reservations(
-             [{'name': 'r1'}],
+             [{'name': 'r1', 'partitions': '*'}],
              georgerojas,
              )
         
@@ -3710,6 +3715,671 @@ def test_qsub_qsub_8():
     _args   = args.replace('<USER>',user)
 
     results = testutils.run_cmd('qsub.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_qsub_qsub_9():
+    """
+    qsub test run: qsub_9
+
+        Command Output:
+        9
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """-t 50 -n 30 -h /bin/ls"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qsub.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_qstat_qstat_10():
+    """
+    qstat test run: qstat_10
+
+        Command Output:
+        JobID  JobName  User         Score    WallTime  QueuedTime  RunTime   Nodes  State      Location        Mode  Procs  Queue    StartTime                             
+        ====================================================================================================================================================================
+        8      -        georgerojas    0.1    02:30:00  00:00:00    N/A       30     queued     None            smp   30     default  N/A                                   
+        9      -        georgerojas    0.1    00:50:00  00:00:00    N/A       30     user_hold  None            smp   30     default  N/A                                   
+        2      -        georgerojas    0.1    01:55:00  00:00:09    00:00:05  30     starting   ANL-R01-M0-512  smp   30     default  Tue Jul 23 20:38:53 2013 +0000 (UTC)  
+        6      -        georgerojas    0.1    02:30:00  00:00:09    N/A       30     queued     None            smp   30     default  N/A                                   
+        5      -        georgerojas    0.1    02:45:00  00:00:13    N/A       30     queued     None            smp   30     default  N/A                                   
+        3      -        georgerojas    0.1    02:45:00  00:00:14    N/A       30     queued     None            smp   30     default  N/A                                   
+        1      -        georgerojas    0.1    01:05:00  00:00:14    N/A       30     queued     None            smp   30     default  N/A                                   
+        7      -        georgerojas    0.1    02:30:00  00:00:09    N/A       30     queued     None            smp   30     default  N/A                                   
+        4      -        georgerojas    0.1    02:45:00  00:00:14    N/A       30     queued     None            smp   30     default  N/A                                   
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """-f"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qstat.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_cqadm_1():
+    """
+    cqadm test run: cqadm_1
+
+        Command Output:
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--admin-hold 9"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_qstat_qstat_11():
+    """
+    qstat test run: qstat_11
+
+        Command Output:
+        JobID  JobName  User         Score    WallTime  QueuedTime  RunTime   Nodes  State      Location        Mode  Procs  Queue    StartTime                             
+        ====================================================================================================================================================================
+        8      -        georgerojas    0.1    02:30:00  00:00:01    N/A       30     queued     None            smp   30     default  N/A                                   
+        9      -        georgerojas    0.1    00:50:00  00:00:00    N/A       30     user_hold  None            smp   30     default  N/A                                   
+        2      -        georgerojas    0.1    01:55:00  00:00:09    00:00:05  30     starting   ANL-R01-M0-512  smp   30     default  Tue Jul 23 20:38:53 2013 +0000 (UTC)  
+        6      -        georgerojas    0.1    02:30:00  00:00:10    N/A       30     queued     None            smp   30     default  N/A                                   
+        5      -        georgerojas    0.1    02:45:00  00:00:14    N/A       30     queued     None            smp   30     default  N/A                                   
+        3      -        georgerojas    0.1    02:45:00  00:00:14    N/A       30     queued     None            smp   30     default  N/A                                   
+        1      -        georgerojas    0.1    01:05:00  00:00:15    N/A       30     queued     None            smp   30     default  N/A                                   
+        7      -        georgerojas    0.1    02:30:00  00:00:10    N/A       30     queued     None            smp   30     default  N/A                                   
+        4      -        georgerojas    0.1    02:45:00  00:00:14    N/A       30     queued     None            smp   30     default  N/A                                   
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """-f"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qstat.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_cqadm_2():
+    """
+    cqadm test run: cqadm_2
+
+        Command Output:
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--user-release 9"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_qstat_qstat_12():
+    """
+    qstat test run: qstat_12
+
+        Command Output:
+        JobID  JobName  User         Score    WallTime  QueuedTime  RunTime   Nodes  State       Location        Mode  Procs  Queue    StartTime                             
+        =====================================================================================================================================================================
+        8      -        georgerojas    0.1    02:30:00  00:00:01    N/A       30     queued      None            smp   30     default  N/A                                   
+        9      -        georgerojas    0.1    00:50:00  00:00:01    N/A       30     admin_hold  None            smp   30     default  N/A                                   
+        2      -        georgerojas    0.1    01:55:00  00:00:09    00:00:06  30     starting    ANL-R01-M0-512  smp   30     default  Tue Jul 23 20:38:53 2013 +0000 (UTC)  
+        6      -        georgerojas    0.1    02:30:00  00:00:10    N/A       30     queued      None            smp   30     default  N/A                                   
+        5      -        georgerojas    0.1    02:45:00  00:00:14    N/A       30     queued      None            smp   30     default  N/A                                   
+        3      -        georgerojas    0.1    02:45:00  00:00:15    N/A       30     queued      None            smp   30     default  N/A                                   
+        1      -        georgerojas    0.1    01:05:00  00:00:15    N/A       30     queued      None            smp   30     default  N/A                                   
+        7      -        georgerojas    0.1    02:30:00  00:00:10    N/A       30     queued      None            smp   30     default  N/A                                   
+        4      -        georgerojas    0.1    02:45:00  00:00:14    N/A       30     queued      None            smp   30     default  N/A                                   
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """-f"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qstat.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_cqadm_3():
+    """
+    cqadm test run: cqadm_3
+
+        Command Output:
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--user-hold 9"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_qstat_qstat_13():
+    """
+    qstat test run: qstat_13
+
+        Command Output:
+        JobID  JobName  User         Score    WallTime  QueuedTime  RunTime   Nodes  State      Location        Mode  Procs  Queue    StartTime                             
+        ====================================================================================================================================================================
+        8      -        georgerojas    0.1    02:30:00  00:00:01    N/A       30     queued     None            smp   30     default  N/A                                   
+        9      -        georgerojas    0.1    00:50:00  00:00:01    N/A       30     user_hold  None            smp   30     default  N/A                                   
+        2      -        georgerojas    0.1    01:55:00  00:00:09    00:00:06  30     starting   ANL-R01-M0-512  smp   30     default  Tue Jul 23 20:38:53 2013 +0000 (UTC)  
+        6      -        georgerojas    0.1    02:30:00  00:00:11    N/A       30     queued     None            smp   30     default  N/A                                   
+        5      -        georgerojas    0.1    02:45:00  00:00:15    N/A       30     queued     None            smp   30     default  N/A                                   
+        3      -        georgerojas    0.1    02:45:00  00:00:15    N/A       30     queued     None            smp   30     default  N/A                                   
+        1      -        georgerojas    0.1    01:05:00  00:00:16    N/A       30     queued     None            smp   30     default  N/A                                   
+        7      -        georgerojas    0.1    02:30:00  00:00:10    N/A       30     queued     None            smp   30     default  N/A                                   
+        4      -        georgerojas    0.1    02:45:00  00:00:15    N/A       30     queued     None            smp   30     default  N/A                                   
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """-f"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qstat.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_cqadm_4():
+    """
+    cqadm test run: cqadm_4
+
+        Command Output:
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--admin-release 9"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_qstat_qstat_14():
+    """
+    qstat test run: qstat_14
+
+        Command Output:
+        JobID  JobName  User         Score    WallTime  QueuedTime  RunTime   Nodes  State      Location        Mode  Procs  Queue    StartTime                             
+        ====================================================================================================================================================================
+        8      -        georgerojas    0.1    02:30:00  00:00:02    N/A       30     queued     None            smp   30     default  N/A                                   
+        9      -        georgerojas    0.1    00:50:00  00:00:02    N/A       30     user_hold  None            smp   30     default  N/A                                   
+        2      -        georgerojas    0.1    01:55:00  00:00:09    00:00:07  30     starting   ANL-R01-M0-512  smp   30     default  Tue Jul 23 20:38:53 2013 +0000 (UTC)  
+        6      -        georgerojas    0.1    02:30:00  00:00:11    N/A       30     queued     None            smp   30     default  N/A                                   
+        5      -        georgerojas    0.1    02:45:00  00:00:15    N/A       30     queued     None            smp   30     default  N/A                                   
+        3      -        georgerojas    0.1    02:45:00  00:00:16    N/A       30     queued     None            smp   30     default  N/A                                   
+        1      -        georgerojas    0.1    01:05:00  00:00:16    N/A       30     queued     None            smp   30     default  N/A                                   
+        7      -        georgerojas    0.1    02:30:00  00:00:11    N/A       30     queued     None            smp   30     default  N/A                                   
+        4      -        georgerojas    0.1    02:45:00  00:00:15    N/A       30     queued     None            smp   30     default  N/A                                   
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """-f"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qstat.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_cqadm_5():
+    """
+    cqadm test run: cqadm_5
+
+        Command Output:
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--hold 9"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_qstat_qstat_15():
+    """
+    qstat test run: qstat_15
+
+        Command Output:
+        JobID  JobName  User         Score    WallTime  QueuedTime  RunTime   Nodes  State      Location        Mode  Procs  Queue    StartTime                             
+        ====================================================================================================================================================================
+        8      -        georgerojas    0.1    02:30:00  00:00:02    N/A       30     queued     None            smp   30     default  N/A                                   
+        9      -        georgerojas    0.1    00:50:00  00:00:02    N/A       30     user_hold  None            smp   30     default  N/A                                   
+        2      -        georgerojas    0.1    01:55:00  00:00:09    00:00:07  30     starting   ANL-R01-M0-512  smp   30     default  Tue Jul 23 20:38:53 2013 +0000 (UTC)  
+        6      -        georgerojas    0.1    02:30:00  00:00:12    N/A       30     queued     None            smp   30     default  N/A                                   
+        5      -        georgerojas    0.1    02:45:00  00:00:15    N/A       30     queued     None            smp   30     default  N/A                                   
+        3      -        georgerojas    0.1    02:45:00  00:00:16    N/A       30     queued     None            smp   30     default  N/A                                   
+        1      -        georgerojas    0.1    01:05:00  00:00:17    N/A       30     queued     None            smp   30     default  N/A                                   
+        7      -        georgerojas    0.1    02:30:00  00:00:11    N/A       30     queued     None            smp   30     default  N/A                                   
+        4      -        georgerojas    0.1    02:45:00  00:00:16    N/A       30     queued     None            smp   30     default  N/A                                   
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """-f"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qstat.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_cqadm_6():
+    """
+    cqadm test run: cqadm_6
+
+        Command Output:
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--user-release 9"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_qstat_qstat_16():
+    """
+    qstat test run: qstat_16
+
+        Command Output:
+        JobID  JobName  User         Score    WallTime  QueuedTime  RunTime   Nodes  State       Location        Mode  Procs  Queue    StartTime                             
+        =====================================================================================================================================================================
+        8      -        georgerojas    0.1    02:30:00  00:00:03    N/A       30     queued      None            smp   30     default  N/A                                   
+        9      -        georgerojas    0.1    00:50:00  00:00:02    N/A       30     admin_hold  None            smp   30     default  N/A                                   
+        2      -        georgerojas    0.1    01:55:00  00:00:09    00:00:08  30     starting    ANL-R01-M0-512  smp   30     default  Tue Jul 23 20:38:53 2013 +0000 (UTC)  
+        6      -        georgerojas    0.1    02:30:00  00:00:12    N/A       30     queued      None            smp   30     default  N/A                                   
+        5      -        georgerojas    0.1    02:45:00  00:00:16    N/A       30     queued      None            smp   30     default  N/A                                   
+        3      -        georgerojas    0.1    02:45:00  00:00:17    N/A       30     queued      None            smp   30     default  N/A                                   
+        1      -        georgerojas    0.1    01:05:00  00:00:17    N/A       30     queued      None            smp   30     default  N/A                                   
+        7      -        georgerojas    0.1    02:30:00  00:00:12    N/A       30     queued      None            smp   30     default  N/A                                   
+        4      -        georgerojas    0.1    02:45:00  00:00:16    N/A       30     queued      None            smp   30     default  N/A                                   
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """-f"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qstat.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_cqadm_7():
+    """
+    cqadm test run: cqadm_7
+
+        Command Output:
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--release 9"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_qstat_qstat_17():
+    """
+    qstat test run: qstat_17
+
+        Command Output:
+        JobID  JobName  User         Score    WallTime  QueuedTime  RunTime   Nodes  State     Location        Mode  Procs  Queue    StartTime                             
+        ===================================================================================================================================================================
+        8      -        georgerojas    0.1    02:30:00  00:00:03    N/A       30     queued    None            smp   30     default  N/A                                   
+        9      -        georgerojas    0.1    00:50:00  00:00:03    N/A       30     queued    None            smp   30     default  N/A                                   
+        2      -        georgerojas    0.1    01:55:00  00:00:09    00:00:08  30     starting  ANL-R01-M0-512  smp   30     default  Tue Jul 23 20:38:53 2013 +0000 (UTC)  
+        6      -        georgerojas    0.1    02:30:00  00:00:12    N/A       30     queued    None            smp   30     default  N/A                                   
+        5      -        georgerojas    0.1    02:45:00  00:00:16    N/A       30     queued    None            smp   30     default  N/A                                   
+        3      -        georgerojas    0.1    02:45:00  00:00:17    N/A       30     queued    None            smp   30     default  N/A                                   
+        1      -        georgerojas    0.1    01:05:00  00:00:18    N/A       30     queued    None            smp   30     default  N/A                                   
+        7      -        georgerojas    0.1    02:30:00  00:00:12    N/A       30     queued    None            smp   30     default  N/A                                   
+        4      -        georgerojas    0.1    02:45:00  00:00:17    N/A       30     queued    None            smp   30     default  N/A                                   
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """-f"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qstat.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]

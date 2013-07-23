@@ -3437,3 +3437,1159 @@ def test_cqadm_combine_addq_and_startq():
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_user_hold_option_1():
+    """
+    cqadm test run: user_hold_option_1
+
+    """
+
+    args      = """--user-hold"""
+
+    cmdout    = \
+"""Usage: cqadm.py --help
+Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+
+"""
+
+    cmderr    = \
+"""No arguments or options provided
+
+"""
+
+    stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('cqadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_user_hold_option_2():
+    """
+    cqadm test run: user_hold_option_2
+
+    """
+
+    args      = """--user-hold 1 2 3"""
+
+    cmdout    = ''
+
+    cmderr    = ''
+
+    stubout   = \
+"""
+SET_JOBS
+
+
+Original Jobs:
+
+user: gooduser
+jobid:1
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+user_hold:False
+user_hold type: <type 'bool'>
+walltime:*
+walltime type: <type 'str'>
+jobid:2
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+user_hold:False
+user_hold type: <type 'bool'>
+walltime:*
+walltime type: <type 'str'>
+jobid:3
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+user_hold:False
+user_hold type: <type 'bool'>
+walltime:*
+walltime type: <type 'str'>
+
+New Job Info:
+
+user_hold:True
+user_hold type: <type 'bool'>
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('cqadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_user_hold_option_3():
+    """
+    cqadm test run: user_hold_option_3
+
+    """
+
+    args      = """-d --user-hold  1 2 3"""
+
+    cmdout    = ''
+
+    cmderr    = \
+"""
+cqadm.py -d --user-hold 1 2 3
+
+component: "queue-manager.set_jobs", defer: False
+  set_jobs(
+     [{'user_hold': False, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 1}, {'user_hold': False, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 2}, {'user_hold': False, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 3}],
+     {'user_hold': True},
+     gooduser,
+     )
+
+
+[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}, {'queue': 'jello', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 2, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 1024, 'walltime': 10, 'user_hold': False, 'procs': 1024, 'user': 'land'}, {'queue': 'bello', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 3, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 1536, 'walltime': 15, 'user_hold': False, 'procs': 1536, 'user': 'house'}]
+"""
+
+    stubout   = \
+"""
+SET_JOBS
+
+
+Original Jobs:
+
+user: gooduser
+jobid:1
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+user_hold:False
+user_hold type: <type 'bool'>
+walltime:*
+walltime type: <type 'str'>
+jobid:2
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+user_hold:False
+user_hold type: <type 'bool'>
+walltime:*
+walltime type: <type 'str'>
+jobid:3
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+user_hold:False
+user_hold type: <type 'bool'>
+walltime:*
+walltime type: <type 'str'>
+
+New Job Info:
+
+user_hold:True
+user_hold type: <type 'bool'>
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('cqadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_user_hold_option_4():
+    """
+    cqadm test run: user_hold_option_4
+
+    """
+
+    args      = """-f --user-hold  1 2 3"""
+
+    cmdout    = ''
+
+    cmderr    = ''
+
+    stubout   = \
+"""
+SET_JOBS
+
+
+Original Jobs:
+
+user: gooduser
+jobid:1
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+user_hold:False
+user_hold type: <type 'bool'>
+walltime:*
+walltime type: <type 'str'>
+jobid:2
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+user_hold:False
+user_hold type: <type 'bool'>
+walltime:*
+walltime type: <type 'str'>
+jobid:3
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+user_hold:False
+user_hold type: <type 'bool'>
+walltime:*
+walltime type: <type 'str'>
+
+New Job Info:
+
+user_hold:True
+user_hold type: <type 'bool'>
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('cqadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_user_release_option_1():
+    """
+    cqadm test run: user_release_option_1
+
+    """
+
+    args      = """--user-release"""
+
+    cmdout    = \
+"""Usage: cqadm.py --help
+Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+
+"""
+
+    cmderr    = \
+"""No arguments or options provided
+
+"""
+
+    stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('cqadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_user_release_option_2():
+    """
+    cqadm test run: user_release_option_2
+
+    """
+
+    args      = """--user-release 1 2 3"""
+
+    cmdout    = ''
+
+    cmderr    = ''
+
+    stubout   = \
+"""
+SET_JOBS
+
+
+Original Jobs:
+
+user: gooduser
+jobid:1
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+user_hold:True
+user_hold type: <type 'bool'>
+walltime:*
+walltime type: <type 'str'>
+jobid:2
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+user_hold:True
+user_hold type: <type 'bool'>
+walltime:*
+walltime type: <type 'str'>
+jobid:3
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+user_hold:True
+user_hold type: <type 'bool'>
+walltime:*
+walltime type: <type 'str'>
+
+New Job Info:
+
+user_hold:False
+user_hold type: <type 'bool'>
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('cqadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_user_release_option_3():
+    """
+    cqadm test run: user_release_option_3
+
+    """
+
+    args      = """-d --user-release 1 2 3"""
+
+    cmdout    = ''
+
+    cmderr    = \
+"""
+cqadm.py -d --user-release 1 2 3
+
+component: "queue-manager.set_jobs", defer: False
+  set_jobs(
+     [{'user_hold': True, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 1}, {'user_hold': True, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 2}, {'user_hold': True, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 3}],
+     {'user_hold': False},
+     gooduser,
+     )
+
+
+[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}, {'queue': 'jello', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 2, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 1024, 'walltime': 10, 'user_hold': False, 'procs': 1024, 'user': 'land'}, {'queue': 'bello', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 3, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 1536, 'walltime': 15, 'user_hold': False, 'procs': 1536, 'user': 'house'}]
+"""
+
+    stubout   = \
+"""
+SET_JOBS
+
+
+Original Jobs:
+
+user: gooduser
+jobid:1
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+user_hold:True
+user_hold type: <type 'bool'>
+walltime:*
+walltime type: <type 'str'>
+jobid:2
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+user_hold:True
+user_hold type: <type 'bool'>
+walltime:*
+walltime type: <type 'str'>
+jobid:3
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+user_hold:True
+user_hold type: <type 'bool'>
+walltime:*
+walltime type: <type 'str'>
+
+New Job Info:
+
+user_hold:False
+user_hold type: <type 'bool'>
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('cqadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_user_release_option_4():
+    """
+    cqadm test run: user_release_option_4
+
+    """
+
+    args      = """-f --user-release 1 2 3"""
+
+    cmdout    = ''
+
+    cmderr    = ''
+
+    stubout   = \
+"""
+SET_JOBS
+
+
+Original Jobs:
+
+user: gooduser
+jobid:1
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+user_hold:True
+user_hold type: <type 'bool'>
+walltime:*
+walltime type: <type 'str'>
+jobid:2
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+user_hold:True
+user_hold type: <type 'bool'>
+walltime:*
+walltime type: <type 'str'>
+jobid:3
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+user_hold:True
+user_hold type: <type 'bool'>
+walltime:*
+walltime type: <type 'str'>
+
+New Job Info:
+
+user_hold:False
+user_hold type: <type 'bool'>
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('cqadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_admin_hold_option_1():
+    """
+    cqadm test run: admin_hold_option_1
+
+    """
+
+    args      = """--admin-hold"""
+
+    cmdout    = \
+"""Usage: cqadm.py --help
+Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+
+"""
+
+    cmderr    = \
+"""No arguments or options provided
+
+"""
+
+    stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('cqadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_admin_hold_option_2():
+    """
+    cqadm test run: admin_hold_option_2
+
+    """
+
+    args      = """--admin-hold 1 2 3"""
+
+    cmdout    = ''
+
+    cmderr    = ''
+
+    stubout   = \
+"""
+SET_JOBS
+
+
+Original Jobs:
+
+user: gooduser
+admin_hold:False
+admin_hold type: <type 'bool'>
+jobid:1
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+walltime:*
+walltime type: <type 'str'>
+admin_hold:False
+admin_hold type: <type 'bool'>
+jobid:2
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+walltime:*
+walltime type: <type 'str'>
+admin_hold:False
+admin_hold type: <type 'bool'>
+jobid:3
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+walltime:*
+walltime type: <type 'str'>
+
+New Job Info:
+
+admin_hold:True
+admin_hold type: <type 'bool'>
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('cqadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_admin_hold_option_3():
+    """
+    cqadm test run: admin_hold_option_3
+
+    """
+
+    args      = """-d --admin-hold  1 2 3"""
+
+    cmdout    = ''
+
+    cmderr    = \
+"""
+cqadm.py -d --admin-hold 1 2 3
+
+component: "queue-manager.set_jobs", defer: False
+  set_jobs(
+     [{'admin_hold': False, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 1}, {'admin_hold': False, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 2}, {'admin_hold': False, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 3}],
+     {'admin_hold': True},
+     gooduser,
+     )
+
+
+[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}, {'queue': 'jello', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 2, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 1024, 'walltime': 10, 'user_hold': False, 'procs': 1024, 'user': 'land'}, {'queue': 'bello', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 3, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 1536, 'walltime': 15, 'user_hold': False, 'procs': 1536, 'user': 'house'}]
+"""
+
+    stubout   = \
+"""
+SET_JOBS
+
+
+Original Jobs:
+
+user: gooduser
+admin_hold:False
+admin_hold type: <type 'bool'>
+jobid:1
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+walltime:*
+walltime type: <type 'str'>
+admin_hold:False
+admin_hold type: <type 'bool'>
+jobid:2
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+walltime:*
+walltime type: <type 'str'>
+admin_hold:False
+admin_hold type: <type 'bool'>
+jobid:3
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+walltime:*
+walltime type: <type 'str'>
+
+New Job Info:
+
+admin_hold:True
+admin_hold type: <type 'bool'>
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('cqadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_admin_hold_option_4():
+    """
+    cqadm test run: admin_hold_option_4
+
+    """
+
+    args      = """-f --admin-hold  1 2 3"""
+
+    cmdout    = ''
+
+    cmderr    = ''
+
+    stubout   = \
+"""
+SET_JOBS
+
+
+Original Jobs:
+
+user: gooduser
+admin_hold:False
+admin_hold type: <type 'bool'>
+jobid:1
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+walltime:*
+walltime type: <type 'str'>
+admin_hold:False
+admin_hold type: <type 'bool'>
+jobid:2
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+walltime:*
+walltime type: <type 'str'>
+admin_hold:False
+admin_hold type: <type 'bool'>
+jobid:3
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+walltime:*
+walltime type: <type 'str'>
+
+New Job Info:
+
+admin_hold:True
+admin_hold type: <type 'bool'>
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('cqadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_admin_release_option_1():
+    """
+    cqadm test run: admin_release_option_1
+
+    """
+
+    args      = """--admin-release"""
+
+    cmdout    = \
+"""Usage: cqadm.py --help
+Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+
+"""
+
+    cmderr    = \
+"""No arguments or options provided
+
+"""
+
+    stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('cqadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_admin_release_option_2():
+    """
+    cqadm test run: admin_release_option_2
+
+    """
+
+    args      = """--admin-release 1 2 3"""
+
+    cmdout    = ''
+
+    cmderr    = ''
+
+    stubout   = \
+"""
+SET_JOBS
+
+
+Original Jobs:
+
+user: gooduser
+admin_hold:True
+admin_hold type: <type 'bool'>
+jobid:1
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+walltime:*
+walltime type: <type 'str'>
+admin_hold:True
+admin_hold type: <type 'bool'>
+jobid:2
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+walltime:*
+walltime type: <type 'str'>
+admin_hold:True
+admin_hold type: <type 'bool'>
+jobid:3
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+walltime:*
+walltime type: <type 'str'>
+
+New Job Info:
+
+admin_hold:False
+admin_hold type: <type 'bool'>
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('cqadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_admin_release_option_3():
+    """
+    cqadm test run: admin_release_option_3
+
+    """
+
+    args      = """-d --admin-release 1 2 3"""
+
+    cmdout    = ''
+
+    cmderr    = \
+"""
+cqadm.py -d --admin-release 1 2 3
+
+component: "queue-manager.set_jobs", defer: False
+  set_jobs(
+     [{'admin_hold': True, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 1}, {'admin_hold': True, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 2}, {'admin_hold': True, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 3}],
+     {'admin_hold': False},
+     gooduser,
+     )
+
+
+[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}, {'queue': 'jello', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 2, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 1024, 'walltime': 10, 'user_hold': False, 'procs': 1024, 'user': 'land'}, {'queue': 'bello', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 3, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 1536, 'walltime': 15, 'user_hold': False, 'procs': 1536, 'user': 'house'}]
+"""
+
+    stubout   = \
+"""
+SET_JOBS
+
+
+Original Jobs:
+
+user: gooduser
+admin_hold:True
+admin_hold type: <type 'bool'>
+jobid:1
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+walltime:*
+walltime type: <type 'str'>
+admin_hold:True
+admin_hold type: <type 'bool'>
+jobid:2
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+walltime:*
+walltime type: <type 'str'>
+admin_hold:True
+admin_hold type: <type 'bool'>
+jobid:3
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+walltime:*
+walltime type: <type 'str'>
+
+New Job Info:
+
+admin_hold:False
+admin_hold type: <type 'bool'>
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('cqadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_admin_release_option_4():
+    """
+    cqadm test run: admin_release_option_4
+
+    """
+
+    args      = """-f --admin-release 1 2 3"""
+
+    cmdout    = ''
+
+    cmderr    = ''
+
+    stubout   = \
+"""
+SET_JOBS
+
+
+Original Jobs:
+
+user: gooduser
+admin_hold:True
+admin_hold type: <type 'bool'>
+jobid:1
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+walltime:*
+walltime type: <type 'str'>
+admin_hold:True
+admin_hold type: <type 'bool'>
+jobid:2
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+walltime:*
+walltime type: <type 'str'>
+admin_hold:True
+admin_hold type: <type 'bool'>
+jobid:3
+jobid type: <type 'int'>
+location:*
+location type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+walltime:*
+walltime type: <type 'str'>
+
+New Job Info:
+
+admin_hold:False
+admin_hold type: <type 'bool'>
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('cqadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
