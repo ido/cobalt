@@ -1144,7 +1144,7 @@ class BGSystem (BGBaseSystem):
                         cached_io_block.getStatus() == pybgsched.IOBlock.Free and cached_io_block.getAction() == pybgsched.Action._None):
                     self.logger.warning("IO Block %s: Autoreboot block reporting Free.  System initiating boot.",
                             cobalt_io_block.name)
-                    self.booter.initiate_io_boot(cobalt_io_block.name)
+                    self.booter.initiate_io_boot(cobalt_io_block.name, tag='io_boot')
 
         for io_block_name, new_state in io_block_updates:
             self._io_blocks[io_block_name].state = new_state
@@ -1833,15 +1833,14 @@ class BGSystem (BGBaseSystem):
                 except:
                     self.logger.error("Block %s: failed to clear kernel settings", b.name)
                 #ION kernel reset
-                cn_block_io_nodes = self._blocks[b.name].io_nodes
-                io_blocks_to_reboot = []
-                for io_block in self._io_blocks.values():
-                    if (io_block.io_nodes.issubset(b.name)):
-                        self.logger.info('IO Block %s: initiating kernel reset and cleanup.', io_block_name)
-                        self._clear_kernel(io_block.name, 'ion')
-                        #should not have to force this, the compute blocks should also be cleaning.
-                        self.free_io_block(io_block.name)
-                        self.booter.initiate_io_boot(io_block_name, tag='ion-kernel', reboot=True)
+                reboot_candidates = self._get_io_blocks_to_reboot(b)
+                for io_block in reboot_candidates:
+                    self.logger.info('IO Block %s: initiating kernel reset and cleanup.', io_block.name)
+                    self._clear_kernel(io_block.name, 'ion')
+                    #should not have to force this, the compute blocks should also be cleaning.
+                    self.free_io_block(io_block.name, force=True)
+                    self.booter.initiate_io_boot(io_block.name, tag='io_boot', reboot=True,
+                            ion_kerneloptions=io_block.current_kernel_options)
 
 
             Cobalt.Util.sleep(10)
@@ -1936,6 +1935,8 @@ class BGSystem (BGBaseSystem):
         try:
             current = os.readlink(partition_link)
         except OSError, err:
+            # Consult documentation on IO errors
+            # Allow Cobalt to automatically set the symlinks for alt-kernel support
             if err.errno == errno.ENOENT:
                 self.logger.warning("partition %s: partitionboot location %s does not exist; creating link",
                     partition, partition_link)
@@ -1955,20 +1956,17 @@ class BGSystem (BGBaseSystem):
             if current:
                 self.logger.info("partition %s: updating boot image; currently set to \"%s\"", partition, current.split('/')[-1])
             try:
-                try:
-                    os.unlink(partition_link)
-                except OSError, err:
-                    if err.errno != errno.ENOENT:
-                        self.logger.error("partition %s: unable to unlink \"%s\": %s", partition, partition_link, err.strerror)
-                        raise
-                try:
-                    os.symlink(kernel_dir, partition_link)
-                except OSError, err:
-                    self.logger.error("partition %s: failed to reset boot location \"%s\" to \"%s\": %s" %
-                        (partition, partition_link, kernel_dir, err.strerror))
+                os.unlink(partition_link)
+            except OSError, err:
+                if err.errno != errno.ENOENT:
+                    self.logger.error("partition %s: unable to unlink \"%s\": %s", partition, partition_link, err.strerror)
                     raise
-            except OSError:
-                raise Exception("failed to reset boot location for partition", partition)
+            try:
+                os.symlink(kernel_dir, partition_link)
+            except OSError, err:
+                self.logger.error("partition %s: failed to reset boot location \"%s\" to \"%s\": %s" %
+                    (partition, partition_link, kernel_dir, err.strerror))
+                raise
             self.logger.info("partition %s: boot image updated; now set to \"%s\"", partition, kernel)
 
     def _clear_kernel(self, block_name, kernel_type):
@@ -1979,15 +1977,14 @@ class BGSystem (BGBaseSystem):
         '''
         if get_config_option('bgsystem', 'allow_alternate_kernels', 'false') in Cobalt.Util.config_true_values:
             if kernel_type not in ['cn', 'ion']:
-                self.logger.error("")
+                self.logger.error("ERROR: kernel_type must be one of 'cn' or 'ion'.")
                 raise ValueError, "ERROR: kernel_type must be one of 'cn' or 'ion'."
             try:
                 default_kernel = get_config_option('bgsystem', '%s_default_kernel' % kernel_type, 'default')
                 default_kernel_options = get_config_option('bgsystem', '%s_default_kernel_options' % kernel_type, ' ')
-                self._set_kernel(block_name, get_config_option('bgsystem', '%s_default_kernel' % kernel_type, 'default'),
-                        kernel_type)
-            except:
-                logger.error("block_name %s: failed to reset boot location", block_name)
+                self._set_kernel(block_name, default_kernel, kernel_type)
+            except OSError:
+                self.logger.error("block_name %s: failed to reset boot location", block_name)
             else:
                 if kernel_type == 'cn':
                     self._blocks[block_name].current_kernel = default_kernel
@@ -1995,8 +1992,10 @@ class BGSystem (BGBaseSystem):
                 elif kernel_type == 'ion':
                     self._io_blocks[block_name].current_kernel = default_kernel
                     self._io_blocks[block_name].current_kernel_options = default_kernel_options
+                else:
+                    raise RuntimeError, "%s is an invalid kernel type." % kernel_type
 
-                logger.info("block %s: kernel and options reset", block_name)
+                self.logger.info("block %s: kernel and options reset", block_name)
 
     def generate_xml(self):
         """This method produces an XML file describing the managed partitions, suitable for use with the simulator."""
@@ -2020,28 +2019,44 @@ class BGSystem (BGBaseSystem):
         return ret
     generate_xml = exposed(generate_xml)
 
+    def _get_io_blocks_to_reboot(self, cn_block):
+        '''Get a list of IO blocks that are already booted for this block. For now we assume that we want to load alternate kernels
+        on the same blocks that we have booted.
 
+        This is also getting used in cleanup
 
-    def set_kernel_for_io_blocks(self, cn_block_name, ion_kernel, ion_kerneloptions, label="LABEL UNSET"):
+        '''
+        reboot_candidates = []
+        for io_block in self._io_blocks.values():
+            if io_block.io_nodes.issubset(cn_block.io_nodes) and io_block.state in ['allocated', 'allocated-degraded']:
+                reboot_candidates.append(io_block)
+        return reboot_candidates
+
+    def set_kernel_for_io_blocks(self, cn_block, pgroup):
         '''Given a comptute block, reset the kernels on the associated io blocks
 
         Returns a list of IO Blocks to reboot due to changed kernels.
         '''
-        cn_block_io_nodes = self._blocks[cn_block_name].io_nodes
+        reboot_candidates = self._get_io_blocks_to_reboot(cn_block)
         io_blocks_to_reboot = []
-        for io_block in self._io_blocks.values():
-            if (io_block.io_nodes.issubset(cn_block_io_nodes) and (ion_kernel != io_block.current_kernel or
-                    ion_kerneloptions != io_block.current_kernel_options)):
-                try:
-                    io_block.current_kernel = ion_kernel
-                    io_block.current_kernel_options = ion_kerneloptions
-                    self._set_kernel(io_block.name, ion_kernel, 'ion')
-                    io_blocks_to_reboot.append(io_block.name)
-                except Exception, e:
-                    self.logger.error('%s: failed to set kernel %s on %s', label, ion_kernel, io_block.name)
-                    raise
-                else:
-                    self.logger.info('%s: Kernel on %s set to %s with options: %s', label, io_block.name, ion_kernel, ion_kerneloptions)
+        for io_block in reboot_candidates:
+            if pgroup.ion_kernel != io_block.current_kernel or pgroup.ion_kerneloptions != io_block.current_kernel_options:
+                self.logger.debug("SET KERNEL!!!!!!!!:: %s %s", pgroup.ion_kernel, pgroup.ion_kerneloptions)
+                io_block.current_kernel = pgroup.ion_kernel
+                io_block.current_kernel_options = pgroup.ion_kerneloptions
+                io_blocks_to_reboot.append(io_block.name)
+            try:
+                # Always do this.  This will set up the kernel directory structures for the default kernel in the event of a new
+                # block that hasn't had appropriate directories generated.
+                # Keep in mind that if you're resetting kernels in the control system, you'll have to generate the initial symlinks
+                # This also forces a reset if cleanup went badly.  --PMR
+                self._set_kernel(io_block.name, pgroup.ion_kernel, 'ion')
+            except OSError:
+                self.logger.error('%s: failed to set kernel %s on %s', pgroup.label, pgroup.ion_kernel, io_block.name)
+                raise
+            else:
+                self.logger.info('%s: Kernel on %s set to %s with options: %s', pgroup.label, io_block.name, pgroup.ion_kernel,
+                        pgroup.ion_kerneloptions)
         return io_blocks_to_reboot
 
     @exposed
@@ -2067,39 +2082,45 @@ class BGSystem (BGBaseSystem):
         # the process group so that cqm can report the problem to the user.
 
         start_apg_timer = time.time()
+        self.logger.debug('SPECS: %s', specs)
         process_groups = self.process_groups.q_add(specs)
         #set the default kernel for this job.
         for pgroup in process_groups:
             pgroup.label = "Job %s/%s/%s" % (pgroup.jobid, pgroup.user, pgroup.id)
-            pgroup.nodect = self._blocks[pgroup.location[0]].size
             self.logger.debug("%s: job requesting kernel %s with options %s", pgroup.label, pgroup.kernel, pgroup.kerneloptions)
             self.logger.info("%s: process group %s created to track job status", pgroup.label, pgroup.id)
-            self._blocks[pgroup.location[0]].current_kernel = pgroup.kernel
-            self._blocks[pgroup.location[0]].current_kernel_options = pgroup.kerneloptions
+            self._blocks_lock.acquire()
             try:
-                pgroup.ions_pending_reboot = self.set_kernel_for_io_blocks(pgroup.location[0], pgroup.ion_kernel,
-                            pgroup.ion_kerneloptions, pgroup.label)
-            except Exception, e:
-                self.logger.error("%s: failed to set the ion_kernel; %s", pgroup.label, e)
+                target_block = self._blocks[pgroup.location[0]]
+            finally:
+                self._blocks_lock.release()
+            pgroup.nodect = target_block.size
+            target_block.current_kernel = pgroup.kernel
+            target_block.current_kernel_options = pgroup.kerneloptions
+            try:
+                pgroup.ions_pending_reboot = self.set_kernel_for_io_blocks(target_block, pgroup)
+            except OSError, err:
+                self.logger.error("%s: failed to set the ion_kernel; %s", pgroup.label, err)
                 self.logger.error("%s: job abborted due to errors setting up kernel.", pgroup.label)
                 pgroup.exit_status = 255
             else:
                 #Change the kernel.  Default is specified in cobalt.conf.
                 try:
-                    self._set_kernel(pgroup.location[0], pgroup.kernel, "cn")
+                    self._set_kernel(target_block.name, pgroup.kernel, "cn")
                     self.logger.info("%s: now using kernel %s" % (pgroup.label, pgroup.kernel))
-                except Exception, e:
-                    self.logger.error("%s: failed to set the kernel; %s", pgroup.label, e)
+                except OSError, err:
+                    self.logger.error("%s: failed to set the kernel; %s", pgroup.label, err)
                     self.logger.error("%s: job abborted due to errors setting up kernel.", pgroup.label)
                     pgroup.exit_status = 255
                 else:
-                    if (pgroup.ion_kernel != get_config_option('bgsystem', 'ion_default_kernel', 'default') or
-                        pgroup.ion_kerneloptions != get_config_option('bgsystem', 'ion_default_kernel_options', 'default')
-                        and pgroup.ions_pending_reboot is not None):
-                        #we need to kick the IONs, delay job startup until all ION blocks have completed in check_boot_status
+                    self.logger.debug("pending reboots: %s", pgroup.ions_pending_reboot)
+                    if pgroup.ions_pending_reboot is not None and len(pgroup.ions_pending_reboot) > 0:
+                        # We need to kick the IONs, delay job startup until all ION blocks have completed in check_boot_status
+                        # Compute node block boot will happen in later once ION boot has been completed in check_boot_status
                         for io_block_name in pgroup.ions_pending_reboot:
-                            self.free_io_block(io_block_name, False, pgroup.user)
-                            self.booter.initiate_io_boot(io_block_name, pgroup.jobid, pgroup.user, 'ion-kernel', True)
+                            self.free_io_block(io_block_name, user=pgroup.user)
+                            self.booter.initiate_io_boot(io_block_name, job_id=pgroup.jobid, user=pgroup.user, tag='ion-kernel',
+                                    reboot=True, ion_kerneloptions=pgroup.ion_kerneloptions)
                     else:
                         self._start_compute_nodes(pgroup)
         end_apg_timer = time.time()
@@ -2191,23 +2212,23 @@ class BGSystem (BGBaseSystem):
                     pgroup = pgroups[0]
                     self._log_boot_messages(pgroup)
                 else:
-                    self.logger.warning('Failed to find process group associated with boot on %s', boot.context.block_id)
+                    self.logger.warning('Failed to find process group associated with boot on %s', boot.block_id)
+                    continue
                 if boot.state in ['complete', 'failed']:
-                    pgroup.ions_pending_reboot.remove(boot.block_id)
                     if boot.state == 'failed':
                         self.logger.warning("%s: IO Boot failed on IO Block %s.", pgroup.label, boot.block_id)
                         pgroup.ion_boot_failed = True
-                    if len(pgroup.ions_pending_reboot) == 0 and not pgroup.ion_boot_failed:
-                        self.logger.info("%s: IO Nodes have been rebooted successfully.", pgroup.label)
-                        self._start_compute_nodes(pgroup)
-                    elif len(pgroup.ions_pending_reboot) != 0:
-                        #just wait for all of the outstanding boots to complete.
-                        pass
-                    else:
-                        self.logger.warning("%s: terminating process group due to failed IO Node reboot(s).", pgroup.label)
-                        self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
-                        self._mark_block_for_cleaning(pgroup.location[0], pgroup.jobid)
-                        pgroup.exit_status = 255
+                    pgroup.ions_pending_reboot.remove(boot.block_id)
+                    if len(pgroup.ions_pending_reboot) == 0:
+                        #Take appropriate action now that all IO boots have completed.
+                        if pgroup.ion_boot_failed:
+                            self.logger.warning("%s: terminating process group due to failed IO Node reboot(s).", pgroup.label)
+                            self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
+                            self._mark_block_for_cleaning(pgroup.location[0], pgroup.jobid)
+                            pgroup.exit_status = 255
+                        else:
+                            self.logger.info("%s: IO Nodes have been rebooted successfully.", pgroup.label)
+                            self._start_compute_nodes(pgroup)
                     self.booter.reap(boot.block_id)
                 continue
             elif boot.tag != 'internal':
@@ -2222,7 +2243,7 @@ class BGSystem (BGBaseSystem):
                 pgroup = pgroups[0]
                 self._log_boot_messages(pgroup)
             else:
-                self.logger.warning('Failed to find process group associated with boot on %s', boot.context.block_id)
+                self.logger.warning('Failed to find process group associated with boot on %s', boot.block_id)
             if boot.state in ['complete', 'failed']:
                 #should only have one pgroup for jobid
                 if boot.state == 'complete': 
@@ -2639,7 +2660,7 @@ class BGSystem (BGBaseSystem):
                 self._blocks_lock.release()
         return True
 
-    def free_io_block(self, io_location, force=False, user=None, reboot=False):
+    def free_io_block(self, io_location, force=False, user=None):
         '''Free an IO block.  Also mark that rebooting is occuring.
 
         '''

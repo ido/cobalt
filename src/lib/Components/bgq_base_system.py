@@ -998,6 +998,14 @@ class BGBaseSystem (Component):
             Cobalt.Util.validate_geometry(spec['geometry'], int(spec['nodecount']))
 
         # need to handle kernel
+        minimum_alt_ion_size = int(get_config_option('bgsystem', 'minimum_allowed_ion_kernel_size', 0))
+        if spec['ion_kernel']:
+            if (get_config_option('bgsystem', 'allow_alternate_kernels', 'false') in Cobalt.Util.config_true_values and
+                    spec['ion_kernel'] != get_config_option('bgsystem', 'ion_default_kernel', 'default') and
+                    int(spec['nodecount']) < minimum_alt_ion_size):
+                raise JobValidationError("Jobs requesting an alternate ION image must reuest at least %s nodes on this system.",
+                        minimum_alt_ion_size)
+
         return spec
     validate_job = exposed(validate_job)
 
@@ -1391,18 +1399,6 @@ class BGBaseSystem (Component):
         except:
             self.logger.error("error in find_job_location", exc_info=True)
         self._blocks_lock.release()
-
-#            for jobid, block_list in best_block_dict.iteritems():
-                #part = self.blocks[block_list[0]]
-                #self.logger.info("Allocating Block %s to Job %s", part.name, int(jobid))
-                #part.used_by = int(jobid)
-                #part.reserved_until = time.time() + 5*60
-                #if part.state == "idle":
-                    #part.state = "allocated"
-                    #self._recompute_block_state()
-        #except:
-            #self.logger.error("error in find_job_location", exc_info=True)
-#        self._blocks_lock.release()
 
         reserve_failed = []
         for jobid, block_list in best_block_dict.iteritems():

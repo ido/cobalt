@@ -66,7 +66,7 @@ class IOBlock(Cobalt.Data.Data):
         allocated -- all hardware reported as available, block in non-Free status
         idle-degraded -- some hardware unavailable, but block can be used, block in Free status
         allocated-degraded -- some hardware unavailable, but block can be used, block in non-Free status
-        offline) -- all hardware for the block is reported as offline
+        offline -- all hardware for the block is reported as offline
         blocked -- The block has IONs that are in-use by another IO Block.  This block may or may not be controled by Cobalt.
 
         NOTE: this does not actually set the state, only fetches what it should be.  This does not side-effect the io block itself
