@@ -443,7 +443,10 @@ class BGSystem (BGBaseSystem):
         else:
             self._configure_from_file(bridgeless, config_file)
             self.logger.info("File Init Complete.")
-
+        self.logger.debug("Started with options:")
+        self.logger.debug('allow_alternate_kernels %s', get_config_option('bgsystem', 'allow_alternate_kernels', 'false'))
+        self.logger.debug('cn_default_kernel %s', get_config_option('bgsystem', 'cn_default_kernel', 'default'))
+        self.logger.debug('ion_default_kernel %s', get_config_option('bgsystem', 'ion_default_kernel', 'default'))
 
     def _configure_from_bridge(self):
 
@@ -1835,12 +1838,16 @@ class BGSystem (BGBaseSystem):
                 #ION kernel reset
                 reboot_candidates = self._get_io_blocks_to_reboot(b)
                 for io_block in reboot_candidates:
-                    self.logger.info('IO Block %s: initiating kernel reset and cleanup.', io_block.name)
-                    self._clear_kernel(io_block.name, 'ion')
-                    #should not have to force this, the compute blocks should also be cleaning.
-                    self.free_io_block(io_block.name, force=True)
-                    self.booter.initiate_io_boot(io_block.name, tag='io_boot', reboot=True,
-                            ion_kerneloptions=io_block.current_kernel_options)
+                    if (io_block.current_kernel != get_config_option('bgsystem', 'ion_default_kernel', 'default') or
+                        io_block.current_kernel_options != get_config_option('bgsystem', 'ion_default_kernel_options', None)):
+                        self.logger.info('IO Block %s: initiating kernel reset and cleanup.', io_block.name)
+                        self._clear_kernel(io_block.name, 'ion')
+                        #should not have to force this, the compute blocks should also be cleaning.
+                        self.free_io_block(io_block.name, force=True)
+                        self.booter.initiate_io_boot(io_block.name, tag='io_boot', reboot=True,
+                                ion_kerneloptions=io_block.current_kernel_options)
+                    else:
+                        self.logger.debug("IO Block %s: no cleanup needed, already running default kernel.", io_block.name)
 
 
             Cobalt.Util.sleep(10)
@@ -1981,7 +1988,7 @@ class BGSystem (BGBaseSystem):
                 raise ValueError, "ERROR: kernel_type must be one of 'cn' or 'ion'."
             try:
                 default_kernel = get_config_option('bgsystem', '%s_default_kernel' % kernel_type, 'default')
-                default_kernel_options = get_config_option('bgsystem', '%s_default_kernel_options' % kernel_type, ' ')
+                default_kernel_options = get_config_option('bgsystem', '%s_default_kernel_options' % kernel_type, None)
                 self._set_kernel(block_name, default_kernel, kernel_type)
             except OSError:
                 self.logger.error("block_name %s: failed to reset boot location", block_name)
@@ -2041,10 +2048,8 @@ class BGSystem (BGBaseSystem):
         io_blocks_to_reboot = []
         for io_block in reboot_candidates:
             if pgroup.ion_kernel != io_block.current_kernel or pgroup.ion_kerneloptions != io_block.current_kernel_options:
-                self.logger.debug("SET KERNEL!!!!!!!!:: %s %s", pgroup.ion_kernel, pgroup.ion_kerneloptions)
                 io_block.current_kernel = pgroup.ion_kernel
                 io_block.current_kernel_options = pgroup.ion_kerneloptions
-                io_blocks_to_reboot.append(io_block.name)
             try:
                 # Always do this.  This will set up the kernel directory structures for the default kernel in the event of a new
                 # block that hasn't had appropriate directories generated.
@@ -2057,6 +2062,11 @@ class BGSystem (BGBaseSystem):
             else:
                 self.logger.info('%s: Kernel on %s set to %s with options: %s', pgroup.label, io_block.name, pgroup.ion_kernel,
                         pgroup.ion_kerneloptions)
+                if (io_block.current_kernel != get_config_option('bgsystem', 'ion_default_kernel', 'default') or
+                        io_block.current_kernel_options != get_config_option('bgsystem', 'ion_default_kernel_options', None)):
+                    self.logger.info('IO Block %s: changed kernel to %s with kerneloptions %s.  Scheduling for reboot', io_block.name,
+                            io_block.current_kernel, io_block.current_kernel_options)
+                    io_blocks_to_reboot.append(io_block.name)
         return io_blocks_to_reboot
 
     @exposed

@@ -43,7 +43,7 @@ class IOBlock(Cobalt.Data.Data):
         self.ions_in_soft_failure = False
         self.autoreboot = False
         self.current_kernel = Cobalt.Util.get_config_option('bgsystem', 'ion_default_kernel', 'default')
-        self.current_kernel_options = Cobalt.Util.get_config_option('bgsystem', 'ion_default_kernel_options', 'default')
+        self.current_kernel_options = Cobalt.Util.get_config_option('bgsystem', 'ion_default_kernel_options', ' ')
 
     io_drawer_list = property(lambda self: list(self.io_drawers))
     io_node_list = property(lambda self: list(self.io_nodes))
