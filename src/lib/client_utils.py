@@ -563,11 +563,11 @@ def get_options(spec,opts,opt2spec,parser):
                 spec[deststr]     = optval
                 destdic[deststr]  = True
                 opt_count        += 1
-        
+
         else: # Option not in command line
 
             # need the default specified in spec for these options (qsub)
-            if optstr in ['queue','kernel','cwd'] and client_data.curr_cmd == 'qsub':
+            if optstr in ['queue', 'kernel', 'ion_kernel', 'cwd'] and client_data.curr_cmd == 'qsub':
                 opts[optstr] = spec[deststr]
 
             # for option attrs the default is an empty dictionary (qsub, qalter)

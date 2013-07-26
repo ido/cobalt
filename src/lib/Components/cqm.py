@@ -100,6 +100,9 @@ from Cobalt.Exceptions import (QueueError, ComponentLookupError, DataStateError,
     JobRunError, JobPreemptionError, JobDeleteError, IncrIDError, ResourceReservationFailure)
 from Cobalt import accounting
 from Cobalt.Statistics import Statistics
+from Cobalt.Util import get_config_option, init_cobalt_config
+
+init_cobalt_config()
 
 CLOB_SIZE = 4096
 
@@ -526,7 +529,7 @@ class Job (StateMachine):
         "walltime", "procs", "nodes", "mode", "cwd", "command", "args", 
         "outputdir", "project", "lienID", "stagein", "stageout",
         "reservation", "host", "port", "url", "stageid", "envs", "inputfile", 
-        "kernel", "kerneloptions", "admin_hold",
+        "kernel", "kerneloptions", "ion_kernel", "ion_kerneloptions", "admin_hold",
         "user_hold", "dependencies", "notify", "adminemail", "outputpath",
         "errorpath", "cobalt_log_file", "path", "preemptable", "preempts",
         "mintasktime", "maxtasktime", "maxcptime", "force_kill_delay", 
@@ -585,8 +588,10 @@ class Job (StateMachine):
         self.stageid = spec.get("stageid")
         self.inputfile = spec.get("inputfile")
         self.tag = spec.get("tag", "job")
-        self.kernel = spec.get("kernel", "default")
+        self.kernel = spec.get("kernel", get_config_option('bgsystem', 'cn_default_kernel', 'default'))
         self.kerneloptions = spec.get("kerneloptions")
+        self.ion_kernel = spec.get("ion_kernel",  get_config_option('bgsystem', 'ion_default_kernel', 'default'))
+        self.ion_kerneloptions = spec.get("ion_kerneloptions")
         self.notify = spec.get("notify")
         self.adminemail = spec.get("adminemail")
         self.location = spec.get("location")
@@ -613,7 +618,7 @@ class Job (StateMachine):
 
         self.all_dependencies = spec.get("all_dependencies")
         if self.all_dependencies:
-            self.all_dependencies = self.all_dependencies.split(":")
+            self.all_dependencies = str(self.all_dependencies).split(":")
             logger.info("Job %s/%s: dependencies set to %s", self.jobid, self.user, ":".join(self.all_dependencies))
         else:
             self.all_dependencies = []
@@ -769,8 +774,11 @@ class Job (StateMachine):
             self.geometry = None
         if not state.has_key("script_preboot"):
             self.script_preboot = True
+        if not state.has_key('ion_kernel'):
+            self.ion_kernel = get_config_option('bgsystem', 'ion_default_kernel', 'default')
+        if not state.has_key('ion_kernel'):
+            self.ion_kerneloptions = get_config_option('bgsystem', 'ion_default_kernel_options', 'default')
         self.runid = state.get("runid", None)
-
         self.initializing = False
 
     def __task_signal(self, retry = True):
@@ -836,6 +844,8 @@ class Job (StateMachine):
                 'umask':self.umask,
                 'kernel':self.kernel,
                 'kerneloptions':self.kerneloptions,
+                'ion_kernel':self.ion_kernel,
+                'ion_kerneloptions':self.ion_kerneloptions,
                 'starttime':self.starttime,
                 'walltime':walltime,
                 'killtime':self.force_kill_delay + 1,
@@ -3974,6 +3984,7 @@ class QueueManager(Component):
         # I think this duplicates cobalt's old scheduling policy
         # higher queue priorities win, with jobid being the tie breaker
         def default():
+            #this is a vairable that is always being passed in by us.
             val = queue_priority + 0.1
             return val
 

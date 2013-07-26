@@ -9,6 +9,7 @@ This is a hashable object, suitable for use with sets
 import Cobalt.Data
 import pybgsched
 import logging
+import Cobalt.Util
 
 _logger = logging.getLogger()
 
@@ -41,6 +42,8 @@ class IOBlock(Cobalt.Data.Data):
         self.block_computes_for_reboot = False
         self.ions_in_soft_failure = False
         self.autoreboot = False
+        self.current_kernel = Cobalt.Util.get_config_option('bgsystem', 'ion_default_kernel', 'default')
+        self.current_kernel_options = Cobalt.Util.get_config_option('bgsystem', 'ion_default_kernel_options', ' ')
 
     io_drawer_list = property(lambda self: list(self.io_drawers))
     io_node_list = property(lambda self: list(self.io_nodes))
@@ -63,7 +66,7 @@ class IOBlock(Cobalt.Data.Data):
         allocated -- all hardware reported as available, block in non-Free status
         idle-degraded -- some hardware unavailable, but block can be used, block in Free status
         allocated-degraded -- some hardware unavailable, but block can be used, block in non-Free status
-        offline) -- all hardware for the block is reported as offline
+        offline -- all hardware for the block is reported as offline
         blocked -- The block has IONs that are in-use by another IO Block.  This block may or may not be controled by Cobalt.
 
         NOTE: this does not actually set the state, only fetches what it should be.  This does not side-effect the io block itself

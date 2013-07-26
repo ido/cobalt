@@ -44,9 +44,10 @@ class IOBootPending(BaseTriremeState):
 
     def __init__(self, context):
         super(IOBootPending, self).__init__(context)
-        self._destination_states = frozenset([IOBootInitiating, IOBootFailed])
+        self._destination_states = frozenset([IOBootPending, IOBootInitiating, IOBootFailed])
 
     def progress(self):
+        label = "%s/%s" % (self.context.user, self.context.job_id)
         io_block = _fetch_io_block(self.context.io_block_name)
         if io_block == None:
             _logger.critical('Control system error duing boot intiation, failing boot for block %s', self.context.io_block_name)
@@ -55,6 +56,24 @@ class IOBootPending(BaseTriremeState):
         block_status = io_block.getStatus()
 
         if block_status == pybgsched.IOBlock.Free and io_block.getAction() == pybgsched.Action._None:
+            try:
+                # Initialize the ion_kernel options in the control system
+                if self.context.ion_kerneloptions == '' or self.context.ion_kerneloptions is None:
+                    #Workaround for not accepting null-strings.  Should be fixed by IBM later.
+                    self.context.ion_kerneloptions = ' '
+                if (self.context.ion_kerneloptions != io_block.getBootOptions() and
+                    self.context.ion_kerneloptions is not None):
+                    #only write to the database if we have a change
+                    if len(self.context.ion_kerneloptions) > 256: #control system size limit.
+                        self.context.status_string.append("%s: ERROR: kernel options: [%s] longer than 256 characters",
+                                label, self.context.ion_kerneloptions)
+                        return IOBootFailed(self.context)
+                    io_block.setBootOptions(self.context.ion_kerneloptions)
+                    io_block.update()
+            except RuntimeError:
+                #if we don't have enough access to the control system to do this, this boot is going to completely fail now.
+                self.context.status_string("%s: Unable to set kernel options on block.  Aborting job.")
+                return IOBootFailed(self.context)
             # Unlike compute blocks, we can and do boot IO Blocks with non-functional hardware.  If we see any, log that there is
             # down hardware at boot-time.
             unavailable_resources = pybgsched.StringVector() #here for interface purposes, but subsumed by unavailableIONodes
@@ -66,8 +85,8 @@ class IOBootPending(BaseTriremeState):
                 _logger.info("Error encountered while booting IOBlock %s. Boot failing.", self.context.io_block_name)
                 return IOBootFailed(self.context)
             except Exception:
-                _logger.critical("%s/%s: Unexpected exception recieved during ION boot.  Aborting job startup.",
-                        self.context.io_block_name, exc_info=True)
+                _logger.critical("%s: Unexpected exception recieved during ION boot block %s.  Aborting job startup.",
+                        label, self.context.io_block_name, exc_info=True)
                 return IOBootFailed(self.context)
             if unavailable_io_nodes.size() != 0:
                 _logger.warning("IOBlock %s: Some nodes not available on booted block: %s", self.context.io_block_name,
@@ -75,9 +94,12 @@ class IOBootPending(BaseTriremeState):
             return IOBootInitiating(self.context)
         else:
             #we can only boot a free block.  Otherwise this is an error
-            _logger.error("Attempted to boot IOBlock %s in non-free status or pending action.  Boot Failed." % \
-                    (self.context.io_block_name ))
-            return IOBootFailed(self.context)
+            #Unless this is a kernel reboot, wait for the block to transition to the free state instead.
+            if not self.context.pending_kernel_reboot:
+                _logger.error("Attempted to boot IOBlock %s in non-free status or pending action.  Boot Failed." % \
+                        (self.context.io_block_name ))
+                return IOBootFailed(self.context)
+        return self
 
 class IOBootInitiating(BaseTriremeState):
     '''Track a boot that has been initiated and progress to completed or failed as appropriate.
