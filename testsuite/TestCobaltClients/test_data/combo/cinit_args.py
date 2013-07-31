@@ -108,4 +108,12 @@ test_argslist = [
     {"tc_name" : "qstat_16"                            , "command" : "qstat"  , "args" : "-f", },
     {"tc_name" : "cqadm_7"                             , "command" : "cqadm"  , "args" : "--release 9", },
     {"tc_name" : "qstat_17"                            , "command" : "qstat"  , "args" : "-f", },
+    {"tc_name" : "setres_12"                           , "command" : "setres" , "args" : "-n r1 -s 2014-01-01-10:30 -u '*' -d 50 -q q_1 ANL-R01-1024 ANL-R00-M0-512", },
+    {"tc_name" : "showres_8"                           , "command" : "showres", "args" : ""},
+    {"tc_name" : "setres_13"                           , "command" : "setres" , "args" : "-m -n r1 -u <USER>", },
+    {"tc_name" : "showres_9"                           , "command" : "showres", "args" : ""},
+    {"tc_name" : "setres_14"                           , "command" : "setres" , "args" : "-m -n r1 -u '*'", },
+    {"tc_name" : "showres_10"                          , "command" : "showres", "args" : ""},
+    {"tc_name" : "releaseres_5"                        , "command" : "releaseres" , "args" : "-d r1", },
+    {"tc_name" : "showres_11"                          , "command" : "showres", "args" : ""},
     ]

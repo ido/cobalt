@@ -17,7 +17,7 @@ OPTIONS DEFINITIONS:
 '-p','--partition',dest='partitions',type='string',help='partition (now optional)'
 '-q','--queue',dest='queue',type='string',help='queue name'
 '-s','--starttime',dest='start',type='string',help='start date time: YYYY_MM_DD-HH:MM, or now',callback=cb_date
-'-u','--user',dest='users',type='string',help='user id list (user1:user2:...)',callback=cb_user_list
+'-u','--user',dest='users',type='string',help='user id list (user1:user2:... or "*" for all users)',callback=cb_res_users
 '--debug',dest='debug',help='turn on communication debugging',callback=cb_debug
 
 
@@ -35,7 +35,7 @@ import math
 import sys
 import time
 from Cobalt import client_utils
-from Cobalt.client_utils import cb_debug, cb_time, cb_date, cb_passthrough, cb_user_list
+from Cobalt.client_utils import cb_debug, cb_time, cb_date, cb_passthrough, cb_res_users
 
 from Cobalt.arg_parser import ArgParse
 
@@ -188,7 +188,7 @@ def modify_reservation(parser):
             updates['duration'] = parser.options.duration
 
     if parser.options.users != None:
-        updates['users'] = ':'.join(parser.options.users)
+        updates['users'] = None if parser.options.users == "*" else parser.options.users
     if parser.options.project != None:
         updates['project'] = parser.options.project
     if parser.options.cycle != None:
@@ -210,9 +210,9 @@ def add_reservation(parser,spec,user):
     """
     add reservation 
     """
-    spec['users']             = ':'.join(parser.options.users) if parser.options.users != None else None
-    spec['cycle']             = parser.options.cycle 
-    spec['project']           = parser.options.project
+    spec['users']   = None if parser.options.users == '*' else parser.options.users
+    spec['cycle']   = parser.options.cycle 
+    spec['project'] = parser.options.project
 
     if parser.options.block_passthrough == None: spec['block_passthrough'] = False
 
@@ -237,7 +237,7 @@ def main():
         [ cb_date                , (True,) ], # Allow to set the date to 'now'
         [ cb_passthrough         , () ],
         [ cb_debug               , () ],
-        [ cb_user_list           , (opts, False) ]] # do not add current user
+        [ cb_res_users           , () ]] 
 
     # Get the version information
     opt_def =  __doc__.replace('__revision__',__revision__)
@@ -248,7 +248,7 @@ def main():
     user = client_utils.getuid()
 
     parser.parse_it() # parse the command line
-    opt_count = client_utils.get_options(spec,opts,opt2spec,parser)
+    opt_count = client_utils.get_options(spec, opts, opt2spec, parser)
 
     # if continue to process options then
     if validate_args(parser,spec,opt_count):

@@ -213,7 +213,7 @@ def main():
         ( cb_path         , (opts, True) ), # use CWD
         ( cb_dep          , () ),
         ( cb_attrs        , () ),
-        ( cb_user_list    , (opts,True) ), # add current user
+        ( cb_user_list    , (opts,) ),
         ( cb_geometry     , (opts,) )]
 
     # Get the version information

@@ -222,7 +222,7 @@ def main():
         [ cb_time                , (True, False, False) ], # delta time allowed, return minutes, return string
         [ cb_upd_dep             , () ],
         [ cb_attrs               , () ],
-        [ cb_user_list           , (opts, True) ], # add user
+        [ cb_user_list           , (opts,) ],
         [ cb_geometry            , (opts,) ],
         [ cb_mode                , () ]]
 
