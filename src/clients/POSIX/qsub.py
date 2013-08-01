@@ -41,10 +41,12 @@ Option with values:
 
 The following options are only valid on IBM BlueGene architecture platforms:
 
-'--kernel',dest='kernel',type='string',help='set kernel profile'
-'-K','--kerneloptions',dest='kerneloptions',type='string',help='set kernel options'
-'--mode',dest='mode',type='string',help='select system mode'
-'--geometry',dest='geometry',type='string',help='set geometry (AxBxCxDxE)',callback=cb_geometry
+'--kernel',dest='kernel',type='string',help='set a compute node kernel profile'
+'-K','--kerneloptions',dest='kerneloptions',type='string',help='set compute node kernel options'
+'--ion_kernel',dest='ion_kernel',type='string',help='set an IO node kernel profile'
+'--ion_kerneloptions',dest='ion_kerneloptions',type='string',help='set IO node kernel options'
+'--mode', dest='mode', type='string', help='select system mode'
+'--geometry', dest='geometry', type='string', help='set geometry (AxBxCxDxE)',callback=cb_geometry
 
 """
 import logging
@@ -56,13 +58,14 @@ from Cobalt.client_utils import \
     cb_debug, cb_env, cb_nodes, cb_time, cb_umask, cb_path, \
     cb_dep, cb_attrs, cb_user_list, cb_geometry, cb_gtzero
 from Cobalt.arg_parser import ArgParse
+from Cobalt.Util import get_config_option, init_cobalt_config
 
-    
 __revision__ = '$Revision: 559 $'
 __version__  = '$Version$'
 
 SYSMGR = client_utils.SYSMGR
 QUEMGR = client_utils.QUEMGR
+
 
 def validate_args(parser, spec, opt_count):
     """
@@ -196,7 +199,10 @@ def main():
     """
     # setup logging for client. The clients should call this before doing anything else.
     client_utils.setup_logging(logging.INFO)
-    
+
+    #init cobalt config file for setting default kernels.
+    init_cobalt_config()
+
     spec     = {} # map of destination option strings and parsed values
     opts     = {} # old map
     opt2spec = {}
@@ -232,7 +238,8 @@ def main():
     spec['path']           = client_utils.getpath()
     spec['mode']           = False
     spec['cwd']            = client_utils.getcwd()
-    spec['kernel']         = 'default'
+    spec['kernel']         = get_config_option('bgsystem', 'cn_default_kernel', 'default')
+    spec['ion_kernel']     = get_config_option('bgsystem', 'ion_default_kernel', 'default')
     spec['queue']          = 'default'
     spec['umask']          = 022
     spec['run_project']    = False

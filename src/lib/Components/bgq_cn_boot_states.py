@@ -6,7 +6,6 @@ import pybgsched
 import logging
 from Cobalt.BaseTriremeState import BaseTriremeState
 
-
 _logger = logging.getLogger()
 
 def _initiate_boot(context):
@@ -63,6 +62,7 @@ class BootPending(BaseTriremeState):
 
     def progress(self):
         #Make sure we have the lock for this resource, set user and start booting.
+        label = "%s/%s" % (self.context.user, self.context.job_id)
         if self.context.under_resource_reservation():
             #we can continue the boot, we're not out of time.
             try:
@@ -70,8 +70,25 @@ class BootPending(BaseTriremeState):
                 pybgsched.Block.addUser(self.context.subblock_parent, self.context.user)
             except RuntimeError:
                 #control system connection has blown.  This boot may as well be dead.
-                self.context.status_string.append("%s/%s: Unable to retrieve control system data for block %s. Aborting job." % \
-                        (self.context.user, self.context.job_id, self.context.subblock_parent))
+                self.context.status_string.append("%s: Unable to retrieve control system data for block %s. Aborting job." %\
+                        (label, self.context.subblock_parent))
+                return BootFailed(self.context)
+            try:
+                #Unlike BG/P where kernel options are passed in to mpirun we have to set them as a part of the block here.
+                if self.context.block.current_kernel_options == '' or self.context.block.current_kernel_options is None:
+                    #Workaround for not accepting null-strings.  Should be fixed by IBM later.
+                    self.context.block.current_kernel_options = ' '
+                if (self.context.block.current_kernel_options != compute_block.getBootOptions() and
+                    self.context.block.current_kernel_options is not None):
+                    #only write to the database if we have a change
+                    if len(self.context.block.current_kernel_options) > 256: #control system size limit.
+                        self.context.status_string.append("%s: ERROR: kernel options: [%s] longer than 256 characters",
+                                label, self.context.block.current_kernel_options)
+                        return BootFailed(self.context)
+                    compute_block.setBootOptions(self.context.block.current_kernel_options)
+                    compute_block.update()
+            except RuntimeError:
+                self.context.status_string("%s: Unable to set kernel options on block.  Aborting job.")
                 return BootFailed(self.context)
             if self.context.block.block_type == 'pseudoblock':
                 #we have to boot a subblock job. If already booted, this is complete.
@@ -82,21 +99,19 @@ class BootPending(BaseTriremeState):
                 elif block_status == pybgsched.Block.Initialized:
                     if compute_block.getAction() == pybgsched.Action._None:
                         compute_block.addUser(self.context.subblock_parent, self.context.user)
-                        self.context.status_string.append("%s/%s: Block %s for location %s already booted." \
-                                "  Boot Complete from pending." % (self.context.user, self.context.job_id,
-                                    self.context.subblock_parent, self.context.block_id))
+                        self.context.status_string.append("%s: Block %s for location %s already booted." \
+                                "  Boot Complete from pending." % (label, self.context.subblock_parent, self.context.block_id))
                         return BootComplete(self.context)
                     else: #we're going to have to wait for this block to free and reboot the block.
-                        _logger.info("%s/%s: trying to start on freeing block %s. waiting until free.", self.context.user, 
-                                self.context.job_id, self.context.subblock_parent)
+                        _logger.info("%s: trying to start on freeing block %s. waiting until free.", label,
+                            self.context.subblock_parent)
                         return self
             return _initiate_boot(self.context)
         else:
-            self.context.status_string.append("%s/%s: the internal reservation on %s expired; job has been terminated" % \
-                    (self.context.user, self.context.job_id, self.context.subblock_parent))
+            self.context.status_string.append("%s: the internal reservation on %s expired; job has been terminated" % \
+                    (label, self.context.subblock_parent))
             return BootFailed(self.context)
         raise RuntimeError, "Unable to return a valid state"
-
 
 class BootInitiating(BaseTriremeState):
     '''Check to determine if our boot is still continuing or has completed.
