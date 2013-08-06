@@ -993,7 +993,7 @@ class Job (StateMachine):
     def _sm_check_job_timers(self):
         if self.__max_job_timer.has_expired:
             # if the job execution time has exceeded the wallclock time, then inform the task that it must terminate
-            self._sm_log_info("maximum execution time exceeded; initiating job terminiation", cobalt_log = True)
+            self._sm_log_info("maximum execution time exceeded; initiating job termination", cobalt_log = True)
             accounting_logger.info(accounting.abort(self.jobid))
             return Signal_Info(Signal_Info.Reason.time_limit, Signal_Map.terminate)
         else:
