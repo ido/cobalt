@@ -116,4 +116,8 @@ test_argslist = [
     {"tc_name" : "showres_10"                          , "command" : "showres", "args" : ""},
     {"tc_name" : "releaseres_5"                        , "command" : "releaseres" , "args" : "-d r1", },
     {"tc_name" : "showres_11"                          , "command" : "showres", "args" : ""},
+    {"tc_name" : "setres_15"                           , "command" : "setres" , "args" : "-n r1 -s 2014-01-01-10:30 -u '*' -d 50 -q q_1 -p ANL-R01-1024:ANL-R00-M0-512 ANL-R00-R01-2048", },
+    {"tc_name" : "showres_12"                          , "command" : "showres", "args" : ""},
+    {"tc_name" : "releaseres_6"                        , "command" : "releaseres" , "args" : "-d r1", },
+    {"tc_name" : "showres_13"                          , "command" : "showres", "args" : ""},
     ]

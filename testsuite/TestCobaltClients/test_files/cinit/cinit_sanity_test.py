@@ -2064,16 +2064,16 @@ def test_qalter_qalter_1():
         
         component: "queue-manager.set_jobs", defer: False
           set_jobs(
-             [{'project': None, 'user': 'georgerojas', 'jobid': 3, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 150, 'procs': 30, 'notify': None}],
-             {'queue': 'default', 'mode': 'smp', 'jobid': 3, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '160.0', 'procs': 30, 'user': 'georgerojas'},
+             [{'project': None, 'user': 'georgerojas', 'jobid': 4, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 150, 'procs': 30, 'notify': None}],
+             {'queue': 'default', 'mode': 'smp', 'jobid': 4, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '160.0', 'procs': 30, 'user': 'georgerojas'},
              georgerojas,
              )
         
         
         component: "queue-manager.set_jobs", defer: False
           set_jobs(
-             [{'project': None, 'user': 'georgerojas', 'jobid': 4, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 150, 'procs': 30, 'notify': None}],
-             {'queue': 'default', 'mode': 'smp', 'jobid': 4, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '160.0', 'procs': 30, 'user': 'georgerojas'},
+             [{'project': None, 'user': 'georgerojas', 'jobid': 3, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 150, 'procs': 30, 'notify': None}],
+             {'queue': 'default', 'mode': 'smp', 'jobid': 3, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '160.0', 'procs': 30, 'user': 'georgerojas'},
              georgerojas,
              )
         
@@ -2198,16 +2198,16 @@ def test_qalter_qalter_2():
         
         component: "queue-manager.set_jobs", defer: False
           set_jobs(
-             [{'project': None, 'user': 'georgerojas', 'jobid': 3, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 160, 'procs': 30, 'notify': None}],
-             {'queue': 'default', 'mode': 'smp', 'jobid': 3, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '155.0', 'procs': 30, 'user': 'georgerojas'},
+             [{'project': None, 'user': 'georgerojas', 'jobid': 4, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 160, 'procs': 30, 'notify': None}],
+             {'queue': 'default', 'mode': 'smp', 'jobid': 4, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '155.0', 'procs': 30, 'user': 'georgerojas'},
              georgerojas,
              )
         
         
         component: "queue-manager.set_jobs", defer: False
           set_jobs(
-             [{'project': None, 'user': 'georgerojas', 'jobid': 4, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 160, 'procs': 30, 'notify': None}],
-             {'queue': 'default', 'mode': 'smp', 'jobid': 4, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '155.0', 'procs': 30, 'user': 'georgerojas'},
+             [{'project': None, 'user': 'georgerojas', 'jobid': 3, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 160, 'procs': 30, 'notify': None}],
+             {'queue': 'default', 'mode': 'smp', 'jobid': 3, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '155.0', 'procs': 30, 'user': 'georgerojas'},
              georgerojas,
              )
         
@@ -2332,16 +2332,16 @@ def test_qalter_qalter_3():
         
         component: "queue-manager.set_jobs", defer: False
           set_jobs(
-             [{'project': None, 'user': 'georgerojas', 'jobid': 3, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 155, 'procs': 30, 'notify': None}],
-             {'queue': 'default', 'mode': 'smp', 'jobid': 3, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '165.0', 'procs': 30, 'user': 'georgerojas'},
+             [{'project': None, 'user': 'georgerojas', 'jobid': 4, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 155, 'procs': 30, 'notify': None}],
+             {'queue': 'default', 'mode': 'smp', 'jobid': 4, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '165.0', 'procs': 30, 'user': 'georgerojas'},
              georgerojas,
              )
         
         
         component: "queue-manager.set_jobs", defer: False
           set_jobs(
-             [{'project': None, 'user': 'georgerojas', 'jobid': 4, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 155, 'procs': 30, 'notify': None}],
-             {'queue': 'default', 'mode': 'smp', 'jobid': 4, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '165.0', 'procs': 30, 'user': 'georgerojas'},
+             [{'project': None, 'user': 'georgerojas', 'jobid': 3, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 155, 'procs': 30, 'notify': None}],
+             {'queue': 'default', 'mode': 'smp', 'jobid': 3, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '165.0', 'procs': 30, 'user': 'georgerojas'},
              georgerojas,
              )
         
@@ -2452,13 +2452,13 @@ def test_qrls_qrls_1():
         
         component: "queue-manager.set_jobs", defer: False
           set_jobs(
-             [{'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'georgerojas', 'jobid': 1}, {'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'georgerojas', 'jobid': 2}, {'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'georgerojas', 'jobid': 3}, {'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'georgerojas', 'jobid': 4}, {'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'georgerojas', 'jobid': 5}],
+             [{'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'georgerojas', 'jobid': 1}, {'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'georgerojas', 'jobid': 2}, {'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'georgerojas', 'jobid': 4}, {'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'georgerojas', 'jobid': 3}, {'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'georgerojas', 'jobid': 5}],
              {'user_hold': False},
              georgerojas,
              )
         
         
-        Response: [{'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'georgerojas', 'jobid': 1}, {'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'georgerojas', 'jobid': 2}, {'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'georgerojas', 'jobid': 3}, {'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'georgerojas', 'jobid': 4}, {'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'georgerojas', 'jobid': 5}]
+        Response: [{'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'georgerojas', 'jobid': 1}, {'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'georgerojas', 'jobid': 2}, {'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'georgerojas', 'jobid': 4}, {'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'georgerojas', 'jobid': 3}, {'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'georgerojas', 'jobid': 5}]
         
         
     """
@@ -2643,13 +2643,13 @@ def test_qsub_qsub_6():
         
         component: "system.validate_job", defer: False
           validate_job(
-             {'kernel': 'default', 'verbose': False, 'held': False, 'notify': False, 'project': False, 'preemptable': False, 'outputprefix': False, 'umask': False, 'version': False, 'env': False, 'cwd': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'run_project': False, 'forcenoval': False, 'kerneloptions': False, 'time': '150', 'debug': True, 'dependencies': False, 'debuglog': False, 'proccount': False, 'disable_preboot': False, 'geometry': False, 'queue': 'default', 'mode': False, 'error': False, 'nodecount': '30', 'output': False, 'attrs': {}, 'user_list': False, 'inputfile': False},
+             {'kernel': 'default', 'verbose': False, 'held': False, 'notify': False, 'ion_kerneloptions': False, 'project': False, 'preemptable': False, 'outputprefix': False, 'umask': False, 'version': False, 'env': False, 'cwd': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'run_project': False, 'forcenoval': False, 'kerneloptions': False, 'time': '150', 'debug': True, 'dependencies': False, 'debuglog': False, 'ion_kernel': 'default', 'proccount': False, 'disable_preboot': False, 'geometry': False, 'queue': 'default', 'mode': False, 'error': False, 'nodecount': '30', 'output': False, 'attrs': {}, 'user_list': False, 'inputfile': False},
              )
         
         
         component: "queue-manager.add_jobs", defer: False
           add_jobs(
-             [{'cwd': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'args': [], 'kernel': 'default', 'user_list': ['georgerojas'], 'umask': 18, 'jobid': '*', 'queue': 'default', 'script_preboot': True, 'tag': 'job', 'command': '/bin/ls', 'mode': 'smp', 'path': '/Users/georgerojas/p/Cobalt/cobalt/src/clients:/Users/georgerojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin:/usr/local/git/bin:~/bin', 'nodes': 30, 'walltime': '150', 'procs': 30, 'outputdir': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'run_project': False, 'user': 'georgerojas'}],
+             [{'cwd': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'args': [], 'kernel': 'default', 'user_list': ['georgerojas'], 'umask': 18, 'procs': 30, 'jobid': '*', 'queue': 'default', 'script_preboot': True, 'tag': 'job', 'command': '/bin/ls', 'mode': 'smp', 'path': '/Users/georgerojas/p/Cobalt/cobalt/src/clients:/Users/georgerojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin:/usr/local/git/bin:~/bin', 'nodes': 30, 'walltime': '150', 'ion_kernel': 'default', 'outputdir': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'run_project': False, 'user': 'georgerojas'}],
              )
         
         
@@ -2695,13 +2695,13 @@ def test_qsub_qsub_7():
         
         component: "system.validate_job", defer: False
           validate_job(
-             {'kernel': 'default', 'verbose': False, 'held': False, 'notify': False, 'project': False, 'preemptable': False, 'outputprefix': False, 'umask': False, 'version': False, 'env': False, 'cwd': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'run_project': False, 'forcenoval': False, 'kerneloptions': False, 'time': '150', 'debug': True, 'dependencies': False, 'debuglog': False, 'proccount': False, 'disable_preboot': False, 'geometry': False, 'queue': 'default', 'mode': False, 'error': False, 'nodecount': '30', 'output': False, 'attrs': {}, 'user_list': False, 'inputfile': False},
+             {'kernel': 'default', 'verbose': False, 'held': False, 'notify': False, 'ion_kerneloptions': False, 'project': False, 'preemptable': False, 'outputprefix': False, 'umask': False, 'version': False, 'env': False, 'cwd': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'run_project': False, 'forcenoval': False, 'kerneloptions': False, 'time': '150', 'debug': True, 'dependencies': False, 'debuglog': False, 'ion_kernel': 'default', 'proccount': False, 'disable_preboot': False, 'geometry': False, 'queue': 'default', 'mode': False, 'error': False, 'nodecount': '30', 'output': False, 'attrs': {}, 'user_list': False, 'inputfile': False},
              )
         
         
         component: "queue-manager.add_jobs", defer: False
           add_jobs(
-             [{'cwd': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'args': [], 'kernel': 'default', 'user_list': ['georgerojas'], 'umask': 18, 'jobid': '*', 'queue': 'default', 'script_preboot': True, 'tag': 'job', 'command': '/bin/ls', 'mode': 'smp', 'path': '/Users/georgerojas/p/Cobalt/cobalt/src/clients:/Users/georgerojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin:/usr/local/git/bin:~/bin', 'nodes': 30, 'walltime': '150', 'procs': 30, 'outputdir': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'run_project': False, 'user': 'georgerojas'}],
+             [{'cwd': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'args': [], 'kernel': 'default', 'user_list': ['georgerojas'], 'umask': 18, 'procs': 30, 'jobid': '*', 'queue': 'default', 'script_preboot': True, 'tag': 'job', 'command': '/bin/ls', 'mode': 'smp', 'path': '/Users/georgerojas/p/Cobalt/cobalt/src/clients:/Users/georgerojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin:/usr/local/git/bin:~/bin', 'nodes': 30, 'walltime': '150', 'ion_kernel': 'default', 'outputdir': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'run_project': False, 'user': 'georgerojas'}],
              )
         
         
@@ -2839,15 +2839,15 @@ def test_qstat_qstat_10():
     qstat test run: qstat_10
 
         Command Output:
-        JobID  User         WallTime  Nodes  State   Location  
-        =======================================================
-        1      georgerojas  01:05:00  30     queued  None      
-        2      georgerojas  01:55:00  30     queued  None      
-        3      georgerojas  02:45:00  30     queued  None      
-        4      georgerojas  02:45:00  30     queued  None      
-        5      georgerojas  02:45:00  30     queued  None      
-        6      georgerojas  02:30:00  30     queued  None      
-        7      georgerojas  02:30:00  30     queued  None      
+        JobID  User         WallTime  Nodes  State     Location        
+        ===============================================================
+        1      georgerojas  01:05:00  30     queued    None            
+        2      georgerojas  01:55:00  30     starting  ANL-R01-M0-512  
+        3      georgerojas  02:45:00  30     queued    None            
+        4      georgerojas  02:45:00  30     queued    None            
+        5      georgerojas  02:45:00  30     queued    None            
+        6      georgerojas  02:30:00  30     queued    None            
+        7      georgerojas  02:30:00  30     queued    None            
         
         Command Error/Debug:
         
@@ -2964,7 +2964,6 @@ def test_showres_showres_4():
         Command Output:
         Reservation  Queue  User  Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions                     Project  ResID  CycleID  Time Remaining  
         =================================================================================================================================================================================================================
-        res_passed   q_1    None  Wed Dec  1 16:30:00 2010 +0000 (UTC)  00:50     Wed Dec  1 17:20:00 2010 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048               None     2      -        00:00:00        
         george       q_1    None  Thu Jun 30 15:30:00 2022 +0000 (UTC)  05:00     Thu Jun 30 20:30:00 2022 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048               None     1      -        Not Started     
         res1         q_1    None  Wed Dec  1 16:30:00 2032 +0000 (UTC)  00:50     Wed Dec  1 17:20:00 2032 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048:ANL-R00-1024  None     3      -        Not Started     
         res2         q_1    None  Thu Dec  1 16:30:00 2033 +0000 (UTC)  00:50     Thu Dec  1 17:20:00 2033 +0000 (UTC)  None        Allowed      ANL-R01-1024:ANL-R00-M0-512    None     4      -        Not Started     
@@ -3594,8 +3593,8 @@ def test_setres_setres_11():
     setres test run: setres_11
 
         Command Output:
-        Got starttime Tue Jul 30 23:43:00 2013 +0000 (UTC)
-        [{'project': None, 'users': None, 'block_passthrough': False, 'name': 'r1', 'queue': 'q_1', 'start': 1375227780.0, 'duration': 3000, 'cycle': None, 'res_id': 10, 'partitions': 'ANL-R01-1024:ANL-R00-M0-512'}]
+        Got starttime Tue Aug  6 21:53:00 2013 +0000 (UTC)
+        [{'project': None, 'users': None, 'block_passthrough': False, 'name': 'r1', 'queue': 'q_1', 'start': 1375825980.0, 'duration': 3000, 'cycle': None, 'res_id': 10, 'partitions': 'ANL-R01-1024:ANL-R00-M0-512'}]
         
         
         Command Error/Debug:
@@ -3693,13 +3692,13 @@ def test_qsub_qsub_8():
         
         component: "system.validate_job", defer: False
           validate_job(
-             {'kernel': 'default', 'verbose': False, 'held': False, 'notify': False, 'project': False, 'preemptable': False, 'outputprefix': False, 'umask': False, 'version': False, 'env': 'A=one:B=two:C=x\\=1\\:y\\=2\\:z\\=3:D=four', 'cwd': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'run_project': False, 'forcenoval': False, 'kerneloptions': False, 'time': '150', 'debug': True, 'dependencies': False, 'debuglog': False, 'proccount': False, 'disable_preboot': False, 'geometry': False, 'queue': 'default', 'mode': False, 'error': False, 'nodecount': '30', 'output': False, 'attrs': {}, 'user_list': False, 'inputfile': False},
+             {'kernel': 'default', 'verbose': False, 'held': False, 'notify': False, 'ion_kerneloptions': False, 'project': False, 'preemptable': False, 'outputprefix': False, 'umask': False, 'version': False, 'env': 'A=one:B=two:C=x\\=1\\:y\\=2\\:z\\=3:D=four', 'cwd': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'run_project': False, 'forcenoval': False, 'kerneloptions': False, 'time': '150', 'debug': True, 'dependencies': False, 'debuglog': False, 'ion_kernel': 'default', 'proccount': False, 'disable_preboot': False, 'geometry': False, 'queue': 'default', 'mode': False, 'error': False, 'nodecount': '30', 'output': False, 'attrs': {}, 'user_list': False, 'inputfile': False},
              )
         
         
         component: "queue-manager.add_jobs", defer: False
           add_jobs(
-             [{'cwd': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'args': [], 'kernel': 'default', 'envs': {'A': 'one', 'C': 'x=1:y=2:z=3', 'B': 'two', 'D': 'four'}, 'user_list': ['georgerojas'], 'umask': 18, 'jobid': '*', 'queue': 'default', 'script_preboot': True, 'tag': 'job', 'command': '/bin/ls', 'mode': 'smp', 'path': '/Users/georgerojas/p/Cobalt/cobalt/src/clients:/Users/georgerojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin:/usr/local/git/bin:~/bin', 'nodes': 30, 'walltime': '150', 'procs': 30, 'outputdir': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'run_project': False, 'user': 'georgerojas'}],
+             [{'cwd': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'args': [], 'kernel': 'default', 'envs': {'A': 'one', 'C': 'x=1:y=2:z=3', 'B': 'two', 'D': 'four'}, 'user_list': ['georgerojas'], 'umask': 18, 'procs': 30, 'jobid': '*', 'queue': 'default', 'script_preboot': True, 'tag': 'job', 'command': '/bin/ls', 'mode': 'smp', 'path': '/Users/georgerojas/p/Cobalt/cobalt/src/clients:/Users/georgerojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin:/usr/local/git/bin:~/bin', 'nodes': 30, 'walltime': '150', 'ion_kernel': 'default', 'outputdir': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'run_project': False, 'user': 'georgerojas'}],
              )
         
         
@@ -3778,15 +3777,15 @@ def test_qstat_qstat_10():
         Command Output:
         JobID  JobName  User         Score    WallTime  QueuedTime  RunTime   Nodes  State      Location        Mode  Procs  Queue    StartTime                             
         ====================================================================================================================================================================
-        9      -        georgerojas    0.1    00:50:00  00:00:00    N/A       30     user_hold  None            smp   30     default  N/A                                   
         8      -        georgerojas    0.1    02:30:00  00:00:00    N/A       30     queued     None            smp   30     default  N/A                                   
-        2      -        georgerojas    0.1    01:55:00  00:00:08    00:00:06  30     starting   ANL-R01-M0-512  smp   30     default  Tue Jul 30 23:43:49 2013 +0000 (UTC)  
-        7      -        georgerojas    0.1    02:30:00  00:00:10    N/A       30     queued     None            smp   30     default  N/A                                   
-        5      -        georgerojas    0.1    02:45:00  00:00:14    N/A       30     queued     None            smp   30     default  N/A                                   
-        6      -        georgerojas    0.1    02:30:00  00:00:11    N/A       30     queued     None            smp   30     default  N/A                                   
+        6      -        georgerojas    0.1    02:30:00  00:00:10    N/A       30     queued     None            smp   30     default  N/A                                   
+        7      -        georgerojas    0.1    02:30:00  00:00:09    N/A       30     queued     None            smp   30     default  N/A                                   
+        9      -        georgerojas    0.1    00:50:00  00:00:00    N/A       30     user_hold  None            smp   30     default  N/A                                   
+        2      -        georgerojas    0.1    01:55:00  00:00:05    00:00:09  30     starting   ANL-R01-M0-512  smp   30     default  Tue Aug  6 21:53:33 2013 +0000 (UTC)  
+        5      -        georgerojas    0.1    02:45:00  00:00:13    N/A       30     queued     None            smp   30     default  N/A                                   
+        3      -        georgerojas    0.1    02:45:00  00:00:14    N/A       30     queued     None            smp   30     default  N/A                                   
         1      -        georgerojas    0.1    01:05:00  00:00:15    N/A       30     queued     None            smp   30     default  N/A                                   
         4      -        georgerojas    0.1    02:45:00  00:00:14    N/A       30     queued     None            smp   30     default  N/A                                   
-        3      -        georgerojas    0.1    02:45:00  00:00:15    N/A       30     queued     None            smp   30     default  N/A                                   
         
         Command Error/Debug:
         
@@ -3861,15 +3860,15 @@ def test_qstat_qstat_11():
         Command Output:
         JobID  JobName  User         Score    WallTime  QueuedTime  RunTime   Nodes  State      Location        Mode  Procs  Queue    StartTime                             
         ====================================================================================================================================================================
-        9      -        georgerojas    0.1    00:50:00  00:00:00    N/A       30     user_hold  None            smp   30     default  N/A                                   
         8      -        georgerojas    0.1    02:30:00  00:00:00    N/A       30     queued     None            smp   30     default  N/A                                   
-        2      -        georgerojas    0.1    01:55:00  00:00:08    00:00:07  30     starting   ANL-R01-M0-512  smp   30     default  Tue Jul 30 23:43:49 2013 +0000 (UTC)  
-        7      -        georgerojas    0.1    02:30:00  00:00:11    N/A       30     queued     None            smp   30     default  N/A                                   
-        5      -        georgerojas    0.1    02:45:00  00:00:15    N/A       30     queued     None            smp   30     default  N/A                                   
-        6      -        georgerojas    0.1    02:30:00  00:00:11    N/A       30     queued     None            smp   30     default  N/A                                   
-        1      -        georgerojas    0.1    01:05:00  00:00:16    N/A       30     queued     None            smp   30     default  N/A                                   
-        4      -        georgerojas    0.1    02:45:00  00:00:15    N/A       30     queued     None            smp   30     default  N/A                                   
-        3      -        georgerojas    0.1    02:45:00  00:00:15    N/A       30     queued     None            smp   30     default  N/A                                   
+        6      -        georgerojas    0.1    02:30:00  00:00:10    N/A       30     queued     None            smp   30     default  N/A                                   
+        7      -        georgerojas    0.1    02:30:00  00:00:10    N/A       30     queued     None            smp   30     default  N/A                                   
+        9      -        georgerojas    0.1    00:50:00  00:00:00    N/A       30     user_hold  None            smp   30     default  N/A                                   
+        2      -        georgerojas    0.1    01:55:00  00:00:05    00:00:09  30     starting   ANL-R01-M0-512  smp   30     default  Tue Aug  6 21:53:33 2013 +0000 (UTC)  
+        5      -        georgerojas    0.1    02:45:00  00:00:14    N/A       30     queued     None            smp   30     default  N/A                                   
+        3      -        georgerojas    0.1    02:45:00  00:00:14    N/A       30     queued     None            smp   30     default  N/A                                   
+        1      -        georgerojas    0.1    01:05:00  00:00:15    N/A       30     queued     None            smp   30     default  N/A                                   
+        4      -        georgerojas    0.1    02:45:00  00:00:14    N/A       30     queued     None            smp   30     default  N/A                                   
         
         Command Error/Debug:
         
@@ -3945,14 +3944,14 @@ def test_qstat_qstat_12():
         JobID  JobName  User         Score    WallTime  QueuedTime  RunTime   Nodes  State       Location        Mode  Procs  Queue    StartTime                             
         =====================================================================================================================================================================
         9      -        georgerojas    0.1    00:50:00  00:00:01    N/A       30     admin_hold  None            smp   30     default  N/A                                   
+        2      -        georgerojas    0.1    01:55:00  00:00:05    00:00:10  30     starting    ANL-R01-M0-512  smp   30     default  Tue Aug  6 21:53:33 2013 +0000 (UTC)  
         8      -        georgerojas    0.1    02:30:00  00:00:01    N/A       30     queued      None            smp   30     default  N/A                                   
-        2      -        georgerojas    0.1    01:55:00  00:00:08    00:00:07  30     starting    ANL-R01-M0-512  smp   30     default  Tue Jul 30 23:43:49 2013 +0000 (UTC)  
-        7      -        georgerojas    0.1    02:30:00  00:00:11    N/A       30     queued      None            smp   30     default  N/A                                   
-        5      -        georgerojas    0.1    02:45:00  00:00:15    N/A       30     queued      None            smp   30     default  N/A                                   
         6      -        georgerojas    0.1    02:30:00  00:00:11    N/A       30     queued      None            smp   30     default  N/A                                   
-        1      -        georgerojas    0.1    01:05:00  00:00:16    N/A       30     queued      None            smp   30     default  N/A                                   
-        4      -        georgerojas    0.1    02:45:00  00:00:15    N/A       30     queued      None            smp   30     default  N/A                                   
-        3      -        georgerojas    0.1    02:45:00  00:00:16    N/A       30     queued      None            smp   30     default  N/A                                   
+        7      -        georgerojas    0.1    02:30:00  00:00:10    N/A       30     queued      None            smp   30     default  N/A                                   
+        5      -        georgerojas    0.2    02:45:00  00:00:14    N/A       30     queued      None            smp   30     default  N/A                                   
+        3      -        georgerojas    0.2    02:45:00  00:00:15    N/A       30     queued      None            smp   30     default  N/A                                   
+        1      -        georgerojas    0.2    01:05:00  00:00:16    N/A       30     queued      None            smp   30     default  N/A                                   
+        4      -        georgerojas    0.2    02:45:00  00:00:15    N/A       30     queued      None            smp   30     default  N/A                                   
         
         Command Error/Debug:
         
@@ -4028,14 +4027,14 @@ def test_qstat_qstat_13():
         JobID  JobName  User         Score    WallTime  QueuedTime  RunTime   Nodes  State      Location        Mode  Procs  Queue    StartTime                             
         ====================================================================================================================================================================
         9      -        georgerojas    0.1    00:50:00  00:00:01    N/A       30     user_hold  None            smp   30     default  N/A                                   
-        8      -        georgerojas    0.1    02:30:00  00:00:01    N/A       30     queued     None            smp   30     default  N/A                                   
-        2      -        georgerojas    0.1    01:55:00  00:00:08    00:00:07  30     starting   ANL-R01-M0-512  smp   30     default  Tue Jul 30 23:43:49 2013 +0000 (UTC)  
-        7      -        georgerojas    0.1    02:30:00  00:00:12    N/A       30     queued     None            smp   30     default  N/A                                   
-        5      -        georgerojas    0.1    02:45:00  00:00:15    N/A       30     queued     None            smp   30     default  N/A                                   
-        6      -        georgerojas    0.1    02:30:00  00:00:12    N/A       30     queued     None            smp   30     default  N/A                                   
-        1      -        georgerojas    0.1    01:05:00  00:00:17    N/A       30     queued     None            smp   30     default  N/A                                   
-        4      -        georgerojas    0.1    02:45:00  00:00:16    N/A       30     queued     None            smp   30     default  N/A                                   
-        3      -        georgerojas    0.1    02:45:00  00:00:16    N/A       30     queued     None            smp   30     default  N/A                                   
+        2      -        georgerojas    0.1    01:55:00  00:00:05    00:00:10  30     starting   ANL-R01-M0-512  smp   30     default  Tue Aug  6 21:53:33 2013 +0000 (UTC)  
+        8      -        georgerojas    0.1    02:30:00  00:00:02    N/A       30     queued     None            smp   30     default  N/A                                   
+        6      -        georgerojas    0.1    02:30:00  00:00:11    N/A       30     queued     None            smp   30     default  N/A                                   
+        7      -        georgerojas    0.1    02:30:00  00:00:11    N/A       30     queued     None            smp   30     default  N/A                                   
+        5      -        georgerojas    0.2    02:45:00  00:00:15    N/A       30     queued     None            smp   30     default  N/A                                   
+        3      -        georgerojas    0.2    02:45:00  00:00:16    N/A       30     queued     None            smp   30     default  N/A                                   
+        1      -        georgerojas    0.2    01:05:00  00:00:16    N/A       30     queued     None            smp   30     default  N/A                                   
+        4      -        georgerojas    0.2    02:45:00  00:00:15    N/A       30     queued     None            smp   30     default  N/A                                   
         
         Command Error/Debug:
         
@@ -4111,14 +4110,14 @@ def test_qstat_qstat_14():
         JobID  JobName  User         Score    WallTime  QueuedTime  RunTime   Nodes  State      Location        Mode  Procs  Queue    StartTime                             
         ====================================================================================================================================================================
         9      -        georgerojas    0.1    00:50:00  00:00:02    N/A       30     user_hold  None            smp   30     default  N/A                                   
+        2      -        georgerojas    0.1    01:55:00  00:00:05    00:00:11  30     starting   ANL-R01-M0-512  smp   30     default  Tue Aug  6 21:53:33 2013 +0000 (UTC)  
         8      -        georgerojas    0.1    02:30:00  00:00:02    N/A       30     queued     None            smp   30     default  N/A                                   
-        2      -        georgerojas    0.1    01:55:00  00:00:08    00:00:08  30     starting   ANL-R01-M0-512  smp   30     default  Tue Jul 30 23:43:49 2013 +0000 (UTC)  
-        7      -        georgerojas    0.1    02:30:00  00:00:12    N/A       30     queued     None            smp   30     default  N/A                                   
-        5      -        georgerojas    0.1    02:45:00  00:00:16    N/A       30     queued     None            smp   30     default  N/A                                   
         6      -        georgerojas    0.1    02:30:00  00:00:12    N/A       30     queued     None            smp   30     default  N/A                                   
-        1      -        georgerojas    0.1    01:05:00  00:00:17    N/A       30     queued     None            smp   30     default  N/A                                   
-        4      -        georgerojas    0.1    02:45:00  00:00:16    N/A       30     queued     None            smp   30     default  N/A                                   
-        3      -        georgerojas    0.1    02:45:00  00:00:17    N/A       30     queued     None            smp   30     default  N/A                                   
+        7      -        georgerojas    0.1    02:30:00  00:00:11    N/A       30     queued     None            smp   30     default  N/A                                   
+        5      -        georgerojas    0.2    02:45:00  00:00:16    N/A       30     queued     None            smp   30     default  N/A                                   
+        3      -        georgerojas    0.2    02:45:00  00:00:16    00:00:00  30     starting   ANL-R00-M0-512  smp   30     default  Tue Aug  6 21:53:44 2013 +0000 (UTC)  
+        1      -        georgerojas    0.2    01:05:00  00:00:17    N/A       30     queued     None            smp   30     default  N/A                                   
+        4      -        georgerojas    0.2    02:45:00  00:00:16    N/A       30     queued     None            smp   30     default  N/A                                   
         
         Command Error/Debug:
         
@@ -4194,14 +4193,14 @@ def test_qstat_qstat_15():
         JobID  JobName  User         Score    WallTime  QueuedTime  RunTime   Nodes  State      Location        Mode  Procs  Queue    StartTime                             
         ====================================================================================================================================================================
         9      -        georgerojas    0.1    00:50:00  00:00:02    N/A       30     user_hold  None            smp   30     default  N/A                                   
-        8      -        georgerojas    0.1    02:30:00  00:00:02    N/A       30     queued     None            smp   30     default  N/A                                   
-        2      -        georgerojas    0.1    01:55:00  00:00:08    00:00:08  30     starting   ANL-R01-M0-512  smp   30     default  Tue Jul 30 23:43:49 2013 +0000 (UTC)  
+        2      -        georgerojas    0.1    01:55:00  00:00:05    00:00:11  30     starting   ANL-R01-M0-512  smp   30     default  Tue Aug  6 21:53:33 2013 +0000 (UTC)  
+        8      -        georgerojas    0.1    02:30:00  00:00:03    N/A       30     queued     None            smp   30     default  N/A                                   
+        6      -        georgerojas    0.1    02:30:00  00:00:12    N/A       30     queued     None            smp   30     default  N/A                                   
         7      -        georgerojas    0.1    02:30:00  00:00:12    N/A       30     queued     None            smp   30     default  N/A                                   
-        5      -        georgerojas    0.1    02:45:00  00:00:16    N/A       30     queued     None            smp   30     default  N/A                                   
-        6      -        georgerojas    0.1    02:30:00  00:00:13    N/A       30     queued     None            smp   30     default  N/A                                   
-        1      -        georgerojas    0.1    01:05:00  00:00:18    N/A       30     queued     None            smp   30     default  N/A                                   
-        4      -        georgerojas    0.1    02:45:00  00:00:17    N/A       30     queued     None            smp   30     default  N/A                                   
-        3      -        georgerojas    0.1    02:45:00  00:00:17    N/A       30     queued     None            smp   30     default  N/A                                   
+        5      -        georgerojas    0.2    02:45:00  00:00:16    N/A       30     queued     None            smp   30     default  N/A                                   
+        3      -        georgerojas    0.2    02:45:00  00:00:16    00:00:00  30     starting   ANL-R00-M0-512  smp   30     default  Tue Aug  6 21:53:44 2013 +0000 (UTC)  
+        1      -        georgerojas    0.2    01:05:00  00:00:17    N/A       30     queued     None            smp   30     default  N/A                                   
+        4      -        georgerojas    0.2    02:45:00  00:00:16    N/A       30     queued     None            smp   30     default  N/A                                   
         
         Command Error/Debug:
         
@@ -4276,15 +4275,15 @@ def test_qstat_qstat_16():
         Command Output:
         JobID  JobName  User         Score    WallTime  QueuedTime  RunTime   Nodes  State       Location        Mode  Procs  Queue    StartTime                             
         =====================================================================================================================================================================
-        9      -        georgerojas    0.1    00:50:00  00:00:02    N/A       30     admin_hold  None            smp   30     default  N/A                                   
+        9      -        georgerojas    0.1    00:50:00  00:00:03    N/A       30     admin_hold  None            smp   30     default  N/A                                   
+        2      -        georgerojas    0.1    01:55:00  00:00:05    00:00:12  30     starting    ANL-R01-M0-512  smp   30     default  Tue Aug  6 21:53:33 2013 +0000 (UTC)  
         8      -        georgerojas    0.1    02:30:00  00:00:03    N/A       30     queued      None            smp   30     default  N/A                                   
-        2      -        georgerojas    0.1    01:55:00  00:00:08    00:00:09  30     starting    ANL-R01-M0-512  smp   30     default  Tue Jul 30 23:43:49 2013 +0000 (UTC)  
-        7      -        georgerojas    0.1    02:30:00  00:00:13    N/A       30     queued      None            smp   30     default  N/A                                   
-        5      -        georgerojas    0.1    02:45:00  00:00:17    N/A       30     queued      None            smp   30     default  N/A                                   
         6      -        georgerojas    0.1    02:30:00  00:00:13    N/A       30     queued      None            smp   30     default  N/A                                   
-        1      -        georgerojas    0.1    01:05:00  00:00:18    N/A       30     queued      None            smp   30     default  N/A                                   
-        4      -        georgerojas    0.1    02:45:00  00:00:17    N/A       30     queued      None            smp   30     default  N/A                                   
-        3      -        georgerojas    0.1    02:45:00  00:00:17    N/A       30     queued      None            smp   30     default  N/A                                   
+        7      -        georgerojas    0.1    02:30:00  00:00:12    N/A       30     queued      None            smp   30     default  N/A                                   
+        5      -        georgerojas    0.2    02:45:00  00:00:16    N/A       30     queued      None            smp   30     default  N/A                                   
+        3      -        georgerojas    0.2    02:45:00  00:00:16    00:00:01  30     starting    ANL-R00-M0-512  smp   30     default  Tue Aug  6 21:53:44 2013 +0000 (UTC)  
+        1      -        georgerojas    0.2    01:05:00  00:00:18    N/A       30     queued      None            smp   30     default  N/A                                   
+        4      -        georgerojas    0.2    02:45:00  00:00:17    N/A       30     queued      None            smp   30     default  N/A                                   
         
         Command Error/Debug:
         
@@ -4359,15 +4358,15 @@ def test_qstat_qstat_17():
         Command Output:
         JobID  JobName  User         Score    WallTime  QueuedTime  RunTime   Nodes  State     Location        Mode  Procs  Queue    StartTime                             
         ===================================================================================================================================================================
-        2      -        georgerojas    0.1    01:55:00  00:00:08    00:00:09  30     starting  ANL-R01-M0-512  smp   30     default  Tue Jul 30 23:43:49 2013 +0000 (UTC)  
         9      -        georgerojas    0.1    00:50:00  00:00:03    N/A       30     queued    None            smp   30     default  N/A                                   
-        8      -        georgerojas    0.1    02:30:00  00:00:03    N/A       30     queued    None            smp   30     default  N/A                                   
-        7      -        georgerojas    0.2    02:30:00  00:00:13    N/A       30     queued    None            smp   30     default  N/A                                   
+        2      -        georgerojas    0.1    01:55:00  00:00:05    00:00:12  30     starting  ANL-R01-M0-512  smp   30     default  Tue Aug  6 21:53:33 2013 +0000 (UTC)  
+        8      -        georgerojas    0.1    02:30:00  00:00:04    N/A       30     queued    None            smp   30     default  N/A                                   
+        6      -        georgerojas    0.1    02:30:00  00:00:13    N/A       30     queued    None            smp   30     default  N/A                                   
+        7      -        georgerojas    0.1    02:30:00  00:00:13    N/A       30     queued    None            smp   30     default  N/A                                   
         5      -        georgerojas    0.2    02:45:00  00:00:17    N/A       30     queued    None            smp   30     default  N/A                                   
-        6      -        georgerojas    0.2    02:30:00  00:00:14    N/A       30     queued    None            smp   30     default  N/A                                   
-        1      -        georgerojas    0.2    01:05:00  00:00:19    N/A       30     queued    None            smp   30     default  N/A                                   
-        4      -        georgerojas    0.2    02:45:00  00:00:18    N/A       30     queued    None            smp   30     default  N/A                                   
-        3      -        georgerojas    0.2    02:45:00  00:00:18    N/A       30     queued    None            smp   30     default  N/A                                   
+        3      -        georgerojas    0.2    02:45:00  00:00:16    00:00:01  30     starting  ANL-R00-M0-512  smp   30     default  Tue Aug  6 21:53:44 2013 +0000 (UTC)  
+        1      -        georgerojas    0.2    01:05:00  00:00:18    N/A       30     queued    None            smp   30     default  N/A                                   
+        4      -        georgerojas    0.2    02:45:00  00:00:17    N/A       30     queued    None            smp   30     default  N/A                                   
         
         Command Error/Debug:
         
@@ -4687,6 +4686,175 @@ def test_releaseres_releaseres_5():
 def test_showres_showres_11():
     """
     showres test run: showres_11
+
+        Command Output:
+        Reservation  Queue  User  Start  Duration  Passthrough  Partitions  Time Remaining  
+        ====================================================================================
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = ''
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('showres.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_setres_setres_15():
+    """
+    setres test run: setres_15
+
+        Command Output:
+        Got starttime Wed Jan  1 16:30:00 2014 +0000 (UTC)
+        [{'project': None, 'users': None, 'block_passthrough': False, 'queue': 'q_1', 'start': 1388593800.0, 'cycle': None, 'duration': 3000, 'partitions': 'ANL-R00-R01-2048:ANL-R01-1024:ANL-R00-M0-512', 'res_id': 12, 'name': 'r1'}]
+        
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """-n r1 -s 2014-01-01-10:30 -u '*' -d 50 -q q_1 -p ANL-R01-1024:ANL-R00-M0-512 ANL-R00-R01-2048"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('setres.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_showres_showres_12():
+    """
+    showres test run: showres_12
+
+        Command Output:
+        Reservation  Queue  User  Start                                 Duration  Passthrough  Partitions                                    Time Remaining  
+        =====================================================================================================================================================
+        r1           q_1    None  Wed Jan  1 16:30:00 2014 +0000 (UTC)  00:50     Allowed      ANL-R00-R01-2048:ANL-R01-1024:ANL-R00-M0-512  Not Started     
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = ''
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('showres.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_releaseres_releaseres_6():
+    """
+    releaseres test run: releaseres_6
+
+        Command Output:
+        Released reservation 'r1' for partitions: ['ANL-R00-R01-2048', 'ANL-R01-1024', 'ANL-R00-M0-512']
+        
+        Command Error/Debug:
+        releaseres.py -d r1
+        
+        component: "scheduler.get_reservations", defer: False
+          get_reservations(
+             [{'name': 'r1', 'partitions': '*'}],
+             )
+        
+        
+        component: "scheduler.release_reservations", defer: False
+          release_reservations(
+             [{'name': 'r1', 'partitions': '*'}],
+             georgerojas,
+             )
+        
+        
+        
+        
+    """
+
+    args      = """-d r1"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('releaseres.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_showres_showres_13():
+    """
+    showres test run: showres_13
 
         Command Output:
         Reservation  Queue  User  Start  Duration  Passthrough  Partitions  Time Remaining  

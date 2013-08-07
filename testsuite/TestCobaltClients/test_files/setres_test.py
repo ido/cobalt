@@ -2616,3 +2616,82 @@ CHECK_RESERVATIONS
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
+# ---------------------------------------------------------------------------------
+def test_setres_add_res_13():
+    """
+    setres test run: add_res_13
+
+    """
+
+    args      = """-n resname -s NOW -d 50 -c 10:10:10 -p p1:p2:p3 p4"""
+
+    cmdout    = \
+"""Got starttime Tue Mar 26 21:58:00 2013 +0000 (UTC)
+True
+True
+"""
+
+    cmderr    = ''
+
+    stubout   = \
+"""
+VERIFY_LOCATIONS
+
+location list: ['p4', 'p1', 'p2', 'p3']
+
+VERIFY_LOCATIONS
+
+location list: ['p4', 'p1', 'p2', 'p3']
+
+VERIFY_LOCATIONS
+
+location list: ['p4', 'p1', 'p2', 'p3']
+
+VERIFY_LOCATIONS
+
+location list: ['p4', 'p1', 'p2', 'p3']
+
+ADD_RESERVATIONS
+
+block_passthrough:False
+block_passthrough type: <type 'bool'>
+cycle:36600
+cycle type: <type 'int'>
+duration:3000
+duration type: <type 'int'>
+name:resname
+name type: <type 'str'>
+partitions:p4:p1:p2:p3
+partitions type: <type 'str'>
+project:None
+project type: <type 'NoneType'>
+start:1364335080.0
+start type: <type 'float'>
+users:None
+users type: <type 'NoneType'>
+user: gooduser
+
+CHECK_RESERVATIONS
+
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('setres.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+

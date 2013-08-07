@@ -14,7 +14,7 @@ OPTIONS DEFINITIONS:
 '-d','--duration',dest='duration',type='string',help='duration time in minutes or HH:MM:SS>',callback=cb_time
 '-m','--modify_res',dest='modify_res',help='modify current reservation specified in -n',action='store_true'
 '-n','--name',dest='name',type='string',help='reservation name to add or modify'
-'-p','--partition',dest='partitions',type='string',help='partition (now optional)'
+'-p','--partitions',dest='partitions',type='string',help='partition(s) (now optional) part1:..:partN'
 '-q','--queue',dest='queue',type='string',help='queue name'
 '-s','--starttime',dest='start',type='string',help='start date time: YYYY_MM_DD-HH:MM, or now',callback=cb_date
 '-u','--user',dest='users',type='string',help='user id list (user1:user2:... or "*" for all users)',callback=cb_res_users
@@ -84,7 +84,7 @@ def validate_args(parser,spec,opt_count):
     Validate setres arguments. Will return true if we want to continue processing options.
     """
     if parser.options.partitions != None:
-        parser.args += [parser.options.partitions]
+        parser.args += [part for part in parser.options.partitions.split(':')]
 
     if parser.options.cycle_id != None or parser.options.res_id != None:
         only_id_change = True
