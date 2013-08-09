@@ -186,7 +186,7 @@ def component_call(comp_name, defer, func_name, args, exit_on_error = True):
     except xmlrpclib.Fault, fault:
         component_error("XMLRPC failure %s in %s.%s\n", fault, comp_name, func_name)
     except Exception, e:
-        component_error("Following exception while trying to excecute %s.%s: %s\n", comp_name, func_name, e)
+        component_error("Following exception occured while trying to execute %s.%s: %s\n", comp_name, func_name, e)
 
     return retVal
 
