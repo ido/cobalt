@@ -4,6 +4,15 @@ Submit jobs to the queue manager for execution.
 
 Usage: %prog --help
 Usage: %prog [options] <executable> [<excutable options>]
+
+   jobid expansion: 
+      If "\$jobid" is specified in any jobid expansion option then it will be converted to the actual jobid.
+
+      Example: qsub ... --env myenv:\$jobid_myval ... if the jobid is 123 then myenv will be set to '123_myval'
+               note: $jobid will have to be escaped as follows \$jobid.
+
+      jobid expansion options: --env, --jobname, -o, -e, -O, --debuglog
+
 version: "%prog " + __revision__ + , Cobalt  + __version__
 
 OPTIONS DEFINITIONS:
@@ -38,6 +47,8 @@ Option with values:
 '--dependencies',dest='all_dependencies',type='string',help='set job dependencies (jobid1:jobid2:...:jobidN)',callback=cb_dep
 '--attrs',dest='attrs',type='string',help='set attributes (attr1=val1:attr2=val2:...:attrN=valN)',callback=cb_attrs
 '--user_list','--run_users',dest='user_list',type='string',help='set user list (user1:user2:...:userN)',callback=cb_user_list
+'--jobname',dest='jobname',type='string', /
+   help='Sets Jobname. If this option is not provided then Jobname will be set to whatever -o option specified.'
 
 The following options are only valid on IBM BlueGene architecture platforms:
 
@@ -184,6 +195,7 @@ def logjob(job,spec):
 
         try:
             cobalt_log_file = open(filename, "a")
+            print >> cobalt_log_file, "Jobid: %s\n" % job['jobid']
             print >> cobalt_log_file, "%s\n" % (" ".join(sys.argv))
             print >> cobalt_log_file, "submitted with cwd set to: %s\n" % spec['cwd']
             cobalt_log_file.close()

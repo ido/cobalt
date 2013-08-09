@@ -561,6 +561,8 @@ class Job (StateMachine):
         # StateMachine.__init__(self, spec, seas = seas, terminal_actions = [(self._sm_terminal, {})])
         StateMachine.__init__(self, spec, seas = seas)
 
+        logger.info(str(spec))
+
         self.jobid = spec.get("jobid")
         self.umask = spec.get("umask")
         self.jobname = spec.get("jobname", "N/A")
@@ -597,7 +599,7 @@ class Job (StateMachine):
         self.location = spec.get("location")
         self.__locations = []
         self.outputpath = spec.get("outputpath")
-        if self.outputpath:
+        if self.outputpath and self.jobname == 'N/A':
             jname = self.outputpath.split('/')[-1].split('.output')[0]
             if jname and jname != str(self.jobid):
                 self.jobname = jname
@@ -3112,6 +3114,13 @@ class JobList(DataList):
         for spec in specs:
             if "jobid" not in spec or spec['jobid'] == "*":
                 spec['jobid'] = self.id_gen.next()
+            jobid_expansion_options = ['outputprefix', 'errorpath', 'outputpath', 'cobalt_log_file', 'jobname']
+            for item in spec:
+                if item in jobid_expansion_options:
+                    spec[item] = spec[item].replace('$jobid', str(spec['jobid'])) if type(spec[item]) is str else spec[item]
+            if 'envs' in spec:
+                for item in spec['envs']:
+                    spec['envs'][item] = spec['envs'][item].replace('$jobid', str(spec['jobid']))
         jobs_added = DataList.q_add(self, specs, callback, cargs)
         if jobs_added:
             user = spec.get('user', None)
