@@ -12,7 +12,7 @@ submits a job to the queue manager for execution.
    jobid expansion:
       If \\$jobid is specified in any jobid expansion option then it will be converted to the actual jobid.
 
-      Example: qsub ... --env myenv:\\$jobid_myval ... 
+      Example: qsub ... --env myenv=\\$jobid_myval ... 
 
                if the jobid is 123 then myenv will be set to '123_myval'
 
