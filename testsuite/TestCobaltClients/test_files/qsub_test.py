@@ -25,13 +25,13 @@ component: "queue-manager.get_jobs", defer: True
 
 component: "system.validate_job", defer: False
   validate_job(
-     {'kernel': 'kernel', 'verbose': True, 'held': True, 'notify': 'myemal@gmail.com', 'project': 'myproj', 'preemptable': False, 'forcenoval': False, 'umask': False, 'version': False, 'env': 'v1=1:v2=2', 'cwd': '/tmp', 'run_project': True, 'outputprefix': '/tmp', 'kerneloptions': 'kopts', 'time': '10', 'debug': True, 'dependencies': '1:2:3', 'debuglog': '/tmp/d', 'proccount': '10', 'disable_preboot': False, 'geometry': '198x198x198x198', 'queue': 'queue', 'mode': 'smp', 'error': '/tmp/e', 'nodecount': '10', 'output': '/tmp/o', 'attrs': {'a': '1', 'b': '2'}, 'user_list': 'user1:user2:user3', 'inputfile': '/bin/ls'},
+     {'kernel': 'kernel', 'verbose': True, 'held': True, 'notify': 'myemal@gmail.com', 'ion_kerneloptions': False, 'project': 'myproj', 'preemptable': False, 'forcenoval': False, 'umask': False, 'version': False, 'env': 'v1=1:v2=2', 'cwd': '/tmp', 'run_project': True, 'outputprefix': '/tmp', 'kerneloptions': 'kopts', 'time': '10', 'jobname': False, 'debug': True, 'dependencies': '1:2:3', 'debuglog': '/tmp/d', 'ion_kernel': 'default', 'proccount': '10', 'disable_preboot': False, 'geometry': '198x198x198x198', 'queue': 'queue', 'mode': 'smp', 'error': '/tmp/e', 'nodecount': '10', 'output': '/tmp/o', 'attrs': {'a': '1', 'b': '2'}, 'user_list': 'user1:user2:user3', 'inputfile': '/bin/ls'},
      )
 
 
 component: "queue-manager.add_jobs", defer: False
   add_jobs(
-     [{'kernel': 'kernel', 'errorpath': '/tmp/e', 'outputpath': '/tmp/o', 'tag': 'job', 'notify': 'myemal@gmail.com', 'outputdir': '/tmp', 'queue': 'queue', 'envs': {'v1': '1', 'v2': '2'}, 'umask': 18, 'nodes': 10, 'cwd': '/tmp', 'run_project': True, 'kerneloptions': 'kopts', 'args': [], 'cobalt_log_file': '/tmp/d', 'user': 'gooduser', 'path': '/tmp', 'procs': '10', 'walltime': '10', 'geometry': [198, 198, 198, 198, 2], 'user_hold': True, 'jobid': '*', 'project': 'myproj', 'script_preboot': True, 'command': '/bin/ls', 'mode': 'smp', 'all_dependencies': '1:2:3', 'attrs': {'a': '1', 'b': '2'}, 'user_list': ['gooduser', 'user1', 'user2', 'user3'], 'inputfile': '/bin/ls'}],
+     [{'kernel': 'kernel', 'errorpath': '/tmp/e', 'outputpath': '/tmp/o', 'tag': 'job', 'notify': 'myemal@gmail.com', 'outputdir': '/tmp', 'queue': 'queue', 'envs': {'v1': '1', 'v2': '2'}, 'umask': 18, 'nodes': 10, 'cwd': '/tmp', 'run_project': True, 'kerneloptions': 'kopts', 'args': [], 'cobalt_log_file': '/tmp/d', 'user': 'gooduser', 'path': '/tmp', 'ion_kernel': 'default', 'procs': '10', 'walltime': '10', 'geometry': [198, 198, 198, 198, 2], 'user_hold': True, 'jobid': '*', 'project': 'myproj', 'script_preboot': True, 'command': '/bin/ls', 'mode': 'smp', 'all_dependencies': '1:2:3', 'attrs': {'a': '1', 'b': '2'}, 'user_list': ['gooduser', 'user1', 'user2', 'user3'], 'inputfile': '/bin/ls'}],
      )
 
 
@@ -71,6 +71,8 @@ geometry:[198, 198, 198, 198, 2]
 geometry type: <type 'list'>
 inputfile:/bin/ls
 inputfile type: <type 'str'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 kernel:kernel
@@ -138,6 +140,12 @@ held:True
 held type: <type 'bool'>
 inputfile:/bin/ls
 inputfile type: <type 'str'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:kernel
 kernel type: <type 'str'>
 kerneloptions:kopts
@@ -222,6 +230,8 @@ cwd:/tmp
 cwd type: <type 'str'>
 envs:{'BG_COREDUMPDISABLED': '1'}
 envs type: <type 'dict'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 kernel:default
@@ -279,6 +289,12 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -349,6 +365,15 @@ def test_qsub_no_options_passed():
 """Usage: qsub.py --help
 Usage: qsub.py [options] <executable> [<excutable options>]
 
+   jobid expansion: 
+      If "\$jobid" is specified in any jobid expansion option then it will be converted to the actual jobid.
+
+      Example: qsub ... --env myenv:\$jobid_myval ... if the jobid is 123 then myenv will be set to '123_myval'
+               note: $jobid will have to be escaped as follows \$jobid.
+
+      jobid expansion options: --env, --jobname, -o, -e, -O, --debuglog
+
+
 """
 
     cmderr    = \
@@ -393,6 +418,15 @@ def test_qsub_non_existant_option():
 """Usage: qsub.py --help
 Usage: qsub.py [options] <executable> [<excutable options>]
 
+   jobid expansion: 
+      If "\$jobid" is specified in any jobid expansion option then it will be converted to the actual jobid.
+
+      Example: qsub ... --env myenv:\$jobid_myval ... if the jobid is 123 then myenv will be set to '123_myval'
+               note: $jobid will have to be escaped as follows \$jobid.
+
+      jobid expansion options: --env, --jobname, -o, -e, -O, --debuglog
+
+
 qsub.py: error: no such option: -z
 """
 
@@ -430,6 +464,15 @@ def test_qsub_debug_flag_only_1():
     cmdout    = \
 """Usage: qsub.py --help
 Usage: qsub.py [options] <executable> [<excutable options>]
+
+   jobid expansion: 
+      If "\$jobid" is specified in any jobid expansion option then it will be converted to the actual jobid.
+
+      Example: qsub ... --env myenv:\$jobid_myval ... if the jobid is 123 then myenv will be set to '123_myval'
+               note: $jobid will have to be escaped as follows \$jobid.
+
+      jobid expansion options: --env, --jobname, -o, -e, -O, --debuglog
+
 
 """
 
@@ -476,6 +519,15 @@ def test_qsub_debug_flag_only_2():
 """Usage: qsub.py --help
 Usage: qsub.py [options] <executable> [<excutable options>]
 
+   jobid expansion: 
+      If "\$jobid" is specified in any jobid expansion option then it will be converted to the actual jobid.
+
+      Example: qsub ... --env myenv:\$jobid_myval ... if the jobid is 123 then myenv will be set to '123_myval'
+               note: $jobid will have to be escaped as follows \$jobid.
+
+      jobid expansion options: --env, --jobname, -o, -e, -O, --debuglog
+
+
 """
 
     cmderr    = \
@@ -521,6 +573,15 @@ def test_qsub_verbose_flag_only():
 """Usage: qsub.py --help
 Usage: qsub.py [options] <executable> [<excutable options>]
 
+   jobid expansion: 
+      If "\$jobid" is specified in any jobid expansion option then it will be converted to the actual jobid.
+
+      Example: qsub ... --env myenv:\$jobid_myval ... if the jobid is 123 then myenv will be set to '123_myval'
+               note: $jobid will have to be escaped as follows \$jobid.
+
+      jobid expansion options: --env, --jobname, -o, -e, -O, --debuglog
+
+
 """
 
     cmderr    = \
@@ -564,6 +625,15 @@ def test_qsub_non_integer_nodecount():
     cmderr    = \
 """Usage: qsub.py --help
 Usage: qsub.py [options] <executable> [<excutable options>]
+
+   jobid expansion: 
+      If "\$jobid" is specified in any jobid expansion option then it will be converted to the actual jobid.
+
+      Example: qsub ... --env myenv:\$jobid_myval ... if the jobid is 123 then myenv will be set to '123_myval'
+               note: $jobid will have to be escaped as follows \$jobid.
+
+      jobid expansion options: --env, --jobname, -o, -e, -O, --debuglog
+
 
 qsub.py: error: option -n: invalid integer value: 'five'
 """
@@ -691,6 +761,8 @@ cwd:/tmp
 cwd type: <type 'str'>
 geometry:[1, 2, 3, 4, 2]
 geometry type: <type 'list'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 kernel:default
@@ -748,6 +820,12 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -832,6 +910,8 @@ cwd:/tmp
 cwd type: <type 'str'>
 geometry:[1, 2, 3, 4, 2]
 geometry type: <type 'list'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 kernel:default
@@ -889,6 +969,12 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -973,6 +1059,8 @@ cwd:/tmp
 cwd type: <type 'str'>
 geometry:[48, 48, 48, 48, 2]
 geometry type: <type 'list'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 kernel:default
@@ -1030,6 +1118,12 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -1151,6 +1245,8 @@ cwd:/tmp
 cwd type: <type 'str'>
 geometry:[128, 64, 32, 4, 2]
 geometry type: <type 'list'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 kernel:default
@@ -1208,6 +1304,12 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -1327,6 +1429,8 @@ command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
 cwd type: <type 'str'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 kernel:default
@@ -1386,6 +1490,12 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -1470,6 +1580,8 @@ command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
 cwd type: <type 'str'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 kernel:default
@@ -1527,6 +1639,12 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -1611,6 +1729,8 @@ command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
 cwd type: <type 'str'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 kernel:default
@@ -1668,6 +1788,12 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -1752,6 +1878,8 @@ command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
 cwd type: <type 'str'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 kernel:default
@@ -1809,6 +1937,12 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -1893,6 +2027,8 @@ command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
 cwd type: <type 'str'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 kernel:default
@@ -1950,6 +2086,12 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -2034,6 +2176,8 @@ cwd:/tmp/
 cwd type: <type 'str'>
 errorpath:/tmp//p
 errorpath type: <type 'str'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 kernel:default
@@ -2091,6 +2235,12 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -2175,6 +2325,8 @@ cwd:/tmp
 cwd type: <type 'str'>
 errorpath:/tmp/p
 errorpath type: <type 'str'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 kernel:default
@@ -2232,6 +2384,12 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -2353,6 +2511,8 @@ cwd:/tmp/
 cwd type: <type 'str'>
 errorpath:/tmp//p
 errorpath type: <type 'str'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 kernel:default
@@ -2412,6 +2572,12 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -2496,6 +2662,8 @@ cwd:/tmp
 cwd type: <type 'str'>
 errorpath:/tmp/p
 errorpath type: <type 'str'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 kernel:default
@@ -2555,6 +2723,12 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -2641,6 +2815,8 @@ cwd:/tmp
 cwd type: <type 'str'>
 errorpath:/tmp/p
 errorpath type: <type 'str'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 kernel:default
@@ -2700,6 +2876,12 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -2821,6 +3003,8 @@ cwd:/tmp
 cwd type: <type 'str'>
 inputfile:/tmp/y
 inputfile type: <type 'str'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 kernel:default
@@ -2878,6 +3062,12 @@ held:False
 held type: <type 'bool'>
 inputfile:y
 inputfile type: <type 'str'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -2960,6 +3150,8 @@ command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
 cwd type: <type 'str'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 kernel:default
@@ -3019,6 +3211,12 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -3108,6 +3306,8 @@ cwd:/tmp
 cwd type: <type 'str'>
 errorpath:/tmp.error
 errorpath type: <type 'str'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 kernel:default
@@ -3167,6 +3367,12 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -3286,6 +3492,8 @@ command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
 cwd type: <type 'str'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 kernel:default
@@ -3343,6 +3551,12 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -3425,6 +3639,8 @@ command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
 cwd type: <type 'str'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 kernel:default
@@ -3482,6 +3698,12 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -3566,6 +3788,8 @@ cwd:/tmp
 cwd type: <type 'str'>
 geometry:[40, 40, 50, 50, 2]
 geometry type: <type 'list'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 kernel:default
@@ -3623,6 +3847,12 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -3742,6 +3972,8 @@ command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
 cwd type: <type 'str'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 kernel:default
@@ -3799,6 +4031,12 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -3883,6 +4121,8 @@ cwd:/tmp
 cwd type: <type 'str'>
 envs:{'var1': 'val1,var2=val2'}
 envs type: <type 'dict'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 kernel:default
@@ -3940,6 +4180,12 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -4024,6 +4270,8 @@ cwd:/tmp
 cwd type: <type 'str'>
 envs:{'var1': 'val1', 'var2': 'val2'}
 envs type: <type 'dict'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 kernel:default
@@ -4081,6 +4329,12 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -4157,13 +4411,13 @@ qsub.py --env var1=val1:var2=svar1\=sval1\:svar2\=sval2:var3=val3 -t50 -n10 -d /
 
 component: "system.validate_job", defer: False
   validate_job(
-     {'kernel': 'default', 'verbose': False, 'held': False, 'notify': False, 'project': False, 'preemptable': False, 'outputprefix': False, 'umask': False, 'version': False, 'env': 'var1=val1:var2=svar1\\=sval1\\:svar2\\=sval2:var3=val3', 'cwd': '/tmp', 'run_project': False, 'forcenoval': False, 'kerneloptions': False, 'time': '50', 'debug': True, 'dependencies': False, 'debuglog': False, 'proccount': False, 'disable_preboot': False, 'geometry': False, 'queue': 'default', 'mode': False, 'error': False, 'nodecount': '10', 'output': False, 'attrs': {}, 'user_list': False, 'inputfile': False},
+     {'kernel': 'default', 'verbose': False, 'held': False, 'notify': False, 'ion_kerneloptions': False, 'project': False, 'preemptable': False, 'outputprefix': False, 'umask': False, 'version': False, 'env': 'var1=val1:var2=svar1\\=sval1\\:svar2\\=sval2:var3=val3', 'cwd': '/tmp', 'run_project': False, 'forcenoval': False, 'kerneloptions': False, 'time': '50', 'jobname': False, 'debug': True, 'dependencies': False, 'debuglog': False, 'ion_kernel': 'default', 'proccount': False, 'disable_preboot': False, 'geometry': False, 'queue': 'default', 'mode': False, 'error': False, 'nodecount': '10', 'output': False, 'attrs': {}, 'user_list': False, 'inputfile': False},
      )
 
 
 component: "queue-manager.add_jobs", defer: False
   add_jobs(
-     [{'cwd': '/tmp', 'args': [], 'kernel': 'default', 'envs': {'var1': 'val1', 'var3': 'val3', 'var2': 'svar1=sval1:svar2=sval2'}, 'user_list': ['gooduser'], 'umask': 18, 'jobid': '*', 'queue': 'default', 'script_preboot': True, 'tag': 'job', 'command': '/bin/ls', 'mode': 'c1', 'path': '/tmp', 'nodes': 10, 'walltime': '50', 'procs': '512', 'outputdir': '/tmp', 'run_project': False, 'user': 'gooduser'}],
+     [{'cwd': '/tmp', 'args': [], 'kernel': 'default', 'envs': {'var1': 'val1', 'var3': 'val3', 'var2': 'svar1=sval1:svar2=sval2'}, 'user_list': ['gooduser'], 'umask': 18, 'procs': '512', 'jobid': '*', 'queue': 'default', 'script_preboot': True, 'tag': 'job', 'command': '/bin/ls', 'mode': 'c1', 'path': '/tmp', 'nodes': 10, 'walltime': '50', 'ion_kernel': 'default', 'outputdir': '/tmp', 'run_project': False, 'user': 'gooduser'}],
      )
 
 
@@ -4182,6 +4436,8 @@ cwd:/tmp
 cwd type: <type 'str'>
 envs:{'var1': 'val1', 'var3': 'val3', 'var2': 'svar1=sval1:svar2=sval2'}
 envs type: <type 'dict'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 kernel:default
@@ -4239,6 +4495,12 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False

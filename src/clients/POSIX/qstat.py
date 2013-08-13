@@ -103,7 +103,7 @@ def get_output_for_jobs(parser,hinfo,queues):
     for q in query:
         for h in hinfo.long_header:
             if h == 'JobName':
-                q.update({'outputpath':'*'})
+                q.update({'jobname':'*'})
             elif h not in ['JobID', 'Queue']:
                 q.update({h.lower():'*'})
             if h in query_dependencies:
@@ -166,10 +166,7 @@ def get_output_for_jobs(parser,hinfo,queues):
                 j['timeremaining'] = "%02d:%02d:%02d" % (h, m, s)
         # jobname
         outputpath = j.get('outputpath')
-        if outputpath:
-            jobname = os.path.basename(outputpath).split('.output')[0]
-            if jobname != j['jobid'].split()[0]:
-                j['jobname'] = jobname
+        jobname    = j.get('jobname')
         # envs
         if j['envs'] is None:
             j.update({'envs':''})

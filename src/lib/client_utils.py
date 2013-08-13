@@ -186,7 +186,7 @@ def component_call(comp_name, defer, func_name, args, exit_on_error = True):
     except xmlrpclib.Fault, fault:
         component_error("XMLRPC failure %s in %s.%s\n", fault, comp_name, func_name)
     except Exception, e:
-        component_error("Following exception while trying to excecute %s.%s: %s\n", comp_name, func_name, e)
+        component_error("Following exception occured while trying to execute %s.%s: %s\n", comp_name, func_name, e)
 
     return retVal
 
@@ -952,15 +952,12 @@ def cb_attrs(option,opt_str,value,parser,*args):
             logger.error( "Improperly formatted argument to attrs : %s" % attr)
             sys.exit(1)
     setattr(parser.values,option.dest,newoptsattrs) # set the option
-    
-def cb_user_list(option,opt_str,value,parser,*args):
+
+def _validate_users(users):
     """
-    This callback will validate the user list and store it.
+    This function will validate the user list
     """
-    opts     = args[0] 
-    add_user = args[1]
-    user = getuid()
-    user_list = [auth_user for auth_user in value.split(':')]  
+    user_list = [auth_user for auth_user in users.split(':')]  
     for auth_user in user_list:
         try:
             pwd.getpwnam(auth_user)
@@ -970,10 +967,28 @@ def cb_user_list(option,opt_str,value,parser,*args):
         except Exception, e:
             logger.error("UNKNOWN FAILURE: user %s." % (auth_user,),e)
             sys.exit(1)
-    if user not in user_list and add_user:
+    return user_list
+    
+def cb_user_list(option, opt_str, value, parser, *args):
+    """
+    This callback will validate the user list and store it.
+    """
+    opts = args[0] 
+    user = getuid()
+    user_list = _validate_users(value)
+    if user not in user_list:
         user_list.insert(0, user)
-    setattr(parser.values,option.dest,user_list) # set the option
+    setattr(parser.values,option.dest,user_list)
     opts[option.dest] = value
+    
+def cb_res_users(option, opt_str, value, parser, *args):
+    """
+    This callback will validate resevation users list and store it.
+    """
+    if value != '*':
+        _validate_users(value)
+    users = value
+    setattr(parser.values, option.dest, users)
     
 def cb_mode(option,opt_str,value,parser,*args):
     """

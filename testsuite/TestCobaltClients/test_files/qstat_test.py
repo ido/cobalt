@@ -113,7 +113,7 @@ component: "queue-manager.get_queues", defer: True
 
 component: "queue-manager.get_jobs", defer: False
   get_jobs(
-     [{'timeremaining': '*', 'kernel': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'admin_hold': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'path': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'queuedtime': '*', 'jobid': '*', 'queue': '*', 'submittime': '*', 'state': '*', 'dependencies': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}],
+     [{'timeremaining': '*', 'kernel': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': '*', 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}],
      )
 
 
@@ -152,6 +152,8 @@ index:*
 index type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -240,11 +242,11 @@ def test_qstat_full_option_1():
     cmdout    = \
 """JobID  JobName  User   Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
 ========================================================================================================================
-5      tmp      henry   30.0    00:25:00  378981:57:19  N/A      2560   *      /tmp      smp   2560   hhh    N/A        
-3      tmp      dog     40.0    00:15:00  378981:57:19  N/A      1536   *      /tmp      smp   1536   aaa    N/A        
-1      tmp      land    50.0    00:05:00  378981:57:19  N/A      512    *      /tmp      smp   512    jello  N/A        
-2      tmp      house   55.0    00:10:00  378981:57:19  N/A      1024   *      /tmp      smp   1024   bello  N/A        
-4      tmp      cat     60.0    00:20:00  378981:57:19  N/A      2048   *      /tmp      smp   2048   bbb    N/A        
+5      -        henry   30.0    00:25:00  378981:57:19  N/A      2560   *      /tmp      smp   2560   hhh    N/A        
+3      -        dog     40.0    00:15:00  378981:57:19  N/A      1536   *      /tmp      smp   1536   aaa    N/A        
+1      -        land    50.0    00:05:00  378981:57:19  N/A      512    *      /tmp      smp   512    jello  N/A        
+2      -        house   55.0    00:10:00  378981:57:19  N/A      1024   *      /tmp      smp   1024   bello  N/A        
+4      -        cat     60.0    00:20:00  378981:57:19  N/A      2048   *      /tmp      smp   2048   bbb    N/A        
 """
 
     cmderr    = \
@@ -259,7 +261,7 @@ component: "queue-manager.get_queues", defer: True
 
 component: "queue-manager.get_jobs", defer: False
   get_jobs(
-     [{'timeremaining': '*', 'kernel': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'admin_hold': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'path': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'queuedtime': '*', 'jobid': 1, 'queue': '*', 'submittime': '*', 'state': '*', 'dependencies': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}, {'timeremaining': '*', 'kernel': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'admin_hold': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'path': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'queuedtime': '*', 'jobid': 2, 'queue': '*', 'submittime': '*', 'state': '*', 'dependencies': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}, {'timeremaining': '*', 'kernel': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'admin_hold': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'path': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'queuedtime': '*', 'jobid': 3, 'queue': '*', 'submittime': '*', 'state': '*', 'dependencies': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}, {'timeremaining': '*', 'kernel': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'admin_hold': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'path': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'queuedtime': '*', 'jobid': 4, 'queue': '*', 'submittime': '*', 'state': '*', 'dependencies': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}, {'timeremaining': '*', 'kernel': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'admin_hold': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'path': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'queuedtime': '*', 'jobid': 5, 'queue': '*', 'submittime': '*', 'state': '*', 'dependencies': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}],
+     [{'timeremaining': '*', 'kernel': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': 1, 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}, {'timeremaining': '*', 'kernel': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': 2, 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}, {'timeremaining': '*', 'kernel': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': 3, 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}, {'timeremaining': '*', 'kernel': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': 4, 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}, {'timeremaining': '*', 'kernel': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': 5, 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}],
      )
 
 
@@ -298,6 +300,8 @@ index:*
 index type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -374,6 +378,8 @@ index:*
 index type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -450,6 +456,8 @@ index:*
 index type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -526,6 +534,8 @@ index:*
 index type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -602,6 +612,8 @@ index:*
 index type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -690,11 +702,11 @@ def test_qstat_full_option_2():
     cmdout    = \
 """JobID  JobName  User   Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
 ========================================================================================================================
-5      tmp      henry   30.0    00:25:00  378981:57:19  N/A      2560   *      /tmp      smp   2560   hhh    N/A        
-3      tmp      dog     40.0    00:15:00  378981:57:19  N/A      1536   *      /tmp      smp   1536   aaa    N/A        
-1      tmp      land    50.0    00:05:00  378981:57:19  N/A      512    *      /tmp      smp   512    jello  N/A        
-2      tmp      house   55.0    00:10:00  378981:57:19  N/A      1024   *      /tmp      smp   1024   bello  N/A        
-4      tmp      cat     60.0    00:20:00  378981:57:19  N/A      2048   *      /tmp      smp   2048   bbb    N/A        
+5      -        henry   30.0    00:25:00  378981:57:19  N/A      2560   *      /tmp      smp   2560   hhh    N/A        
+3      -        dog     40.0    00:15:00  378981:57:19  N/A      1536   *      /tmp      smp   1536   aaa    N/A        
+1      -        land    50.0    00:05:00  378981:57:19  N/A      512    *      /tmp      smp   512    jello  N/A        
+2      -        house   55.0    00:10:00  378981:57:19  N/A      1024   *      /tmp      smp   1024   bello  N/A        
+4      -        cat     60.0    00:20:00  378981:57:19  N/A      2048   *      /tmp      smp   2048   bbb    N/A        
 """
 
     cmderr    = ''
@@ -732,6 +744,8 @@ index:*
 index type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -808,6 +822,8 @@ index:*
 index type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -884,6 +900,8 @@ index:*
 index type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -960,6 +978,8 @@ index:*
 index type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -1036,6 +1056,8 @@ index:*
 index type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -1124,11 +1146,11 @@ def test_qstat_full_option_3():
     cmdout    = \
 """JobID  JobName  User   Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
 ========================================================================================================================
-4      tmp      cat     60.0    00:20:00  378981:57:19  N/A      2048   *      /tmp      smp   2048   bbb    N/A        
-2      tmp      house   55.0    00:10:00  378981:57:19  N/A      1024   *      /tmp      smp   1024   bello  N/A        
-1      tmp      land    50.0    00:05:00  378981:57:19  N/A      512    *      /tmp      smp   512    jello  N/A        
-3      tmp      dog     40.0    00:15:00  378981:57:19  N/A      1536   *      /tmp      smp   1536   aaa    N/A        
-5      tmp      henry   30.0    00:25:00  378981:57:19  N/A      2560   *      /tmp      smp   2560   hhh    N/A        
+4      -        cat     60.0    00:20:00  378981:57:19  N/A      2048   *      /tmp      smp   2048   bbb    N/A        
+2      -        house   55.0    00:10:00  378981:57:19  N/A      1024   *      /tmp      smp   1024   bello  N/A        
+1      -        land    50.0    00:05:00  378981:57:19  N/A      512    *      /tmp      smp   512    jello  N/A        
+3      -        dog     40.0    00:15:00  378981:57:19  N/A      1536   *      /tmp      smp   1536   aaa    N/A        
+5      -        henry   30.0    00:25:00  378981:57:19  N/A      2560   *      /tmp      smp   2560   hhh    N/A        
 """
 
     cmderr    = ''
@@ -1166,6 +1188,8 @@ index:*
 index type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -1242,6 +1266,8 @@ index:*
 index type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -1318,6 +1344,8 @@ index:*
 index type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -1394,6 +1422,8 @@ index:*
 index type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -1470,6 +1500,8 @@ index:*
 index type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -1557,7 +1589,7 @@ def test_qstat_full_option_4():
 
     cmdout    = \
 """JobID: 5
-    JobName       : tmp
+    JobName       : -
     User          : henry
     WallTime      : 00:25:00
     QueuedTime    : 378981:57:19
@@ -1596,7 +1628,7 @@ def test_qstat_full_option_4():
     Geometry      : Any
 
 JobID: 3
-    JobName       : tmp
+    JobName       : -
     User          : dog
     WallTime      : 00:15:00
     QueuedTime    : 378981:57:19
@@ -1635,7 +1667,7 @@ JobID: 3
     Geometry      : Any
 
 JobID: 1
-    JobName       : tmp
+    JobName       : -
     User          : land
     WallTime      : 00:05:00
     QueuedTime    : 378981:57:19
@@ -1674,7 +1706,7 @@ JobID: 1
     Geometry      : Any
 
 JobID: 2
-    JobName       : tmp
+    JobName       : -
     User          : house
     WallTime      : 00:10:00
     QueuedTime    : 378981:57:19
@@ -1713,7 +1745,7 @@ JobID: 2
     Geometry      : Any
 
 JobID: 4
-    JobName       : tmp
+    JobName       : -
     User          : cat
     WallTime      : 00:20:00
     QueuedTime    : 378981:57:19
@@ -1788,6 +1820,8 @@ index:*
 index type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -1864,6 +1898,8 @@ index:*
 index type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -1940,6 +1976,8 @@ index:*
 index type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -2016,6 +2054,8 @@ index:*
 index type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -2092,6 +2132,8 @@ index:*
 index type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -2179,7 +2221,7 @@ def test_qstat_full_option_5():
 
     cmdout    = \
 """JobID: 4
-    JobName       : tmp
+    JobName       : -
     User          : cat
     WallTime      : 00:20:00
     QueuedTime    : 378981:57:19
@@ -2218,7 +2260,7 @@ def test_qstat_full_option_5():
     Geometry      : Any
 
 JobID: 2
-    JobName       : tmp
+    JobName       : -
     User          : house
     WallTime      : 00:10:00
     QueuedTime    : 378981:57:19
@@ -2257,7 +2299,7 @@ JobID: 2
     Geometry      : Any
 
 JobID: 1
-    JobName       : tmp
+    JobName       : -
     User          : land
     WallTime      : 00:05:00
     QueuedTime    : 378981:57:19
@@ -2296,7 +2338,7 @@ JobID: 1
     Geometry      : Any
 
 JobID: 3
-    JobName       : tmp
+    JobName       : -
     User          : dog
     WallTime      : 00:15:00
     QueuedTime    : 378981:57:19
@@ -2335,7 +2377,7 @@ JobID: 3
     Geometry      : Any
 
 JobID: 5
-    JobName       : tmp
+    JobName       : -
     User          : henry
     WallTime      : 00:25:00
     QueuedTime    : 378981:57:19
@@ -2410,6 +2452,8 @@ index:*
 index type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -2486,6 +2530,8 @@ index:*
 index type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -2562,6 +2608,8 @@ index:*
 index type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -2638,6 +2686,8 @@ index:*
 index type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -2714,6 +2764,8 @@ index:*
 index type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -2801,7 +2853,7 @@ def test_qstat_full_option_6():
 
     cmdout    = \
 """JobID: 4
-    JobName       : tmp
+    JobName       : -
     User          : cat
     WallTime      : 00:20:00
     QueuedTime    : 378981:57:19
@@ -2840,7 +2892,7 @@ def test_qstat_full_option_6():
     Geometry      : Any
 
 JobID: 3
-    JobName       : tmp
+    JobName       : -
     User          : dog
     WallTime      : 00:15:00
     QueuedTime    : 378981:57:19
@@ -2879,7 +2931,7 @@ JobID: 3
     Geometry      : Any
 
 JobID: 5
-    JobName       : tmp
+    JobName       : -
     User          : henry
     WallTime      : 00:25:00
     QueuedTime    : 378981:57:19
@@ -2918,7 +2970,7 @@ JobID: 5
     Geometry      : Any
 
 JobID: 2
-    JobName       : tmp
+    JobName       : -
     User          : house
     WallTime      : 00:10:00
     QueuedTime    : 378981:57:19
@@ -2957,7 +3009,7 @@ JobID: 2
     Geometry      : Any
 
 JobID: 1
-    JobName       : tmp
+    JobName       : -
     User          : land
     WallTime      : 00:05:00
     QueuedTime    : 378981:57:19
@@ -3032,6 +3084,8 @@ index:*
 index type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -3108,6 +3162,8 @@ index:*
 index type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -3184,6 +3240,8 @@ index:*
 index type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -3260,6 +3318,8 @@ index:*
 index type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -3336,6 +3396,8 @@ index:*
 index type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -3423,7 +3485,7 @@ def test_qstat_full_option_7():
 
     cmdout    = \
 """JobID: 1
-    JobName       : tmp
+    JobName       : -
     User          : land
     WallTime      : 00:05:00
     QueuedTime    : 378981:57:19
@@ -3462,7 +3524,7 @@ def test_qstat_full_option_7():
     Geometry      : Any
 
 JobID: 2
-    JobName       : tmp
+    JobName       : -
     User          : house
     WallTime      : 00:10:00
     QueuedTime    : 378981:57:19
@@ -3501,7 +3563,7 @@ JobID: 2
     Geometry      : Any
 
 JobID: 5
-    JobName       : tmp
+    JobName       : -
     User          : henry
     WallTime      : 00:25:00
     QueuedTime    : 378981:57:19
@@ -3540,7 +3602,7 @@ JobID: 5
     Geometry      : Any
 
 JobID: 3
-    JobName       : tmp
+    JobName       : -
     User          : dog
     WallTime      : 00:15:00
     QueuedTime    : 378981:57:19
@@ -3579,7 +3641,7 @@ JobID: 3
     Geometry      : Any
 
 JobID: 4
-    JobName       : tmp
+    JobName       : -
     User          : cat
     WallTime      : 00:20:00
     QueuedTime    : 378981:57:19
@@ -3654,6 +3716,8 @@ index:*
 index type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -3730,6 +3794,8 @@ index:*
 index type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -3806,6 +3872,8 @@ index:*
 index type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -3882,6 +3950,8 @@ index:*
 index type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -3958,6 +4028,8 @@ index:*
 index type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -4045,7 +4117,7 @@ def test_qstat_full_option_8():
 
     cmdout    = \
 """JobID: 3
-    JobName       : tmp
+    JobName       : -
     User          : dog
     WallTime      : 00:15:00
     QueuedTime    : 378981:57:19
@@ -4084,7 +4156,7 @@ def test_qstat_full_option_8():
     Geometry      : Any
 
 JobID: 4
-    JobName       : tmp
+    JobName       : -
     User          : cat
     WallTime      : 00:20:00
     QueuedTime    : 378981:57:19
@@ -4123,7 +4195,7 @@ JobID: 4
     Geometry      : Any
 
 JobID: 2
-    JobName       : tmp
+    JobName       : -
     User          : house
     WallTime      : 00:10:00
     QueuedTime    : 378981:57:19
@@ -4162,7 +4234,7 @@ JobID: 2
     Geometry      : Any
 
 JobID: 5
-    JobName       : tmp
+    JobName       : -
     User          : henry
     WallTime      : 00:25:00
     QueuedTime    : 378981:57:19
@@ -4201,7 +4273,7 @@ JobID: 5
     Geometry      : Any
 
 JobID: 1
-    JobName       : tmp
+    JobName       : -
     User          : land
     WallTime      : 00:05:00
     QueuedTime    : 378981:57:19
@@ -4276,6 +4348,8 @@ index:*
 index type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -4352,6 +4426,8 @@ index:*
 index type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -4428,6 +4504,8 @@ index:*
 index type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -4504,6 +4582,8 @@ index:*
 index type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -4580,6 +4660,8 @@ index:*
 index type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -4667,7 +4749,7 @@ def test_qstat_full_option_9():
 
     cmdout    = \
 """JobID: 1
-    JobName       : tmp
+    JobName       : -
     User          : land
     WallTime      : 00:05:00
     QueuedTime    : 378981:57:19
@@ -4706,7 +4788,7 @@ def test_qstat_full_option_9():
     Geometry      : Any
 
 JobID: 5
-    JobName       : tmp
+    JobName       : -
     User          : henry
     WallTime      : 00:25:00
     QueuedTime    : 378981:57:19
@@ -4745,7 +4827,7 @@ JobID: 5
     Geometry      : Any
 
 JobID: 2
-    JobName       : tmp
+    JobName       : -
     User          : house
     WallTime      : 00:10:00
     QueuedTime    : 378981:57:19
@@ -4784,7 +4866,7 @@ JobID: 2
     Geometry      : Any
 
 JobID: 4
-    JobName       : tmp
+    JobName       : -
     User          : cat
     WallTime      : 00:20:00
     QueuedTime    : 378981:57:19
@@ -4823,7 +4905,7 @@ JobID: 4
     Geometry      : Any
 
 JobID: 3
-    JobName       : tmp
+    JobName       : -
     User          : dog
     WallTime      : 00:15:00
     QueuedTime    : 378981:57:19
@@ -4898,6 +4980,8 @@ index:*
 index type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -4974,6 +5058,8 @@ index:*
 index type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -5050,6 +5136,8 @@ index:*
 index type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -5126,6 +5214,8 @@ index:*
 index type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -5202,6 +5292,8 @@ index:*
 index type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -5290,7 +5382,7 @@ def test_qstat_full_option_10():
     cmdout    = \
 """JobID  JobName  User  Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
 =======================================================================================================================
-100    tmp      land   50.0    00:05:00  378981:57:19  N/A      512    *      /tmp      smp   512    jello  N/A        
+100    -        land   50.0    00:05:00  378981:57:19  N/A      512    *      /tmp      smp   512    jello  N/A        
 """
 
     cmderr    = ''
@@ -5328,6 +5420,8 @@ index:*
 index type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -5416,9 +5510,9 @@ def test_qstat_full_option_11():
     cmdout    = \
 """JobID  JobName  User   Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
 ========================================================================================================================
-3      tmp      dog     40.0    00:15:00  378981:57:19  N/A      1536   *      /tmp      smp   1536   aaa    N/A        
-1      tmp      land    50.0    00:05:00  378981:57:19  N/A      512    *      /tmp      smp   512    jello  N/A        
-2      tmp      house   55.0    00:10:00  378981:57:19  N/A      1024   *      /tmp      smp   1024   bello  N/A        
+3      -        dog     40.0    00:15:00  378981:57:19  N/A      1536   *      /tmp      smp   1536   aaa    N/A        
+1      -        land    50.0    00:05:00  378981:57:19  N/A      512    *      /tmp      smp   512    jello  N/A        
+2      -        house   55.0    00:10:00  378981:57:19  N/A      1024   *      /tmp      smp   1024   bello  N/A        
 """
 
     cmderr    = ''
@@ -5456,6 +5550,8 @@ index:*
 index type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -5532,6 +5628,8 @@ index:*
 index type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -5608,6 +5706,8 @@ index:*
 index type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -5738,6 +5838,8 @@ index:*
 index type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -5896,6 +5998,8 @@ index:*
 index type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -5972,6 +6076,8 @@ index:*
 index type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -6048,6 +6154,8 @@ index:*
 index type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -6124,6 +6232,8 @@ index:*
 index type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -6200,6 +6310,8 @@ index:*
 index type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -6358,6 +6470,8 @@ index:*
 index type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -6434,6 +6548,8 @@ index:*
 index type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -6510,6 +6626,8 @@ index:*
 index type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -6586,6 +6704,8 @@ index:*
 index type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -6662,6 +6782,8 @@ index:*
 index type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -6820,6 +6942,8 @@ index:*
 index type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -6896,6 +7020,8 @@ index:*
 index type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -6972,6 +7098,8 @@ index:*
 index type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -7048,6 +7176,8 @@ index:*
 index type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -7124,6 +7254,8 @@ index:*
 index type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -7282,6 +7414,8 @@ index:*
 index type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -7358,6 +7492,8 @@ index:*
 index type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -7434,6 +7570,8 @@ index:*
 index type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -7510,6 +7648,8 @@ index:*
 index type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -7586,6 +7726,8 @@ index:*
 index type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -7744,6 +7886,8 @@ index:*
 index type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -7820,6 +7964,8 @@ index:*
 index type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -7896,6 +8042,8 @@ index:*
 index type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -7972,6 +8120,8 @@ index:*
 index type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -8048,6 +8198,8 @@ index:*
 index type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -8183,6 +8335,8 @@ index:*
 index type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -8259,6 +8413,8 @@ index:*
 index type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -8335,6 +8491,8 @@ index:*
 index type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
@@ -10077,6 +10235,8 @@ index:*
 index type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
+jobname:*
+jobname type: <type 'str'>
 kernel:*
 kernel type: <type 'str'>
 kerneloptions:*
