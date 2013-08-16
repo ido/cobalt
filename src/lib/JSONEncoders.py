@@ -18,7 +18,6 @@ class ReportObject(object):
     '''note: timestamp is expected to be a UT value (FP is ok) '''
 
     def __init__(self, exec_user, state, item_type, item, timestamp=None):
->>>>>>> develop
 
         self.exec_user = exec_user #id of what is causing change None is cobalt
         self.state = state #Current state causing message 
