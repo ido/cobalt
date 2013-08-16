@@ -1,0 +1,63 @@
+\documentclass[10pt,letterpaper]{book}
+\usepackage[utf8]{inputenc}
+
+\begin{document}
+
+\title {\textbf{Cobalt Administrator's Guide}}
+\author{Paul Rich, Brian Toonen, Narayan Dessai}
+
+\maketitle
+\tableofcontents
+\chapter{Introduction}
+Cobalt is a highly modular, scalable batch scheduling system.  
+%comment I have no idea what else should go into an introduction.
+\section{Supported Systems}
+
+\chapter{Installation and Setup}
+\section{Simulation Mode}
+\section{System Deployment}
+\section{System Initialization}
+Cobalt can be initialized by its init script: \textit{/etc/init.d/cobalt start}
+Inidvidual components can be restarted via \textit{/etc/init.d cobalt start-component} \textless\textit{component name}\textgreater
+\section{System Shutdown}
+Cobalt may be shutdown via the same init script: \textit{/etc/init.d/cobalt stop}
+Individual components may be halted by 
+
+\chapter{Components}
+\section{Service Locator}
+\section{Queue Manager}
+\section{Scheduler}
+\section{System}
+\section{User Script Forker}
+\section{System Script Forker}
+
+\chapter{Administrative Commands}
+\section{cqadm}
+\section{partadm}
+\section{schedctl}
+\section{setres}
+
+\chapter{Configuration}
+\section{Configuration File}
+Many features of Cobalt that are site or system specific can be set via the Cobalt configuration file.  Additionally Cobalt has the capacity to run with highly configurable utility functions which govern score accrual.
+\section{Utility Functions}
+
+  
+\chapter{Troubleshooting}
+
+\appendix
+\chapter {Building the RPM}
+\chapter{BlueGene/P Extensions}
+\chapter{BlueGene/Q Extensions}
+\section{BlueGene/Q Component Names}
+\section{Auxillary libraries}
+\chapter{Cluster System Extensions}
+
+
+
+\end{document}
+
+
+
+
+

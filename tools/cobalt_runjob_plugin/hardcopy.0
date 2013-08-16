@@ -1,0 +1,50 @@
+#ifndef __COBALT_RUNJOB_PLUGIN_H                                                                     |    //cout << "Node: " << ret->node_id << endl;
+#define __COBALT_RUNJOB_PLUGIN_H                                                                     |    //cout << "Size: " << ret->size << endl;
+                                                                                                     |
+#include <bgsched/runjob/Plugin.h>                                                                   |    return ret;
+                                                                                                     |}
+#include <boost/thread/mutex.hpp>                                                                    |
+                                                                                                     |
+/******************************************************************************                      |/* Plugin constructor */
+ * class: CobaltRunjobPlugin                                                                         |CobaltRunjobPlugin::CobaltRunjobPlugin() : bgsched::runjob::Plugin(), _mutex(){
+ * Any mangling that needs to go to job arguments should likely go here,                             |    std::cout << "Initializing Cobalt Runjob Plugin" << std::endl;
+ * especially if they need to be intercepted for all runjob calls                                    |    return;
+ *****************************************************************************/                      |}
+                                                                                                     |
+class CobaltRunjobPlugin : public bgsched::runjob::Plugin{                                           |CobaltRunjobPlugin::~CobaltRunjobPlugin(){
+                                                                                                     |    std::cout << "Finalizing Cobalt Runjob Plugin" << std::endl;
+public:                                                                                              |    return;
+    CobaltRunjobPlugin();                                                                            |}
+    ~CobaltRunjobPlugin();                                                                           |
+    void execute(bgsched::runjob::Verify &data);                                                     |/*execute for job verification.  This verify reference is mutable.
+    void execute(const bgsched::runjob::Started &data);                                              | * Modifies job data, so watch for locks.*/
+    void execute(const bgsched::runjob::Terminated &data);                                           |void CobaltRunjobPlugin::execute(bgsched::runjob::Verify &data){
+                                                                                                     |    cout << "starting job from pid: " << data.pid() << endl;
+private:                                                                                             |    cout << "exe: "<< data.exe() << endl;
+    boost::mutex _mutex;                                                                             |
+};                                                                                                   |    cout << "args: " << endl;
+                                                                                                     |    cout << endl;
+typedef struct block_info_t{                                                                         |
+    std::string loc_id;                                                                              |    cout << "block data:" << endl;
+    int rack_id;                                                                                     |
+    int midplane_id;                                                                                 |    //Attempt to extract block info and run subblock if we need
+    int node_board_id;                                                                               |    string block_id = data.block();
+    int node_id;                                                                                     |    block_info *corner;
+    int size;                                                                                        |    corner = parse_block_info(data.block());
+    std::string parent_block;                                                                        |    cout << corner->node_board_id << endl;
+} block_info;                                                                                        |    cout << corner->node_id << endl;
+                                                                                                     |    cout << corner->size << endl;
+block_info *parse_block_info(std::string block_id);                                                  |
+                                                                                                     |    if (corner->size >=128){
+#endif                                                                                               |        cout << "block name: "<< data.block() << endl;
+~                                                                                                    |        return;
+~                                                                                                    |    }
+~                                                                                                    |
+~                                                                                                    |    data.block(corner->parent_block);
+~                                                                                                    |
+~                                                                                                    |    cout << "block name: "<< data.block() << endl;
+~                                                                                                    |
+~                                                                                                    |    const char *corner_node_fmt = "R%02d-M%d-N%02d-J%02d";
+~                                                                                                    |    char corner_name[32];
+cobalt_runjob_plugin.h                                                             37,51          All cobalt_runjob_plugin.cpp [+]                                                      92,0-1         56%
+1 change; before #12  39 seconds ago

@@ -1,0 +1,122 @@
+\documentclass[10pt,letterpaper]{article}
+
+\begin{document}
+\part*{Common Cobalt Administrative Tasks}
+\section*{Startup/Shutdown}
+Due to the use of setuid and setgid within Cobalt, it is currently a requirement to run the Cobalt daemons as root.
+\subsection*{Startup}
+Cobalt may be started up by running \textit{/etc/init.d/cobalt start} as root on the Service Node (mirasn1) and the Script Login (miralac1).  When switching to root to bring up Cobalt, make sure that you get a clean root login environment.  Ensure that the control system is up and running and that the addtional runjob\_mux is running on the Script Login before bringing up Cobalt.  
+\subsection*{Single-Component Startup}
+A single component of Cobalt may be restarted by running \textit{/etc/init.d/cobalt start-component \textless component-name\textgreater}.
+\subsection*{Cobalt Shutdown}
+To shutdown Cobalt, run \textit{/etc/init.d/cobalt stop}.  If restarting Cobalt, make sure that all components have fully shut down prior to running the startup command.  Additionally, it is highly recommended that you suspend scheduling, place a reservation, and ensure that no jobs are currently running.  This operation is fatal to all currently running jobs managed by Cobalt.   Jobs that are being run outside of Cobalt are unaffected.
+\subsection*{Single-Component Shutdown}
+A single component of Cobalt may be restarted by running \textit{/etc/init.d/cobalt stop-component \textless component-name\textgreater}.  Depending on the component, this operation may be fatal to running jobs.
+\subsection*{A note on currently running jobs}
+If a forker is restarted, then any running process beneath that forker is considered lost.  This operation is fatal to any running job or auxiliary script beneath that forker.  Additionally, restarting the system component is fatal to all jobs running through Cobalt on the BlueGene/Q.
+\subsection*{Components for the BlueGene/Q Configuration}
+\subsubsection*{Service Node Components}
+\begin{itemize}
+\item slp - Service location component
+\item cqm - Queue-Manager
+\item bgsched - scheduler
+\item bgqsystem - system
+\item system\_script\_forker - forker for auxiliary internal Cobalt scripts
+\item bg\_runjob\_forker - forker for non-script mode jobs (invokes runjob
+ directly)
+ cdbwriter - database writer (may run without)
+\end{itemize}
+\subsubsection*{Script Login Components}
+\begin{itemize}
+\item user\_script\_forker - forker that runs user-specified scripts (script-mode jobs)
+\end{itemize}
+\begin{center}
+\line(1,0){450}
+\end{center}
+\section*{Reservations}
+For further information, please consult the the setres manpage
+\subsection*{Setting Reservations}
+\textit{setres.py -n \textless name\textgreater -s \textless start-time\textgreater -d \textless duration\textgreater \textless block-id1\textgreater \textless block-id2\textgreater ...}
+Reservations may be set with the setres command.  Notes on options:
+\begin{itemize}
+\item the start-time is in the format of YYYY-MM-DD-HH:mm
+\item the duration is in HH:mm:ss format
+\item if a block is included in the list of locations, then all blocks that have compute nodes that intersect the locations will be included in the reservation.  This does not include passthrough-only blocks, however. 
+\end{itemize}
+All times are in UTC, unless you set your TZ variable. It is recommended that hardware replacement reservations be named \textit{hw.\textless location-name\textgreater}  
+\subsection*{Modifying Reservations}
+A reservation may be modified by using \textit{setres.py -m -n \textless name\textgreater [options-and-new-values]}
+You may pass in any option that you can specify with \textit{setres}.  These new values will replace the old values.  Keep in mind that if you want to extend a reservation, you need to specify the time from the reservation start (i.e. -d 1:15:00 to add 15 minutes to a 1 hour reservation)
+\subsection*{Releasing Reservations}
+Running \textit{releaseres.py \textless reservation-name\textgreater} with administrator permissions will release any defined reservation.  This command will take a list of reservation names.  A cyclic reservation may be deferred via \textit{setres.py -D -n \textless name\textgreater}.  releaseres will delete a cyclic reservation, not defer it to it's next cycle.
+\begin{center}
+\line(1,0){450}
+\end{center}
+\section*{Scheduling}
+Scheduling may be halted and resumed via schedctl.py.
+\begin{itemize}
+\item schedctl.py -\--start resumes scheduling
+\item schedctl.py -\--stop halts scheduling immediately
+\item schedctl.py -\--status reports if scheduling has already been disabled 
+\end{itemize}
+This will immediately halt all scheduling from Cobalt, and will prevent any new jobs from running.  This also prevents reservations from running.
+\begin{center}
+\line(1,0){450}
+\end{center}
+\section*{Jobs}
+The \textit{cqadm.py} command is the queue-manager administration command.
+\subsubsection*{Administrative Hold}
+\textit{cqadm.py -\--hold jobid1 jobid2 ...}
+\\
+\\
+This command will place a job into a hold state, which prevents the job from running.  This command will accepts a list of jobids. It may not be run with any other cqadm flag.
+\subsubsection*{Adminstrative Hold Release}
+\textit{cqadm.py -\--release jobid1 jobid2 ...}
+\\
+\\
+This will release an admin hold on all listed jobs.  If a job has any other type of hold on it, such as a user-hold placed on the job by the user via qhold.
+\subsubsection*{Administrative Job Kill}
+\textit{cqadm.py -\--kill jobid}
+\\
+\\
+This is equivalent to running qdel on a job as that user.  This allows an administrator to remove any job from the queue
+\subsubsection*{Force Delete}
+\textbf{CAUTION: This command may cause resources to become unavailable}
+\\
+\\
+\textit{cqadm.py -\--delete joibid}
+\\
+\\
+This forces cobalt to delete a job from the queue manager.  It will make one last attempt to free the resources from the system component.  However, it will not guarantee the resources are free. Use this only as a last resort.
+\subsubsection*{Changing Job Score}
+This is handled through schedctl.py:
+\\
+\\
+\textit{schedctl.py -\--score }new-score \textit{jobid}
+\\
+\\
+This will set a job's score to a new value.  Cobalt will always try to run the highest scored job first, so long as there is hardware available that can run the job.
+\begin{center}
+\line(1,0){450}
+\end{center}
+\section*{Block Administration}
+\subsubsection*{Block Details}
+To obtain a detailed description of a block and it's associated hardware from Cobalt's perspective:  \textit{partadm.py -b blockid1 blockid2 ...}.
+\subsubsection*{Listing Blocks}
+A list of all blocks that Cobalt is tracking, including ones marked non-functional, can be obtained by using \textit{partadm.py -l}.
+\subsubsection*{Disabling Single Blocks}
+A single block may be disabled, and removed from scheduling decisions using \textit{partadm.py -\--disable blockid1 blockid2 ...}. This removes the block from the display in partlist.
+\subsubsection*{Enabling Single Blocks}
+A single block may be enabled, and returned from scheduling decisions using \textit{partadm.py -\--enable blockid1 blockid2 ...}. This restores the block in partlist.
+\subsubsection*{Boot Control}
+Block booting can be controled/queried by the following commands:
+\begin{itemize}
+\item \textit{partadm.py -\--boot-status}
+\item \textit{partadm.py -\--boot-start}
+\item \textit{partadm.py -\--boot-stop}
+\end{itemize}
+Halting booting without first halting scheduling is strongly discouraged and could result in allocated jobs being prematurely cleaned.
+\subsubsection*{Force-Cleaning}
+If scheduling is stopped and booting is halted a block may be force-cleared by issuing \textit{partadm.py -c blockid}.  Check the logs to ensure that the block has cleared prior to resuming booting and scheduling.
+
+\end{document}

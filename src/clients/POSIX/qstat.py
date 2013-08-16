@@ -1,29 +1,43 @@
 #!/usr/bin/env python
+"""
+Cobalt Queue Status
 
-'''Cobalt Queue Status'''
+Usage: %prog [options] <jobids1> ... <jobidsN>
+version: "%prog " + __revision__ + , Cobalt  + __version__
 
-__revision__ = '$Revision: 406 $'
-__version__ = '$Version$'
+OPTIONS DEFINITIONS:
 
+Option with no values:
+
+'-d','--debug',dest='debug',help='turn non communication debugging',callback=cb_debug
+'-f','--full',dest='full',help='show more verbose information',action='store_true'
+'-l','--long',dest='long',help='show job info in vertical format',action='store_true'
+'-Q',dest='Q',help='show queues and properties',action='store_true'
+'--reverse',dest='reverse',help='show output in reverse',action='store_true'
+
+Option with values:
+
+'--header',dest='header',type='string',help='specify custom header',callback=cb_split
+'--sort',dest='sort',type='string',help='sort output by specified attribute',callback=cb_split
+'-u','--user',dest='user',type='string',help='Specify username'
+
+"""
 import math
 import os
 import sys
 import time
 import types
-import ConfigParser
-import socket
+import logging
+from Cobalt import client_utils
+from Cobalt.client_utils import \
+    cb_debug, cb_split
 
-import Cobalt
-import Cobalt.Logging
-import Cobalt.Util
-from Cobalt.Proxy import ComponentProxy
-from Cobalt.Exceptions import ComponentLookupError
-from Cobalt.Util import sec_to_str
+from Cobalt.arg_parser import ArgParse
 
-__helpmsg__ = "Usage: qstat [-d] [-f] [-l] [-u username] [--sort <fields>] [--header <fields>] [--reverse] [<jobid|queue> ...]\n" + \
-              "       qstat [-d] -Q <queue> <queue>\n" + \
-              "       qstat [--version]"
+__revision__ = '$Revision: 406 $'
+__version__ = '$Version$'
 
+QUEMGR = client_utils.QUEMGR
 
 def human_format(x):
     units = ['  ', ' K', ' M', ' G', ' T', ' P']
@@ -40,238 +54,157 @@ def human_format(x):
             return "%5.1f%s" % (max(stuff, 0.1), units[-1])
 
         stuff = stuff / dividend
-        
-def get_elapsed_time(starttime, endtime):
+
+def get_output_for_queues(parser,hinfo):
     """
-    returns hh:mm:ss elapsed time string from start and end timestamps
+    get the queues info for the specified queues
     """
-    runtime = endtime - starttime
-    minutes, seconds = divmod(runtime, 60)
-    hours, minutes = divmod(minutes, 60)
-    return ( "%02d:%02d:%02d" % (hours, minutes, seconds) )
 
+    names = parser.args if not parser.no_args() else ['*']
 
-if __name__ == '__main__':
-    if '--version' in sys.argv:
-        print "qstat %s" % __revision__
-        print "cobalt %s" % __version__
-        sys.exit(0)
-    if '-h' in sys.argv or '--help' in sys.argv:
-        print __helpmsg__
-        sys.exit(0)
+    query = [{'name':qname,'users':'*','mintime':'*','maxtime':'*','maxrunning':'*','maxqueued':'*','maxusernodes':'*',
+              'maxnodehours':'*','totalnodes':'*','state':'*'} for qname in names]
+    response = client_utils.component_call(QUEMGR, True, 'get_queues', (query,))
 
-    options = {'d':'debug', 'f':'full', 'l':'long', 'version':'version',
-               'Q':'Q', 'reverse':'reverse'}
-    doptions = {'header':'header', 'sort':'sort', 'u':'user'}
-    (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:], options,
-                                            doptions, __helpmsg__)
-
-    # check for custom header, first in cobalt.conf, env, then in --header
-    custom_header = None
-    custom_header_full = None
-    try:
-        CP = ConfigParser.ConfigParser()
-        CP.read(Cobalt.CONFIG_FILES)
-        custom_header = CP.get('cqm', 'cqstat_header').split(':')
-    except:
-        pass
-        
-    try:
-        custom_header_full = CP.get('cqm', 'cqstat_header_full').split(':')
-    except:
-        pass
-    if 'CQSTAT_HEADER' in os.environ.keys():
-        custom_header = os.environ['CQSTAT_HEADER'].split(':')
-    elif 'QSTAT_HEADER' in os.environ.keys():
-        custom_header = os.environ['QSTAT_HEADER'].split(':')
-    if 'CQSTAT_HEADER_FULL' in os.environ.keys():
-        custom_header_full = os.environ['CQSTAT_HEADER_FULL'].split(':')
-    elif 'QSTAT_HEADER_FULL' in os.environ.keys():
-        custom_header_full = os.environ['QSTAT_HEADER_FULL'].split(':')
-    if opts['header']:
-        custom_header = opts['header'].split(':')
-
-    try:
-        cqm = ComponentProxy("queue-manager", defer=False)
-    except ComponentLookupError:
-        print >> sys.stderr, "Failed to connect to queue manager"
-        sys.exit(2)
-    
-    try:
-        queues = cqm.get_queues([{'name':"*", 'state':"*"}])
-    except:
-        print >> sys.stderr, "Failed to get queue list from queue manager"
-        sys.exit(2)
-
-    level = 30
-    if opts['debug']:
-        level = 10
-
-    if opts['version']:
-        print "qstat %s" % __revision__
-        sys.exit(0)
-        
-    Cobalt.Logging.setup_logging('qstat', to_syslog=False, level=level)
-
-    jobid = None
-
-    if len(args) > 0:
-        names = args
-    else:
-        names = ["*"]
-
-    # define headers, long_header is used to query the queue-manager
-    default_header = ['JobID', 'User', 'WallTime', 'Nodes', 'State', 'Location']
-    full_header    = ['JobID', 'JobName', 'User', 'WallTime', 'QueuedTime',
-                      'RunTime', 'Nodes', 'State', 'Location', 'Mode', 'Procs',
-                      'Preemptable', 'Queue', 'StartTime', 'Index']
-    long_header    = ['JobID', 'JobName', 'User', 'WallTime', 'QueuedTime',
-                      'RunTime', 'Nodes', 'State', 'Location', 'Mode', 'Procs',
-                      'Preemptable', 'User_Hold', 'Admin_Hold', 'Queue',
-                      'StartTime', 'Index', 'SubmitTime', 'Path', 'OutputDir',
-                      'ErrorPath', 'OutputPath',
-                      'Envs', 'Command', 'Args', 'Kernel', 'KernelOptions',
-                      'Project', 'Dependencies', 'short_state', 'Notify', 
-                      'Score', 'Maxtasktime', 'attrs', 'dep_frac','user_list']
-    header = None
-    query_dependencies = {'QueuedTime':['SubmitTime', 'StartTime'], 'RunTime':['StartTime']}
-
-    try:
-        cqm = ComponentProxy("queue-manager", defer=False)
-    except ComponentLookupError:
-        print >> sys.stderr, "Failed to connect to queue manager"
-        sys.exit(2)
-
-    user_name = '*'
-    if opts['user']:
-        user_name = opts['user']
-
-    if opts['Q']:  # querying for queues
-        query = [{'name':qname, 'users':'*', 
-                  'mintime':'*', 'maxtime':'*', 'maxrunning':'*',
-                  'maxqueued':'*', 'maxusernodes':'*',
-                  'maxnodehours': '*', 
-                  'totalnodes':'*', 'state':'*'} for qname in names]
-        header = ['Name', 'Users', 'MinTime', 'MaxTime', 
-                  'MaxRunning', 'MaxQueued', 'MaxUserNodes', 
-                  'MaxNodeHours',
-                  'TotalNodes', 'State']
-        response = cqm.get_queues(query)
-    else:
-        if opts['full'] and opts['long']:
-            header = long_header
-        elif opts['full'] and custom_header_full:
-            header = custom_header_full
-        elif opts['full'] and not opts['long']:
-            header = full_header
-        elif custom_header:
-            header = custom_header
-        else:
-            header = default_header
-
-        # build query from long_header (all fields) and fetch response
-        try:
-            query = []
-            for n in names:
-                if n=='*':
-                    query.append({'tag':'job', 'jobid':n, 'queue':'*'})
-                elif [q['name'] for q in queues if q['name'] == n]:
-                    query.append({'tag':'job', 'queue':n, 'jobid':'*'})
-                else:
-                    query.append({'tag':'job', 'jobid':int(n), 'queue':'*'})
-        except ValueError:
-            print "%s is not a valid jobid or queue name" % n
-            sys.exit(2)
-        for q in query:
-            for h in long_header:
-                if h == 'JobName':
-                    q.update({'outputpath':'*'})
-                elif h not in ['JobID', 'Queue']:
-                    q.update({h.lower():'*'})
-                if h in query_dependencies.keys():
-                    for x in query_dependencies[h]:
-                        if x not in header:
-                            q.update({x.lower():'*'})
-            q["user"] = user_name
-        response = cqm.get_jobs(query)
-        
-    if len(args) and not response:
+    if not parser.no_args() and not response:
         sys.exit(1)
 
-    if opts['Q']:
-        for q in response:
-            if q['maxtime'] is not None:
-                q['maxtime'] = "%02d:%02d:00" % (divmod(int(q['maxtime']), 60))
-            if q['mintime'] is not None:
-                q['mintime'] = "%02d:%02d:00" % (divmod(int(q['mintime']), 60))
-        output = [[q[x] for x in [y.lower() for y in header]] for q in response]
-    else:
-        if response:
-            maxjoblen = max([len(str(item.get('jobid'))) for item in response])
-            jobidfmt = "%%%ss" % maxjoblen
-        # calculate derived values
-        for j in response:
-            # walltime
-            t = int(float(j['walltime']))
-            h = int(math.floor(t/60))
-            t -= (h * 60)
-            j['walltime'] = "%02d:%02d:00" % (h, t)
-            # jobid
-            j['jobid'] = jobidfmt % j['jobid']
-            # location
-            if isinstance(j['location'], types.ListType) and len(j['location']) > 1:
-                j['location'] = Cobalt.Util.merge_nodelist(j['location'])
-            elif isinstance(j['location'], types.ListType) and len(j['location']) == 1:
-                j['location'] = j['location'][0]
-            # queuedtime
-            if j.get('starttime') in ('-1', 'BUG', 'N/A', None):
-                j['queuedtime'] = get_elapsed_time(float(j.get('submittime')), time.time())
-            else:
-                j['queuedtime'] = get_elapsed_time(float(j.get('submittime')), float(j['starttime']))
-            # runtime
-            if j.get('starttime') in ('-1', 'BUG', 'N/A', None):
-                j['runtime'] = 'N/A'
-            else:
-                j['runtime'] = get_elapsed_time( float(j['starttime']), time.time())
-            # starttime
-            if j.get('starttime') in ('-1', 'BUG', None):
-                j['starttime'] = 'N/A'
-            else:
-                j['starttime'] = sec_to_str(float(j['starttime']))
-            # jobname
-            outputpath = j.get('outputpath')
-            if outputpath:
-                jobname = os.path.basename(outputpath).split('.output')[0]
-                if jobname != j['jobid'].split()[0]:
-                    j['jobname'] = jobname
-            # envs
-            if j['envs'] is None:
-                j.update({'envs':''})
-            else:
-                j['envs'] = ' '.join([str(x) + '=' + str(y) for x, y in j['envs'].iteritems()])
-            # args
-            j['args'] = ' '.join(j['args'])
-            
-            # make the SubmitTime readable by humans
-            j['submittime'] = sec_to_str(float(j['submittime']))
-            
-            j['outputpath'] = outputpath
-            j['errorpath'] = j.get('errorpath')
-            j['user_list'] = ':'.join(j['user_list'])
+    for q in response:
+        if q['maxtime'] is not None:
+            q['maxtime'] = "%02d:%02d:00" % (divmod(int(q['maxtime']), 60))
+        if q['mintime'] is not None:
+            q['mintime'] = "%02d:%02d:00" % (divmod(int(q['mintime']), 60))
 
-        # any header that was not present in the query response has value set to '-'
-        output = [[j.get(x, '-') for x in [y.lower() for y in header]]
-                  for j in response]
+    output = [[q[x] for x in [y.lower() for y in hinfo.header]] for q in response]
 
-    field = opts['sort'] or "score"
-    fields = [f.lower() for f in field.split(":")]
-    lower_case_header = [str(h).lower() for h in header]
-    idxes = []
+    return output
+
+def get_output_for_jobs(parser,hinfo,queues):
+    """
+    get jobs from specified jobids
+    """
+    names              = parser.args if not parser.no_args() else ['*']
+    user_name          = parser.options.user if parser.options.user != None else '*'
+    query_dependencies = {'QueuedTime':
+                              ['SubmitTime','StartTime'],'RunTime':['StartTime'],'TimeRemaining':['WallTime','StartTime']}
+
+    try:
+        query = []
+        for n in names:
+            if n=='*':
+                query.append({'tag':'job', 'jobid':n, 'queue':'*'})
+            elif [q['name'] for q in queues if q['name'] == n]:
+                query.append({'tag':'job', 'queue':n, 'jobid':'*'})
+            else:
+                query.append({'tag':'job', 'jobid':int(n), 'queue':'*'})
+    except ValueError:
+        client_utils.logger.error("%s is not a valid jobid or queue name" % n)
+        sys.exit(1)
+    for q in query:
+        for h in hinfo.long_header:
+            if h == 'JobName':
+                q.update({'jobname':'*'})
+            elif h not in ['JobID', 'Queue']:
+                q.update({h.lower():'*'})
+            if h in query_dependencies:
+                for x in query_dependencies[h]:
+                    if x not in hinfo.header:
+                        q.update({x.lower():'*'})
+        q["user"] = user_name
+
+    response = client_utils.component_call(QUEMGR, False, 'get_jobs', (query,))
+
+    if not parser.no_args() and not response:
+        sys.exit(1)
+
+    if response:
+        maxjoblen = max([len(str(item.get('jobid'))) for item in response])
+        jobidfmt = "%%%ss" % maxjoblen
+    # calculate derived values
+    for j in response:
+        # walltime
+        walltime_secs = int(j['walltime']) * 60
+        t = int(float(j['walltime']))
+        h = int(math.floor(t/60))
+        t -= (h * 60)
+        j['walltime'] = "%02d:%02d:00" % (h, t)
+        # jobid
+        j['jobid'] = jobidfmt % j['jobid']
+        # location
+        if isinstance(j['location'], types.ListType) and len(j['location']) > 1:
+            j['location'] = client_utils.merge_nodelist(j['location'])
+        elif isinstance(j['location'], types.ListType) and len(j['location']) == 1:
+            j['location'] = j['location'][0]
+        # queuedtime
+        if j.get('starttime') in ('-1', 'BUG', 'N/A', None):
+            j['queuedtime'] = client_utils.get_elapsed_time(float(j.get('submittime')), time.time())
+        else:
+            j['queuedtime'] = client_utils.get_elapsed_time(float(j.get('submittime')), float(j['starttime']))
+        # runtime
+        if j.get('starttime') in ('-1', 'BUG', 'N/A', None):
+            j['runtime'] = 'N/A'
+        else:
+            currtime = time.time()
+            j['runtime'] = client_utils.get_elapsed_time( float(j['starttime']), time.time())
+        # starttime
+        if j.get('starttime') in ('-1', 'BUG', None):
+            j['starttime'] = 'N/A'
+        else:
+            orig_starttime = float(j['starttime'])
+            j['starttime'] = client_utils.sec_to_str(float(j['starttime']))
+        # timeremaining
+        if j.get('starttime') in ['-1', 'BUG', 'N/A' ,None]:
+            j['timeremaining'] = 'N/A'
+        else:
+            time_remaining = walltime_secs - (currtime - orig_starttime)
+            if time_remaining < 0:
+                j['timeremaining'] = '00:00:00'
+            else:
+                s = int(time_remaining) % 60
+                m = (int(time_remaining) % 3600) / 60
+                h = int(time_remaining) / 3600
+                j['timeremaining'] = "%02d:%02d:%02d" % (h, m, s)
+        # jobname
+        outputpath = j.get('outputpath')
+        jobname    = j.get('jobname')
+        # envs
+        if j['envs'] is None:
+            j.update({'envs':''})
+        else:
+            j['envs'] = ' '.join([str(x) + '=' + str(y) for x, y in j['envs'].iteritems()])
+        # args
+        j['args'] = ' '.join(j['args'])
+
+        # make the SubmitTime readable by humans
+        j['submittime'] = client_utils.sec_to_str(float(j['submittime']))
+
+        j['outputpath'] = outputpath
+        j['errorpath'] = j.get('errorpath')
+        j['user_list'] = ':'.join(j['user_list'])
+
+        if j['geometry'] != None:
+            j['geometry'] = "x".join([str(i) for i in j['geometry']])
+        else:
+            j['geometry'] = 'Any'
+    # any header that was not present in the query response has value set to '-'
+    output = [[j.get(x, '-') for x in [y.lower() for y in hinfo.header]]
+              for j in response]
+
+    return output
+
+def process_the_output(output,parser,hinfo):
+    """
+    process the qstat output
+    """
+    fields            = ['score'] if parser.options.sort == None else [f.lower() for f in parser.options.sort]
+    lower_case_header = [str(h).lower() for h in hinfo.header]
+    idxes             = []
+    
     for f in fields:
         try:
             idx = lower_case_header.index(f)
             idxes.append(idx)
-        except ValueError:
+        except:
             pass
     if not idxes:
         idxes.append(0)
@@ -286,25 +219,74 @@ if __name__ == '__main__':
                 continue
             else:
                 return val
-    
+
         return 0
-    
+
     output.sort(_my_cmp)
-    
-    if opts['reverse']:
+
+    if parser.options.reverse != None:
         output.reverse()
     
     if "short_state" in lower_case_header:
         idx = lower_case_header.index("short_state")
-        header[idx] = "S"
-    
+        hinfo.header[idx] = "S"
+
     if "score" in lower_case_header:
         idx = lower_case_header.index("score")
         for line in output:
             line[idx] = human_format(float(line[idx]))
-        
-    
-    if opts['long']:
-        Cobalt.Util.print_vertical([tuple(x) for x in [header] + output])
+
+    if parser.options.long != None:
+        client_utils.print_vertical([tuple(x) for x in [hinfo.header] + output])
     else:
-        Cobalt.Util.print_tabular([tuple(x) for x in [header] + output])
+        client_utils.print_tabular([tuple(x) for x in [hinfo.header] + output])
+
+
+def main():
+    """
+    qstat main
+    """
+    # setup logging for client. The clients should call this before doing anything else.
+    client_utils.setup_logging(logging.INFO)
+
+    delim = ':'
+
+    # list of callback with its arguments
+    callbacks = [
+        # <cb function>     <cb args (tuple) >
+        ( cb_debug        , () ),
+        ( cb_split        , (delim,) ) ]
+
+    # Get the version information
+    opt_def =  __doc__.replace('__revision__',__revision__)
+    opt_def =  opt_def.replace('__version__',__version__)
+
+    parser = ArgParse(opt_def,callbacks)
+    parser.parse_it() # parse the command line
+
+    # Get the header instance 
+    hinfo = client_utils.header_info(parser)
+
+    # Get the queues for job ids
+    queues = client_utils.component_call(QUEMGR, True, 'get_queues', ([{'name':'*','state':'*'}],))
+
+    #  if Q option specified then get the info for the specified queues 
+    if parser.options.Q != None:
+
+        output = get_output_for_queues(parser,hinfo)
+
+    else:
+
+        # build query from long_header (all fields) and fetch response        
+        output = get_output_for_jobs(parser,hinfo,queues)
+
+    process_the_output(output,parser,hinfo)
+            
+if __name__ == '__main__':
+    try:
+        main()
+    except SystemExit:
+        raise
+    except Exception, e:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", e)
+        sys.exit(1)

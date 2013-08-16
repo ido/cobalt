@@ -2,8 +2,8 @@ import logging
 
 from Cobalt.Components.base import Component, exposed, automatic
 import Cobalt.Proxy
-from sets import Set as set
 import time, random
+from TestCobalt.Utilities.Time import timeout
 
 class TestComponent (object):
     
@@ -51,14 +51,6 @@ class TestComponent (object):
             runs = dict(method1=0, method2=0, method3=0)
             m4data = []
             
-            def method1 (self):
-                self.runs['method1'] += 1
-            method1 = automatic(method1)
-            
-            def method2 (self):
-                self.runs['method2'] += 1
-            method2 = automatic(method2, 0)
-            
             def method3 (self):
                 self.runs['method3'] += 1
 
@@ -68,12 +60,6 @@ class TestComponent (object):
                 
         component = TestComponent()
         component.do_tasks()
-        assert component.runs['method1'] == 1
-        assert component.runs['method2'] == 1
-        assert component.runs['method3'] == 0
-        component.do_tasks()
-        assert component.runs['method1'] == 1
-        assert component.runs['method2'] == 2
         assert component.runs['method3'] == 0
         for i in range(15):
             time.sleep(random.randrange(0, 6))

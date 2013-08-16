@@ -4,11 +4,11 @@ from distutils.core import setup
 from glob import glob
 
 setup(name="Cobalt",
-      version="0.99.0pre12",
+      version="$Version$",
       description="Cobalt Resource Manager",
       author="Cobalt Team",
       author_email="cobalt@mcs.anl.gov",
-      packages=["Cobalt", "Cobalt.Components", "Cobalt.DataTypes"],
+      packages=["Cobalt", "Cobalt.Components", "Cobalt.DataTypes", "Cobalt.Components.DBWriter"],
       package_dir = {'Cobalt': 'src/lib'},
       scripts = glob('src/clients/*.py') + glob('src/clients/POSIX/*.py') \
       + glob('src/components/*.py'),

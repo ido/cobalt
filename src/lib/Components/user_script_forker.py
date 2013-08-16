@@ -1,23 +1,84 @@
 import logging
 import os
 import pwd
-import subprocess
 import tempfile
+import signal
+
+import Cobalt
 import Cobalt.Components.pg_forker
-PGPreexec = Cobalt.Components.pg_forker.PGPreexec
+PGChild = Cobalt.Components.pg_forker.PGChild
 PGForker = Cobalt.Components.pg_forker.PGForker
 import Cobalt.Util
+exposed = Cobalt.Components.base.exposed
 convert_argv_to_quoted_command_string = Cobalt.Util.convert_argv_to_quoted_command_string
 
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__.split('.')[-1])
 
 
-class UserScriptPreexec(PGPreexec):
-    def __init__(self, child, cmd_str, env):
-        PGPreexec.__init__(self, child, cmd_str, env)
+class UserScriptChild (PGChild):
+    def __init__(self, id = None, **kwargs):
+        PGChild.__init__(self, id=id, **kwargs)
 
-    def do_first(self):
-        PGPreexec.do_first(self)
+        try:
+            self.bg_partition = self.pg.location[0]
+        except IndexError:
+            _logger.error("%s: no partition was specified", self.label)
+            raise
+
+        data = kwargs['data']
+        if data.has_key('nodect'):
+            self.pg.nodect = data['nodect']
+        else:
+            self.pg.nodect = self.pg.size
+
+    def __getstate__(self):
+        state = {}
+        state.update(PGChild.__getstate__(self))
+        return state
+
+    def __setstate__(self, state):
+        PGChild.__setstate__(self, state)
+
+    def preexec_first(self):
+        PGChild.preexec_first(self)
+
+        try:
+            user_info = pwd.getpwnam(self.pg.user)
+            shell = user_info.pw_shell
+            homedir = user_info.pw_dir
+        except:
+            _logger.error("%s: unable to obtain account information for user %s", self.label, self.pg.user)
+            self.print_clf_error("unable to obtain account information for user %s", self.pg.user)
+            raise
+
+        if not self.cwd:
+            self.cwd = homedir
+
+        self.env = {}
+        self.env.update(self.pg.env)
+        self.env['HOME'] = homedir
+        self.env['USER'] = self.pg.user
+        self.env['LOGNAME'] = self.pg.user
+        self.env['SHELL'] = shell
+        self.env["COBALT_PARTNAME"] = self.bg_partition
+        self.env["COBALT_PARTSIZE"] = str(self.pg.nodect)
+        self.env["COBALT_JOBSIZE"] = str(self.pg.size)
+        if os.environ.has_key('COBALT_CONFIG_FILES'):
+            self.env['COBALT_CONFIG_FILES'] = os.environ['COBALT_CONFIG_FILES']
+        if os.environ.has_key('COBALT_SOURCE_DIR'):
+            self.env['COBALT_SOURCE_DIR'] = os.environ['COBALT_SOURCE_DIR']
+        if os.environ.has_key('COBALT_RUNTIME_DIR'):
+            self.env['COBALT_RUNTIME_DIR'] = os.environ['COBALT_RUNTIME_DIR']
+
+        if self.pg.subblock == True:
+            self.env["COBALT_SUBBLOCK"] = str(self.pg.subblock)
+            self.env["COBALT_PARTNAME"] = self.pg.subblock_parent
+            self.env["COBALT_CORNER"] = self.pg.corner
+            self.env["COBALT_SHAPE"] = "x".join([str(ext) for ext in self.pg.extents])
+
+            #TODO: Have to add better env variables to describe what you're getting shape-wise
+            # This is a must-do for Mira
+
 
         # create a nodefile in /tmp
         try:
@@ -29,15 +90,29 @@ class UserScriptPreexec(PGPreexec):
         except:
             _logger.error("%s: unable to create node file", self.label, exc_info=True)
 
-    def do_last(self):
-        PGPreexec.do_last(self)
+        # One last bit of mangling to prevent premature splitting of args
+        # quote the argument strings so the shell doesn't eat them.
+        self.cmd_string = convert_argv_to_quoted_command_string(self.args)
+        self.exe = shell
+        self.args = ["-", "-c", "exec " + self.cmd_string]
+
+    def preexec_last(self):
+        PGChild.preexec_last(self)
+
+    def signal(self, signum, pg=True):
+        PGChild.signal(self, signum, pg)
+
 
 
 class UserScriptForker (PGForker):
     """Component for starting script jobs"""
-    
-    name = "user_script_forker"
-    # implementation = "generic"
+
+    name = __name__.split('.')[-1]
+    implementation = name
+
+    child_cls = UserScriptChild
+
+    logger = _logger
 
     def __init__ (self, *args, **kwargs):
         """Initialize a new user script forker.
@@ -52,59 +127,27 @@ class UserScriptForker (PGForker):
     def __setstate__(self, state):
         PGForker.__setstate__(self, state)
 
-    def _fork(self, child, data):
-        PGForker._fork(self, child, data)
-        pg = child.pg
-        if data.has_key('nodect'):
-            pg.nodect = data['nodect']
-        else:
-            pg.nodect = pg.size
+    def signal(self, child_id, signame):
+        """
+        Signal a child process.
+        
+        Arguments:
+        child_id -- id of the child to signal
+        signame -- signal name
+        """
+
+        _logger.debug("Using overridden signal method.")
+
+        if not self.children.has_key(child_id):
+            _logger.error("Child %s: child not found; unable to signal", child_id)
+            return
 
         try:
-            user_info = pwd.getpwnam(pg.user)
-            shell = user_info.pw_shell
-            homedir = user_info.pw_dir
-        except:
-            _logger.error("%s: unable to obtain information about user %s", child.label, pg.user)
+            signum = getattr(signal, signame)
+        except AttributeError:
+            _logger.error("%s: %s is not a valid signal name; child not signaled", child.label, signame)
             raise
 
-        if pg.cwd:
-            cwd = pg.cwd
-        else:
-            cwd = homedir
+        super(UserScriptChild, self.children[child_id]).signal(signum, pg=True)
 
-        postfork_env = {}
-        postfork_env.update(pg.env)
-        postfork_env['HOME'] = homedir
-        postfork_env['USER'] = pg.user
-        postfork_env["COBALT_PARTNAME"] = pg.partition
-        postfork_env["COBALT_PARTSIZE"] = str(pg.nodect)
-        postfork_env["COBALT_JOBSIZE"] = str(pg.size)
-        # add the cobalt env vars last so as overwrite any value provided by the user
-        self._add_cobalt_env_vars(child, postfork_env)
-
-        # One last bit of mangling to prevent premature splitting of args
-        # quote the argument strings so the shell doesn't eat them.
-        cmd_str = convert_argv_to_quoted_command_string([child.cmd] + child.args)
-
-        try:
-            preexec_fn = UserScriptPreexec(child, cmd_str, postfork_env)
-        except:
-            _logger.error("%s: instantiation of preexec class failed; aborting execution")
-            raise
-
-        try:
-            child.proc = subprocess.Popen(["-", "-c", cmd_str], executable=shell, cwd=cwd, preexec_fn=preexec_fn, env=postfork_env)
-            child.pid = child.proc.pid
-            _logger.info("%s: forked with pid %s", child.label, child.pid)
-        except OSError as e:
-            _logger.error("%s: failed to execute with a code of %s: %s", child.label, e.errno, e)
-        except ValueError:
-            _logger.error("%s: failed to run due to bad arguments.", child.label)
-        except Exception as e:
-            _logger.error("%s: failed due to an unexpected exception: %s", child.label, e)
-            _logger.debug("%s: Parent Traceback:", child.label, exc_info=True)
-            if e.__dict__.has_key('child_traceback'):
-                _logger.debug("%s: Child Traceback:\n %s", child.label, e.child_traceback)
-            #It may be valuable to get the child traceback for debugging.
-            raise
+    signal = exposed(signal) 

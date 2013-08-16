@@ -1,0 +1,39 @@
+.TH "nodesadm" 8
+.SH "NAME"
+
+nodeadm is the administrative interface for cluster systems.
+
+.SH "SYNOPSIS"
+.B nodeadm [-l] [--down part1 part2] [--up part1 part2]
+
+.SH "DESCRIPTION"
+.TP
+Allows one to mark resource as being down, or back up if there are schedulable again and it handles queue-resource associations.
+
+.SH "OPTIONS"
+
+.TP
+.B \-d \-\-debug
+Turn on communication debugging.
+.TP
+.B \-h \-\-help
+Displays the usage and a brief descriptions of the options
+.TP
+.B \-\-version
+Displays client revision and Cobalt version
+.TP
+.B \-\-down
+mark nodes as down
+.TP
+.B \-\-up
+mark nodes as up (even if allocated)
+.TP
+.B \-\-queue
+set queue associations
+.TP
+.B \-l \-\-list'
+list node states
+
+.SH "SEE ALSO"
+.BR nodelist(1)
+.SH "BUGS"

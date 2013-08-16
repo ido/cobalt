@@ -2,20 +2,29 @@
 .SH "NAME"
 showres \- show all reservations
 .SH "SYNOPSIS"
-.B showres [--version] [-d] [-l]
+.B showres [options]
 .SH "DESCRIPTION"
 .TP
 This program lists all reservations.
 .SH OPTIONS
 .TP
-.B \-d
+.B \-d \--debug
 Turn on communication debugging
+.TP
+.B \-h \-\-help
+Displays the usage and a brief descriptions of the options
+.TP
+.B \-\-version
+Displays client revision and Cobalt version
 .TP
 .B \-l
 Display shortened reservation listing
 .TP
-.B \-\-version
-Displays client revision and Cobalt version
+.B \-\-oldts
+Use old timestamp
+.TP
+.B \-x
+Print reservations really verbose
 .SH "SEE ALSO"
 .BR setres(8)
 .BR releaseres(8)

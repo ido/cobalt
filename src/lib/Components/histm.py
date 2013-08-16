@@ -11,8 +11,6 @@ config = ConfigParser.ConfigParser()
 config.read(Cobalt.CONFIG_FILES)
 logger = logging.getLogger('histm')
 
-AP_THRESHOLD_MIN = 0.5
-
 #Ap stands for Adjusting Parameter
 #the predicted walltime = user_estimationn * Ap
 
@@ -51,6 +49,7 @@ class HistoryManager(Component):
         self.jobinfo_file = get_histm_config("jobinfo_file", "jobinfo.hist")
         self.jobinfo_script = get_histm_config("jobinfo_script", "jobinfo.py")
         self.fraction = float(get_histm_config("fraction", 0.8))
+        self.minimum_ap = float(get_histm_config("minimum_ap", 0.5))
         
         self.job_dict = {}   #historical job dictionary
         self.project_set = set([])  #distinct project names of historical jobs
@@ -59,13 +58,18 @@ class HistoryManager(Component):
         
         self.Ap_dict_proj = {}  #dictionary of walltime adjusting parameters by project name
         self.Ap_dict_user = {}  #dictionary of walltime adjusting parameters by user name
-        self.Ap_dict_combined = {} #dictionary of walltime adjusting parameters by double key (user, project)
+        self.Ap_dict_paired = {} #dictionary of walltime adjusting parameters by double key (user, project)
         
         self.update_Ap_Dict()
                 
     def update_job_dict(self):
         '''initialize/update job_dict from jobinfo_file'''
-        input_file = open(self.jobinfo_file, 'r')
+        try:
+            input_file = open(self.jobinfo_file, "r")
+        except IOError:
+            logger.error("History manager: unable to open jobinfo file %s", self.jobinfo_file)
+            return
+                
         for line in input_file:
             line = line.strip('\n')
             jobspec = parse_jobinfo(line)
@@ -96,11 +100,11 @@ class HistoryManager(Component):
                 self.Ap_dict_user[username] = ap
                 
         for keypair in self.pair_set:
-            if not self.Ap_dict_combined.has_key(keypair):
-                ap = self.calculate_Ap_combined(keypair)
+            if not self.Ap_dict_paired.has_key(keypair):
+                ap = self.calculate_Ap_paired(keypair)
                 keystr = "%s:%s" % (keypair[0], keypair[1])
-                self.Ap_dict_combined[keystr] = ap                
-
+                self.Ap_dict_paired[keystr] = ap                
+      
         print "***********Adjusting Parameter Dict Updated***********"
         
     update_Ap_Dict = automatic(update_Ap_Dict, update_interval*3600)
@@ -123,7 +127,7 @@ class HistoryManager(Component):
             Ap = 1
         return Ap
     
-    def calculate_Ap_combined(self, keypair):
+    def calculate_Ap_paired(self, keypair):
         username = keypair[0]
         projectname = keypair[1]
         
@@ -138,15 +142,14 @@ class HistoryManager(Component):
             Ap = Rlist[pos]
         else:
             Ap = 1
-        if Ap < AP_THRESHOLD_MIN:
-            Ap = AP_THRESHOLD_MIN
+        if Ap < self.minimum_ap:
+            Ap = self.minimum_ap
         if Ap > 1:
             Ap = 1
         return Ap
     
     def get_Ap(self, key, val):
         Ap = 1
-        #print "dict=", self.Ap_dict_user
         if key == 'user':
             Ap = self.Ap_dict_user.get(val, 1)
         if key == 'project':
@@ -156,7 +159,7 @@ class HistoryManager(Component):
     
     def get_Ap_by_keypair(self, username, projectname):
         keypair = "%s:%s" % (username, projectname)
-        Ap = self.Ap_dict_combined.get(keypair, 1)
+        Ap = self.Ap_dict_paired.get(keypair, 1)
         return Ap
     get_Ap_by_keypair = exposed(get_Ap_by_keypair)
     
@@ -172,5 +175,3 @@ class HistoryManager(Component):
     def is_alive(self):
         return True
     is_alive = exposed(is_alive)
-
-       

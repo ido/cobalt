@@ -1,7 +1,8 @@
 '''JSON encoding objects for transmitting data to the logging database.'''
-__revision__ = '$Revision: 1 $'
+__revision__ = '$Revision:$'
 
 import datetime
+import time
 import Cobalt.Components
 
 try:
@@ -14,14 +15,18 @@ db2format = '%Y-%m-%d-%H.%M.%S.%f'
 #allow us to dump relevant data to JSON.  
 #let the database importer figure out what to do with the data.
 class ReportObject(object):
-    
-    def __init__(self, exec_user, state, item_type, item):
+    '''note: timestamp is expected to be a UT value (FP is ok) '''
+
+    def __init__(self, exec_user, state, item_type, item, timestamp=None):
+>>>>>>> develop
 
         self.exec_user = exec_user #id of what is causing change None is cobalt
         self.state = state #Current state causing message 
         self.item_type = item_type #the type of item being changed
         self.item = item #this should contain further information to go to db
-        d = datetime.datetime.utcnow()
+        d = datetime.datetime.utcnow() #utc-tuple
+        if timestamp != None:
+            d = datetime.datetime.utcfromtimestamp(timestamp)
         self.timestamp = d.strftime(db2format)
         
         return

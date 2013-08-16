@@ -2,10 +2,19 @@ import os
 import socket
 import threading
 import xmlrpclib
+import ssl
+import ConfigParser
 
 import Cobalt.Server
 from Cobalt.Server import find_intended_location, XMLRPCServer
 from Cobalt.Components.base import Component
+
+cp = ConfigParser.ConfigParser()
+cp.read("testsuite/configs/cobalt.test_server.conf")
+keypath = os.path.expandvars(cp.get('communication', 'key'))
+certpath = os.path.expandvars(cp.get('communication', 'cert'))
+capath = os.path.expandvars(cp.get('communication', 'ca'))
+
 
 c = Component()
 
@@ -92,11 +101,11 @@ class XMLRPCServerTester (object):
         assert self.server.credentials is \
             self.server.RequestHandlerClass.credentials == dict(user="pass")
     
-    def test_secure (self):
-        raise NotImplemented("This test has not been implemented.")
+    #def test_secure (self):
+    #    raise NotImplemented("This test has not been implemented.")
     
-    def test_url (self):
-        raise NotImplemented("This test has not been implemented.")
+    #def test_url (self):
+    #    raise NotImplemented("This test has not been implemented.")
     
     def test_listMethods (self):
         server_thread = threading.Thread(target=self.server.handle_request)
@@ -118,27 +127,27 @@ class TestXMLRPCServer_http (XMLRPCServerTester):
     
     def setup (self):
         XMLRPCServerTester.setup(self)
-        self.server = XMLRPCServer(("localhost", 5900), register=False)
+        self.server = XMLRPCServer(("localhost", 5900), register=False, keyfile=keypath, certfile=certpath, cafile=capath)
         self.server.register_instance(c)
-        self.proxy = xmlrpclib.ServerProxy("http://localhost:5900")
+        self.proxy = xmlrpclib.ServerProxy("https://localhost:5900")
     
     def test_secure (self):
-        assert not self.server.secure
+        assert ssl.PROTOCOL_SSLv23 == self.server.ssl_protocol, self.server.ssl_protocol
     
     def test_url (self):
         hname = socket.gethostname()
-        assert self.server.url == "http://%s:5900" % hname
+        assert self.server.url == "https://%s:5900" % hname, self.server.url
 
 
 class TestXMLRPCServer_http_auth (TestXMLRPCServer_http):
     
     def setup (self):
         XMLRPCServerTester.setup(self)
-        self.server = XMLRPCServer(("localhost", 5900), register=False)
+        self.server = XMLRPCServer(("localhost", 5900), register=False, keyfile=keypath, certfile=certpath, cafile=capath)
         self.server.require_auth = True
         self.server.credentials = dict(user="pass")
         self.server.register_instance(c)
-        self.proxy = xmlrpclib.ServerProxy("http://user:pass@localhost:5900")
+        self.proxy = xmlrpclib.ServerProxy("https://user:pass@localhost:5900")
     
     def test_require_auth (self):
         assert self.server.require_auth == \
@@ -158,28 +167,28 @@ class TestXMLRPCServer_http_auth (TestXMLRPCServer_http):
             self.server.RequestHandlerClass.credentials is None
     
     def test_ping_without_auth (self):
-        self.proxy = xmlrpclib.ServerProxy("http://localhost:5900")
+        self.proxy = xmlrpclib.ServerProxy("https://localhost:5900")
         try:
             self.test_ping()
-        except xmlrpclib.Fault:
+        except:
             pass
         else:
             assert not "Allowed unauthorized access."
     
     def test_ping_unknown_user (self):
-        self.proxy = xmlrpclib.ServerProxy("http://otheruser@localhost:5900")
+        self.proxy = xmlrpclib.ServerProxy("https://otheruser@localhost:5900")
         try:
             self.test_ping()
-        except xmlrpclib.Fault:
+        except:
             pass
         else:
             assert not "Allowed unauthorized access."
     
     def test_ping_wrong_password (self):
-        self.proxy = xmlrpclib.ServerProxy("http://user:wrongpassword@localhost:5900")
+        self.proxy = xmlrpclib.ServerProxy("https://user:wrongpassword@localhost:5900")
         try:
             self.test_ping()
-        except xmlrpclib.Fault:
+        except:
             pass
         else:
             assert not "Allowed unauthorized access."
@@ -190,14 +199,14 @@ class TestXMLRPCServer_https (XMLRPCServerTester):
     
     def setup (self):
         XMLRPCServerTester.setup(self)
-        assert os.path.exists("keyfile") and os.path.exists("certfile")
-        self.server = XMLRPCServer(("localhost", 5900), keyfile="keyfile", certfile="certfile", register=False)
+        assert os.path.exists(keypath) and os.path.exists(certpath)
+        self.server = XMLRPCServer(("localhost", 5900), keyfile=keypath, certfile=certpath, cafile=capath, register=False)
         self.server.register_instance(c)
         self.proxy = xmlrpclib.ServerProxy("https://localhost:5900")
     
     def test_secure (self):
-        assert self.server.secure
+        assert ssl.PROTOCOL_SSLv23 == self.server.ssl_protocol, self.server.ssl_protocol
     
     def test_url (self):
         hname = socket.gethostname()
-        assert self.server.url == "https://%s:5900" % hname
+        assert self.server.url == "https://%s:5900" % hname, self.server.url

@@ -1,0 +1,41 @@
+# Command Line Options and Arguments to test get-bootable-blocks
+# Special Instructions:
+#    1. At the end of the arguments line need to supply test case comment as "# ... <tc:comment here with regex format '\w'>".
+#    2. Test case comment needs to be unique to this file.
+#    3. Before putting the test case comment you need to put the comment character '#'
+#    4. You can add comments by putting the '#' character before any comment.
+#    5. If you only want a new command to be executed then put the tag <NEW_ONLY> after the comment character '#'
+#    6. If the old command and new command have different args for the same effect then
+#       put the old args first then use the separate character '|' and put the new args.
+#       i.e -d -j | -d --job
+
+            # <tc:arg_1>
+arg         # <tc:arg_2>
+
+--size 1024      # <tc:size_1>
+--size 1024 arg  # <tc:size_2>
+
+--geometry 1              arg # <tc:geometry_1>
+--geometry geo            arg # <tc:geometry_2>
+--geometry 90x90x90x90x90 arg # <tc:geometry_3>
+--geometry 90x90x90x90    arg # <tc:geometry_4>
+--geometry -9x90x90x90x2  arg # <tc:geometry_5>
+--geometry 9x10x11x12x2   arg # <tc:geometry_6>
+--geometry 90x90x90x90x1  arg # <tc:geometry_7>
+--geometry 90x90x90x90x2  arg # <tc:geometry_8>
+--geometry 90x90x90x90x3  arg # <tc:geometry_9>
+--geometry 90x90x90x90x11 arg # <tc:geometry_10>
+--geometry 99x99x99x99x2  arg # <tc:geometry_11>
+--geometry 00x00x00x00x2  arg # <tc:geometry_12>
+--geometry 100x00x00x00x2 arg # <tc:geometry_13>
+--geometry 00x100x00x00x2 arg # <tc:geometry_14>
+--geometry 00x00x100x00x2 arg # <tc:geometry_15>
+--geometry 00x00x00x100x2 arg # <tc:geometry_16>
+
+--geometry 00x00x00x00x2 --size 2048 arg # <tc:combo>
+
+--help      # <tc:help_1>
+-h          # <tc:help_2>
+
+--version   # <tc:version>
+--debug     # <tc:debug> <NEW_ONLY>

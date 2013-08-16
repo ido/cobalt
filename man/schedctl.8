@@ -1,0 +1,48 @@
+.TH "schedctl" 8
+.SH "NAME"
+schedctl
+
+.SH "SYNOPSIS"
+.B schedctl [--stop | --start | --status | --reread-policy | --savestate]
+
+.B schedctl [--score | --inherit] jobid1 .. jobidN
+
+.SH "DESCRIPTION"
+.TP
+Commands to control job scheduling.
+
+.SH "OPTIONS"
+.TP
+.B \-d \-\-debug
+Turn on communication debugging.
+.TP
+.B \-h \-\-help
+Displays the usage and a brief descriptions of the options
+.TP
+.B \-\-version
+Displays client revision and Cobalt version
+.TP
+.B \-\-stop
+stop scheduling jobs
+.TP
+.B \-\-start
+resume scheduling jobs
+.TP
+.B \-\-status
+query scheduling status
+.TP
+.B \-\-reread-policy
+reread the utility function definition file
+.TP
+.B \-\-savestate
+write the current state to the specified file
+.TP
+.B \-\-score
+adjust the scores of the jobid arguments
+.TP
+.B \-\-inherit
+control the fraction of the score inherited by jobs which depend on the jobid arguments
+
+.SH "SEE ALSO"
+
+.SH "BUGS"

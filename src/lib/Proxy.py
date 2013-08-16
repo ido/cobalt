@@ -33,13 +33,6 @@ known_servers = dict()
 
 log = logging.getLogger("Proxy")
 
-try:
-    config = SafeConfigParser()
-    config.read(Cobalt.CONFIG_FILES)
-    passwd = config.get('communication', 'password')
-except:
-    passwd = 'default'
-
 class CertificateError(Exception):
     def __init__(self, commonName):
         self.commonName = commonName
@@ -64,7 +57,6 @@ class RetryServerProxy(ServerProxy):
     def __getattr__(self, name):
         #an even more magiv method dispatcher that includes retries.
         return RetryMethod(self._ServerProxy__request, name)
-
 
 class RetryMethod(_Method):
     """Method with error handling and retries built in."""
@@ -219,11 +211,25 @@ class XMLRPCTransport(xmlrpclib.Transport):
         self.timeout = timeout
 
     def make_connection(self, host):
-        host = self.get_host_info(host)[0]
-        http = SSLHTTPConnection(host, key=self.key, cert=self.cert, ca=self.ca,
+        #this is a hack
+        try:
+            #python 2.7
+            self._connection
+        except AttributeError:
+            #python not 2.7
+            host = self.get_host_info(host)[0]
+            http = SSLHTTPConnection(host, key=self.key, cert=self.cert, ca=self.ca,
                                  scns=self.scns, timeout=self.timeout)
-        https = httplib.HTTP()
-        https._setup(http)
+            https = httplib.HTTP()
+            https._setup(http)
+        else:
+            host, self._extra_headers, x509 = self.get_host_info(host)
+            http = SSLHTTPConnection(host, key=self.key, cert=self.cert, ca=self.ca,
+                                 scns=self.scns, timeout=self.timeout)
+            self._connection = host, http
+            https = self._connection[1]
+            https = httplib.HTTP()
+            https._setup(http)
         return https
 
     def request(self, host, handler, request_body, verbose=0):
@@ -286,8 +292,8 @@ def ComponentProxy(component_name, **kwargs):
 
     user = 'root'
     try:
-        #config = SafeConfigParser()
-        #config.read(Cobalt.CONFIG_FILES)
+        config = SafeConfigParser()
+        config.read(Cobalt.CONFIG_FILES)
         passwd = config.get('communication', 'password')
         keypath = os.path.expandvars(config.get('communication', 'key'))
         certpath = os.path.expandvars(config.get('communication', 'cert'))

@@ -1,0 +1,33 @@
+# db2 db name to store cobalt logs in.  Must be the same as specified
+# in cobalt.conf under [cdbwriter]
+
+set DATABASE = "COBALT"
+
+# db2 schema to store cobalt logs in.  Must be the same as specified
+# in cobalt.conf under [cdbwriter]
+
+set COBALT_SCHEMA = "SURVEYOR"
+
+# Tablespace for tables.  Must have a pagesize 8K or greater
+# Set to "" for default tablespace
+
+set TABLESPACE = "USERSPACE1"
+
+# db username with sufficient authority to create tables
+# This should be different than the COBALT_USER
+
+set DB_ADMIN = "dbadmin"
+
+# db username for cobalt process.  Must be the same as specified
+# in cobalt.conf under [cdbwriter]
+
+set COBALT_USER = "cobalt"
+
+# Resulting DDL will include grants to a read only user if desired
+# Set the following to "--" if no R/O support is desired
+
+set RO_SUPPORT = ""
+
+# User name for RO support. Set to "" if no RO support desired
+
+set RO_USER = "queryusr"

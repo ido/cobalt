@@ -1,6 +1,10 @@
 # no one could possibly need more than a million kinds of exceptions?  right?
 fault_code_counter = xrange(1000, 1000000).__iter__()
 
+
+class BridgeCommunicationError (Exception):
+    '''An Error has occurred communicating with a system bridge.'''
+
 class NoExposedMethod (Exception):
     """There is no method exposed with the given name."""
 
@@ -117,5 +121,13 @@ class StateMachineNonexistentEventError (Exception):
     fault_code = fault_code_counter.next()
 
 class ThreadPickledAliveException (Exception):
+    log = True
+    fault_code = fault_code_counter.next()
+
+class ResourceReservationFailure (Exception):
+    '''Denote that we failed to reserve a resource with
+    reserve_resources_until.  No job was run.
+
+    '''
     log = True
     fault_code = fault_code_counter.next()

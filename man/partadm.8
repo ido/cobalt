@@ -1,6 +1,6 @@
 .TH "partadm" 8
 .SH "NAME"
-partadm \- partition administration tool
+partadm 
 .SH "SYNOPSIS"
 .B partadm [-a|-d] part1 part2
 .TP
@@ -10,18 +10,38 @@ partadm \- partition administration tool
 .TP
 .B partadm [--enable|--disable] part1 part2
 .TP
-.B partadm --queue=queue1:queue2 part1 part2
-.TP
-.B partadm --diag=diag_name partition
+.B partadm --queue=queue1:queue2 [--rmq | --appq] part1 part2
 .TP
 .B partadm --fail part1 part2
 .TP
 .B partadm --unfail part1 part2
 .TP
+.B partadm --savestate=<full path to file>
+.TP
 .B partadm --xml
+.TP
+.B partadm --boot-stop
+.TP
+.B partadm --boot-enable
+.TP
+.B partadm --boot-status
 .TP
 .B partadm --version
 .SH "DESCRIPTION"
+partition administration tool
+
+.SH "OPTIONS"
+The following options are available on all BlueGene platforms.
+.TP
+.B \-\-debug
+Turn on communication debugging
+.TP
+.B \-h \-\-help
+Displays the usage and a brief descriptions of the options
+.TP
+.B \-\-version
+Displays client revision and Cobalt version
+
 .TP
 .B \-a
 Add new partitions into the scheduler
@@ -47,12 +67,13 @@ Do not run jobs on this partition(s). (Jobs can run on larger or
 smaller overlapping partitions)
 .TP
 .B \-\-queue
-Set the queue[s] that point to particular partitions.
+Set the queue[s] that point to particular partitions. Use option --rmq to remove queue(s) or --appq to append queue(s)
 .TP
-.B \-\-diag
-Run the named diagnostic on the selected partition.  Valid diagnostics are 
-programs in /usr/lib/cobalt/diags/ which return 0 to indicate no problem was found
-on the partition being tested, and non-zero to indicate an error.
+.B \-\-rmq
+Remove queues specified in \-\-queue from specified partitions.
+.TP
+.B \-\-appq
+Append queues specified in \-\-queue to the specified partitions.
 .TP
 .B \-\-fail
 Manually fail a partition in the same way as a partition that has failed diagnostics.
@@ -60,6 +81,9 @@ Manually fail a partition in the same way as a partition that has failed diagnos
 .B \-\-unfail
 Manually clear the failed state from a partition that has failed diagnostics (or
 has been marked failed by the --fail command).
+.TP
+.B \-\-savestate
+Force the system component to write the statefile to the specified file (full path must be supplied)
 .TP
 .B \-\-xml
 This option is only available when running bgsystem (i.e. not the simulator).
@@ -69,12 +93,61 @@ managed by the running cobalt.  This file is suitable for use with the simulator
 .B \-\-dump
 Dump partition state
 .TP
-.B \-r
+.B \-r \-\-recursive
 Activate recursive mode. All child partitions of all specified
 partitions will be modified (for activate/deactivate/enable/disable/queue/deps/free)
 .TP
-.B \-\-version
-Displays client revision and Cobalt version
+.B \-b \-\-blockinfo
+Print the detailed state and information for all requested blocks.  On BlueGene/Q platforms, this will also accept IO block names.  When submitting names for multiple blocks, compute block names may be mixed with IO block names.
+.TP
+.B \-c \-\-clean_block
+Force the block to cleanup and clear all internal reservations on that resource.
+.SH "BLUE GENE/Q OPTIONS"
+.TP
+.B \-\-boot-stop
+Diable booting of any job.
+.TP
+.B \-\-boot-start
+Enable booting of any job.
+.TP
+.B \-\-boot-status
+Show whether or not booting is enabled.
+.TP
+.B \-i \-\-list_io
+List information on IO blocks.  This may be combined with the
+.B \-l
+flag.
+.TP
+.B \-\-add_io_block
+Add a list of IO blocks to be tracked by the scheduler.
+.TP
+.B \-\-del_io_block
+Remove a list of IO blocks from tracking by the scheduler.
+.TP
+.B \-\-boot_io_block
+Manually boot listed IO blocks.  A target IO block must be managed by Cobalt for
+this command to have an effect on a target block.
+.TP
+.B \-\-free_io_block
+Manually free listed IO blocks.  A target IO block must be managed by Cobalt for
+this command to have an effect on a target block.
+.TP
+.B \-\-set_io_autoboot
+Enable the listed IO blocks to be automatically booted/rebooted by Cobalt
+.TP
+.B \-\-unset_io_autoboot
+Remove the auto reboot flag from the listed IO blocks.
+.TP
+.B \-\-io_autoboot_start
+Set the flag to allow Cobalt to automatically boot IO blocks marked for
+automatic control.
+.TP
+.B \-\-io_autoboot_stop
+Stop Cobalt from automatically booting IO blocks marked for automatic control.
+.TP
+.B \-\-io_autoboot_status
+Query whether or not Cobalt is set to automatically boot IO blocks.
+.TP
 .SH "SEE ALSO"
 .BR partlist(1)
 .SH "BUGS"

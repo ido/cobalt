@@ -16,7 +16,7 @@ import ConfigParser
 import Cobalt
 import Cobalt.Data
 import Cobalt.Util
-from Cobalt.Components.base import exposed, automatic, query, locking
+from Cobalt.Components.base import Component, exposed, automatic, query, locking
 from Cobalt.Exceptions import ProcessGroupCreationError, ComponentLookupError
 from Cobalt.Components.cluster_base_system import ClusterBaseSystem
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
@@ -48,36 +48,41 @@ def get_cluster_system_config(option, default):
 
 
 class ClusterProcessGroup(ProcessGroup):
-    
+
     def __init__(self, spec):
-        ProcessGroup.__init__(self, spec, logger)
+        spec['forker'] = "user_script_forker"
+        ProcessGroup.__init__(self, spec)
         self.nodefile = ""
+        self.label = "%s/%s/%s" %(self.jobid, self.user, self.id)
         self.start()
-        
-    
+
+
     def prefork (self):
         ret = {}
-        
+        ret = ProcessGroup.prefork(self)
+
         sim_mode  = get_cluster_system_config("simulation_mode", 'false').lower() in config_true_values
-        if not sim_mode: 
+        if not sim_mode:
             nodefile_dir = get_cluster_system_config("nodefile_dir", "/var/tmp")
             self.nodefile = os.path.join(nodefile_dir, "cobalt.%s" % self.jobid)
         else:
             self.nodefile = "fake"
-        
+
         try:
+            #This is the head node, return this to the user.
             rank0 = self.location[0].split(":")[0]
         except IndexError:
             raise ProcessGroupCreationError("no location")
 
-        split_args = self.args.split()
+        split_args = self.args
         cmd_args = ('--nf', str(self.nodefile),
                     '--jobid', str(self.jobid),
                     '--cwd', str(self.cwd),
                     '--exe', str(self.executable))
-        
+
         cmd_exe = None
         if sim_mode: 
+            logger.debug("We are setting up with simulation mode.")
             cmd_exe = get_cluster_system_config("simulation_executable", None)
             if None == cmd_exe:
                 logger.critical("Job: %s/%s: Executable for simulator not specified! This job will not run!")
@@ -85,7 +90,7 @@ class ClusterProcessGroup(ProcessGroup):
         else:
             #FIXME: Need to put launcher location into config
             cmd_exe = '/usr/bin/cobalt-launcher.py' 
-        
+
         #run the user script off the login node, and on the compute node
         if (get_cluster_system_config("run_remote", 'true').lower() in config_true_values and
                 not sim_mode):
@@ -94,17 +99,21 @@ class ClusterProcessGroup(ProcessGroup):
             cmd = (cmd_exe,) + cmd_args + tuple(split_args)
 
         ret["cmd" ] = cmd
-        ret["args"] = split_args
-        
+        ret["args"] = cmd[1:]
+        ret["executable"] = cmd[0]
+        self.executable = ret["executable"]
+        self.cmd = ret["cmd"]
+        self.args = list(ret["args"])
+
         return ret
 
-    
+
 
 
 class ClusterSystem (ClusterBaseSystem):
-    
+
     """cluster system component.
-    
+
     Methods:
     configure -- load partitions from the bridge API
     add_process_groups -- add (start) an mpirun process on the system (exposed, ~query)
@@ -113,30 +122,38 @@ class ClusterSystem (ClusterBaseSystem):
     signal_process_groups -- send a signal to the head process of the specified process groups (exposed, query)
     update_partition_state -- update partition state from the bridge API (runs as a thread)
     """
-    
+
     name = "system"
     implementation = "cluster_system"
-    
+
     logger = logger
 
-    
+
     def __init__ (self, *args, **kwargs):
         ClusterBaseSystem.__init__(self, *args, **kwargs)
         self.process_groups.item_cls = ClusterProcessGroup
-        
+
+    def __getstate__(self):
+        state = {}
+        state.update(ClusterBaseSystem.__getstate__(self))
+        # state.update({
+        #         "cluster_system_version": 1 }) 
+        return state
+
     def __setstate__(self, state):
         ClusterBaseSystem.__setstate__(self, state)
         self.process_groups.item_cls = ClusterProcessGroup
-    
+
     def add_process_groups (self, specs):
         """Create a process group.
-        
+
         Arguments:
         spec -- dictionary hash specifying a process group to start
         """
 
         self.logger.info("add_process_groups(%r)", specs)
         process_groups = self.process_groups.q_add(specs)
+
         for pgroup in process_groups:
             self.logger.info("Job %s/%s: process group %s created to track script", 
                     pgroup.user, pgroup.jobid, pgroup.id)
@@ -144,67 +161,98 @@ class ClusterSystem (ClusterBaseSystem):
         #in cluster_base_system.
         for pg in process_groups:
             for location in pg.location:
-                del self.alloc_only_nodes[location]
-
+                try:
+                    del self.alloc_only_nodes[location]
+                except KeyError:
+                    logger.critical("%s already removed from alloc_only_nodes list", location)
         return process_groups
     add_process_groups = exposed(query(add_process_groups))
-    
+
     def get_process_groups (self, specs):
         self._get_exit_status()
         return self.process_groups.q_get(specs)
     get_process_groups = exposed(query(get_process_groups))
-    
-    def _get_exit_status (self):
-        try:
-            running = ComponentProxy("forker").active_list("process group")
-        except:
-            self.logger.error("failed to contact forker component for list of running jobs")
-            return
 
-        for each in self.process_groups.itervalues():
-            if each.head_pid not in running and each.exit_status is None:
-                # FIXME: i bet we should consider a retry thing here -- if we fail enough times, just
-                # assume the process is dead?  or maybe just say there's no exit code the first time it happens?
-                # maybe the second choice is better
-                try:
-                    dead_dict = ComponentProxy("forker").get_status(each.head_pid)
-                except Queue.Empty:
-                    self.logger.error("failed call for get_status from forker component for pg %s", each.head_pid)
-                    return
-                
-                if dead_dict is None:
-                    self.logger.info("Job %s/%s: process group %i: exited with unknown status", each.user, each.jobid, each.id)
-                    each.exit_status = 1234567
+    def _get_exit_status (self):
+        children = {}
+        cleanup = {}
+        for forker in ['user_script_forker']:
+            try:
+                for child in ComponentProxy(forker).get_children("process group", None):
+                    children[(forker, child['id'])] = child
+                    child['pg'] = None
+                cleanup[forker] = []
+            except ComponentLookupError, e:
+                self.logger.error("failed to contact the %s component to obtain a list of children", forker)
+            except:
+                self.logger.error("unexpected exception while getting a list of children from the %s component",
+                    forker, exc_info=True)
+        for pg in self.process_groups.itervalues():
+            if pg.forker in cleanup:
+                clean_partition = False
+                if (pg.forker, pg.head_pid) in children:
+                    child = children[(pg.forker, pg.head_pid)]
+                    child['pg'] = pg
+                    if child['complete']:
+                        if pg.exit_status is None:
+                            pg.exit_status = child["exit_status"]
+                            if child["signum"] == 0:
+                                self.logger.info("%s: job exited with status %s", pg.label, pg.exit_status)
+                            else:
+                                if child["core_dump"]:
+                                    core_dump_str = ", core dumped"
+                                else:
+                                    core_dump_str = ""
+                                self.logger.info("%s: terminated with signal %s%s", pg.label, child["signum"], core_dump_str)
+                        cleanup[pg.forker].append(child['id'])
+                        clean_partition = True
                 else:
-                    each.exit_status = dead_dict["exit_status"]
-                    if dead_dict["signum"] == 0:
-                        self.logger.info("process group %i: job %s/%s exited with status %i", 
-                            each.id, each.jobid, each.user, each.exit_status)
-                    else:
-                        if dead_dict["core_dump"]:
-                            core_dump_str = ", core dumped"
-                        else:
-                            core_dump_str = ""
-                        self.logger.info("process group %i: job %s/%s terminated with signal %s%s", 
-                            each.id, each.jobid, each.user, dead_dict["signum"], core_dump_str)
-    
-    _get_exit_status = automatic(_get_exit_status)
-    
+                    if pg.exit_status is None:
+                        # the forker has lost the child for our process group
+                        self.logger.info("%s: job exited with unknown status", pg.label)
+                        # FIXME: should we use a negative number instead to indicate internal errors? --brt
+                        pg.exit_status = 1234567
+                        clean_partition = True
+                if clean_partition:
+                    pass
+                    #self.reserve_resources_until(pg.location, None, pg.jobid)
+                    #self._mark_partition_for_cleaning(pg.location[0], pg.jobid)
+
+        # check for children that no longer have a process group associated 
+        # with them and add them to the cleanup list.  This might have 
+        # happpened if a previous cleanup attempt failed and the process group
+        # has already been waited upon
+        for forker, child_id in children.keys():
+            if children[(forker, child_id)]['pg'] is None:
+                cleanup[forker].append(child['id'])
+
+        # cleanup any children that have completed and been processed
+        for forker in cleanup.keys():
+            if len(cleanup[forker]) > 0:
+                try:
+                    ComponentProxy(forker).cleanup_children(cleanup[forker])
+                except ComponentLookupError:
+                    self.logger.error("failed to contact the %s component to cleanup children", forker)
+                except:
+                    self.logger.error("unexpected exception while requesting that the %s component perform cleanup",
+                        forker, exc_info=True)
+    _get_exit_status = automatic(_get_exit_status, 
+            float(get_cluster_system_config('get_exit_status_interval', 10)))
+
     def wait_process_groups (self, specs):
         self._get_exit_status()
         process_groups = [pg for pg in self.process_groups.q_get(specs) if pg.exit_status is not None]
         for process_group in process_groups:
-            self.clean_nodes(pg.location, pg.user, pg.jobid) #FIXME: This call is a good place to look for problems
+            self.clean_nodes(process_group.location, process_group.user, process_group.jobid) 
         return process_groups
     wait_process_groups = locking(exposed(query(wait_process_groups)))
-   
-     
+
     def signal_process_groups (self, specs, signame="SIGINT"):
         my_process_groups = self.process_groups.q_get(specs)
         for pg in my_process_groups:
             if pg.exit_status is None:
                 try:
-                    ComponentProxy("forker").signal(pg.head_pid, signame)
+                    ComponentProxy(pg.forker).signal(pg.head_pid, signame)
                 except:
                     self.logger.error("Failed to communicate with forker when signalling job")
 
@@ -217,12 +265,9 @@ class ClusterSystem (ClusterBaseSystem):
            jobid -- jobid associated with the process group we are removing
 
         '''
-
         del_items = self.process_groups.q_del([{'jobid':jobid}])
-        
-
         if del_items == []:
             self.logger.warning("Job %s: Process group not found for this jobid.", jobid)
         else:
             self.logger.info("Job %s: Process group deleted.", jobid)
-
+            return

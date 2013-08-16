@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-'''Cobalt Queue Simulator (for Blue Gene systems) library'''
+'''Cobalt Queue Simulator (for cluster systems) library'''
 
 import ConfigParser
 import copy

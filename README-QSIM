@@ -1,0 +1,72 @@
+Qsim is a event-driven jobs scheduling simulator being part of the Cobalt resource mananger.
+It contains several files specific for simulation while using most of the code directly from Cobalt.
+The simulation specific parts including event-mananger, queue-simulators, and system simulator, etc.
+
+Usage: qsim.py [options]
+
+Options:
+  -h, --help            show this help message and exit
+  -j BGJOB, --job=BGJOB
+                        file name of the job trace (when scheduling for bg
+                        system only)
+  -c CJOB, --cjob=CJOB  file name of the job trace from the cluster system
+  -p CONFIG_FILE, --partition=CONFIG_FILE
+                        file name of the partition configuration of the Blue
+                        Gene system
+  -o OUTPUTLOG, --output=OUTPUTLOG
+                        featuring string for output log
+  -i SLEEP_INTERVAL, --interval=SLEEP_INTERVAL
+                        seconds to wait at each event when printing screens
+  -F BG_FRACTION, --bg_frac=BG_FRACTION
+                        parameter to adjust bg workload. All the interval
+                        between job arrivals will be multiplied with the
+                        parameter
+  -f CLUSTER_FRACTION, --cluster_frac=CLUSTER_FRACTION
+                        parameter to adjust cluster workload. All the interval
+                        between job arrivals will be multiplied with the
+                        parameter
+  -S BG_TRACE_START, --Start=BG_TRACE_START
+                        bg job submission times (in job trace) should be after
+                        12.01am on this date.        By default it equals to
+                        the first job submission time in job trace 'bgjob'
+  -E BG_TRACE_END, --End=BG_TRACE_END
+                        bg job submission time (in job trace) should be prior
+                        to 12.01am on this date.  By default it equals
+                        to the last job submission time in job trace 'bgjob'                                           
+  -s C_TRACE_START, --start=C_TRACE_START
+                        cluster job submission times (in job trace) should be
+                        after 12.01am on this date.         By default it
+                        equals to the first job submission time in job trace
+                        'cjob'
+  -e C_TRACE_END, --end=C_TRACE_END
+                        cluster job submission time (in job trace) should be
+                        prior to 12.01am on this date         By default it
+                        equals to the last job submission time in job trace
+                        'cjob'
+  -A ANCHOR, --Anchor=ANCHOR
+                        the virtual start date of simulation for bqsim. If not
+                        specified, it is same as bg_trace_start
+  -a ANCHOR, --anchor=ANCHOR
+                        the virtual start date of simulation for bqsim. If not
+                        specified, it is same as c_trace_start
+  -P PREDICT, --prediction=PREDICT
+                        [xyz] x,y,z=0|1. x,y,z==1 means to use walltime
+                        prediction for (x:queuing / y:backfilling / z:running)
+                        jobs
+  -W WASS, --walltimeaware=WASS
+                        [cons | aggr | both] specify the walltime aware
+                        spatial scheduling scheme: cons=conservative scheme,
+                        aggr=aggressive scheme, both=cons+aggr
+  -C COSCHEDULING, --coscheduling=COSCHEDULING
+                        [x y] (x,y=hold | yield). specify the coscheduling
+                        scheme: 'hold' or 'yield' resource if mate job can not
+                        run. x for bqsim, y for cqsim.
+  -v VICINITY, --vicinity=VICINITY
+                        Threshold to determine mate jobs in coscheduling.
+                        Two jobs can be considered mated only if their
+                        submission time difference is smaller than 'vicinity'
+  -r MATE_RATIO, --ratio=MATE_RATIO
+                        Specifies the ratio of number mate jobs to number
+                        total jobs. Used in the case two job traces have the
+                        same number of total jobs.
+  -b, --batch           enable batch execution model, do not print screen

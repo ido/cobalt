@@ -34,32 +34,47 @@ class TestAccounting (object):
         accounting.datetime = datetime
     
     def test_log (self):
-        log_entry = accounting.log("A", 123,
+        log_entry = accounting.entry("A", 123,
             {'val1':1, 'val2':"foo", 'val3':"bar baz"})
         assert log_entry == \
-            "01/01/2000 00:00:00;A;123;val3=\"bar baz\" val2=foo val1=1", \
+            "01/01/2000 00:00:00;A;123;val1=1 val2=foo val3=\"bar baz\"", \
             log_entry
     
     def test_job_abort (self):
         job = Job({'jobid':123})
-        log_entry = accounting.job_abort(job)
+        log_entry = accounting.abort(job.jobid)
         assert log_entry == \
             "01/01/2000 00:00:00;A;123;", log_entry
     
     def test_job_checkpoint (self):
         job = Job({'jobid':123})
-        log_entry = accounting.job_checkpoint(job)
+        log_entry = accounting.checkpoint(job.jobid)
         assert log_entry == \
             "01/01/2000 00:00:00;C;123;", log_entry
     
     def test_job_delete (self):
         job = Job({'jobid':123})
-        log_entry = accounting.job_delete(job, "me@mydomain.net")
+        log_entry = accounting.delete(job.jobid, "me@mydomain.net")
         assert log_entry == \
             "01/01/2000 00:00:00;D;123;requester=me@mydomain.net", log_entry
     
     def test_job_end (self):
         job = Job({'jobid':123})
-        log_entry = accounting.job_end(job)
-        assert False, log_entry
+        #group and session are unknown
+        log_entry = accounting.end(job.jobid, job.user,
+            "unknown", job.jobname, job.queue,
+            job.outputdir, job.command, job.args, job.mode,
+            0.1, 0.2, 0.3, -1.0, None,
+            {'ncpus':job.procs, 'nodect':job.nodes,
+             'walltime':str(job.walltime * 60)},
+            "unknown", -2.0, 255,
+            {'location':"ANL",
+             'nodect':job.nodes,
+             'walltime':"0.0"})
+        
+        #accounting.end(job.jobid, job.user, job.group,
+        #        job.name, job.queue, job.cwd, job.cmd, job.args, job.mode
+        #        job.)
+        assert log_entry == \
+                "01/01/2000 00:00:00;E;123;Exit_status=255 Resource_List.ncpus=None Resource_List.nodect=None Resource_List.walltime=0 args= ctime=0.1 cwd=None end=-2.0 etime=0.3 exe=None exec_host=None group=unknown jobname=N/A mode=co priority_core_hours=0 qtime=0.2 queue=default resources_used.location=ANL resources_used.nodect=None resources_used.walltime=0.0 session=unknown start=-1.0 user=None", log_entry
 

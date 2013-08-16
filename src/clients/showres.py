@@ -1,18 +1,32 @@
 #!/usr/bin/env python
-'''Display reservations'''
+"""
+Cobalt showres command
+
+Usage: showres [-l] [-x] [--oldts] [--version]
+version: "%prog " + __revision__ + , Cobalt  + __version__
+
+OPTIONS DEFINITIONS:
+
+'-d','--debug',dest='debug',help='turn on communication debugging',callback=cb_debug
+'-l',dest='verbose',action='store_true',help='print reservation list verbose'
+'--oldts',dest='oldts',action='store_true',help='use old timestamp'
+'-x',dest='really_verbose',action='store_true',help='print reservations really verbose'
+
+"""
+import logging
+import math
+import sys
+import time
+from Cobalt import client_utils
+from Cobalt.client_utils import cb_debug
+
+from Cobalt.arg_parser import ArgParse
+
 __revision__ = '$Revision: 2154 $'
 __version__ = '$Version$'
 
-import sys, time
-import math
-import optparse
-import Cobalt.Logging, Cobalt.Util
-from Cobalt.Proxy import ComponentProxy
-from Cobalt.Exceptions import ComponentLookupError
-from Cobalt.Util import sec_to_str
-
-
-__helpmsg__ = "Usage: showres [-l] [-x] [--oldts] [--version]"
+SYSMGR = client_utils.SYSMGR
+SCHMGR = client_utils.SCHMGR
 
 def mergelist(location_string, cluster):
     if not cluster:
@@ -20,64 +34,77 @@ def mergelist(location_string, cluster):
 
     locations = location_string.split(":")
 
-    return Cobalt.Util.merge_nodelist(locations)
+    return client_utils.merge_nodelist(locations)
 
-#def parse_options()
-#    p = optparse.OptionParser()
-#    p.add_option("-l", "--long", action="store_true", default=False
-#            dest="long", help="shows long display")
-#    p.add_option(None, "--version" action="store_true", default=False,
-#            dest="version", help="Prints version information")
-#    p.add_option(None, 
+def main():
+    """
+    showres main
+    """
+    # setup logging for client. The clients should call this before doing anything else.
+    client_utils.setup_logging(logging.INFO)
 
+    # list of callback with its arguments
+    callbacks = [
+        # <cb function>     <cb args>
+        [ cb_debug        , () ] ]
 
-if __name__ == '__main__':
-    if '--version' in sys.argv:
-        print "showres %s" % __revision__
-        print "cobalt %s" % __version__
-        raise SystemExit, 0
-    Cobalt.Logging.setup_logging('showres', to_syslog=False, level=20)
-    try:
-        scheduler = ComponentProxy("scheduler", defer=False)
-    except ComponentLookupError:
-        print "Failed to connect to scheduler"
-        raise SystemExit, 1
-    cluster = False
-    try:
-        if "cluster" in ComponentProxy("system", defer=False).get_implementation():
-            cluster = True
-    except ComponentLookupError:
-        print "Failed to connect to system component"
-        raise SystemExit, 1
+    # Get the version information
+    opt_def =  __doc__.replace('__revision__',__revision__)
+    opt_def =  opt_def.replace('__version__',__version__)
 
-    reservations = scheduler.get_reservations([{'name':'*', 'users':'*', 
-        'start':'*', 'duration':'*', 'partitions':'*', 'cycle': '*', 
-        'queue': '*', 'res_id': '*', 'cycle_id': '*', 
-        'project':'*'}])
-    output = []
- 
-    verbose = False
-    really_verbose = False
-    header = [('Reservation', 'Queue', 'User', 'Start', 'Duration', 
-        'Partitions')]
+    parser = ArgParse(opt_def,callbacks)
+
+    parser.parse_it() # parse the command line
+
+    if not parser.no_args():
+        client_utils.logger.error("No arguments needed")
     
-    if '-l' in sys.argv:
+    if parser.options.verbose != None and parser.options.really_verbose != None:
+        client_utils.logger.error('Only use -l or -x not both')
+        sys.exit(1)
+
+    cluster = False
+    if 'cluster' in client_utils.component_call(SYSMGR, False, 'get_implementation', ()):
+        cluster = True
+
+    reservations = client_utils.component_call(SCHMGR, False, 'get_reservations', 
+                                               ([{'name':'*', 'users':'*','start':'*', 'duration':'*', 'partitions':'*', 
+                                                  'cycle': '*', 'queue': '*', 'res_id': '*', 'cycle_id': '*','project':'*', 
+                                                  'block_passthrough':'*'}], ))
+
+    output = []
+
+    verbose        = False
+    really_verbose = False
+    header = [('Reservation', 'Queue', 'User', 'Start', 'Duration','Passthrough', 'Partitions', 'Time Remaining')]
+
+    if parser.options.verbose:
         verbose = True
-        header = [('Reservation', 'Queue', 'User', 'Start', 'Duration', 
-            'End Time', 'Cycle Time', 'Partitions')]
-    if '-x' in sys.argv:
+        header = [('Reservation', 'Queue', 'User', 'Start', 'Duration',
+                   'End Time', 'Cycle Time', 'Passthrough', 'Partitions', 'Time Remaining')]
+    elif parser.options.really_verbose:
         really_verbose = True
-        header = [('Reservation', 'Queue', 'User', 'Start', 'Duration', 
-            'End Time', 'Cycle Time', 'Partitions', 'Project', 'ResID', 'CycleID')]
+        header = [('Reservation', 'Queue', 'User', 'Start', 'Duration','End Time', 'Cycle Time','Passthrough','Partitions', 
+                   'Project', 'ResID', 'CycleID', 'Time Remaining' )]
 
     for res in reservations:
-        start = float(res['start'])
-        duration = float(res['duration'])
+
+        passthrough = "Allowed"
+        if res['block_passthrough']:
+            passthrough = "Blocked"
+
+        start     = float(res['start'])
+        duration  = float(res['duration'])
+        now       = time.time()
+
+        deltatime = now - start
+        timeleft = "Not Started" if deltatime < 0.0 else client_utils.get_elapsed_time(deltatime, duration)
+        timeleft = "00:00:00" if '-' in timeleft else timeleft
+
         # do some crazy stuff to make reservations which cycle display the 
         # "next" start time
         if res['cycle']:
             cycle = float(res['cycle'])
-            now = time.time()
             periods = math.floor((now - start)/cycle)
             # reservations can't become active until they pass the start time 
             # -- so negative periods aren't allowed
@@ -104,37 +131,42 @@ if __name__ == '__main__':
         dmin = (duration/60)%60
         dhour = duration/3600
 
-       
         time_fmt = "%c"
         starttime = time.strftime(time_fmt, time.localtime(start))
-        endtime = time.strftime(time_fmt, time.localtime(start + duration)) 
+        endtime   = time.strftime(time_fmt, time.localtime(start + duration)) 
 
-        if not ('--oldts' in sys.argv):
+        if parser.options.oldts == None:
             #time_fmt += " %z (%Z)"
-            starttime = sec_to_str(start)
-            endtime = sec_to_str(start + duration)
-    
+            starttime = client_utils.sec_to_str(start)
+            endtime = client_utils.sec_to_str(start + duration)
 
         if really_verbose:
             output.append((res['name'], res['queue'], res['users'], 
-                starttime,
-                "%02d:%02d" % (dhour, dmin),
-                endtime, cycle, 
-                mergelist(res['partitions'], cluster), res['project'],
-                res['res_id'], res['cycle_id']))
+                           starttime,"%02d:%02d" % (dhour, dmin),
+                           endtime, cycle, passthrough,
+                           mergelist(res['partitions'], cluster), 
+                           res['project'], res['res_id'], res['cycle_id'], timeleft))
         elif verbose:
             output.append((res['name'], res['queue'], res['users'], 
-                starttime,
-                "%02d:%02d" % (dhour, dmin),
-                endtime, cycle, 
-                mergelist(res['partitions'], cluster)))
+                           starttime,"%02d:%02d" % (dhour, dmin),
+                           endtime, cycle, passthrough,
+                           mergelist(res['partitions'], cluster), 
+                           timeleft))
         else:
             output.append((res['name'], res['queue'], res['users'], 
-                starttime,
-                "%02d:%02d" % (dhour, dmin), 
-                mergelist(res['partitions'], cluster)))
+                           starttime,"%02d:%02d" % (dhour, dmin), passthrough,
+                           mergelist(res['partitions'], cluster), 
+                           timeleft))
 
     output.sort( (lambda x,y: cmp( time.mktime(time.strptime(x[3].split('+')[0].split('-')[0].strip(), time_fmt)), 
-        time.mktime(time.strptime(y[3].split('+')[0].split('-')[0].strip(), time_fmt))) ) )
-    Cobalt.Util.print_tabular(header + output)
-                     
+                                   time.mktime(time.strptime(y[3].split('+')[0].split('-')[0].strip(), time_fmt))) ) )
+    client_utils.print_tabular(header + output)
+
+if __name__ == '__main__':
+    try:
+        main()
+    except SystemExit:
+        raise
+    except Exception, e:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", e)
+        sys.exit(1)

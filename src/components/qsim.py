@@ -104,7 +104,7 @@ def integrated_main(options):
             evsim.init_unhold_events(0)
         if opts.coscheduling[1] == "hold":
             evsim.init_unhold_events(1)
-            
+
     if opts.adaptive:
         print "inserting metrics monitor events into event list..."
         evsim.init_mmon_events()  
@@ -281,8 +281,6 @@ if __name__ == "__main__":
         print "cluster simulation start date=", opts.anchor
         t_tuple = time.strptime(str(opts.anchor), "%Y-%m-%d %H:%M:%S")
         opts.anchor = time.mktime(t_tuple)
-        
-
                        
     options = {}
     for argname in arg_list:
