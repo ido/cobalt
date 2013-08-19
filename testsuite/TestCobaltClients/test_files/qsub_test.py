@@ -25,7 +25,7 @@ component: "queue-manager.get_jobs", defer: True
 
 component: "system.validate_job", defer: False
   validate_job(
-     {'kernel': 'kernel', 'verbose': True, 'held': True, 'notify': 'myemal@gmail.com', 'ion_kerneloptions': False, 'project': 'myproj', 'preemptable': False, 'forcenoval': False, 'umask': False, 'version': False, 'env': 'v1=1:v2=2', 'cwd': '/tmp', 'run_project': True, 'outputprefix': '/tmp', 'kerneloptions': 'kopts', 'time': '10', 'debug': True, 'dependencies': '1:2:3', 'debuglog': '/tmp/d', 'ion_kernel': 'default', 'proccount': '10', 'disable_preboot': False, 'geometry': '198x198x198x198', 'queue': 'queue', 'mode': 'smp', 'error': '/tmp/e', 'nodecount': '10', 'output': '/tmp/o', 'attrs': {'a': '1', 'b': '2'}, 'user_list': 'user1:user2:user3', 'inputfile': '/bin/ls'},
+     {'kernel': 'kernel', 'verbose': True, 'held': True, 'notify': 'myemal@gmail.com', 'ion_kerneloptions': False, 'project': 'myproj', 'preemptable': False, 'forcenoval': False, 'umask': False, 'version': False, 'env': 'v1=1:v2=2', 'cwd': '/tmp', 'run_project': True, 'outputprefix': '/tmp', 'kerneloptions': 'kopts', 'time': '10', 'jobname': False, 'debug': True, 'dependencies': '1:2:3', 'debuglog': '/tmp/d', 'ion_kernel': 'default', 'proccount': '10', 'disable_preboot': False, 'geometry': '198x198x198x198', 'queue': 'queue', 'mode': 'smp', 'error': '/tmp/e', 'nodecount': '10', 'output': '/tmp/o', 'attrs': {'a': '1', 'b': '2'}, 'user_list': 'user1:user2:user3', 'inputfile': '/bin/ls'},
      )
 
 
@@ -144,6 +144,8 @@ ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
 ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:kernel
 kernel type: <type 'str'>
 kerneloptions:kopts
@@ -291,6 +293,8 @@ ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
 ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -361,6 +365,15 @@ def test_qsub_no_options_passed():
 """Usage: qsub.py --help
 Usage: qsub.py [options] <executable> [<excutable options>]
 
+   jobid expansion: 
+      If "\$jobid" is specified in any jobid expansion option then it will be converted to the actual jobid.
+
+      Example: qsub ... --env myenv:\$jobid_myval ... if the jobid is 123 then myenv will be set to '123_myval'
+               note: $jobid will have to be escaped as follows \$jobid.
+
+      jobid expansion options: --env, --jobname, -o, -e, -O, --debuglog
+
+
 """
 
     cmderr    = \
@@ -405,6 +418,15 @@ def test_qsub_non_existant_option():
 """Usage: qsub.py --help
 Usage: qsub.py [options] <executable> [<excutable options>]
 
+   jobid expansion: 
+      If "\$jobid" is specified in any jobid expansion option then it will be converted to the actual jobid.
+
+      Example: qsub ... --env myenv:\$jobid_myval ... if the jobid is 123 then myenv will be set to '123_myval'
+               note: $jobid will have to be escaped as follows \$jobid.
+
+      jobid expansion options: --env, --jobname, -o, -e, -O, --debuglog
+
+
 qsub.py: error: no such option: -z
 """
 
@@ -442,6 +464,15 @@ def test_qsub_debug_flag_only_1():
     cmdout    = \
 """Usage: qsub.py --help
 Usage: qsub.py [options] <executable> [<excutable options>]
+
+   jobid expansion: 
+      If "\$jobid" is specified in any jobid expansion option then it will be converted to the actual jobid.
+
+      Example: qsub ... --env myenv:\$jobid_myval ... if the jobid is 123 then myenv will be set to '123_myval'
+               note: $jobid will have to be escaped as follows \$jobid.
+
+      jobid expansion options: --env, --jobname, -o, -e, -O, --debuglog
+
 
 """
 
@@ -488,6 +519,15 @@ def test_qsub_debug_flag_only_2():
 """Usage: qsub.py --help
 Usage: qsub.py [options] <executable> [<excutable options>]
 
+   jobid expansion: 
+      If "\$jobid" is specified in any jobid expansion option then it will be converted to the actual jobid.
+
+      Example: qsub ... --env myenv:\$jobid_myval ... if the jobid is 123 then myenv will be set to '123_myval'
+               note: $jobid will have to be escaped as follows \$jobid.
+
+      jobid expansion options: --env, --jobname, -o, -e, -O, --debuglog
+
+
 """
 
     cmderr    = \
@@ -533,6 +573,15 @@ def test_qsub_verbose_flag_only():
 """Usage: qsub.py --help
 Usage: qsub.py [options] <executable> [<excutable options>]
 
+   jobid expansion: 
+      If "\$jobid" is specified in any jobid expansion option then it will be converted to the actual jobid.
+
+      Example: qsub ... --env myenv:\$jobid_myval ... if the jobid is 123 then myenv will be set to '123_myval'
+               note: $jobid will have to be escaped as follows \$jobid.
+
+      jobid expansion options: --env, --jobname, -o, -e, -O, --debuglog
+
+
 """
 
     cmderr    = \
@@ -576,6 +625,15 @@ def test_qsub_non_integer_nodecount():
     cmderr    = \
 """Usage: qsub.py --help
 Usage: qsub.py [options] <executable> [<excutable options>]
+
+   jobid expansion: 
+      If "\$jobid" is specified in any jobid expansion option then it will be converted to the actual jobid.
+
+      Example: qsub ... --env myenv:\$jobid_myval ... if the jobid is 123 then myenv will be set to '123_myval'
+               note: $jobid will have to be escaped as follows \$jobid.
+
+      jobid expansion options: --env, --jobname, -o, -e, -O, --debuglog
+
 
 qsub.py: error: option -n: invalid integer value: 'five'
 """
@@ -766,6 +824,8 @@ ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
 ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -913,6 +973,8 @@ ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
 ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -1060,6 +1122,8 @@ ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
 ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -1244,6 +1308,8 @@ ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
 ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -1428,6 +1494,8 @@ ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
 ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -1575,6 +1643,8 @@ ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
 ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -1722,6 +1792,8 @@ ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
 ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -1869,6 +1941,8 @@ ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
 ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -2016,6 +2090,8 @@ ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
 ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -2163,6 +2239,8 @@ ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
 ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -2310,6 +2388,8 @@ ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
 ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -2496,6 +2576,8 @@ ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
 ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -2645,6 +2727,8 @@ ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
 ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -2796,6 +2880,8 @@ ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
 ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -2980,6 +3066,8 @@ ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
 ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -3127,6 +3215,8 @@ ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
 ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -3281,6 +3371,8 @@ ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
 ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -3463,6 +3555,8 @@ ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
 ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -3608,6 +3702,8 @@ ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
 ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -3755,6 +3851,8 @@ ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
 ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -3937,6 +4035,8 @@ ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
 ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -4084,6 +4184,8 @@ ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
 ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -4231,6 +4333,8 @@ ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
 ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
@@ -4307,7 +4411,7 @@ qsub.py --env var1=val1:var2=svar1\=sval1\:svar2\=sval2:var3=val3 -t50 -n10 -d /
 
 component: "system.validate_job", defer: False
   validate_job(
-     {'kernel': 'default', 'verbose': False, 'held': False, 'notify': False, 'ion_kerneloptions': False, 'project': False, 'preemptable': False, 'outputprefix': False, 'umask': False, 'version': False, 'env': 'var1=val1:var2=svar1\\=sval1\\:svar2\\=sval2:var3=val3', 'cwd': '/tmp', 'run_project': False, 'forcenoval': False, 'kerneloptions': False, 'time': '50', 'debug': True, 'dependencies': False, 'debuglog': False, 'ion_kernel': 'default', 'proccount': False, 'disable_preboot': False, 'geometry': False, 'queue': 'default', 'mode': False, 'error': False, 'nodecount': '10', 'output': False, 'attrs': {}, 'user_list': False, 'inputfile': False},
+     {'kernel': 'default', 'verbose': False, 'held': False, 'notify': False, 'ion_kerneloptions': False, 'project': False, 'preemptable': False, 'outputprefix': False, 'umask': False, 'version': False, 'env': 'var1=val1:var2=svar1\\=sval1\\:svar2\\=sval2:var3=val3', 'cwd': '/tmp', 'run_project': False, 'forcenoval': False, 'kerneloptions': False, 'time': '50', 'jobname': False, 'debug': True, 'dependencies': False, 'debuglog': False, 'ion_kernel': 'default', 'proccount': False, 'disable_preboot': False, 'geometry': False, 'queue': 'default', 'mode': False, 'error': False, 'nodecount': '10', 'output': False, 'attrs': {}, 'user_list': False, 'inputfile': False},
      )
 
 
@@ -4395,6 +4499,8 @@ ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
 ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
 kernel:default
 kernel type: <type 'str'>
 kerneloptions:False

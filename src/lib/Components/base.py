@@ -150,7 +150,7 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
     if component.name != 'service-location':
         address = Cobalt.Proxy.ComponentProxy('service-location').locate(component.name)
         if address:
-            component.logger.critical("CRITICAL: Instance of component %s already registerd.  Startup of this instance aborted.", component.name)
+            component.logger.critical("CRITICAL: Instance of component %s already registered.  Startup of this instance aborted.", component.name)
             sys.exit(1)
     server.register_instance(component)
 

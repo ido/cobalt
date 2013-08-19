@@ -8,6 +8,16 @@ qsub \- submit jobs to the queue manager for execution
 .PP
 .B qsub
 submits a job to the queue manager for execution. 
+
+   jobid expansion:
+      If \\$jobid is specified in any jobid expansion option then it will be converted to the actual jobid.
+
+      Example: qsub ... --env myenv=\\$jobid_myval ... 
+
+               if the jobid is 123 then myenv will be set to '123_myval'
+
+      jobid expansion options: --env, --jobname, -o, -e, -O, --debuglog
+
 .SH "OPTIONS"
 .TP
 .B \-d \-\-debug
@@ -32,7 +42,7 @@ specific block.
 Tell the job to use the specified directory as the default current working directory
 while running the job.
 .TP
-.B \-\-debuglog [path to file]
+.B \-\-debuglog [path to file] - (jobid expansion)
 Send debugging information from cobalt to file specified.
 .TP
 .B \-\-dependencies [<jobid1>:<jobid2>:...]
@@ -43,15 +53,14 @@ all jobs in the dependency list have finished and exited with a status of 0.
 If --mode script is specified, this will cause Cobalt to run the job script without
 booting the block first.  By default the script is executed after the requested block is booted.
 .TP
-.B \-e \-\-error [path to file]
+.B \-e \-\-error [path to file] - (jobid expansion)
 Send job stderr to file specified.
 .TP
-.B \-\-env [<var1=value1>:<var=value2>]
+.B \-\-env [<var1=value1>:<var=value2>] - (jobid expansion)
 Set environment variables that will be passed into the job's environment at 
-runtime. 
-
 If the the characters ":" and "=" are within the value, right hand side (rhs) of a environment variable assignment,
 then need to quote the entire string and precede any ":" and "=" characters that are in the rhs with "\\". 
+runtime. 
 
 e.g. qsub ... --env "A=B:C=x\\=1\\:y\\=2\\:z\\=3:D=ABC" ...
 
@@ -60,6 +69,9 @@ A would equal B
 C would equal x=1:y=2:z=3
 
 D would equal ABC
+.TP
+.B \-\-jobname [job name] - (jobid expansion)
+Sets Jobname. If this option is not provided then Jobname will be set to whatever -o option specified.'
 .TP
 .B \-\-geometry <geometry_spec>
 Sets the geometry of the block that the jobs should run on.  This is in
@@ -83,10 +95,10 @@ specified email address.
 .B \-n \-\-nodecount [nodecount]
 Specifies the node count for a job
 .TP
-.B \-o \-\-output [path to file]
+.B \-o \-\-output [path to file] - (jobid expansion)
 Send job stdout to file specified.
 .TP
-.B \-O \-\-outputprefix [output prefix]
+.B \-O \-\-outputprefix [output prefix] - (jobid expansion)
 Use the specified prefix for both .output, .error and debuglog files. This will only take effect if \-o or \-e or \-\-debuglog not supplied. 
 .TP
 .B \-\-proccount [process count]
