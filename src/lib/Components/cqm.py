@@ -4160,10 +4160,13 @@ class JobDataMsg(object):
                      'path', 'mode', 'envs', 'queue', 'priority_core_hours',
                      'force_kill_delay', 'all_dependencies', 'attribute', 
                      'attrs', 'satisfied_dependencies', 'preemptable', 
-                     'user_list', 'dep_frac', 'resid', 'cwd'
+                     'user_list', 'dep_frac', 'resid', 'cwd', 'ion_kernel',
+                     'ion_kerneloptions', 'geometry'
                      ]
         small_clob_list = ['command', 'inputfile', 'kernel', 'outputpath',
-                           'outputdir', 'errorpath','path','cwd']
+                           'outputdir', 'errorpath', 'path', 'cwd',
+                           'ion_kernel', 'ion_kerneloptions'
+                           ]
 
         for attr in attr_list:
 
@@ -4173,6 +4176,9 @@ class JobDataMsg(object):
                 self.job_user = job.user
             elif attr == 'user_list':
                 self.job_user_list = job.user_list
+            elif attr == 'geometry':
+                if job.geometry is not None:
+                    self.geometry = 'x'.join([str(dim) for dim in job.geometry])
             elif attr in small_clob_list:
                 clob_str = job.__getattribute__(attr)
                 if clob_str != None:

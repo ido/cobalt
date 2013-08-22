@@ -62,13 +62,16 @@ class ReservationStateEncoder(json.JSONEncoder):
 
     def default(self, obj):
         if isinstance(obj, Cobalt.Components.bgsched.Reservation):
-            
+
             #Convert to UTC for consistiency
             start = datetime.datetime.utcfromtimestamp(obj.start)
-            
+
             my_proj = None
             if hasattr(obj, "project"):
                 my_proj = obj.project
+            block_passthrough = None
+            if hasattr(obj, "block_passthrough"):
+                block_passthrough = obj.block_passthrough
 
             return {'cycle' : obj.cycle,
                     'cycle_id' : obj.cycle_id,
@@ -80,7 +83,8 @@ class ReservationStateEncoder(json.JSONEncoder):
                     'start' : start.strftime(db2format),
                     'tag': obj.tag,
                     'users' : obj.users,
-                    'project' : my_proj}    
+                    'project' : my_proj,
+                    'block_passthrough': block_passthrough}
         else:
             return json.JSONEncoder.default(self, obj)
 
