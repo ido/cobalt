@@ -3118,9 +3118,11 @@ class JobList(DataList):
             for item in spec:
                 if item in jobid_expansion_options:
                     spec[item] = spec[item].replace('$jobid', str(spec['jobid'])) if type(spec[item]) is str else spec[item]
+                    spec[item] = spec[item].replace('$COBALT_JOBID', str(spec['jobid'])) if type(spec[item]) is str else spec[item]
             if 'envs' in spec:
                 for item in spec['envs']:
                     spec['envs'][item] = spec['envs'][item].replace('$jobid', str(spec['jobid']))
+                    spec['envs'][item] = spec['envs'][item].replace('$COBALT_JOBID', str(spec['jobid']))
         jobs_added = DataList.q_add(self, specs, callback, cargs)
         if jobs_added:
             user = spec.get('user', None)

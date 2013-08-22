@@ -996,6 +996,12 @@ def cb_mode(option,opt_str,value,parser,*args):
     """
     (sys_type,job_types) = system_info()
 
+    if parser.values.mode is not None:
+        if parser.values.mode != value:
+            logger.error("Mode already set to '%s' and trying to set it again to '%s'", parser.values.mode, value)
+            sys.exit(1)
+        return
+
     mode = value
 
     if mode not in job_types:

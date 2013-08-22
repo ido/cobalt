@@ -130,4 +130,8 @@ test_argslist = [
     {"tc_name" : "qstat_14"                            , "command" : "qstat"  , "args" : "-f -l 13", },
     {"tc_name" : "qsub_14"                             , "command" : "qsub"   , "args" : """--jobname "myjob_\$jobid" -O "outpref_\$jobid" -t 50 -n 30 /bin/ls""", },
     {"tc_name" : "qstat_15"                            , "command" : "qstat"  , "args" : "-f -l 14", },
+    {"tc_name" : "qsub_15"                             , "command" : "qsub"   , "args" : """cobalt_script3.sh""", },
+    {"tc_name" : "qstat_16"                            , "command" : "qstat"  , "args" : "-f -l 15", },
+    {"tc_name" : "qsub_16"                             , "command" : "qsub"   , "args" : """-t 50 -n 30 cobalt_script3.sh""", },
+    {"tc_name" : "qstat_17"                            , "command" : "qstat"  , "args" : "-f -l 16", },
     ]

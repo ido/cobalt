@@ -4,7 +4,14 @@ Submit jobs to the queue manager for execution.
 
 Usage: %prog --help
 Usage: %prog [options] <executable> [<excutable options>]
-       Please refer to man pages for information on "jobid expansion" ($jobid or $COBALT_JOBID).
+
+   jobid expansion: 
+      If "\$jobid" is specified in any jobid expansion option then it will be converted to the actual jobid.
+
+      Example: qsub ... --env myenv:\$jobid_myval ... if the jobid is 123 then myenv will be set to '123_myval'
+               note: $jobid will have to be escaped as follows \$jobid.
+
+      jobid expansion options: --env, --jobname, -o, -e, -O, --debuglog
 
 version: "%prog " + __revision__ + , Cobalt  + __version__
 
@@ -27,7 +34,9 @@ Option with values:
 '--cwd',dest='cwd',type='string',help='set current working directory'
 '-q','--queue',dest='queue',type='string',help='set queue name'
 '-M','--notify',dest='notify',type='string',help='set notification email address'
-'--env',dest='envs',type='string', help='Set env variables. Refer to man pages for more detail information.', callback=cb_env
+'--env',dest='envs',type='string', help='Set env variables. Format: var1=val1:var2=val2:...:varN=valN, if the characters /
+   ":" and "=" are within the value portion then need to precede them with \ character as follows \: or \=, also /
+   the entire string should be in quotes.' , callback=cb_env
 '-t','--time',dest='walltime',type='string',help='set walltime (minutes or HH:MM:SS)',callback=cb_time
 '-u','--umask',dest='umask',type='string',help='set umask: octal number default(022)',callback=cb_umask
 '-O','--outputprefix',dest='outputprefix',type='string',help='output prefix for error,output or debuglog files',callback=cb_path
@@ -47,7 +56,7 @@ The following options are only valid on IBM BlueGene architecture platforms:
 '-K','--kerneloptions',dest='kerneloptions',type='string',help='set compute node kernel options'
 '--ion_kernel',dest='ion_kernel',type='string',help='set an IO node kernel profile'
 '--ion_kerneloptions',dest='ion_kerneloptions',type='string',help='set IO node kernel options'
-'--mode', dest='mode', type='string', help='select system mode',callback=cb_mode
+'--mode', dest='mode', type='string', help='select system mode'
 '--geometry', dest='geometry', type='string', help='set geometry (AxBxCxDxE)',callback=cb_geometry
 
 """
@@ -58,23 +67,40 @@ import sys
 from Cobalt import client_utils
 from Cobalt.client_utils import \
     cb_debug, cb_env, cb_nodes, cb_time, cb_umask, cb_path, \
-    cb_dep, cb_attrs, cb_user_list, cb_geometry, cb_gtzero, cb_mode
+    cb_dep, cb_attrs, cb_user_list, cb_geometry, cb_gtzero
 from Cobalt.arg_parser import ArgParse
 from Cobalt.Util import get_config_option, init_cobalt_config
 
 __revision__ = '$Revision: 559 $'
 __version__  = '$Version$'
 
-SYSMGR           = client_utils.SYSMGR
-QUEMGR           = client_utils.QUEMGR
+SYSMGR = client_utils.SYSMGR
+QUEMGR = client_utils.QUEMGR
 
-def validate_args(parser, spec):
+
+def validate_args(parser, spec, opt_count):
     """
-    If the argument is a script job it will validate it, and get the Cobalt directives
+    Validate qsub arguments
     """
+
+    # Check if any required option entered
+    if opt_count == 0:
+        client_utils.print_usage(parser, "No required options provided")
+        sys.exit(1)
+
     # if no excecutable specified then flag it an exit
     if parser.no_args():
-        client_utils.print_usage(parser, "No executable or script specified")
+        client_utils.print_usage(parser, "No executable specified")
+        sys.exit(1)
+
+    # If no time supplied flag it and exit
+    if parser.options.walltime == None:
+        client_utils.logger.error("'time' not provided")
+        sys.exit(1)
+
+    # If no nodecount give then flag it an exit
+    if parser.options.nodes == None:
+        client_utils.logger.error("'nodecount' not provided")
         sys.exit(1)
 
     # Check if it is a valid executable/file
@@ -96,53 +122,6 @@ def validate_args(parser, spec):
         spec['args'] = parser.args[1:]
     else:
         spec['args'] = []
-
-    tag         = '#COBALT '
-    len_tag     = len(tag)
-    fd          = open(cmd, 'r')
-    line        = fd.readline()
-    reparse    = False
-    if line[0:2] == '#!':
-        line                = fd.readline()
-        new_argv            = []
-        while len(line) > len_tag:
-            if line[:len_tag] != tag:
-                break
-            if new_argv == []:
-                new_argv = ['--mode','script']
-                reparse   = True
-            new_argv += line[len_tag:].split()
-            line      = fd.readline()
-        sys.argv = [sys.argv[0]] + new_argv + sys.argv[1:]
-    fd.close()
-
-    # check for multiple --env options specified
-    if sys.argv.count('--en') + sys.argv.count('--env') > 1:
-        # consolidate the --env options (this will update sys.argv)
-        env_union()
-        reparse = True
-
-    return reparse
-
-def validate_options(parser, opt_count):
-    """
-    Validate qsub arguments
-    """
-
-    # Check if any required option entered
-    if opt_count == 0:
-        client_utils.print_usage(parser, "No required options provided")
-        sys.exit(1)
-
-    # If no time supplied flag it and exit
-    if parser.options.walltime == None:
-        client_utils.logger.error("'time' not provided")
-        sys.exit(1)
-
-    # If no nodecount give then flag it an exit
-    if parser.options.nodes == None:
-        client_utils.logger.error("'nodecount' not provided")
-        sys.exit(1)
 
 def update_outputprefix(parser,spec):
     """
@@ -226,48 +205,6 @@ def logjob(job,spec):
     else:
         client_utils.logger.error("failed to create the job.  Maybe a queue isn't there?")
 
-def env_union():
-    """
-    Take all env options and their values in sys.argv and make the union of them to create one consolidated --env.
-    """
-    try:
-        ndx = 0
-        new_args    = []
-        env_values  = []
-        env_val_ndx = -1
-        skip_next   = False
-        for arg in sys.argv:
-            if arg == '--en' or arg == '--env':
-                env_values.append(sys.argv[ndx+1])
-                if env_val_ndx == -1:
-                    env_val_ndx = ndx+1
-                    new_args.append('--env')
-                    new_args.append('<PLACE HOLDER>')
-                skip_next = True
-            elif not skip_next:
-                new_args.append(sys.argv[ndx])
-            else:
-                skip_next = False
-            ndx += 1
-        new_args[env_val_ndx] = ':'.join(env_values)
-        sys.argv = new_args
-    except:
-        client_utils.logger.error( "No values specified or invalid usage of --env option: %s",str(sys.argv))
-        sys.exit(1)
-
-def parse_options(parser, spec, opts, opt2spec, def_spec):
-    """
-    Will initialize the specs and then parse the command line options 
-    """
-    opts.clear()
-    for item in def_spec:
-        spec[item] = def_spec[item]
-
-    parser.parse_it() # parse the command line
-    opt_count               = client_utils.get_options(spec, opts, opt2spec, parser)
-    opts['disable_preboot'] = not spec['script_preboot']
-    return opt_count
-
 def main():
     """
     qsub main function.
@@ -281,7 +218,6 @@ def main():
     spec     = {} # map of destination option strings and parsed values
     opts     = {} # old map
     opt2spec = {}
-    def_spec = {}
 
     # list of callback with its arguments
     callbacks = [
@@ -295,7 +231,6 @@ def main():
         ( cb_path         , (opts, True) ), # use CWD
         ( cb_dep          , () ),
         ( cb_attrs        , () ),
-        ( cb_mode         , () ),
         ( cb_user_list    , (opts,) ),
         ( cb_geometry     , (opts,) )]
 
@@ -303,38 +238,33 @@ def main():
     opt_def =  __doc__.replace('__revision__',__revision__)
     opt_def =  opt_def.replace('__version__',__version__)
 
+    parser = ArgParse(opt_def,callbacks)
+
     user = client_utils.getuid()
 
-    def_spec['tag']            = 'job'
-    def_spec['user']           = user
-    def_spec['outputdir']      = client_utils.CWD_TAG
-    def_spec['jobid']          = '*'
-    def_spec['path']           = client_utils.getpath()
-    def_spec['mode']           = False
-    def_spec['cwd']            = client_utils.getcwd()
-    def_spec['kernel']         = get_config_option('bgsystem', 'cn_default_kernel', 'default')
-    def_spec['ion_kernel']     = get_config_option('bgsystem', 'ion_default_kernel', 'default')
-    def_spec['queue']          = 'default'
-    def_spec['umask']          = 022
-    def_spec['run_project']    = False
-    def_spec['user_list']      = [user]
-    def_spec['procs']          = False
-    def_spec['script_preboot'] = True
+    # Set required default values
+    spec['tag']            = 'job'
+    spec['user']           = user
+    spec['outputdir']      = client_utils.CWD_TAG
+    spec['jobid']          = '*'
+    spec['path']           = client_utils.getpath()
+    spec['mode']           = False
+    spec['cwd']            = client_utils.getcwd()
+    spec['kernel']         = get_config_option('bgsystem', 'cn_default_kernel', 'default')
+    spec['ion_kernel']     = get_config_option('bgsystem', 'ion_default_kernel', 'default')
+    spec['queue']          = 'default'
+    spec['umask']          = 022
+    spec['run_project']    = False
+    spec['user_list']      = [user]
+    spec['procs']          = False
+    spec['script_preboot'] = True
 
-    parser    = ArgParse(opt_def,callbacks)
-    opt_count = parse_options(parser, spec, opts, opt2spec, def_spec)
-    reparse  = validate_args(parser, spec)
-
-    if reparse:
-        # re-parse with new sys.argv
-        # note: the first parse is necessary to make sure that 
-        #       the env syntax is correct for every --env option provided
-        #       If not parsed prior to the union then the union could result 
-        #       in a valid syntax, but it would not be what the user would want.
-        opt_count = parse_options(parser, spec, opts, opt2spec, def_spec)
+    parser.parse_it() # parse the command line
+    opt_count = client_utils.get_options(spec,opts,opt2spec,parser)
+    opts['disable_preboot'] = not spec['script_preboot']
 
     client_utils.setumask(spec['umask'])
-    validate_options(parser, opt_count)
+    validate_args(parser,spec,opt_count)
     update_outputprefix(parser,spec)
     update_paths(spec)
     check_inputfile(parser,spec)
@@ -347,6 +277,7 @@ def main():
         client_utils.logger.debug("Environment Vars: %s",parser.options.envs)
     logjob(jobs[0],spec)
     
+
 if __name__ == '__main__':
     try:
         main()

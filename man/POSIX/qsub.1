@@ -10,7 +10,7 @@ qsub \- submit jobs to the queue manager for execution
 submits a job to the queue manager for execution. 
 
    jobid expansion:
-      If \\$jobid is specified in any jobid expansion option then it will be converted to the actual jobid.
+      If \\$jobid or \\$COBALT_JOBID is specified in any jobid expansion option then it will be converted to the actual jobid.
 
       Example: qsub ... --env myenv=\\$jobid_myval ... 
 
@@ -57,18 +57,25 @@ booting the block first.  By default the script is executed after the requested 
 Send job stderr to file specified.
 .TP
 .B \-\-env [<var1=value1>:<var=value2>] - (jobid expansion)
-Set environment variables that will be passed into the job's environment at 
+Set environment variables that will be passed into the job's environment.
 If the the characters ":" and "=" are within the value, right hand side (rhs) of a environment variable assignment,
 then need to quote the entire string and precede any ":" and "=" characters that are in the rhs with "\\". 
 runtime. 
 
-e.g. qsub ... --env "A=B:C=x\\=1\\:y\\=2\\:z\\=3:D=ABC" ...
+If multiple \-\-env options are specified then qsub will take the union.
+
+e.g. qsub ... --env "A=B:C=x\\=1\\:y\\=2\\:z\\=3:D=ABC" ... --env "MY_NAME=cobalt' ...
 
 A would equal B
 
 C would equal x=1:y=2:z=3
 
 D would equal ABC
+
+and
+
+MY_NAME would be equal to "cobalt"
+
 .TP
 .B \-\-jobname [job name] - (jobid expansion)
 Sets Jobname. If this option is not provided then Jobname will be set to whatever -o option specified.'

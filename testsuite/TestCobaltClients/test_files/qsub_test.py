@@ -7,7 +7,7 @@ def test_qsub_all_options_1():
 
     """
 
-    args      = """-v -A myproj --attrs=a=1:b=2 --cwd /tmp -d --debuglog=/tmp/d --dependencies=1:2:3 -e /tmp/e --env v1=1:v2=2 --geometry 198x198x198x198 -h -i /bin/ls -M myemal@gmail.com -n10 -o /tmp/o -O /tmp --proccount 10 -qqueue --run_users user1:user2:user3 --run_project -t 10 --mode smp --kernel kernel -K kopts /bin/ls"""
+    args      = """-v -A myproj --attrs=a=1:b=2 --cwd /tmp -d --debuglog=/tmp/d --dependencies=1:2:3 -e /tmp/e --env v1=1:v2=2 --geometry 198x198x198x198 -h -i /bin/ls -M myemal@gmail.com -n10 -o /tmp/o -O /tmp --proccount 10 -qqueue --run_users user1:user2:user3 --run_project -t 10 --mode script --kernel kernel -K kopts /bin/ls"""
 
     cmdout    = \
 """1
@@ -15,7 +15,7 @@ def test_qsub_all_options_1():
 
     cmderr    = \
 """
-qsub.py -v -A myproj --attrs=a=1:b=2 --cwd /tmp -d --debuglog=/tmp/d --dependencies=1:2:3 -e /tmp/e --env v1=1:v2=2 --geometry 198x198x198x198 -h -i /bin/ls -M myemal@gmail.com -n10 -o /tmp/o -O /tmp --proccount 10 -qqueue --run_users user1:user2:user3 --run_project -t 10 --mode smp --kernel kernel -K kopts /bin/ls
+qsub.py -v -A myproj --attrs=a=1:b=2 --cwd /tmp -d --debuglog=/tmp/d --dependencies=1:2:3 -e /tmp/e --env v1=1:v2=2 --geometry 198x198x198x198 -h -i /bin/ls -M myemal@gmail.com -n10 -o /tmp/o -O /tmp --proccount 10 -qqueue --run_users user1:user2:user3 --run_project -t 10 --mode script --kernel kernel -K kopts /bin/ls
 
 component: "queue-manager.get_jobs", defer: True
   get_jobs(
@@ -25,13 +25,13 @@ component: "queue-manager.get_jobs", defer: True
 
 component: "system.validate_job", defer: False
   validate_job(
-     {'kernel': 'kernel', 'verbose': True, 'held': True, 'notify': 'myemal@gmail.com', 'ion_kerneloptions': False, 'project': 'myproj', 'preemptable': False, 'forcenoval': False, 'umask': False, 'version': False, 'env': 'v1=1:v2=2', 'cwd': '/tmp', 'run_project': True, 'outputprefix': '/tmp', 'kerneloptions': 'kopts', 'time': '10', 'jobname': False, 'debug': True, 'dependencies': '1:2:3', 'debuglog': '/tmp/d', 'ion_kernel': 'default', 'proccount': '10', 'disable_preboot': False, 'geometry': '198x198x198x198', 'queue': 'queue', 'mode': 'smp', 'error': '/tmp/e', 'nodecount': '10', 'output': '/tmp/o', 'attrs': {'a': '1', 'b': '2'}, 'user_list': 'user1:user2:user3', 'inputfile': '/bin/ls'},
+     {'kernel': 'kernel', 'verbose': True, 'held': True, 'notify': 'myemal@gmail.com', 'ion_kerneloptions': False, 'project': 'myproj', 'preemptable': False, 'forcenoval': False, 'umask': False, 'version': False, 'env': 'v1=1:v2=2', 'cwd': '/tmp', 'run_project': True, 'outputprefix': '/tmp', 'kerneloptions': 'kopts', 'time': '10', 'jobname': False, 'debug': True, 'dependencies': '1:2:3', 'debuglog': '/tmp/d', 'ion_kernel': 'default', 'proccount': '10', 'disable_preboot': False, 'geometry': '198x198x198x198', 'queue': 'queue', 'mode': 'script', 'error': '/tmp/e', 'nodecount': '10', 'output': '/tmp/o', 'attrs': {'a': '1', 'b': '2'}, 'user_list': 'user1:user2:user3', 'inputfile': '/bin/ls'},
      )
 
 
 component: "queue-manager.add_jobs", defer: False
   add_jobs(
-     [{'kernel': 'kernel', 'errorpath': '/tmp/e', 'outputpath': '/tmp/o', 'tag': 'job', 'notify': 'myemal@gmail.com', 'outputdir': '/tmp', 'queue': 'queue', 'envs': {'v1': '1', 'v2': '2'}, 'umask': 18, 'nodes': 10, 'cwd': '/tmp', 'run_project': True, 'kerneloptions': 'kopts', 'args': [], 'cobalt_log_file': '/tmp/d', 'user': 'gooduser', 'path': '/tmp', 'ion_kernel': 'default', 'procs': '10', 'walltime': '10', 'geometry': [198, 198, 198, 198, 2], 'user_hold': True, 'jobid': '*', 'project': 'myproj', 'script_preboot': True, 'command': '/bin/ls', 'mode': 'smp', 'all_dependencies': '1:2:3', 'attrs': {'a': '1', 'b': '2'}, 'user_list': ['gooduser', 'user1', 'user2', 'user3'], 'inputfile': '/bin/ls'}],
+     [{'kernel': 'kernel', 'errorpath': '/tmp/e', 'outputpath': '/tmp/o', 'tag': 'job', 'notify': 'myemal@gmail.com', 'outputdir': '/tmp', 'queue': 'queue', 'envs': {'v1': '1', 'v2': '2'}, 'umask': 18, 'nodes': 10, 'cwd': '/tmp', 'run_project': True, 'kerneloptions': 'kopts', 'args': [], 'cobalt_log_file': '/tmp/d', 'user': 'gooduser', 'path': '/tmp', 'ion_kernel': 'default', 'procs': '10', 'walltime': '10', 'geometry': [198, 198, 198, 198, 2], 'user_hold': True, 'jobid': '*', 'project': 'myproj', 'script_preboot': True, 'command': '/bin/ls', 'mode': 'script', 'all_dependencies': '1:2:3', 'attrs': {'a': '1', 'b': '2'}, 'user_list': ['gooduser', 'user1', 'user2', 'user3'], 'inputfile': '/bin/ls'}],
      )
 
 
@@ -79,7 +79,7 @@ kernel:kernel
 kernel type: <type 'str'>
 kerneloptions:kopts
 kerneloptions type: <type 'str'>
-mode:smp
+mode:script
 mode type: <type 'str'>
 nodes:10
 nodes type: <type 'int'>
@@ -150,7 +150,7 @@ kernel:kernel
 kernel type: <type 'str'>
 kerneloptions:kopts
 kerneloptions type: <type 'str'>
-mode:smp
+mode:script
 mode type: <type 'str'>
 nodecount:10
 nodecount type: <type 'str'>
@@ -210,7 +210,7 @@ def test_qsub_misc_1():
 
     """
 
-    args      = """--mode c1 -n 512 --env BG_COREDUMPDISABLED=1 --proccount 512 -t 30 -q testing /bin/ls"""
+    args      = """--mode script -n 512 --env BG_COREDUMPDISABLED=1 --proccount 512 -t 30 -q testing /bin/ls"""
 
     cmdout    = \
 """1
@@ -236,7 +236,7 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
-mode:c1
+mode:script
 mode type: <type 'str'>
 nodes:512
 nodes type: <type 'int'>
@@ -299,7 +299,7 @@ kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
 kerneloptions type: <type 'bool'>
-mode:c1
+mode:script
 mode type: <type 'str'>
 nodecount:512
 nodecount type: <type 'str'>
@@ -364,14 +364,7 @@ def test_qsub_no_options_passed():
     cmdout    = \
 """Usage: qsub.py --help
 Usage: qsub.py [options] <executable> [<excutable options>]
-
-   jobid expansion: 
-      If "\$jobid" is specified in any jobid expansion option then it will be converted to the actual jobid.
-
-      Example: qsub ... --env myenv:\$jobid_myval ... if the jobid is 123 then myenv will be set to '123_myval'
-               note: $jobid will have to be escaped as follows \$jobid.
-
-      jobid expansion options: --env, --jobname, -o, -e, -O, --debuglog
+       Please refer to man pages for information on "jobid expansion" ($jobid or $COBALT_JOBID).
 
 
 """
@@ -417,14 +410,7 @@ def test_qsub_non_existant_option():
     cmderr    = \
 """Usage: qsub.py --help
 Usage: qsub.py [options] <executable> [<excutable options>]
-
-   jobid expansion: 
-      If "\$jobid" is specified in any jobid expansion option then it will be converted to the actual jobid.
-
-      Example: qsub ... --env myenv:\$jobid_myval ... if the jobid is 123 then myenv will be set to '123_myval'
-               note: $jobid will have to be escaped as follows \$jobid.
-
-      jobid expansion options: --env, --jobname, -o, -e, -O, --debuglog
+       Please refer to man pages for information on "jobid expansion" ($jobid or $COBALT_JOBID).
 
 
 qsub.py: error: no such option: -z
@@ -464,14 +450,7 @@ def test_qsub_debug_flag_only_1():
     cmdout    = \
 """Usage: qsub.py --help
 Usage: qsub.py [options] <executable> [<excutable options>]
-
-   jobid expansion: 
-      If "\$jobid" is specified in any jobid expansion option then it will be converted to the actual jobid.
-
-      Example: qsub ... --env myenv:\$jobid_myval ... if the jobid is 123 then myenv will be set to '123_myval'
-               note: $jobid will have to be escaped as follows \$jobid.
-
-      jobid expansion options: --env, --jobname, -o, -e, -O, --debuglog
+       Please refer to man pages for information on "jobid expansion" ($jobid or $COBALT_JOBID).
 
 
 """
@@ -480,7 +459,7 @@ Usage: qsub.py [options] <executable> [<excutable options>]
 """
 qsub.py -d
 
-No required options provided
+No executable or script specified
 
 """
 
@@ -518,14 +497,7 @@ def test_qsub_debug_flag_only_2():
     cmdout    = \
 """Usage: qsub.py --help
 Usage: qsub.py [options] <executable> [<excutable options>]
-
-   jobid expansion: 
-      If "\$jobid" is specified in any jobid expansion option then it will be converted to the actual jobid.
-
-      Example: qsub ... --env myenv:\$jobid_myval ... if the jobid is 123 then myenv will be set to '123_myval'
-               note: $jobid will have to be escaped as follows \$jobid.
-
-      jobid expansion options: --env, --jobname, -o, -e, -O, --debuglog
+       Please refer to man pages for information on "jobid expansion" ($jobid or $COBALT_JOBID).
 
 
 """
@@ -534,7 +506,7 @@ Usage: qsub.py [options] <executable> [<excutable options>]
 """
 qsub.py -debug
 
-No executable specified
+No executable or script specified
 
 """
 
@@ -572,20 +544,13 @@ def test_qsub_verbose_flag_only():
     cmdout    = \
 """Usage: qsub.py --help
 Usage: qsub.py [options] <executable> [<excutable options>]
-
-   jobid expansion: 
-      If "\$jobid" is specified in any jobid expansion option then it will be converted to the actual jobid.
-
-      Example: qsub ... --env myenv:\$jobid_myval ... if the jobid is 123 then myenv will be set to '123_myval'
-               note: $jobid will have to be escaped as follows \$jobid.
-
-      jobid expansion options: --env, --jobname, -o, -e, -O, --debuglog
+       Please refer to man pages for information on "jobid expansion" ($jobid or $COBALT_JOBID).
 
 
 """
 
     cmderr    = \
-"""No required options provided
+"""No executable or script specified
 
 """
 
@@ -623,19 +588,10 @@ def test_qsub_non_integer_nodecount():
     cmdout    = ''
 
     cmderr    = \
-"""Usage: qsub.py --help
-Usage: qsub.py [options] <executable> [<excutable options>]
-
-   jobid expansion: 
-      If "\$jobid" is specified in any jobid expansion option then it will be converted to the actual jobid.
-
-      Example: qsub ... --env myenv:\$jobid_myval ... if the jobid is 123 then myenv will be set to '123_myval'
-               note: $jobid will have to be escaped as follows \$jobid.
-
-      jobid expansion options: --env, --jobname, -o, -e, -O, --debuglog
-
-
-qsub.py: error: option -n: invalid integer value: 'five'
+"""Specifed mode 'smp' not valid, valid modes are
+co
+vn
+script
 """
 
     stubout   = ''
@@ -643,7 +599,7 @@ qsub.py: error: option -n: invalid integer value: 'five'
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       512, # Expected return status 
+                       256, # Expected return status 
                        cmdout, # Expected command output
                        stubout, # Expected stub functions output
                        cmderr, # Expected command error output 
@@ -672,7 +628,10 @@ def test_qsub_non_realistic_nodecount():
     cmdout    = ''
 
     cmderr    = \
-"""node count out of realistic range
+"""Specifed mode 'smp' not valid, valid modes are
+co
+vn
+script
 """
 
     stubout   = ''
@@ -704,7 +663,7 @@ def test_qsub_invalid_geometry_1():
 
     """
 
-    args      = """--mode smp -t50 -n10 --geometry x /bin/ls"""
+    args      = """--mode script -t50 -n10 --geometry x /bin/ls"""
 
     cmdout    = ''
 
@@ -741,7 +700,7 @@ def test_qsub_invalid_geometry_2():
 
     """
 
-    args      = """--mode smp -t50 -n10 --geometry 1x2x3x4 /bin/ls"""
+    args      = """--mode script -t50 -n10 --geometry 1x2x3x4 /bin/ls"""
 
     cmdout    = \
 """1
@@ -767,7 +726,7 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
-mode:smp
+mode:script
 mode type: <type 'str'>
 nodes:10
 nodes type: <type 'int'>
@@ -830,7 +789,7 @@ kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
 kerneloptions type: <type 'bool'>
-mode:smp
+mode:script
 mode type: <type 'str'>
 nodecount:10
 nodecount type: <type 'str'>
@@ -890,7 +849,7 @@ def test_qsub_invalid_geometry_3():
 
     """
 
-    args      = """--mode smp -t50 -n10 --geometry 1x2x3x4 /bin/ls"""
+    args      = """--mode script -t50 -n10 --geometry 1x2x3x4 /bin/ls"""
 
     cmdout    = \
 """1
@@ -916,7 +875,7 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
-mode:smp
+mode:script
 mode type: <type 'str'>
 nodes:10
 nodes type: <type 'int'>
@@ -979,7 +938,7 @@ kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
 kerneloptions type: <type 'bool'>
-mode:smp
+mode:script
 mode type: <type 'str'>
 nodecount:10
 nodecount type: <type 'str'>
@@ -1039,7 +998,7 @@ def test_qsub_invalid_geometry_4():
 
     """
 
-    args      = """--mode smp -t50 -n10 --geometry 48x48x48x48x2  /bin/ls"""
+    args      = """--mode script -t50 -n10 --geometry 48x48x48x48x2  /bin/ls"""
 
     cmdout    = \
 """1
@@ -1065,7 +1024,7 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
-mode:smp
+mode:script
 mode type: <type 'str'>
 nodes:10
 nodes type: <type 'int'>
@@ -1128,7 +1087,7 @@ kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
 kerneloptions type: <type 'bool'>
-mode:smp
+mode:script
 mode type: <type 'str'>
 nodecount:10
 nodecount type: <type 'str'>
@@ -1188,7 +1147,7 @@ def test_qsub_invalid_geometry_5():
 
     """
 
-    args      = """--mode smp -t50 -n10 --geometry 48x48x48x48x3  /bin/ls"""
+    args      = """--mode script -t50 -n10 --geometry 48x48x48x48x3  /bin/ls"""
 
     cmdout    = ''
 
@@ -1225,7 +1184,7 @@ def test_qsub_invalid_geometry_6():
 
     """
 
-    args      = """--mode smp -t50 -n10 --geometry 128x64x32x4    /bin/ls"""
+    args      = """--mode script -t50 -n10 --geometry 128x64x32x4    /bin/ls"""
 
     cmdout    = \
 """1
@@ -1251,7 +1210,7 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
-mode:smp
+mode:script
 mode type: <type 'str'>
 nodes:10
 nodes type: <type 'int'>
@@ -1314,7 +1273,7 @@ kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
 kerneloptions type: <type 'bool'>
-mode:smp
+mode:script
 mode type: <type 'str'>
 nodecount:10
 nodecount type: <type 'str'>
@@ -3474,7 +3433,7 @@ def test_qsub_mode_option_1():
 
     """
 
-    args      = """-t10 -n512 --proccount 1023 --mode dual /bin/ls"""
+    args      = """-t10 -n512 --proccount 1023 --mode vn /bin/ls"""
 
     cmdout    = \
 """1
@@ -3498,7 +3457,7 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
-mode:dual
+mode:vn
 mode type: <type 'str'>
 nodes:512
 nodes type: <type 'int'>
@@ -3561,7 +3520,7 @@ kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
 kerneloptions type: <type 'bool'>
-mode:dual
+mode:vn
 mode type: <type 'str'>
 nodecount:512
 nodecount type: <type 'str'>
@@ -3768,7 +3727,7 @@ def test_qsub_mode_option_3():
 
     """
 
-    args      = """--mode co -t50 -n10 --geometry 40x40x50x50 /bin/ls"""
+    args      = """--mode script -t50 -n10 --geometry 40x40x50x50 /bin/ls"""
 
     cmdout    = \
 """1
@@ -3794,7 +3753,7 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
-mode:co
+mode:script
 mode type: <type 'str'>
 nodes:10
 nodes type: <type 'int'>
@@ -3857,7 +3816,7 @@ kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
 kerneloptions type: <type 'bool'>
-mode:co
+mode:script
 mode type: <type 'str'>
 nodecount:10
 nodecount type: <type 'str'>
@@ -3954,7 +3913,7 @@ def test_qsub_preboot_option():
 
     """
 
-    args      = """--disable_preboot -t10 -n512 --proccount 1023 --mode dual /bin/ls"""
+    args      = """--disable_preboot -t10 -n512 --proccount 1023 --mode vn /bin/ls"""
 
     cmdout    = \
 """1
@@ -3978,7 +3937,7 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
-mode:dual
+mode:vn
 mode type: <type 'str'>
 nodes:512
 nodes type: <type 'int'>
@@ -4041,7 +4000,7 @@ kernel:default
 kernel type: <type 'str'>
 kerneloptions:False
 kerneloptions type: <type 'bool'>
-mode:dual
+mode:vn
 mode type: <type 'str'>
 nodecount:512
 nodecount type: <type 'str'>
@@ -4417,7 +4376,7 @@ component: "system.validate_job", defer: False
 
 component: "queue-manager.add_jobs", defer: False
   add_jobs(
-     [{'cwd': '/tmp', 'args': [], 'kernel': 'default', 'envs': {'var1': 'val1', 'var3': 'val3', 'var2': 'svar1=sval1:svar2=sval2'}, 'user_list': ['gooduser'], 'umask': 18, 'procs': '512', 'jobid': '*', 'queue': 'default', 'script_preboot': True, 'tag': 'job', 'command': '/bin/ls', 'mode': 'c1', 'path': '/tmp', 'nodes': 10, 'walltime': '50', 'ion_kernel': 'default', 'outputdir': '/tmp', 'run_project': False, 'user': 'gooduser'}],
+     [{'kernel': 'default', 'args': [], 'outputdir': '/tmp', 'envs': {'var1': 'val1', 'var3': 'val3', 'var2': 'svar1=sval1:svar2=sval2'}, 'user_list': ['gooduser'], 'umask': 18, 'jobid': '*', 'queue': 'default', 'script_preboot': True, 'tag': 'job', 'command': '/bin/ls', 'mode': 'c1', 'run_project': False, 'path': '/tmp', 'nodes': 10, 'walltime': '50', 'ion_kernel': 'default', 'cwd': '/tmp', 'procs': '512', 'user': 'gooduser'}],
      )
 
 
@@ -4542,6 +4501,531 @@ version type: <type 'bool'>
 
     expected_results = ( 
                        0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('qsub.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_qsub_env_option_4():
+    """
+    qsub test run: env_option_4
+
+    """
+
+    args      = """--env var1=val1 --env "var2=svar1\=sval1\:svar2\=sval2" --env var3=val3 -t50 -n10 /bin/ls"""
+
+    cmdout    = \
+"""1
+"""
+
+    cmderr    = ''
+
+    stubout   = \
+"""
+ADD_JOBS
+
+args:[]
+args type: <type 'list'>
+command:/bin/ls
+command type: <type 'str'>
+cwd:/tmp
+cwd type: <type 'str'>
+envs:{'var1': 'val1', 'var3': 'val3', 'var2': 'svar1=sval1:svar2=sval2'}
+envs type: <type 'dict'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+jobid:*
+jobid type: <type 'str'>
+kernel:default
+kernel type: <type 'str'>
+mode:c1
+mode type: <type 'str'>
+nodes:10
+nodes type: <type 'int'>
+outputdir:/tmp
+outputdir type: <type 'str'>
+path:/tmp
+path type: <type 'str'>
+procs:512
+procs type: <type 'str'>
+queue:default
+queue type: <type 'str'>
+run_project:False
+run_project type: <type 'bool'>
+script_preboot:True
+script_preboot type: <type 'bool'>
+tag:job
+tag type: <type 'str'>
+umask:18
+umask type: <type 'int'>
+user:gooduser
+user type: <type 'str'>
+user_list:['gooduser']
+user_list type: <type 'list'>
+walltime:50
+walltime type: <type 'str'>
+
+VALIDATE_JOB
+
+attrs:{}
+attrs type: <type 'dict'>
+cwd:/tmp
+cwd type: <type 'str'>
+debug:False
+debug type: <type 'bool'>
+debuglog:False
+debuglog type: <type 'bool'>
+dependencies:False
+dependencies type: <type 'bool'>
+disable_preboot:False
+disable_preboot type: <type 'bool'>
+env:var1=val1:var2=svar1\=sval1\:svar2\=sval2:var3=val3
+env type: <type 'str'>
+error:False
+error type: <type 'bool'>
+forcenoval:False
+forcenoval type: <type 'bool'>
+geometry:False
+geometry type: <type 'bool'>
+held:False
+held type: <type 'bool'>
+inputfile:False
+inputfile type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
+kernel:default
+kernel type: <type 'str'>
+kerneloptions:False
+kerneloptions type: <type 'bool'>
+mode:False
+mode type: <type 'bool'>
+nodecount:10
+nodecount type: <type 'str'>
+notify:False
+notify type: <type 'bool'>
+output:False
+output type: <type 'bool'>
+outputprefix:False
+outputprefix type: <type 'bool'>
+preemptable:False
+preemptable type: <type 'bool'>
+proccount:False
+proccount type: <type 'bool'>
+project:False
+project type: <type 'bool'>
+queue:default
+queue type: <type 'str'>
+run_project:False
+run_project type: <type 'bool'>
+time:50
+time type: <type 'str'>
+umask:False
+umask type: <type 'bool'>
+user_list:False
+user_list type: <type 'bool'>
+verbose:False
+verbose type: <type 'bool'>
+version:False
+version type: <type 'bool'>
+
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('qsub.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_qsub_script_1():
+    """
+    qsub test run: script_1
+
+    """
+
+    args      = """cobalt_script1.sh"""
+
+    cmdout    = \
+"""1
+"""
+
+    cmderr    = ''
+
+    stubout   = \
+"""
+ADD_JOBS
+
+args:[]
+args type: <type 'list'>
+command:/tmp/cobalt_script1.sh
+command type: <type 'str'>
+cwd:/tmp
+cwd type: <type 'str'>
+envs:{'a': '1', 'c': '3', 'b': '2'}
+envs type: <type 'dict'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+jobid:*
+jobid type: <type 'str'>
+kernel:default
+kernel type: <type 'str'>
+mode:script
+mode type: <type 'str'>
+nodes:100
+nodes type: <type 'int'>
+outputdir:/tmp
+outputdir type: <type 'str'>
+path:/tmp
+path type: <type 'str'>
+procs:512
+procs type: <type 'str'>
+queue:default
+queue type: <type 'str'>
+run_project:False
+run_project type: <type 'bool'>
+script_preboot:True
+script_preboot type: <type 'bool'>
+tag:job
+tag type: <type 'str'>
+umask:18
+umask type: <type 'int'>
+user:gooduser
+user type: <type 'str'>
+user_list:['gooduser']
+user_list type: <type 'list'>
+walltime:75
+walltime type: <type 'str'>
+
+VALIDATE_JOB
+
+attrs:{}
+attrs type: <type 'dict'>
+cwd:/tmp
+cwd type: <type 'str'>
+debug:False
+debug type: <type 'bool'>
+debuglog:False
+debuglog type: <type 'bool'>
+dependencies:False
+dependencies type: <type 'bool'>
+disable_preboot:False
+disable_preboot type: <type 'bool'>
+env:a=1:c=3:b=2
+env type: <type 'str'>
+error:False
+error type: <type 'bool'>
+forcenoval:False
+forcenoval type: <type 'bool'>
+geometry:False
+geometry type: <type 'bool'>
+held:False
+held type: <type 'bool'>
+inputfile:False
+inputfile type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
+kernel:default
+kernel type: <type 'str'>
+kerneloptions:False
+kerneloptions type: <type 'bool'>
+mode:script
+mode type: <type 'str'>
+nodecount:100
+nodecount type: <type 'str'>
+notify:False
+notify type: <type 'bool'>
+output:False
+output type: <type 'bool'>
+outputprefix:False
+outputprefix type: <type 'bool'>
+preemptable:False
+preemptable type: <type 'bool'>
+proccount:False
+proccount type: <type 'bool'>
+project:False
+project type: <type 'bool'>
+queue:default
+queue type: <type 'str'>
+run_project:False
+run_project type: <type 'bool'>
+time:75
+time type: <type 'str'>
+umask:False
+umask type: <type 'bool'>
+user_list:False
+user_list type: <type 'bool'>
+verbose:False
+verbose type: <type 'bool'>
+version:False
+version type: <type 'bool'>
+
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('qsub.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_qsub_script_2():
+    """
+    qsub test run: script_2
+
+    """
+
+    args      = """-t 50 cobalt_script1.sh"""
+
+    cmdout    = \
+"""1
+"""
+
+    cmderr    = ''
+
+    stubout   = \
+"""
+ADD_JOBS
+
+args:[]
+args type: <type 'list'>
+command:/tmp/cobalt_script1.sh
+command type: <type 'str'>
+cwd:/tmp
+cwd type: <type 'str'>
+envs:{'a': '1', 'c': '3', 'b': '2'}
+envs type: <type 'dict'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+jobid:*
+jobid type: <type 'str'>
+kernel:default
+kernel type: <type 'str'>
+mode:script
+mode type: <type 'str'>
+nodes:100
+nodes type: <type 'int'>
+outputdir:/tmp
+outputdir type: <type 'str'>
+path:/tmp
+path type: <type 'str'>
+procs:512
+procs type: <type 'str'>
+queue:default
+queue type: <type 'str'>
+run_project:False
+run_project type: <type 'bool'>
+script_preboot:True
+script_preboot type: <type 'bool'>
+tag:job
+tag type: <type 'str'>
+umask:18
+umask type: <type 'int'>
+user:gooduser
+user type: <type 'str'>
+user_list:['gooduser']
+user_list type: <type 'list'>
+walltime:50
+walltime type: <type 'str'>
+
+VALIDATE_JOB
+
+attrs:{}
+attrs type: <type 'dict'>
+cwd:/tmp
+cwd type: <type 'str'>
+debug:False
+debug type: <type 'bool'>
+debuglog:False
+debuglog type: <type 'bool'>
+dependencies:False
+dependencies type: <type 'bool'>
+disable_preboot:False
+disable_preboot type: <type 'bool'>
+env:a=1:c=3:b=2
+env type: <type 'str'>
+error:False
+error type: <type 'bool'>
+forcenoval:False
+forcenoval type: <type 'bool'>
+geometry:False
+geometry type: <type 'bool'>
+held:False
+held type: <type 'bool'>
+inputfile:False
+inputfile type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
+kernel:default
+kernel type: <type 'str'>
+kerneloptions:False
+kerneloptions type: <type 'bool'>
+mode:script
+mode type: <type 'str'>
+nodecount:100
+nodecount type: <type 'str'>
+notify:False
+notify type: <type 'bool'>
+output:False
+output type: <type 'bool'>
+outputprefix:False
+outputprefix type: <type 'bool'>
+preemptable:False
+preemptable type: <type 'bool'>
+proccount:False
+proccount type: <type 'bool'>
+project:False
+project type: <type 'bool'>
+queue:default
+queue type: <type 'str'>
+run_project:False
+run_project type: <type 'bool'>
+time:50
+time type: <type 'str'>
+umask:False
+umask type: <type 'bool'>
+user_list:False
+user_list type: <type 'bool'>
+verbose:False
+verbose type: <type 'bool'>
+version:False
+version type: <type 'bool'>
+
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('qsub.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_qsub_script_3():
+    """
+    qsub test run: script_3
+
+    """
+
+    args      = """--mode vn cobalt_script1.sh"""
+
+    cmdout    = ''
+
+    cmderr    = \
+"""Mode already set to 'script' and trying to set it again to 'vn'
+"""
+
+    stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('qsub.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_qsub_script_4():
+    """
+    qsub test run: script_4
+
+    """
+
+    args      = """-d cobalt_script2.sh"""
+
+    cmdout    = ''
+
+    cmderr    = \
+"""
+qsub.py -d cobalt_script2.sh
+
+Script Directive Options: --mode script --mode vn -n 100 -t 75
+Mode already set to 'script' and trying to set it again to 'vn'
+"""
+
+    stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
                        cmdout, # Expected command output
                        stubout, # Expected stub functions output
                        cmderr, # Expected command error output 
