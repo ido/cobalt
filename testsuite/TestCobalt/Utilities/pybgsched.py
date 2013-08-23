@@ -62,6 +62,7 @@ class Block(object):
         self.action = Action._None
         block_dict[name] = self
         self.statuses = [self.Free]
+        self.boot_options = ''
 
     @classmethod
     def set_error(cls, error_message):
@@ -98,7 +99,6 @@ class Block(object):
         return
 
     def getStatus(self):
-        print "fetching statuses"
         self.raise_error()
         if len(self.statuses) > 1:
             status = self.statuses.pop()
@@ -110,6 +110,16 @@ class Block(object):
         self.raise_error()
         return self.action
 
+    def getBootOptions(self):
+        self.raise_error()
+        return self.boot_options
+
+    def setBootOptions(self, val):
+        self.boot_options = val
+
+    def update(self):
+        self.raise_error()
+
 class IOBlock(Block):
 
     def __init__(self, name, size):
@@ -120,10 +130,21 @@ class IOBlock(Block):
         self.action = Action._None
         io_block_dict[name] = self
         self.statuses = [self.Free]
+        self.boot_options = ''
 
     @classmethod
     def initiateBoot(cls, location, allow_holes, uninit1, uninit2):
         return
+
+    def getBootOptions(self):
+        self.raise_error()
+        return self.boot_options
+
+    def setBootOptions(self, val):
+        self.boot_options = val
+
+    def update(self):
+        self.raise_error()
 
 class StringVector(object):
 
