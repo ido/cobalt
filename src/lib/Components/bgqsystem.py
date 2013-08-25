@@ -18,6 +18,7 @@ import ConfigParser
 import traceback
 import pybgsched
 import errno
+import re
 
 import Cobalt
 import Cobalt.Data
@@ -916,7 +917,15 @@ class BGSystem (BGBaseSystem):
                     if pybgsched.hardware_in_error_state(nc):
                         state = "error"
                     nodecard_list.append(self._get_node_card(nc.getLocation(), state))
-            io_node_list.extend([link.getDestinationLocation() for link in SWIG_vector_to_list(pybgsched.getIOLinks(midplane_id))])
+            #Get IO nodes this block attaches to.
+            if block_def.isLarge():
+                io_node_list.extend([link.getDestinationLocation() for link in SWIG_vector_to_list(pybgsched.getIOLinks(midplane_id))])
+            else:
+                #the block is smaller than a midplane, so figure out which IONs we're really attached to.
+                io_link_list = SWIG_vector_to_list(pybgsched.getIOLinks(midplane_id))
+                for io_link in io_link_list:
+                    if re.match(r'R..-M.-N..', io_link.getLocation()).group(0) in [str(nc) for nc in nodecard_list]:
+                        io_node_list.append(io_link.getDestinationLocation())
 
         # Add in passthrough switches
         for midplane_id in passthrough_ids:
