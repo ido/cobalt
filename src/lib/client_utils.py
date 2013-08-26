@@ -693,7 +693,11 @@ def process_filters(filters,spec):
     Process the specified filters to spec
     """
     for filt in filters:
-        Cobalt.Util.processfilter(filt, spec)
+        try:
+            Cobalt.Util.processfilter(filt, spec)
+        except Exception, e:
+            logger.error("Filter failure: please contact Administrator: %s: %s", e, filt)
+            sys.exit(1)
 
 def validate_conflicting_options(parser, option_lists):
     """
