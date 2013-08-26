@@ -2,6 +2,7 @@
 """
 Setup reservations in the scheduler
 
+Usage: %prog --help
 Usage: %prog [options] <partition1> ... <partitionN>
 version: "%prog " + __revision__ + , Cobalt  + __version__
 
@@ -10,13 +11,13 @@ OPTIONS DEFINITIONS:
 '-A','--project',dest='project',type='string',help='set project name for partitions in args'
 '-D','--defer',dest='defer',help='defer flag. needs to be used with -m',action='store_true'
 '-c','--cycletime',dest='cycle',type='string',help='set cycle time in minutes or HH:MM:SS',callback=cb_time
-'-d','--duration',dest='duration',type='string',help='duration time in minutes or HH:MM:SS>',callback=cb_time
+'-d','--duration',dest='duration',type='string',help='duration time in minutes or HH:MM:SS',callback=cb_time
 '-m','--modify_res',dest='modify_res',help='modify current reservation specified in -n',action='store_true'
 '-n','--name',dest='name',type='string',help='reservation name to add or modify'
-'-p','--partition',dest='partitions',type='string',help='partition (now optional)'
+'-p','--partitions',dest='partitions',type='string',help='partition(s) (now optional) part1:..:partN'
 '-q','--queue',dest='queue',type='string',help='queue name'
-'-s','--starttime',dest='start',type='string',help='start date time: YYYY_MM_DD-HH:MM>',callback=cb_date
-'-u','--user',dest='users',type='string',help='user id list (user1:user2:...)',callback=cb_user_list
+'-s','--starttime',dest='start',type='string',help='start date time: YYYY_MM_DD-HH:MM, or now',callback=cb_date
+'-u','--user',dest='users',type='string',help='user id list (user1:user2:... or "*" for all users)',callback=cb_res_users
 '--debug',dest='debug',help='turn on communication debugging',callback=cb_debug
 
 
@@ -34,7 +35,7 @@ import math
 import sys
 import time
 from Cobalt import client_utils
-from Cobalt.client_utils import cb_debug, cb_time, cb_date, cb_passthrough, cb_user_list
+from Cobalt.client_utils import cb_debug, cb_time, cb_date, cb_passthrough, cb_res_users
 
 from Cobalt.arg_parser import ArgParse
 
@@ -83,7 +84,7 @@ def validate_args(parser,spec,opt_count):
     Validate setres arguments. Will return true if we want to continue processing options.
     """
     if parser.options.partitions != None:
-        parser.args += [parser.options.partitions]
+        parser.args += [part for part in parser.options.partitions.split(':')]
 
     if parser.options.cycle_id != None or parser.options.res_id != None:
         only_id_change = True
@@ -94,7 +95,7 @@ def validate_args(parser,spec,opt_count):
         only_id_change = False
 
     if parser.options.force_id and not only_id_change:
-        client_utils.logging.error("--force_id can only be used with --cycle_id and/or --res_id.")
+        client_utils.logger.error("--force_id can only be used with --cycle_id and/or --res_id.")
         sys.exit(1)
 
     if only_id_change:
@@ -110,8 +111,12 @@ def validate_args(parser,spec,opt_count):
 
     else:
 
+        if parser.options.name is None:
+            client_utils.print_usage(parser)
+            sys.exit(1)
+
         if parser.no_args() and (parser.options.modify_res == None):
-            client_utils.logging.error("Must supply either -p with value or partitions as arguments")
+            client_utils.logger.error("Must supply either -p with value or partitions as arguments")
             sys.exit(1)
 
         if parser.options.start == None and parser.options.modify_res == None:
@@ -124,10 +129,6 @@ def validate_args(parser,spec,opt_count):
 
         if parser.options.defer != None and (parser.options.start != None or parser.options.cycle != None):
             client_utils.logger.error("Cannot use -D while changing start or cycle time")
-            sys.exit(1)
-
-        if parser.options.name == None and parser.options.modify_res != None:
-            client_utils.logger.error("-m must by called with -n <reservation name>")
             sys.exit(1)
 
         # if we have args then verify the args (partitions)
@@ -187,7 +188,7 @@ def modify_reservation(parser):
             updates['duration'] = parser.options.duration
 
     if parser.options.users != None:
-        updates['users'] = ':'.join(parser.options.users)
+        updates['users'] = None if parser.options.users == "*" else parser.options.users
     if parser.options.project != None:
         updates['project'] = parser.options.project
     if parser.options.cycle != None:
@@ -199,16 +200,20 @@ def modify_reservation(parser):
 
     comp_args = ([{'name':parser.options.name}], updates, client_utils.getuid())
     client_utils.component_call(SCHMGR, False, 'set_reservations', comp_args)
+    reservations = client_utils.component_call(SCHMGR, False, 'get_reservations', 
+                                               ([{'name':parser.options.name, 'users':'*','start':'*', 'duration':'*', 'partitions':'*', 
+                                                  'cycle': '*', 'res_id': '*', 'project':'*', 'block_passthrough':'*'}], ))
+    client_utils.logger.info(reservations)
     client_utils.logger.info(client_utils.component_call(SCHMGR, False, 'check_reservations', ()))
 
 def add_reservation(parser,spec,user):
     """
     add reservation 
     """
-    spec['users']             = ':'.join(parser.options.users) if parser.options.users != None else None
-    spec['cycle']             = parser.options.cycle 
-    spec['project']           = parser.options.project
-    if parser.options.name              == None: spec['name']              = 'system'
+    spec['users']   = None if parser.options.users == '*' else parser.options.users
+    spec['cycle']   = parser.options.cycle 
+    spec['project'] = parser.options.project
+
     if parser.options.block_passthrough == None: spec['block_passthrough'] = False
 
     client_utils.logger.info(client_utils.component_call(SCHMGR, False, 'add_reservations', ([spec], user)))
@@ -229,10 +234,10 @@ def main():
     callbacks = [
         # <cb function>           <cb args>
         [ cb_time                , (False, True, True) ], # no delta time, Seconds, return int
-        [ cb_date                , () ],
+        [ cb_date                , (True,) ], # Allow to set the date to 'now'
         [ cb_passthrough         , () ],
         [ cb_debug               , () ],
-        [ cb_user_list           , (opts, False) ]] # do not add current user
+        [ cb_res_users           , () ]] 
 
     # Get the version information
     opt_def =  __doc__.replace('__revision__',__revision__)
@@ -243,7 +248,7 @@ def main():
     user = client_utils.getuid()
 
     parser.parse_it() # parse the command line
-    opt_count = client_utils.get_options(spec,opts,opt2spec,parser)
+    opt_count = client_utils.get_options(spec, opts, opt2spec, parser)
 
     # if continue to process options then
     if validate_args(parser,spec,opt_count):

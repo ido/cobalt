@@ -2,6 +2,7 @@
 """
 Cobalt qalter command
 
+Usage: %prog --help
 Usage: %prog [options] <jobid1> ... <jobidN>
 version: "%prog " + __revision__ + , Cobalt  + __version__
 
@@ -46,7 +47,7 @@ from Cobalt import client_utils
 from Cobalt.client_utils import \
     cb_debug, cb_nodes, cb_time, cb_mode, \
     cb_upd_dep, cb_attrs, cb_user_list, cb_geometry, cb_gtzero
-
+from Cobalt.Util import init_cobalt_config
 from Cobalt.arg_parser import ArgParse
 
 __revision__ = '$Revision: 559 $' # TBC may go away.
@@ -54,13 +55,15 @@ __version__ = '$Version$'
 
 QUEMGR = client_utils.QUEMGR
 
+init_cobalt_config()
+
 def validate_args(parser, opt_count):
     """
     Validate qalter arguments
     """
     # Check if any altering options entered
     if opt_count == 0:
-        client_utils.logger.error("No job altering options entered")
+        client_utils.print_usage(parser, "No required options provided")
         sys.exit(1)
 
     # get jobids from the argument list
@@ -221,7 +224,7 @@ def main():
         [ cb_time                , (True, False, False) ], # delta time allowed, return minutes, return string
         [ cb_upd_dep             , () ],
         [ cb_attrs               , () ],
-        [ cb_user_list           , (opts, True) ], # add user
+        [ cb_user_list           , (opts,) ],
         [ cb_geometry            , (opts,) ],
         [ cb_mode                , () ]]
 

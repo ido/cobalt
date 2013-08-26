@@ -76,16 +76,16 @@ def main():
 
     verbose        = False
     really_verbose = False
-    header = [('Reservation', 'Queue', 'User', 'Start', 'Duration','Passthrough', 'Partitions')]
+    header = [('Reservation', 'Queue', 'User', 'Start', 'Duration','Passthrough', 'Partitions', 'Time Remaining')]
 
     if parser.options.verbose:
         verbose = True
         header = [('Reservation', 'Queue', 'User', 'Start', 'Duration',
-                   'End Time', 'Cycle Time', 'Passthrough', 'Partitions')]
+                   'End Time', 'Cycle Time', 'Passthrough', 'Partitions', 'Time Remaining')]
     elif parser.options.really_verbose:
         really_verbose = True
-        header = [('Reservation', 'Queue', 'User', 'Start', 'Duration','End Time', 
-                   'Cycle Time','Passthrough','Partitions', 'Project', 'ResID', 'CycleID')]
+        header = [('Reservation', 'Queue', 'User', 'Start', 'Duration','End Time', 'Cycle Time','Passthrough','Partitions', 
+                   'Project', 'ResID', 'CycleID', 'Time Remaining' )]
 
     for res in reservations:
 
@@ -93,13 +93,18 @@ def main():
         if res['block_passthrough']:
             passthrough = "Blocked"
 
-        start    = float(res['start'])
-        duration = float(res['duration'])
+        start     = float(res['start'])
+        duration  = float(res['duration'])
+        now       = time.time()
+
+        deltatime = now - start
+        timeleft = "Not Started" if deltatime < 0.0 else client_utils.get_elapsed_time(deltatime, duration)
+        timeleft = "00:00:00" if '-' in timeleft else timeleft
+
         # do some crazy stuff to make reservations which cycle display the 
         # "next" start time
         if res['cycle']:
             cycle = float(res['cycle'])
-            now = time.time()
             periods = math.floor((now - start)/cycle)
             # reservations can't become active until they pass the start time 
             # -- so negative periods aren't allowed
@@ -128,7 +133,7 @@ def main():
 
         time_fmt = "%c"
         starttime = time.strftime(time_fmt, time.localtime(start))
-        endtime = time.strftime(time_fmt, time.localtime(start + duration)) 
+        endtime   = time.strftime(time_fmt, time.localtime(start + duration)) 
 
         if parser.options.oldts == None:
             #time_fmt += " %z (%Z)"
@@ -139,17 +144,19 @@ def main():
             output.append((res['name'], res['queue'], res['users'], 
                            starttime,"%02d:%02d" % (dhour, dmin),
                            endtime, cycle, passthrough,
-                           mergelist(res['partitions'], cluster), res['project'],
-                           res['res_id'], res['cycle_id']))
+                           mergelist(res['partitions'], cluster), 
+                           res['project'], res['res_id'], res['cycle_id'], timeleft))
         elif verbose:
             output.append((res['name'], res['queue'], res['users'], 
                            starttime,"%02d:%02d" % (dhour, dmin),
                            endtime, cycle, passthrough,
-                           mergelist(res['partitions'], cluster)))
+                           mergelist(res['partitions'], cluster), 
+                           timeleft))
         else:
             output.append((res['name'], res['queue'], res['users'], 
                            starttime,"%02d:%02d" % (dhour, dmin), passthrough,
-                           mergelist(res['partitions'], cluster)))
+                           mergelist(res['partitions'], cluster), 
+                           timeleft))
 
     output.sort( (lambda x,y: cmp( time.mktime(time.strptime(x[3].split('+')[0].split('-')[0].strip(), time_fmt)), 
                                    time.mktime(time.strptime(y[3].split('+')[0].split('-')[0].strip(), time_fmt))) ) )

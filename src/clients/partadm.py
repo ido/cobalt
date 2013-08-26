@@ -2,6 +2,7 @@
 """
 Partadm sets partition attributes in the scheduler
 
+Usage: partadm.py --help
 Usage: partadm.py [-a|-d] part1 part2 (add or del)
 Usage: partadm.py -l
 Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
@@ -101,9 +102,7 @@ def validate_args(parser):
     opt_count = client_utils.get_options(spec, opts, opt2spec, parser)
 
     if opt_count == 0:
-        errmsg = 'Must supply one of -a or -d or -l or -start or -stop or --queue or -b.\n'
-        errmsg += 'Adding "-r" or "--recursive" will add the children of the blocks passed in.\n'
-        client_utils.logger.error(errmsg)
+        client_utils.print_usage(parser)
         sys.exit(1)
 
     opts_wo_args = ['list_blocks', 'xml', 'dump', 'savestate', 'boot_stop', 'boot_start', 'boot_status', 'list_io',
@@ -425,14 +424,15 @@ def handle_blockinfo_option(parts, sys_type, print_block):
                   'block_type':'*','corner_node':'*', 'extents':'*', 'cleanup_pending':'*', 
                   'state':'*','size':'*','draining':'*','backfill_time':'*','wire_list':'*',
                   'wiring_conflict_list':'*', 'midplane_geometry':'*', 'node_geometry':'*',
-                  'passthrough_blocks':'*', 'passthrough_midplane_list':'*', 'io_node_list':'*'}
+                  'passthrough_blocks':'*', 'passthrough_midplane_list':'*', 'io_node_list':'*',
+                  'current_kernel':'*', 'current_kernel_options':'*'}
                  for part in parts], )
-
         info = client_utils.component_call(SYSMGR, False, 'get_blocks', args)
         print_block(info)
 
         args = ([{'name':part, 'status':'*', 'state':'*', 'size':'*', 'io_drawer_list':'*',
-                  'io_node_list':'*', 'block_computes_for_reboot':'*', 'autoreboot':'*'} for part in parts], )
+            'io_node_list':'*', 'block_computes_for_reboot':'*', 'autoreboot':'*', 'current_kernel':'*', 
+            'current_kernel_options':'*'} for part in parts], )
 
         info =  client_utils.component_call(SYSMGR, False, 'get_io_blocks', args)
         print_block(info)
@@ -559,7 +559,8 @@ def handle_list_io_option(sys_type):
 
     #fetch and print bulk IO Block data
     if sys_type == 'bgq':
-        args = ([{'name':'*', 'size':'*', 'status':'*', 'state':'*', 'block_computes_for_reboot':'*', 'autoreboot':'*'}],)
+        args = ([{'name':'*', 'size':'*', 'status':'*', 'state':'*', 'block_computes_for_reboot':'*', 'autoreboot':'*', 
+            'current_kernel':'*', 'current_kernel_options':'*'}],)
         io_block_info = client_utils.component_call(SYSMGR, False, 'get_io_blocks', args)
         data = [['Name', 'Size', 'State', 'CS Status', 'BlockComputes', 'Autoreboot']]
         for io_block in io_block_info:

@@ -601,23 +601,37 @@ class SchedStub(object):
         logmsg("\nGET_RESERVATIONS\n")
         logdiclist(query)
         res_list = []
+
+        # get hooks f
+        thook = testutils.get_testhook()
+
         ct   = 300
         d    = 500
         st   = 1000000
-        res  = query[0]
-        if 'name' in res:
-            _res = {'queue':QUEUES[0],'name':res['name'],'cycle':ct,'duration':d,'start':st,'active':True,
-                    'partitions':':'.join(PARTS),'block_passthrough':True,'cycle_id':10,'users':USERS[0],
-                    'project':'proj','res_id':'id'}
-            res_list.append(_res)
+
+        if thook.find("BOGUS USER") != -1:
+            u = 'bogususer'
         else:
-            for q in QUEUES:
-                ct += 300
-                d  += 500
-                st += 1000000
-                res_list.append({'queue':q,'name':q,'cycle':ct,'duration':d,'start':st,'active':True,
-                                 'partitions':':'.join(PARTS),'block_passthrough':True,'project':'proj','res_id':'id'})
-            
+            u = 'gooduser'
+
+        for res in query:
+            if 'name' in res:
+                if thook.find("NO CYCLE") != -1:
+                    _res = {'queue':QUEUES[0],'name':res['name'],'cycle':None,'duration':d,'start':st,'active':True,
+                            'partitions':':'.join(PARTS),'block_passthrough':True,'cycle_id':10,'users':u,
+                            'project':'proj','res_id':'id'}
+                else:
+                    _res = {'queue':QUEUES[0],'name':res['name'],'cycle':ct,'duration':d,'start':st,'active':True,
+                            'partitions':':'.join(PARTS),'block_passthrough':True,'cycle_id':10,'users':u,
+                            'project':'proj','res_id':'id'}
+                res_list.append(_res)
+            else:
+                for q in QUEUES:
+                    ct += 300
+                    d  += 500
+                    st += 1000000
+                    res_list.append({'queue':q,'name':q,'cycle':ct,'duration':d,'start':st,'active':True,
+                                     'partitions':':'.join(PARTS),'block_passthrough':True,'project':'proj','res_id':'id'})
         return res_list
 
     def set_reservations(self,res_list,spec,user):
@@ -626,6 +640,18 @@ class SchedStub(object):
         logdic(spec)
         logmsg('user: '     + str(user))
         return True
+
+    def release_reservations(self,spec,user):
+        logmsg("\RELEASE_RESERVATIONS\n")
+        logdiclist(spec)
+        logmsg('user: '     + str(user))
+        return [{'name': r['name'], 'partitions': 'p1:p2' } for r in spec]
+
+    def del_reservations(self,spec,user):
+        logmsg("\RELEASE_RESERVATIONS\n")
+        logdiclist(spec)
+        logmsg('user: '     + str(user))
+        return ['one','two','three']
 
     def add_reservations(self,specs,user):
         logmsg("\nADD_RESERVATIONS\n")

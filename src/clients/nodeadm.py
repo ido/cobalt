@@ -11,7 +11,7 @@ OPTIONS DEFINITIONS:
 '--down',dest='down',help='mark nodes as down',action='store_true'
 '--up',dest='up',help='mark nodes as up (even if allocated)',action='store_true'
 '--queue',action='store', dest='queue', help='set queue associations'
-'-l','--list',action='store_true', dest='list', help='list node states'
+'-l','--list_nstates',action='store_true', dest='list_nstates', help='list the node states'
 
 """
 import logging
@@ -36,16 +36,10 @@ def validate_args(parser):
 
     opt_count = client_utils.get_options(spec,opts,opt2spec,parser)
 
-    if parser.no_args() and not parser.options.list:
-        client_utils.logger.error("No arguments provided")
-        parser.parser.print_help()
+    if (parser.no_args() and not parser.options.list_nstates) or opt_count == 0:
+        client_utils.print_usage(parser)
         sys.exit(1)
     
-    if opt_count == 0:
-        client_utils.logger.error("Need at least one option")
-        parser.parser.print_help()
-        sys.exit(1)
-
     impl = client_utils.component_call(SYSMGR, False, 'get_implementation', ())
 
     # make sure we're on a cluster-system
@@ -54,7 +48,7 @@ def validate_args(parser):
         sys.exit(0)
 
     # Check mutually exclusive options
-    mutually_exclusive_option_lists = [['down', 'up', 'list', 'queue']]
+    mutually_exclusive_option_lists = [['down', 'up', 'list_nstates', 'queue']]
 
     if opt_count > 1:
         client_utils.validate_conflicting_options(parser, mutually_exclusive_option_lists)
@@ -107,7 +101,7 @@ def main():
             if a not in delta:
                 client_utils.logger.info("   %s" %a)
     
-    elif opt.list:
+    elif opt.list_nstates:
         status = client_utils.component_call(SYSMGR, False, 'get_node_status', ())
         queue_data = client_utils.component_call(SYSMGR, False, 'get_queue_assignments', ())
 

@@ -9,8 +9,8 @@ test_argslist - is a list of dictionaries, each dictionary has all the necessary
 """
 
 test_argslist = [
-    { "tc_name" : "invalid_option", "args" : """-k""", },
-    { "tc_name" : "only_arg", "args" : """1""", "old_args" : "", },
+    { "tc_name" : "invalid_option", "args" : """-k""", 'new_only' : True, },
+    { "tc_name" : "only_arg", "args" : """1""", "new_only" : True, },
     { "tc_name" : "no_args_opts", "args" : "", "old_args" : """-d""", },
     { "tc_name" : "debug_flag", "args" : """-d""", },
     { "tc_name" : "held_option", "args" : """-h user_hold""", },

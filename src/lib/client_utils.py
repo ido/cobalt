@@ -15,6 +15,7 @@ import xmlrpclib
 import ConfigParser
 import re
 import logging
+import time
 
 import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
@@ -31,6 +32,13 @@ SYSMGR      = 'system'
 QUEMGR      = 'queue-manager'
 SLPMGR      = 'service-location'
 SCHMGR      = 'scheduler'
+
+#
+# env Tags
+COL_TAG = "<<*COL*>>"
+EQL_TAG = "<<*EQL*>>"
+ESC_COL = "\:"
+ESC_EQL = "\="
 
 class Logger(object):
     """
@@ -122,6 +130,14 @@ class client_data(object):
         SCHMGR : {'conn' : None, 'defer' : True}, 
         SLPMGR : {'conn' : None, 'defer' : True} }
 
+def print_usage(parser, errmsg = "No arguments or options provided"):
+    """
+    Will print the usage and a specified error message if provided
+    """
+    parser.parser.print_usage()
+    if errmsg is not None:
+        logger.error(errmsg+'\n')
+
 def component_call(comp_name, defer, func_name, args, exit_on_error = True):
     """
     This function is calls a function on another component and handle XML RPC faults
@@ -170,7 +186,7 @@ def component_call(comp_name, defer, func_name, args, exit_on_error = True):
     except xmlrpclib.Fault, fault:
         component_error("XMLRPC failure %s in %s.%s\n", fault, comp_name, func_name)
     except Exception, e:
-        component_error("Following exception while trying to excecute %s.%s: %s\n", comp_name, func_name, e)
+        component_error("Following exception occured while trying to execute %s.%s: %s\n", comp_name, func_name, e)
 
     return retVal
 
@@ -226,6 +242,30 @@ def set_scores(score, jobids, user):
     else:
         dumb = [str(_id) for _id in response]
         logger.info("updating scores for jobs: %s" % ", ".join(dumb))
+
+def get_cp_option(section, option):
+    """
+    get a config parser option from the config parser 
+    """
+    try:
+        CP = read_config()
+        opt = CP.get(section, option)
+    except ConfigParser.NoOptionError:
+        opt = None
+    except ConfigParser.NoSectionError:
+        logger.error("No section %s in Cobalt config" % section)
+        sys.exit(1)
+    except:
+        logger.error("Unknown error when getting config option")
+        sys.exit(1)
+    return opt
+
+def get_cqm_option(cqm_option):
+    """
+    get a cqm option from the config parser 
+    """
+    cqm_opt = get_cp_option('cqm', cqm_option)
+    return cqm_opt.split(":") if cqm_opt else None
 
 class header_info(object):
     """
@@ -294,6 +334,15 @@ def sec_to_str(t):
     """
     return Cobalt.Util.sec_to_str(t)
 
+def get_elapsed_time(starttime, endtime):
+    """
+    returns hh:mm:ss elapsed time string from start and end timestamps
+    """
+    runtime = endtime - starttime
+    minutes, seconds = divmod(runtime, 60)
+    hours, minutes = divmod(minutes, 60)
+    return ( "%02d:%02d:%02d" % (hours, minutes, seconds) )
+
 def print_tabular(rows):
     """
     print tabular abstract the util verion incase we want to modify it.
@@ -324,7 +373,7 @@ def validate_jobid_args(parser):
     Validate jobids command line arguments.
     """
     if parser.no_args():
-        logger.error("No Jobid(s) given")
+        print_usage(parser, "No Jobid(s) given")
         sys.exit(1)
 
     # get jobids from the argument list
@@ -514,11 +563,11 @@ def get_options(spec,opts,opt2spec,parser):
                 spec[deststr]     = optval
                 destdic[deststr]  = True
                 opt_count        += 1
-        
+
         else: # Option not in command line
 
             # need the default specified in spec for these options (qsub)
-            if optstr in ['queue','kernel','cwd'] and client_data.curr_cmd == 'qsub':
+            if optstr in ['queue', 'kernel', 'ion_kernel', 'cwd'] and client_data.curr_cmd == 'qsub':
                 opts[optstr] = spec[deststr]
 
             # for option attrs the default is an empty dictionary (qsub, qalter)
@@ -567,7 +616,6 @@ def setup_logging(level):
     global logger
 
     if hasattr(logger, 'already_setup'):
-        print('already done')
         return
 
     logger               = Logger(level)
@@ -630,23 +678,6 @@ def get_jobids(args):
             sys.exit(1)
         jobids.add(jobid)
     return jobids
-
-def get_cqm_option(cqm_option):
-    """
-    get a cqm option from the config parser 
-    """
-    try:
-        CP = read_config()
-        opt = CP.get('cqm',cqm_option).split(':')
-    except ConfigParser.NoOptionError:
-        opt = None
-    except ConfigParser.NoSectionError:
-        logger.error("No section 'cqm' in Cobalt config")
-        sys.exit(1)
-    except:
-        logger.error("Unknown error when getting config option")
-        sys.exit(1)
-    return opt
 
 def get_filters():
     """
@@ -816,6 +847,8 @@ def cb_upd_dep(option,opt_str,value,parser,*args):
     """
     _check_dependencies(value)
     deps = value.split(":")
+    if deps[0].lower() == "none":
+        deps = []
     setattr(parser.values,option.dest,deps) # set the option 
 
 def cb_dep(option,opt_str,value,parser,*args):
@@ -838,15 +871,17 @@ def cb_env(option,opt_str,value,parser,*args):
     """
     This callback will validate the env variables and store them.
     """
-    opts = args[0]
-    _env = {}
-    key_value_pairs = [item.split('=', 1) for item in re.split(r':(?=\w+\b=)', value)]
+    opts   = args[0]
+    _env   = {}
+    _value = value.replace(ESC_COL, COL_TAG).replace(ESC_EQL, EQL_TAG)
+    key_value_pairs = [item.split('=', 1) for item in re.split(r':(?=\w+\b=)', _value)]
     for kv in key_value_pairs:
         if len(kv) != 2:
             logger.error( "Improperly formatted argument to env : %r" % kv)
             sys.exit(1)
     for key, val in key_value_pairs:
-        _env.update({key:val})
+        _env.update({key:val.replace(COL_TAG,':').replace(EQL_TAG,'=')})
+    
     setattr(parser.values,option.dest,_env) # set the option
     opts['env'] = value
  
@@ -917,15 +952,12 @@ def cb_attrs(option,opt_str,value,parser,*args):
             logger.error( "Improperly formatted argument to attrs : %s" % attr)
             sys.exit(1)
     setattr(parser.values,option.dest,newoptsattrs) # set the option
-    
-def cb_user_list(option,opt_str,value,parser,*args):
+
+def _validate_users(users):
     """
-    This callback will validate the user list and store it.
+    This function will validate the user list
     """
-    opts     = args[0] 
-    add_user = args[1]
-    user = getuid()
-    user_list = [auth_user for auth_user in value.split(':')]  
+    user_list = [auth_user for auth_user in users.split(':')]  
     for auth_user in user_list:
         try:
             pwd.getpwnam(auth_user)
@@ -935,10 +967,28 @@ def cb_user_list(option,opt_str,value,parser,*args):
         except Exception, e:
             logger.error("UNKNOWN FAILURE: user %s." % (auth_user,),e)
             sys.exit(1)
-    if user not in user_list and add_user:
+    return user_list
+    
+def cb_user_list(option, opt_str, value, parser, *args):
+    """
+    This callback will validate the user list and store it.
+    """
+    opts = args[0] 
+    user = getuid()
+    user_list = _validate_users(value)
+    if user not in user_list:
         user_list.insert(0, user)
-    setattr(parser.values,option.dest,user_list) # set the option
+    setattr(parser.values,option.dest,user_list)
     opts[option.dest] = value
+    
+def cb_res_users(option, opt_str, value, parser, *args):
+    """
+    This callback will validate resevation users list and store it.
+    """
+    if value != '*':
+        _validate_users(value)
+    users = value
+    setattr(parser.values, option.dest, users)
     
 def cb_mode(option,opt_str,value,parser,*args):
     """
@@ -1021,7 +1071,7 @@ def cb_setqueues(option,opt_str,value,parser,*args):
     parser.values.setq_opt = optstr
 
 
-def _setbool_attr(parser,opt_str,attr,true_opt_list):
+def _setbool_attr(parser, opt_str, attr, true_opt_list):
     """
     Set the specified attr to true if opt string in the true option list.
     Will generate an error if the attr is already set.
@@ -1038,9 +1088,25 @@ def _setbool_attr(parser,opt_str,attr,true_opt_list):
 
 def cb_hold(option,opt_str,value,parser,*args):
     """
-    handles the admin hold attribute
+    handles the (user | admin) hold and release attributes
     """
-    _setbool_attr(parser,opt_str,'admin_hold',['--hold'])
+    hold_str = 'admin_hold'
+
+    if opt_str.find('user') != -1:
+        hold_str = 'user_hold'
+
+    elif opt_str.find('admin') == -1:
+        cp_opt = get_cp_option('client', 'allow_cqadm_hold_and_release_options')
+        if cp_opt is None:
+            allow = False
+        else:
+            allow = True if cp_opt.lower() == 'true' else False
+
+        if not allow:
+            logger.error('Options --hold and --release have been deprecated')
+            sys.exit(1)
+
+    _setbool_attr(parser, opt_str, hold_str, ['--hold', '--user-hold', '--admin-hold'])
 
 def cb_passthrough(option,opt_str,value,parser,*args):
     """
@@ -1051,11 +1117,22 @@ def cb_passthrough(option,opt_str,value,parser,*args):
         
 def cb_date(option,opt_str,value,parser,*args):
     """
-    parser date
+    parse date
     """
     try:
-        starttime = Cobalt.Util.parse_datetime(value)
+        _value = value
+
+        if args is not ():
+            allow_now = args[0]
+            if _value.lower() == 'now':
+                if not allow_now: 
+                    raise
+                nt        = time.localtime(time.time())
+                _value = "%04d_%02d_%02d-%02d:%02d" % (nt.tm_year,nt.tm_mon,nt.tm_mday,nt.tm_hour,nt.tm_min)
+
+        starttime = Cobalt.Util.parse_datetime(_value)
         logger.info("Got starttime %s" % (sec_to_str(starttime)))
+
     except:
         logger.error("start time '%s' is invalid" % value)
         logger.error("start time is expected to be in the format: YYYY_MM_DD-HH:MM")

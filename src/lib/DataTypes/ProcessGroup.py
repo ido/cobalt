@@ -9,10 +9,10 @@ from Cobalt.Exceptions import DataCreationError
 from Cobalt.Proxy import ComponentProxy
 
 _logger = logging.getLogger()
-                                          
+
 class ProcessGroup(Data):
     """A job that runs on the system
-    
+
     Attributes:
     tag -- defines what this Data object is (by default "process group")
     args -- Arguments to be passed to the executable script when run
@@ -24,8 +24,8 @@ class ProcessGroup(Data):
     head_pid -- the PID of the child process that becomes the job
     id -- integer id to identify process group
     jobid -- jobid of process group
-    kernel --
-    kerneloptions -- 
+    kernel -- alternate kernel to boot
+    kerneloptions -- options to pass to kernel
     location -- location in system where job will run
     mode -- "script" or other
     nodefile -- used to make a file listing locations that job can run
@@ -36,6 +36,11 @@ class ProcessGroup(Data):
     stdout -- file to use for stdout of script
     umask -- permissions to set
     user -- the user the process group is running under
+
+    Only used by BlueGene/Q systems:
+    ion_kernel -- alternatve ION kernel to boot
+    ion_kerneloptions -- boot options to pass the ION kernel
+
     """
 
     fields = Data.fields + ["args", "cobalt_log_file", "cwd", "env",
@@ -52,7 +57,6 @@ class ProcessGroup(Data):
     def __init__(self, spec):
         Data.__init__(self, spec)
         self.tag = "process group"
-        # self.args = " ".join(spec.get("args", []))
         self.args = spec.get("args", [])
         self.cobalt_log_file = spec.get("cobalt_log_file")
         self.cwd = spec.get("cwd")
@@ -64,6 +68,8 @@ class ProcessGroup(Data):
         self.jobid = spec.get("jobid")
         self.kernel = spec.get("kernel")
         self.kerneloptions = spec.get("kerneloptions")
+        self.ion_kernel = spec.get("ion_kernel", "default")
+        self.ion_kerneloptions = spec.get("ion_kerneloptions", None)
         self.location = spec.get("location", [])
         self.mode = spec.get("mode")
         self.nodefile = None
@@ -80,9 +86,8 @@ class ProcessGroup(Data):
         self.runid = spec.get("runid", None)
         self.forker = spec.get("forker", None)
         self.ranks_per_node = spec.get("ranks_per_node", None)
-        # self.logger = logger
         self.subblock = spec.get("subblock", False)
-        self.subblock_parent = spec.get("subblock_parent",None)
+        self.subblock_parent = spec.get("subblock_parent", None)
         self.corner = spec.get("corner", None)
         self.extents = spec.get("extents", None)
 
@@ -96,7 +101,6 @@ class ProcessGroup(Data):
 
     def __setstate__(self, data):
         self.__dict__.update(data)
-        # self.logger = logging.getLogger()
 
     def _get_state(self):
         """Gets the current 'state' property of the process group"""
@@ -122,7 +126,7 @@ class ProcessGroup(Data):
         call object methods.  It returns a dictionary, which can be passed to 
         a totally static function which handles the exec from inside the child
         process.
-        
+
         """
         data = {}
         for key, value in self.__dict__.iteritems():
@@ -136,7 +140,7 @@ class ProcessGroupDict(DataDict):
 
     item_cls = ProcessGroup
     key = "id"
-    
+
     def __init__(self):
         DataDict.__init__(self)
         self.id_gen = IncrID()

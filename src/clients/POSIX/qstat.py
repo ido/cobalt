@@ -55,15 +55,6 @@ def human_format(x):
 
         stuff = stuff / dividend
 
-def get_elapsed_time(starttime, endtime):
-    """
-    returns hh:mm:ss elapsed time string from start and end timestamps
-    """
-    runtime = endtime - starttime
-    minutes, seconds = divmod(runtime, 60)
-    hours, minutes = divmod(minutes, 60)
-    return ( "%02d:%02d:%02d" % (hours, minutes, seconds) )
-
 def get_output_for_queues(parser,hinfo):
     """
     get the queues info for the specified queues
@@ -112,7 +103,7 @@ def get_output_for_jobs(parser,hinfo,queues):
     for q in query:
         for h in hinfo.long_header:
             if h == 'JobName':
-                q.update({'outputpath':'*'})
+                q.update({'jobname':'*'})
             elif h not in ['JobID', 'Queue']:
                 q.update({h.lower():'*'})
             if h in query_dependencies:
@@ -146,15 +137,15 @@ def get_output_for_jobs(parser,hinfo,queues):
             j['location'] = j['location'][0]
         # queuedtime
         if j.get('starttime') in ('-1', 'BUG', 'N/A', None):
-            j['queuedtime'] = get_elapsed_time(float(j.get('submittime')), time.time())
+            j['queuedtime'] = client_utils.get_elapsed_time(float(j.get('submittime')), time.time())
         else:
-            j['queuedtime'] = get_elapsed_time(float(j.get('submittime')), float(j['starttime']))
+            j['queuedtime'] = client_utils.get_elapsed_time(float(j.get('submittime')), float(j['starttime']))
         # runtime
         if j.get('starttime') in ('-1', 'BUG', 'N/A', None):
             j['runtime'] = 'N/A'
         else:
             currtime = time.time()
-            j['runtime'] = get_elapsed_time( float(j['starttime']), time.time())
+            j['runtime'] = client_utils.get_elapsed_time( float(j['starttime']), time.time())
         # starttime
         if j.get('starttime') in ('-1', 'BUG', None):
             j['starttime'] = 'N/A'
@@ -175,10 +166,7 @@ def get_output_for_jobs(parser,hinfo,queues):
                 j['timeremaining'] = "%02d:%02d:%02d" % (h, m, s)
         # jobname
         outputpath = j.get('outputpath')
-        if outputpath:
-            jobname = os.path.basename(outputpath).split('.output')[0]
-            if jobname != j['jobid'].split()[0]:
-                j['jobname'] = jobname
+        jobname    = j.get('jobname')
         # envs
         if j['envs'] is None:
             j.update({'envs':''})

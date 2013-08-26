@@ -27,7 +27,7 @@ def validate_args(parser,user):
     Validate qmove arguments.
     """
     if len(parser.args) < 2:
-        client_utils.logger.error("Need at least two arguments one queue name and the rest jobid(s)")
+        client_utils.print_usage(parser)
         sys.exit(1)
 
     # get jobids from the argument list

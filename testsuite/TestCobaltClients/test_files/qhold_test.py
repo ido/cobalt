@@ -9,11 +9,7 @@ def test_qhold_invalid_option():
 
     args      = """-k 1"""
 
-    cmdout    = \
-"""option -k not recognized
-Usage:
-qhold [--version] <jobid> <jobid>
-"""
+    cmdout    = ''
 
     cmderr    = \
 """Usage: qhold.py [options] <jobid1> [ ... <jobidN> ]
@@ -356,49 +352,6 @@ user_hold type: <type 'bool'>
 
     expected_results = ( 
                        0, # Expected return status 
-                       cmdout, # Expected command output
-                       stubout, # Expected stub functions output
-                       cmderr, # Expected command error output 
-                       ) 
-
-    testutils.save_testhook("")
-
-    results = testutils.run_cmd('qhold.py',args,stubout_file) 
-    result  = testutils.validate_results(results,expected_results)
-
-    testutils.remove_testhook()
-
-    correct = 1
-    assert result == correct, "Result:\n%s" % result
-
-
-# ---------------------------------------------------------------------------------
-def test_qhold_dependancy_option():
-    """
-    qhold test run: dependancy_option
-
-    """
-
-    args      = """--dependencies 1 2"""
-
-    cmdout    = \
-"""option --dependencies not recognized
-Usage:
-qhold [--version] <jobid> <jobid>
-"""
-
-    cmderr    = \
-"""Usage: qhold.py [options] <jobid1> [ ... <jobidN> ]
-
-qhold.py: error: no such option: --dependencies
-"""
-
-    stubout   = ''
-
-    stubout_file = "stub.out"
-
-    expected_results = ( 
-                       512, # Expected return status 
                        cmdout, # Expected command output
                        stubout, # Expected stub functions output
                        cmderr, # Expected command error output 

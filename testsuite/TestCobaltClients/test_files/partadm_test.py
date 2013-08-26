@@ -47,7 +47,8 @@ def test_partadm_help_option_1():
     args      = """-h"""
 
     cmdout    = \
-"""Usage: partadm.py [-a|-d] part1 part2 (add or del)
+"""Usage: partadm.py --help
+Usage: partadm.py [-a|-d] part1 part2 (add or del)
 Usage: partadm.py -l
 Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
 Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
@@ -147,7 +148,8 @@ def test_partadm_help_option_2():
     args      = """--help"""
 
     cmdout    = \
-"""Usage: partadm.py [-a|-d] part1 part2 (add or del)
+"""Usage: partadm.py --help
+Usage: partadm.py [-a|-d] part1 part2 (add or del)
 Usage: partadm.py -l
 Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
 Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
@@ -246,11 +248,29 @@ def test_partadm_no_arg_1():
 
     args      = ''
 
-    cmdout    = ''
+    cmdout    = \
+"""Usage: partadm.py --help
+Usage: partadm.py [-a|-d] part1 part2 (add or del)
+Usage: partadm.py -l
+Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
+Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
+Usage: partadm.py --queue=queue1:queue2 part1 part2
+Usage: partadm.py --fail part1 part2
+Usage: partadm.py --unfail part1 part2
+Usage: partadm.py --dump
+Usage: partadm.py --xml
+Usage: partadm.py --version
+Usage: partadm.py --savestate filename
+Usage: partadm.py [--boot-stop|--boot-start|--boot-status]
+
+Must supply one of -a or -d or -l or -start or -stop or --queue or -b
+Adding "-r" or "--recursive" will add the children of the blocks passed in.
+
+
+"""
 
     cmderr    = \
-"""Must supply one of -a or -d or -l or -start or -stop or --queue or -b.
-Adding "-r" or "--recursive" will add the children of the blocks passed in.
+"""No arguments or options provided
 
 """
 
@@ -322,14 +342,32 @@ def test_partadm_debug():
 
     args      = """--debug"""
 
-    cmdout    = ''
+    cmdout    = \
+"""Usage: partadm.py --help
+Usage: partadm.py [-a|-d] part1 part2 (add or del)
+Usage: partadm.py -l
+Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
+Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
+Usage: partadm.py --queue=queue1:queue2 part1 part2
+Usage: partadm.py --fail part1 part2
+Usage: partadm.py --unfail part1 part2
+Usage: partadm.py --dump
+Usage: partadm.py --xml
+Usage: partadm.py --version
+Usage: partadm.py --savestate filename
+Usage: partadm.py [--boot-stop|--boot-start|--boot-status]
+
+Must supply one of -a or -d or -l or -start or -stop or --queue or -b
+Adding "-r" or "--recursive" will add the children of the blocks passed in.
+
+
+"""
 
     cmderr    = \
 """
 partadm.py --debug
 
-Must supply one of -a or -d or -l or -start or -stop or --queue or -b.
-Adding "-r" or "--recursive" will add the children of the blocks passed in.
+No arguments or options provided
 
 """
 
@@ -4527,9 +4565,7 @@ def test_partadm_savestate_option_1():
 
     args      = """--savestate /bad/save"""
 
-    cmdout    = \
-"""directory /bad does not exist
-"""
+    cmdout    = ''
 
     cmderr    = \
 """directory /bad/save does not exist
@@ -4612,7 +4648,8 @@ def test_partadm_savestate_option_3():
     cmdout    = ''
 
     cmderr    = \
-"""Usage: partadm.py [-a|-d] part1 part2 (add or del)
+"""Usage: partadm.py --help
+Usage: partadm.py [-a|-d] part1 part2 (add or del)
 Usage: partadm.py -l
 Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
 Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
@@ -5554,7 +5591,8 @@ def test_partadm_queue_option_1():
     cmdout    = ''
 
     cmderr    = \
-"""Usage: partadm.py [-a|-d] part1 part2 (add or del)
+"""Usage: partadm.py --help
+Usage: partadm.py [-a|-d] part1 part2 (add or del)
 Usage: partadm.py -l
 Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
 Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
@@ -5605,10 +5643,7 @@ def test_partadm_queue_option_2():
 
     args      = """--queue q_4:q_3 ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
 
-    cmdout    = \
-"""'q_4' is not an existing queue
-'q_3' is not an existing queue
-"""
+    cmdout    = ''
 
     cmderr    = \
 """'q_4' is not an existing queue
@@ -5654,12 +5689,7 @@ def test_partadm_queue_option_3():
 
     args      = """--queue q_1:q_2:q_3:q_4 ANL-R00-M0-512"""
 
-    cmdout    = \
-"""'q_1' is not an existing queue
-'q_2' is not an existing queue
-'q_3' is not an existing queue
-'q_4' is not an existing queue
-"""
+    cmdout    = ''
 
     cmderr    = \
 """'q_1' is not an existing queue
@@ -5707,9 +5737,7 @@ def test_partadm_queue_option_4():
 
     args      = """--queue q_1 -c ANL-R00-M0-512"""
 
-    cmdout    = \
-"""'q_1' is not an existing queue
-"""
+    cmdout    = ''
 
     cmderr    = \
 """'q_1' is not an existing queue

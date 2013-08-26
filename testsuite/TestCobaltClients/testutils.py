@@ -33,6 +33,8 @@ import sys
 import glob
 import re
 import difflib
+import os
+import pwd
 
 if __name__ == '__main__':
     from arg_parser import ArgParse
@@ -110,7 +112,10 @@ def test_<NAME>_<TC_NAME>():
     args      = <TQ><ARGS><TQ>
     exp_rs    = <RS>
 
-    results = testutils.run_cmd('<CMD>.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('<CMD>.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -125,7 +130,7 @@ def test_<NAME>_<TC_NAME>():
         "Return Status %s, Expected Return Status %s\\n\\n" \\
         "Command Output:\\n%s\\n\\n" \\
         "Command Error:\\n%s\\n\\n" \\
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 """
@@ -235,7 +240,7 @@ def validate_results(results,expected_results,stubout_compare_func = None):
         result  = "*** STUB OUTPUT DOES NOT MATCH ***\n"
         result += diffs
 
-    elif int(exp_rs) == 0 and exp_cmdout != cmdout:
+    elif exp_cmdout != cmdout:
         line_sep = "\n--------------------------------------------\n"
         result   = "\n*** COMMAND OUTPUT DOES NOT MATCH ***\n\nExpected Output:\n%s%sActual Output:\n%s\n" % \
             (exp_cmdout, line_sep, cmdout)
@@ -387,7 +392,7 @@ def gen_sanity_tests(npath, args_path, args_list, skip_list):
         fd = open('%s_sanity_test.py' % name,'w')
 
         # testutils module needs to be imported by the test file
-        fd.write("import testutils\n")
+        fd.write("import testutils\nimport os\nimport pwd")
 
         for args_info in argsmod.test_argslist:
 
@@ -398,8 +403,10 @@ def gen_sanity_tests(npath, args_path, args_list, skip_list):
             args     = args_info['args']
 
             (_name, cmd) = getcmd(npath, args_info, name)
+            user  = pwd.getpwuid(os.getuid())[0] 
+            _args = args.replace('<USER>', user)
 
-            results  = run_cmd(cmd,args)
+            results  = run_cmd(cmd,_args)
             gen_sanity_test(fd, _name, tc_name, args, results)
 
         fd.close()

@@ -2,7 +2,17 @@
 """
 Submit jobs to the queue manager for execution.
 
+Usage: %prog --help
 Usage: %prog [options] <executable> [<excutable options>]
+
+   jobid expansion: 
+      If "\$jobid" is specified in any jobid expansion option then it will be converted to the actual jobid.
+
+      Example: qsub ... --env myenv:\$jobid_myval ... if the jobid is 123 then myenv will be set to '123_myval'
+               note: $jobid will have to be escaped as follows \$jobid.
+
+      jobid expansion options: --env, --jobname, -o, -e, -O, --debuglog
+
 version: "%prog " + __revision__ + , Cobalt  + __version__
 
 OPTIONS DEFINITIONS:
@@ -24,7 +34,9 @@ Option with values:
 '--cwd',dest='cwd',type='string',help='set current working directory'
 '-q','--queue',dest='queue',type='string',help='set queue name'
 '-M','--notify',dest='notify',type='string',help='set notification email address'
-'--env',dest='envs',type='string',help='set env variables (envvar1=val1:envvar2=val2:...:envvarN=valN)',callback=cb_env
+'--env',dest='envs',type='string', help='Set env variables. Format: var1=val1:var2=val2:...:varN=valN, if the characters /
+   ":" and "=" are within the value portion then need to precede them with \ character as follows \: or \=, also /
+   the entire string should be in quotes.' , callback=cb_env
 '-t','--time',dest='walltime',type='string',help='set walltime (minutes or HH:MM:SS)',callback=cb_time
 '-u','--umask',dest='umask',type='string',help='set umask: octal number default(022)',callback=cb_umask
 '-O','--outputprefix',dest='outputprefix',type='string',help='output prefix for error,output or debuglog files',callback=cb_path
@@ -35,13 +47,17 @@ Option with values:
 '--dependencies',dest='all_dependencies',type='string',help='set job dependencies (jobid1:jobid2:...:jobidN)',callback=cb_dep
 '--attrs',dest='attrs',type='string',help='set attributes (attr1=val1:attr2=val2:...:attrN=valN)',callback=cb_attrs
 '--user_list','--run_users',dest='user_list',type='string',help='set user list (user1:user2:...:userN)',callback=cb_user_list
+'--jobname',dest='jobname',type='string', /
+   help='Sets Jobname. If this option is not provided then Jobname will be set to whatever -o option specified.'
 
 The following options are only valid on IBM BlueGene architecture platforms:
 
-'--kernel',dest='kernel',type='string',help='set kernel profile'
-'-K','--kerneloptions',dest='kerneloptions',type='string',help='set kernel options'
-'--mode',dest='mode',type='string',help='select system mode'
-'--geometry',dest='geometry',type='string',help='set geometry (AxBxCxDxE)',callback=cb_geometry
+'--kernel',dest='kernel',type='string',help='set a compute node kernel profile'
+'-K','--kerneloptions',dest='kerneloptions',type='string',help='set compute node kernel options'
+'--ion_kernel',dest='ion_kernel',type='string',help='set an IO node kernel profile'
+'--ion_kerneloptions',dest='ion_kerneloptions',type='string',help='set IO node kernel options'
+'--mode', dest='mode', type='string', help='select system mode'
+'--geometry', dest='geometry', type='string', help='set geometry (AxBxCxDxE)',callback=cb_geometry
 
 """
 import logging
@@ -53,13 +69,14 @@ from Cobalt.client_utils import \
     cb_debug, cb_env, cb_nodes, cb_time, cb_umask, cb_path, \
     cb_dep, cb_attrs, cb_user_list, cb_geometry, cb_gtzero
 from Cobalt.arg_parser import ArgParse
+from Cobalt.Util import get_config_option, init_cobalt_config
 
-    
 __revision__ = '$Revision: 559 $'
 __version__  = '$Version$'
 
 SYSMGR = client_utils.SYSMGR
 QUEMGR = client_utils.QUEMGR
+
 
 def validate_args(parser, spec, opt_count):
     """
@@ -68,7 +85,13 @@ def validate_args(parser, spec, opt_count):
 
     # Check if any required option entered
     if opt_count == 0:
-        client_utils.logger.error("No required options entered")
+        client_utils.print_usage(parser, "No required options provided")
+        sys.exit(1)
+
+    # if no excecutable specified then flag it an exit
+    if parser.no_args():
+        client_utils.print_usage(parser, "No executable specified")
+        sys.exit(1)
 
     # If no time supplied flag it and exit
     if parser.options.walltime == None:
@@ -78,11 +101,6 @@ def validate_args(parser, spec, opt_count):
     # If no nodecount give then flag it an exit
     if parser.options.nodes == None:
         client_utils.logger.error("'nodecount' not provided")
-        sys.exit(1)
-
-    # if no excecutable specified then flag it an exit
-    if parser.no_args():
-        client_utils.logger.error("No executable specified")
         sys.exit(1)
 
     # Check if it is a valid executable/file
@@ -177,6 +195,7 @@ def logjob(job,spec):
 
         try:
             cobalt_log_file = open(filename, "a")
+            print >> cobalt_log_file, "Jobid: %s\n" % job['jobid']
             print >> cobalt_log_file, "%s\n" % (" ".join(sys.argv))
             print >> cobalt_log_file, "submitted with cwd set to: %s\n" % spec['cwd']
             cobalt_log_file.close()
@@ -192,7 +211,10 @@ def main():
     """
     # setup logging for client. The clients should call this before doing anything else.
     client_utils.setup_logging(logging.INFO)
-    
+
+    #init cobalt config file for setting default kernels.
+    init_cobalt_config()
+
     spec     = {} # map of destination option strings and parsed values
     opts     = {} # old map
     opt2spec = {}
@@ -209,7 +231,7 @@ def main():
         ( cb_path         , (opts, True) ), # use CWD
         ( cb_dep          , () ),
         ( cb_attrs        , () ),
-        ( cb_user_list    , (opts,True) ), # add current user
+        ( cb_user_list    , (opts,) ),
         ( cb_geometry     , (opts,) )]
 
     # Get the version information
@@ -228,7 +250,8 @@ def main():
     spec['path']           = client_utils.getpath()
     spec['mode']           = False
     spec['cwd']            = client_utils.getcwd()
-    spec['kernel']         = 'default'
+    spec['kernel']         = get_config_option('bgsystem', 'cn_default_kernel', 'default')
+    spec['ion_kernel']     = get_config_option('bgsystem', 'ion_default_kernel', 'default')
     spec['queue']          = 'default'
     spec['umask']          = 022
     spec['run_project']    = False
@@ -250,6 +273,8 @@ def main():
     client_utils.process_filters(filters,spec)
     update_spec(opts,spec,opt2spec)
     jobs = client_utils.component_call(QUEMGR, False, 'add_jobs',([spec],))
+    if parser.options.envs:
+        client_utils.logger.debug("Environment Vars: %s",parser.options.envs)
     logjob(jobs[0],spec)
     
 

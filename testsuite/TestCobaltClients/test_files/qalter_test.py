@@ -10,7 +10,9 @@ def test_qalter_simple_1():
     args      = """-d -n30"""
 
     cmdout    = \
-"""Failed to match any jobs
+"""Usage: qalter.py --help
+Usage: qalter.py [options] <jobid1> ... <jobidN>
+
 """
 
     cmderr    = \
@@ -18,6 +20,7 @@ def test_qalter_simple_1():
 qalter.py -d -n30
 
 No Jobid(s) given
+
 """
 
     stubout   = ''
@@ -394,10 +397,15 @@ def test_qalter_time_1():
 
     args      = """-v n10 -t5 1 2 3"""
 
-    cmdout    = ''
+    cmdout    = \
+"""Usage: qalter.py --help
+Usage: qalter.py [options] <jobid1> ... <jobidN>
+
+"""
 
     cmderr    = \
-"""No job altering options entered
+"""No required options provided
+
 """
 
     stubout   = ''
@@ -4523,21 +4531,11 @@ def test_qalter_invalid_option():
 
     args      = """-v -m j@gmail.com"""
 
-    cmdout    = \
-"""option -m not recognized
-
-Usage: qalter [-d] [-v] -A <project name> -t <time in minutes>
-              -e <error file path> -o <output file path>
-              --dependencies <jobid1>:<jobid2> --geometry AxBxCxDxE
-              -n <number of nodes> -h --proccount <processor count>
-              -M <email address> --mode <mode co/vn>
-              --run_users <user1>:<user2> --run_project <jobid1> <jobid2>
-              --attrs <attr1=val1>:<attr2=val2>
-
-"""
+    cmdout    = ''
 
     cmderr    = \
-"""Usage: qalter.py [options] <jobid1> ... <jobidN>
+"""Usage: qalter.py --help
+Usage: qalter.py [options] <jobid1> ... <jobidN>
 
 qalter.py: error: no such option: -m
 """
@@ -6149,17 +6147,7 @@ def test_qalter_geometry_1():
 
     args      = """-v --geometry 10 1 2 3 4 5"""
 
-    cmdout    = \
-"""
-Usage: qalter [-d] [-v] -A <project name> -t <time in minutes>
-              -e <error file path> -o <output file path>
-              --dependencies <jobid1>:<jobid2> --geometry AxBxCxDxE
-              -n <number of nodes> -h --proccount <processor count>
-              -M <email address> --mode <mode co/vn>
-              --run_users <user1>:<user2> --run_project <jobid1> <jobid2>
-              --attrs <attr1=val1>:<attr2=val2>
-
-"""
+    cmdout    = ''
 
     cmderr    = \
 """Invalid geometry entered: 
@@ -6196,17 +6184,7 @@ def test_qalter_geometry_2():
 
     args      = """-v --geometry 10x10x10x10x10 1 2 3 4 5"""
 
-    cmdout    = \
-"""
-Usage: qalter [-d] [-v] -A <project name> -t <time in minutes>
-              -e <error file path> -o <output file path>
-              --dependencies <jobid1>:<jobid2> --geometry AxBxCxDxE
-              -n <number of nodes> -h --proccount <processor count>
-              -M <email address> --mode <mode co/vn>
-              --run_users <user1>:<user2> --run_project <jobid1> <jobid2>
-              --attrs <attr1=val1>:<attr2=val2>
-
-"""
+    cmdout    = ''
 
     cmderr    = \
 """Invalid geometry entered: 
@@ -7494,10 +7472,15 @@ def test_qalter_defer_1():
 
     args      = """--defer"""
 
-    cmdout    = ''
+    cmdout    = \
+"""Usage: qalter.py --help
+Usage: qalter.py [options] <jobid1> ... <jobidN>
+
+"""
 
     cmderr    = \
 """No Jobid(s) given
+
 """
 
     stubout   = ''

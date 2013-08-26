@@ -3,6 +3,7 @@
 Administrative interface for queue manager. Allowsone to hold, run, kill, and set 
 the queue for jobs in the queue manager. Can also add/del queues and set queue properties.
 
+Usage: %prog --help
 Usage: %prog [options] <jobid> <jobid> OR <queue> <queue>
 version: "%prog " + __revision__ + , Cobalt  + __version__
 
@@ -40,10 +41,14 @@ Option with values and queue arguments:
 
 Options with no values but with jobid arguments:
 
-'--hold',help='user admin hold jobids in args',callback=cb_hold
 '--kill',dest='kill',help='kill jobids in args',action='store_true'
 '--preempt',dest='preempt',help='preempt jobids in args',action='store_true'
-'--release',help='release jobids in args',callback=cb_hold
+'--hold', help='Deprecated use --admin-hold instead', callback=cb_hold
+'--release', help='Deprecated use --admin-release instead', callback=cb_hold
+'--admin-hold', help='apply admin hold to jobids in args',callback=cb_hold
+'--admin-release', help='release admin hold for jobids in args', callback=cb_hold
+'--user-hold', help='apply user hold to jobids in args', callback=cb_hold
+'--user-release', help='release user hold for jobids in args', callback=cb_hold
 
 Option with values and jobid arguments:
 
@@ -110,10 +115,14 @@ def validate_args(parser, spec, opt_count):
     if hasattr(parser.options, 'admin_hold'):
         opt_count += 1
         spec['admin_hold'] = parser.options.admin_hold
+
+    if hasattr(parser.options, 'user_hold'):
+        opt_count += 1
+        spec['user_hold'] = parser.options.user_hold
     
     # Make sure jobid or queue is supplied for the appropriate commands
     if parser.no_args() and not [opt for opt in spec if opt in opts_wo_args]:
-        client_utils.logger.error("At least on jobid or queue name must be supplied")
+        client_utils.print_usage(parser)
         sys.exit(1)
 
     # Check required options
@@ -167,7 +176,12 @@ def setjobs(jobs, parser, spec, user):
     """
     if hasattr(parser.options,'admin_hold'):
         for job in jobs:
-            job.update({'admin_hold':not parser.options.admin_hold})
+            job.update({'admin_hold': not parser.options.admin_hold})
+
+    if hasattr(parser.options,'user_hold'):
+        for job in jobs:
+            job.update({'user_hold': not parser.options.user_hold})
+
     return client_utils.component_call(QUEMGR, False, 'set_jobs', (jobs, spec, user))
 
 def process_cqadm_options(jobs, parser, spec, user):

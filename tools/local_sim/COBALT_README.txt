@@ -1,95 +1,30 @@
-Setting Up Cobalt Brooklyn Simulator:
+ = Setting Up Cobalt Brooklyn Simulator: =
 
-The purpose of this readme file is to help setup local Cobalt running environment.
+ 1. Download the following python modules from this wiki page:
+    * '''arg_parser.py'''   -- this is imported by setup_cobalt.py
+    * '''setup_cobalt.py''' -- script to setup cobalt. Change permissions to 755
 
-1. Create the following directories:
-   Note: ~/p/Cobalt and src-primary can be whatever you want, but for simplicity we will make
-	 the Cobalt main directory ~/p/Cobalt and the git repo will be in src-primary.
+ 2. Execute the the setup_cobalt.py as follows: (python 2.6 should be used)
+    * '''./setup_cobalt.py -b develop -s $HOME/Cobalt'''
+    * '''note:''' This will create the directory Cobalt in your home directory. This can be changed to whatever you want.
 
-~/p/Cobalt/
-       sysroot-brooklyn/
-             etc/
-             var/log/cobalt/   # files with component pids. used for termination
-             var/spool/cobalt/ # contains the state files, maybe other stuff
-             tmp/
-       src-primary/ # git repo goes here
+ 3. Then from the $HOME/Cobalt do the following:
+    * '''source cobalt_setup''' # This will setup the appropriate env variable and aliases
 
-2. Clone Cobalt Repo:
+ 4. Run cstart.sh
+    * '''./cstart.''' # after this command wait about 20 seconds to let the components start
 
-In the ~/p/Cobalt directory do the following command:
+ 5. Run cinit.sh only one time after running ./cstart.sh. Do not need to run it again unless step (8) is executed.
+    * '''./cinit.sh'''
 
-git clone -b develop git://git.mcs.anl.gov/cobalt.git src-primary
+ 6. To stop all components and Cobalt:
+    * '''cobalt-stop''' # alias created by cobalt_setup to stop all components. Probabaly need to do ps command a few times to see if all components stopped.
 
-3. From ../src-primary/tools/local_sim copy the following files:
+ 7. After starting the cobalt components with cstart.sh then you can monitor the following files:
+    * '''$COBALT_RUNTIME_DIR/var/log/cobalt/*.out'''
 
-../src-primary/tools/local_sim/simulator.xml   ~/p/Cobalt/
-../src-primary/tools/local_sim/cstart.sh       ~/p/Cobalt/
-../src-primary/tools/local_sim/cinit.sh        ~/p/Cobalt/
-../src-primary/tools/local_sim/cobalt.conf     ~/p/Cobalt/sysroot-brooklyn/etc/
-../src-primary/tools/local_sim/partlist-*.txt  ~/p/Cobalt/sysroot-brooklyn/etc/
-../src-primary/tools/local_sim/test-*.py       ~/p/Cobalt/sysroot-brooklyn/etc/
+ 8. If you wish to re-initialize (start fresh) do the following:
+    1. '''cobalt-clean''' # alias created by cobalt_setup to delete $HOME/Cobalt/sysroot_brooklyn/var
+    2. '''./cstart.sh'''
+    3. '''./cinit.sh'''
 
-4. In ~/p/Cobalt/src-primary/src do the following:
-
-ln -s lib Cobalt 
-
-5. In ~/p/Cobalt/sysroot-brooklyn/etc do the following (replacing $HOST with your hostname if needed):
-
-openssl req -batch -x509 -nodes -subj "/C=US/ST=Illinois/L=Argonne/CN=$HOST" -days 1000 -newkey rsa:2048 -keyout ./cobalt.key -noout
-openssl req -batch -new -subj "/C=US/ST=Illinois/L=Argonne/CN=$HOST" -key ./cobalt.key | openssl x509 -req -days 1000 -signkey ./cobalt.key -out ./cobalt.cert
-ln -s partlist-R00-R01.txt partlist.txt
-
-7. In .../src-primary/src/components do the following:
-
-ln -s ../../../simulator.xml simulator.xml
-
-8. In your .bash_profile you need the following:
-
-export P=~/p
-
-9. Copy and paste to the terminal the following commands:
-
-export COBALT_SOURCE_DIR=$P/Cobalt/src-primary
-export COBALT_RUNTIME_DIR=$P/Cobalt/sysroot-brooklyn
-export COBALT_SYSTEM_TYPE=BGSIM
-
-export COBALT_CONFIG_FILES=$COBALT_RUNTIME_DIR/etc/cobalt.conf
-export PYTHONPATH=$COBALT_SOURCE_DIR/src:$COBALT_SOURCE_DIR/testsuite:${PYTHONPATH}
-export PATH=${COBALT_SOURCE_DIR}/src/clients:${COBALT_SOURCE_DIR}/src/clients/POSIX:$PATH
-
-10. Run the following only once per source tree:
-
-# 
-# Puts simlinks to remove .py from client commands. Only do this once per source tree
-#
-(cd $COBALT_SOURCE_DIR/src/clients ; \
- for f in cobalt-mpirun.py cq*.py part*.py releaseres.py setres.py showres.py slpstat.py userres.py schedctl.py brun.py; do \
-     f2=`echo $f | sed -e 's/\.py$//'`; \
-     ln -sf $f $f2 ; \
- done)
-#
-# Samething as above but for the POSIX client commands 
-#
-
-(cd $COBALT_SOURCE_DIR/src/clients/POSIX ; \
- for f in *.py ; do \
-     f2=`echo $f | sed -e 's/\.py$//'`; \
-     ln -sf $f $f2 ; \
- done)
-
-11. Start all components:
-
-~/p/Cobalt/cstart.sh
-
-12. Only need this to re-initialize of initialize the sysroot-... 
-    usually only once unless corruption or significant changes.
-    To clean everything just delete the var directory and re-run this command:
-
-~/p/Cobalt/cinit.sh 
-
-13. To stop all components and Cobalt:
-
-kill `cat $COBALT_RUNTIME_DIR/var/run/cobalt/*`
-
-14. After starting the cobalt components with cstart.sh then you can monitor the following files:
-    $COBALT_RUNTIME_DIR/var/log/cobalt/*.out

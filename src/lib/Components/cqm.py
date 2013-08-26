@@ -100,6 +100,9 @@ from Cobalt.Exceptions import (QueueError, ComponentLookupError, DataStateError,
     JobRunError, JobPreemptionError, JobDeleteError, IncrIDError, ResourceReservationFailure)
 from Cobalt import accounting
 from Cobalt.Statistics import Statistics
+from Cobalt.Util import get_config_option, init_cobalt_config
+
+init_cobalt_config()
 
 CLOB_SIZE = 4096
 
@@ -526,7 +529,7 @@ class Job (StateMachine):
         "walltime", "procs", "nodes", "mode", "cwd", "command", "args", 
         "outputdir", "project", "lienID", "stagein", "stageout",
         "reservation", "host", "port", "url", "stageid", "envs", "inputfile", 
-        "kernel", "kerneloptions", "admin_hold",
+        "kernel", "kerneloptions", "ion_kernel", "ion_kerneloptions", "admin_hold",
         "user_hold", "dependencies", "notify", "adminemail", "outputpath",
         "errorpath", "cobalt_log_file", "path", "preemptable", "preempts",
         "mintasktime", "maxtasktime", "maxcptime", "force_kill_delay", 
@@ -558,6 +561,8 @@ class Job (StateMachine):
         # StateMachine.__init__(self, spec, seas = seas, terminal_actions = [(self._sm_terminal, {})])
         StateMachine.__init__(self, spec, seas = seas)
 
+        logger.info(str(spec))
+
         self.jobid = spec.get("jobid")
         self.umask = spec.get("umask")
         self.jobname = spec.get("jobname", "N/A")
@@ -585,14 +590,16 @@ class Job (StateMachine):
         self.stageid = spec.get("stageid")
         self.inputfile = spec.get("inputfile")
         self.tag = spec.get("tag", "job")
-        self.kernel = spec.get("kernel", "default")
+        self.kernel = spec.get("kernel", get_config_option('bgsystem', 'cn_default_kernel', 'default'))
         self.kerneloptions = spec.get("kerneloptions")
+        self.ion_kernel = spec.get("ion_kernel",  get_config_option('bgsystem', 'ion_default_kernel', 'default'))
+        self.ion_kerneloptions = spec.get("ion_kerneloptions")
         self.notify = spec.get("notify")
         self.adminemail = spec.get("adminemail")
         self.location = spec.get("location")
         self.__locations = []
         self.outputpath = spec.get("outputpath")
-        if self.outputpath:
+        if self.outputpath and self.jobname == 'N/A':
             jname = self.outputpath.split('/')[-1].split('.output')[0]
             if jname and jname != str(self.jobid):
                 self.jobname = jname
@@ -613,7 +620,7 @@ class Job (StateMachine):
 
         self.all_dependencies = spec.get("all_dependencies")
         if self.all_dependencies:
-            self.all_dependencies = self.all_dependencies.split(":")
+            self.all_dependencies = str(self.all_dependencies).split(":")
             logger.info("Job %s/%s: dependencies set to %s", self.jobid, self.user, ":".join(self.all_dependencies))
         else:
             self.all_dependencies = []
@@ -769,8 +776,11 @@ class Job (StateMachine):
             self.geometry = None
         if not state.has_key("script_preboot"):
             self.script_preboot = True
+        if not state.has_key('ion_kernel'):
+            self.ion_kernel = get_config_option('bgsystem', 'ion_default_kernel', 'default')
+        if not state.has_key('ion_kernel'):
+            self.ion_kerneloptions = get_config_option('bgsystem', 'ion_default_kernel_options', 'default')
         self.runid = state.get("runid", None)
-
         self.initializing = False
 
     def __task_signal(self, retry = True):
@@ -836,6 +846,8 @@ class Job (StateMachine):
                 'umask':self.umask,
                 'kernel':self.kernel,
                 'kerneloptions':self.kerneloptions,
+                'ion_kernel':self.ion_kernel,
+                'ion_kerneloptions':self.ion_kerneloptions,
                 'starttime':self.starttime,
                 'walltime':walltime,
                 'killtime':self.force_kill_delay + 1,
@@ -983,7 +995,7 @@ class Job (StateMachine):
     def _sm_check_job_timers(self):
         if self.__max_job_timer.has_expired:
             # if the job execution time has exceeded the wallclock time, then inform the task that it must terminate
-            self._sm_log_info("maximum execution time exceeded; initiating job terminiation", cobalt_log = True)
+            self._sm_log_info("maximum execution time exceeded; initiating job termination", cobalt_log = True)
             accounting_logger.info(accounting.abort(self.jobid))
             return Signal_Info(Signal_Info.Reason.time_limit, Signal_Map.terminate)
         else:
@@ -3102,6 +3114,13 @@ class JobList(DataList):
         for spec in specs:
             if "jobid" not in spec or spec['jobid'] == "*":
                 spec['jobid'] = self.id_gen.next()
+            jobid_expansion_options = ['outputprefix', 'errorpath', 'outputpath', 'cobalt_log_file', 'jobname']
+            for item in spec:
+                if item in jobid_expansion_options:
+                    spec[item] = spec[item].replace('$jobid', str(spec['jobid'])) if type(spec[item]) is str else spec[item]
+            if 'envs' in spec:
+                for item in spec['envs']:
+                    spec['envs'][item] = spec['envs'][item].replace('$jobid', str(spec['jobid']))
         jobs_added = DataList.q_add(self, specs, callback, cargs)
         if jobs_added:
             user = spec.get('user', None)
@@ -3974,6 +3993,7 @@ class QueueManager(Component):
         # I think this duplicates cobalt's old scheduling policy
         # higher queue priorities win, with jobid being the tie breaker
         def default():
+            #this is a vairable that is always being passed in by us.
             val = queue_priority + 0.1
             return val
 
@@ -4140,10 +4160,13 @@ class JobDataMsg(object):
                      'path', 'mode', 'envs', 'queue', 'priority_core_hours',
                      'force_kill_delay', 'all_dependencies', 'attribute', 
                      'attrs', 'satisfied_dependencies', 'preemptable', 
-                     'user_list', 'dep_frac', 'resid', 'cwd'
+                     'user_list', 'dep_frac', 'resid', 'cwd', 'ion_kernel',
+                     'ion_kerneloptions', 'geometry'
                      ]
         small_clob_list = ['command', 'inputfile', 'kernel', 'outputpath',
-                           'outputdir', 'errorpath','path','cwd']
+                           'outputdir', 'errorpath', 'path', 'cwd',
+                           'ion_kernel', 'ion_kerneloptions'
+                           ]
 
         for attr in attr_list:
 
@@ -4153,6 +4176,9 @@ class JobDataMsg(object):
                 self.job_user = job.user
             elif attr == 'user_list':
                 self.job_user_list = job.user_list
+            elif attr == 'geometry':
+                if job.geometry is not None:
+                    self.geometry = 'x'.join([str(dim) for dim in job.geometry])
             elif attr in small_clob_list:
                 clob_str = job.__getattribute__(attr)
                 if clob_str != None:

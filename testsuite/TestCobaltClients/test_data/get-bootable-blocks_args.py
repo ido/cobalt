@@ -9,9 +9,9 @@ test_argslist - is a list of dictionaries, each dictionary has all the necessary
 """
 
 test_argslist = [
-    { "tc_name" : "arg_1", "args" : "", },
+    { "tc_name" : "arg_1", "args" : "", 'new_only' : True, },
     { "tc_name" : "arg_2", "args" : """arg""", 'skip_list' : ['not_bsim'], },
-    { "tc_name" : "size_1", "args" : """--size 1024""", },
+    { "tc_name" : "size_1", "args" : """--size 1024""", 'new_only' : True, },
     { "tc_name" : "size_2", "args" : """--size 1024 arg""", 'skip_list' : ['not_bsim'], },
     { "tc_name" : "geometry_1", "args" : """--geometry 1              arg""", },
     { "tc_name" : "geometry_2", "args" : """--geometry geo            arg""", },

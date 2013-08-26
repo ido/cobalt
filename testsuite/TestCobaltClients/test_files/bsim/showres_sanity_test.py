@@ -1,14 +1,15 @@
 import testutils
-
+import os
+import pwd
 # ---------------------------------------------------------------------------------
 def test_showres_arg_1():
     """
     showres test run: arg_1
 
         Command Output:
-        Reservation  Queue  User  Start                                 Duration  Passthrough  Partitions        
-        =========================================================================================================
-        george       q_1    None  Wed Jun  7 02:32:00 2023 +0000 (UTC)  05:00     Allowed      ANL-R00-R01-2048  
+        Reservation  Queue  User      Start                                 Duration  Passthrough  Partitions  Lapse Time (sec)  
+        =========================================================================================================================
+        *            kebra  gooduser  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Blocked      [P1-10]     -1363334599       
         
         Command Error/Debug:
         
@@ -17,7 +18,10 @@ def test_showres_arg_1():
     args      = ''
     exp_rs    = 0
 
-    results = testutils.run_cmd('showres.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('showres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -32,7 +36,7 @@ def test_showres_arg_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -42,9 +46,9 @@ def test_showres_arg_2():
     showres test run: arg_2
 
         Command Output:
-        Reservation  Queue  User  Start                     Duration  Passthrough  Partitions        
-        =============================================================================================
-        george       q_1    None  Tue Jun  6 21:32:00 2023  05:00     Allowed      ANL-R00-R01-2048  
+        Reservation  Queue  User      Start                     Duration  Passthrough  Partitions  Lapse Time (sec)  
+        =============================================================================================================
+        *            kebra  gooduser  Tue Mar 26 16:56:40 2013  00:08     Blocked      [P1-10]     -1363334599       
         
         Command Error/Debug:
         
@@ -53,7 +57,10 @@ def test_showres_arg_2():
     args      = """--oldts"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('showres.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('showres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -68,7 +75,7 @@ def test_showres_arg_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -78,9 +85,9 @@ def test_showres_arg_3():
     showres test run: arg_3
 
         Command Output:
-        Reservation  Queue  User  Start                                 Duration  Passthrough  Partitions        
-        =========================================================================================================
-        george       q_1    None  Wed Jun  7 02:32:00 2023 +0000 (UTC)  05:00     Allowed      ANL-R00-R01-2048  
+        Reservation  Queue  User      Start                                 Duration  Passthrough  Partitions  Lapse Time (sec)  
+        =========================================================================================================================
+        *            kebra  gooduser  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Blocked      [P1-10]     -1363334599       
         
         Command Error/Debug:No arguments needed
         
@@ -90,7 +97,10 @@ def test_showres_arg_3():
     args      = """arg1"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('showres.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('showres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -105,7 +115,7 @@ def test_showres_arg_3():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -115,9 +125,9 @@ def test_showres_l_option_1():
     showres test run: l_option_1
 
         Command Output:
-        Reservation  Queue  User  Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions        
-        ===========================================================================================================================================================
-        george       q_1    None  Wed Jun  7 02:32:00 2023 +0000 (UTC)  05:00     Wed Jun  7 07:32:00 2023 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  
+        Reservation  Queue  User      Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions  Lapse Time (sec)  
+        ===========================================================================================================================================================================
+        *            kebra  gooduser  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Tue Mar 26 22:05:00 2013 +0000 (UTC)  00:05       Blocked      [P1-10]     -1363334599       
         
         Command Error/Debug:
         
@@ -126,7 +136,10 @@ def test_showres_l_option_1():
     args      = """-l"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('showres.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('showres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -141,7 +154,7 @@ def test_showres_l_option_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -151,9 +164,9 @@ def test_showres_l_option_2():
     showres test run: l_option_2
 
         Command Output:
-        Reservation  Queue  User  Start                     Duration  End Time                  Cycle Time  Passthrough  Partitions        
-        ===================================================================================================================================
-        george       q_1    None  Tue Jun  6 21:32:00 2023  05:00     Wed Jun  7 02:32:00 2023  None        Allowed      ANL-R00-R01-2048  
+        Reservation  Queue  User      Start                     Duration  End Time                  Cycle Time  Passthrough  Partitions  Lapse Time (sec)  
+        ===================================================================================================================================================
+        *            kebra  gooduser  Tue Mar 26 16:56:40 2013  00:08     Tue Mar 26 17:05:00 2013  00:05       Blocked      [P1-10]     -1363334599       
         
         Command Error/Debug:
         
@@ -162,7 +175,10 @@ def test_showres_l_option_2():
     args      = """-l --oldts"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('showres.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('showres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -177,7 +193,7 @@ def test_showres_l_option_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -187,9 +203,9 @@ def test_showres_x_option_1():
     showres test run: x_option_1
 
         Command Output:
-        Reservation  Queue  User  Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions        Project  ResID  CycleID  
-        ====================================================================================================================================================================================
-        george       q_1    None  Wed Jun  7 02:32:00 2023 +0000 (UTC)  05:00     Wed Jun  7 07:32:00 2023 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  None     1      -        
+        Reservation  Queue  User      Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions  Project  ResID  CycleID  Lapse Time (sec)  
+        ====================================================================================================================================================================================================
+        *            kebra  gooduser  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Tue Mar 26 22:05:00 2013 +0000 (UTC)  00:05       Blocked      [P1-10]     proj     id     10       -1363334599       
         
         Command Error/Debug:
         
@@ -198,7 +214,10 @@ def test_showres_x_option_1():
     args      = """-x"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('showres.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('showres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -213,19 +232,19 @@ def test_showres_x_option_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
-def test_showres_x_option_1():
+def test_showres_x_option_2():
     """
-    showres test run: x_option_1
+    showres test run: x_option_2
 
         Command Output:
-        Reservation  Queue  User  Start                     Duration  End Time                  Cycle Time  Passthrough  Partitions        Project  ResID  CycleID  
-        ============================================================================================================================================================
-        george       q_1    None  Tue Jun  6 21:32:00 2023  05:00     Wed Jun  7 02:32:00 2023  None        Allowed      ANL-R00-R01-2048  None     1      -        
+        Reservation  Queue  User      Start                     Duration  End Time                  Cycle Time  Passthrough  Partitions  Project  ResID  CycleID  Lapse Time (sec)  
+        ============================================================================================================================================================================
+        *            kebra  gooduser  Tue Mar 26 16:56:40 2013  00:08     Tue Mar 26 17:05:00 2013  00:05       Blocked      [P1-10]     proj     id     10       -1363334599       
         
         Command Error/Debug:
         
@@ -234,7 +253,10 @@ def test_showres_x_option_1():
     args      = """-x --oldts"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('showres.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('showres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -249,7 +271,7 @@ def test_showres_x_option_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -268,7 +290,10 @@ def test_showres_combo():
     args      = """-l -x"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('showres.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('showres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -283,7 +308,7 @@ def test_showres_combo():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -310,7 +335,10 @@ def test_showres_help_1():
     args      = """--help"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('showres.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('showres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -325,7 +353,7 @@ def test_showres_help_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -352,7 +380,10 @@ def test_showres_help_2():
     args      = """-h"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('showres.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('showres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -367,7 +398,7 @@ def test_showres_help_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -386,7 +417,10 @@ def test_showres_version():
     args      = """--version"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('showres.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('showres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -401,7 +435,7 @@ def test_showres_version():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -411,9 +445,9 @@ def test_showres_debug():
     showres test run: debug
 
         Command Output:
-        Reservation  Queue  User  Start                                 Duration  Passthrough  Partitions        
-        =========================================================================================================
-        george       q_1    None  Wed Jun  7 02:32:00 2023 +0000 (UTC)  05:00     Allowed      ANL-R00-R01-2048  
+        Reservation  Queue  User      Start                                 Duration  Passthrough  Partitions  Lapse Time (sec)  
+        =========================================================================================================================
+        *            kebra  gooduser  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Blocked      [P1-10]     -1363334599       
         
         Command Error/Debug:
         showres.py --debug
@@ -436,7 +470,10 @@ def test_showres_debug():
     args      = """--debug"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('showres.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('showres.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -451,6 +488,6 @@ def test_showres_debug():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg

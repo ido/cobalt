@@ -9,10 +9,7 @@ def test_qmove_invalid_option():
 
     args      = """-k"""
 
-    cmdout    = \
-"""Usage:
-qmove <queue name> <jobid> <jobid>
-"""
+    cmdout    = ''
 
     cmderr    = \
 """Usage: qmove.py [options] <queue name> <jobid1> [... <jobidN>]

@@ -9,9 +9,9 @@ test_argslist - is a list of dictionaries, each dictionary has all the necessary
 """
 
 test_argslist = [
-    { "tc_name" : "invalid_option", "args" : """-k""", },
+    { "tc_name" : "invalid_option", "args" : """-k""", 'new_only' : True, },
     { "tc_name" : "queue_1", "args" : """myq 1 2 3""", },
-    { "tc_name" : "queue_2", "args" : """-d myq 1 2 3""", "new_only" : True,},
+    { "tc_name" : "queue_2", "args" : """-d myq 1 2 3""", "new_only" : True, },
     { "tc_name" : "queue_3", "args" : """1 2 3 4""", "skip_list" : ['not_bsim'], },
     { "tc_name" : "queu_4", "args" : """q1 q2 1 2 3""", },
     ]

@@ -1,5 +1,6 @@
 import testutils
-
+import os
+import pwd
 # ---------------------------------------------------------------------------------
 def test_nodeadm_args_1():
     """
@@ -8,16 +9,9 @@ def test_nodeadm_args_1():
         Command Output:
         Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]"
         
-        Options:
-          --version      show program's version number and exit
-          -h, --help     show this help message and exit
-          -d, --debug    turn on communication debugging
-          --down         mark nodes as down
-          --up           mark nodes as up (even if allocated)
-          --queue=QUEUE  set queue associations
-          -l, --list     list node states
         
-        Command Error/Debug:No arguments provided
+        Command Error/Debug:No arguments or options provided
+        
         
         
     """
@@ -25,7 +19,10 @@ def test_nodeadm_args_1():
     args      = ''
     exp_rs    = 256
 
-    results = testutils.run_cmd('nodeadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('nodeadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -40,7 +37,7 @@ def test_nodeadm_args_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -52,16 +49,9 @@ def test_nodeadm_args_2():
         Command Output:
         Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]"
         
-        Options:
-          --version      show program's version number and exit
-          -h, --help     show this help message and exit
-          -d, --debug    turn on communication debugging
-          --down         mark nodes as down
-          --up           mark nodes as up (even if allocated)
-          --queue=QUEUE  set queue associations
-          -l, --list     list node states
         
-        Command Error/Debug:Need at least one option
+        Command Error/Debug:No arguments or options provided
+        
         
         
     """
@@ -69,7 +59,10 @@ def test_nodeadm_args_2():
     args      = """p1"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('nodeadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('nodeadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -84,7 +77,7 @@ def test_nodeadm_args_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -103,7 +96,10 @@ def test_nodeadm_up_1():
     args      = """--up p1 p2 p3"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('nodeadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('nodeadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -118,7 +114,7 @@ def test_nodeadm_up_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -137,7 +133,10 @@ def test_nodeadm_up_2():
     args      = """--up U1 U2 U5 p1"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('nodeadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('nodeadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -152,7 +151,7 @@ def test_nodeadm_up_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -171,7 +170,10 @@ def test_nodeadm_down_1():
     args      = """--down p1 p2 p3"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('nodeadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('nodeadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -186,7 +188,7 @@ def test_nodeadm_down_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -213,7 +215,10 @@ def test_nodeadm_down_2():
     args      = """-d --down p1 p2 p3"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('nodeadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('nodeadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -228,7 +233,7 @@ def test_nodeadm_down_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -247,7 +252,10 @@ def test_nodeadm_down_3():
     args      = """--down D1 D2 D5 p1"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('nodeadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('nodeadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -262,7 +270,7 @@ def test_nodeadm_down_3():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -281,7 +289,10 @@ def test_nodeadm_list_1():
     args      = """-l"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('nodeadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('nodeadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -296,7 +307,7 @@ def test_nodeadm_list_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -315,7 +326,10 @@ def test_nodeadm_list_2():
     args      = """-l p1"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('nodeadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('nodeadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -330,7 +344,7 @@ def test_nodeadm_list_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -342,16 +356,9 @@ def test_nodeadm_queue_1():
         Command Output:
         Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]"
         
-        Options:
-          --version      show program's version number and exit
-          -h, --help     show this help message and exit
-          -d, --debug    turn on communication debugging
-          --down         mark nodes as down
-          --up           mark nodes as up (even if allocated)
-          --queue=QUEUE  set queue associations
-          -l, --list     list node states
         
-        Command Error/Debug:No arguments provided
+        Command Error/Debug:No arguments or options provided
+        
         
         
     """
@@ -359,7 +366,10 @@ def test_nodeadm_queue_1():
     args      = """--queue QU1"""
     exp_rs    = 256
 
-    results = testutils.run_cmd('nodeadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('nodeadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -374,7 +384,7 @@ def test_nodeadm_queue_1():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg
 
@@ -393,7 +403,10 @@ def test_nodeadm_queue_2():
     args      = """--queue "QU1 QD1" U1 D1 P1"""
     exp_rs    = 0
 
-    results = testutils.run_cmd('nodeadm.py',args,None) 
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('nodeadm.py',_args,None) 
     rs      = results[0]
     cmd_out = results[1]
     cmd_err = results[3]
@@ -408,6 +421,6 @@ def test_nodeadm_queue_2():
         "Return Status %s, Expected Return Status %s\n\n" \
         "Command Output:\n%s\n\n" \
         "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
 
     assert result, errmsg

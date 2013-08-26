@@ -72,17 +72,29 @@ Move a property back to its unset state.  Used for example, to remove a queue re
 
 .SH "OPTIONS WITH NO VALUES BUT WITH JOBID ARGUMENTS (Stand alone options)"
 .TP
-.B \-\-hold jobid(s)
-Set job state to hold, preventing execution (only works on 'queued' jobs)
-.TP
 .B \-\-kill jobid(s)
 Kill job(s) using normal mechanism. Add -f or --force option for force kill. When forceable deletion used then this may leave processes dangling on computation resources.
 .TP
 .B \-\-preempt jobid(s)
 Preempt jobid.
 .TP
-.B \-\-release jobid(s)
-Set job state to ready, allowing execution
+.B \-\-hold jobid(s) \- deprecated use \-\-admin\-hold instead
+ Set job state to admin hold, preventing execution (only works on 'queued' jobs).
+.TP
+.B \-\-release jobid(s) \- deprecated use \-\-admin\-release instead
+Set job that is in admin hold state to ready, allowing execution. 
+.TP
+.B \-\-admin\-hold jobid(s)
+Set job state to admin hold, preventing execution (only works on 'queued' jobs)
+.TP
+.B \-\-admin\-release jobid(s)
+Set job that is in admin hold state to ready, allowing execution.
+.TP
+.B \-\-user\-hold jobid(s)
+Set job state to user hold, preventing execution (only works on 'queued' jobs)
+.TP
+.B \-\-user\-release jobid(s)
+Set job that is in user hold state to ready, allowing execution
 
 .SH "OPTIONS WITH VALUES and JOBID ARGUMENTS (The following options you can mix them together)"
 .TP

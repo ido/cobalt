@@ -10,18 +10,13 @@ def test_nodeadm_args_1():
     args      = ''
 
     cmdout    = \
-"""Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]
+"""Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]"
 
-Options:
-  -h, --help     show this help message and exit
-  --down         mark nodes as down
-  --up           mark nodes as up (even if allocated)
-  --queue=QUEUE  set queue associations
-  -l             list node states
 """
 
     cmderr    = \
-"""No arguments provided
+"""No arguments or options provided
+
 """
 
     stubout   = ''
@@ -56,18 +51,13 @@ def test_nodeadm_args_2():
     args      = """p1"""
 
     cmdout    = \
-"""Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]
+"""Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]"
 
-Options:
-  -h, --help     show this help message and exit
-  --down         mark nodes as down
-  --up           mark nodes as up (even if allocated)
-  --queue=QUEUE  set queue associations
-  -l             list node states
 """
 
     cmderr    = \
-"""Need at least one option
+"""No arguments or options provided
+
 """
 
     stubout   = ''
@@ -145,7 +135,7 @@ def test_nodeadm_combo_2():
     cmdout    = ''
 
     cmderr    = \
-"""Option combinations not allowed with: list option(s)
+"""Option combinations not allowed with: list_nstates option(s)
 """
 
     stubout   = \
@@ -268,7 +258,7 @@ def test_nodeadm_combo_5():
     cmdout    = ''
 
     cmderr    = \
-"""Option combinations not allowed with: list option(s)
+"""Option combinations not allowed with: list_nstates option(s)
 """
 
     stubout   = \
@@ -714,18 +704,13 @@ def test_nodeadm_queue_1():
     args      = """--queue QU1"""
 
     cmdout    = \
-"""Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]
+"""Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]"
 
-Options:
-  -h, --help     show this help message and exit
-  --down         mark nodes as down
-  --up           mark nodes as up (even if allocated)
-  --queue=QUEUE  set queue associations
-  -l             list node states
 """
 
     cmderr    = \
-"""No arguments provided
+"""No arguments or options provided
+
 """
 
     stubout   = ''

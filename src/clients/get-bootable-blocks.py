@@ -49,7 +49,7 @@ def main():
     args   = parser.args
 
     if parser.no_args():
-        client_utils.logger.error('Must specify a block location for search')
+        client_utils.print_usage(parser)
         sys.exit(1)
 
     block_loc   = args[0]
