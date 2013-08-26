@@ -3118,9 +3118,11 @@ class JobList(DataList):
             for item in spec:
                 if item in jobid_expansion_options:
                     spec[item] = spec[item].replace('$jobid', str(spec['jobid'])) if type(spec[item]) is str else spec[item]
+                    spec[item] = spec[item].replace('$COBALT_JOBID', str(spec['jobid'])) if type(spec[item]) is str else spec[item]
             if 'envs' in spec:
                 for item in spec['envs']:
                     spec['envs'][item] = spec['envs'][item].replace('$jobid', str(spec['jobid']))
+                    spec['envs'][item] = spec['envs'][item].replace('$COBALT_JOBID', str(spec['jobid']))
         jobs_added = DataList.q_add(self, specs, callback, cargs)
         if jobs_added:
             user = spec.get('user', None)
@@ -4160,10 +4162,13 @@ class JobDataMsg(object):
                      'path', 'mode', 'envs', 'queue', 'priority_core_hours',
                      'force_kill_delay', 'all_dependencies', 'attribute', 
                      'attrs', 'satisfied_dependencies', 'preemptable', 
-                     'user_list', 'dep_frac', 'resid', 'cwd'
+                     'user_list', 'dep_frac', 'resid', 'cwd', 'ion_kernel',
+                     'ion_kerneloptions', 'geometry'
                      ]
         small_clob_list = ['command', 'inputfile', 'kernel', 'outputpath',
-                           'outputdir', 'errorpath','path','cwd']
+                           'outputdir', 'errorpath', 'path', 'cwd',
+                           'ion_kernel', 'ion_kerneloptions'
+                           ]
 
         for attr in attr_list:
 
@@ -4173,6 +4178,9 @@ class JobDataMsg(object):
                 self.job_user = job.user
             elif attr == 'user_list':
                 self.job_user_list = job.user_list
+            elif attr == 'geometry':
+                if job.geometry is not None:
+                    self.geometry = 'x'.join([str(dim) for dim in job.geometry])
             elif attr in small_clob_list:
                 clob_str = job.__getattribute__(attr)
                 if clob_str != None:

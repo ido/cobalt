@@ -693,7 +693,11 @@ def process_filters(filters,spec):
     Process the specified filters to spec
     """
     for filt in filters:
-        Cobalt.Util.processfilter(filt, spec)
+        try:
+            Cobalt.Util.processfilter(filt, spec)
+        except Exception, e:
+            logger.error("Filter failure: please contact Administrator: %s: %s", e, filt)
+            sys.exit(1)
 
 def validate_conflicting_options(parser, option_lists):
     """
@@ -995,6 +999,12 @@ def cb_mode(option,opt_str,value,parser,*args):
     This callback will validate an store the system mode.
     """
     (sys_type,job_types) = system_info()
+
+    if parser.values.mode is not None:
+        if parser.values.mode != value:
+            logger.error("Mode already set to '%s' and trying to set it again to '%s'", parser.values.mode, value)
+            sys.exit(1)
+        return
 
     mode = value
 

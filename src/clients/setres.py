@@ -11,7 +11,7 @@ OPTIONS DEFINITIONS:
 '-A','--project',dest='project',type='string',help='set project name for partitions in args'
 '-D','--defer',dest='defer',help='defer flag. needs to be used with -m',action='store_true'
 '-c','--cycletime',dest='cycle',type='string',help='set cycle time in minutes or HH:MM:SS',callback=cb_time
-'-d','--duration',dest='duration',type='string',help='duration time in minutes or HH:MM:SS>',callback=cb_time
+'-d','--duration',dest='duration',type='string',help='duration time in minutes or HH:MM:SS',callback=cb_time
 '-m','--modify_res',dest='modify_res',help='modify current reservation specified in -n',action='store_true'
 '-n','--name',dest='name',type='string',help='reservation name to add or modify'
 '-p','--partitions',dest='partitions',type='string',help='partition(s) (now optional) part1:..:partN'

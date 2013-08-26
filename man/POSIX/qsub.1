@@ -9,14 +9,59 @@ qsub \- submit jobs to the queue manager for execution
 .B qsub
 submits a job to the queue manager for execution. 
 
-   jobid expansion:
-      If \\$jobid is specified in any jobid expansion option then it will be converted to the actual jobid.
+.B JOBID EXPANSION ($jobid or $COBALT_JOBID):
 
-      Example: qsub ... --env myenv=\\$jobid_myval ... 
+If $jobid or $COBALT_JOBID is specified in any jobid expansion option 
+then it will be converted to the actual jobid. 
 
-               if the jobid is 123 then myenv will be set to '123_myval'
+Example: qsub ... --env myenv=\\$jobid_myval ... 
 
-      jobid expansion options: --env, --jobname, -o, -e, -O, --debuglog
+If the jobid is 123 then myenv will be set to '123_myval'
+
+jobid expansion options: --env, --jobname, -o, -e, -O, --debuglog
+
+Note: Remember to escape appropriately "\\$jobid" or "\\$COBALT_JOBID" 
+
+.B SCRIPT JOB DIRECTIVES (#COBALT):
+
+Command options can be entered in a script job by using #COBALT <options>.
+You can enter all in one directive or directives.
+The #COBALT tag should be right after the first line of the script.
+qsub will continue to read directives until it reads the first line that 
+does not contain the tag #COBALT.
+
+The command line options will take precedence over the Cobalt script jobx
+directives.
+
+Note: An error will occur if in the script the --mode option 
+is specified and it is not "script"
+
+Example: 
+
+  script.sh:
+     
+    #!bin/bash
+    #COBALT -t 50 -n 30
+    echo "SCRIPT JOB WITH DIRECTIVE"
+
+  or
+
+    #!bin/bash
+    #COBALT -t 50 
+    #COBALT -n 30
+    echo "SCRIPT JOB WITH DIRECTIVE"
+
+  qsub script.sh sargs 
+  is equivalent to 
+  qsub -t 50 -n 30 --mode script script.sh sargs
+
+  qsub -t 75 script.sh sargs 
+  is equivalent to 
+  qsub -t 75 -n 30 --mode script script.sh sargs
+
+  qsub -n 48 --mode script script.sh sargs 
+  is equivalent to 
+  qsub -t 75 -n 48 --mode script script.sh sargs
 
 .SH "OPTIONS"
 .TP
@@ -57,18 +102,25 @@ booting the block first.  By default the script is executed after the requested 
 Send job stderr to file specified.
 .TP
 .B \-\-env [<var1=value1>:<var=value2>] - (jobid expansion)
-Set environment variables that will be passed into the job's environment at 
+Set environment variables that will be passed into the job's environment.
 If the the characters ":" and "=" are within the value, right hand side (rhs) of a environment variable assignment,
 then need to quote the entire string and precede any ":" and "=" characters that are in the rhs with "\\". 
 runtime. 
 
-e.g. qsub ... --env "A=B:C=x\\=1\\:y\\=2\\:z\\=3:D=ABC" ...
+If multiple \-\-env options are specified then qsub will take the union.
+
+e.g. qsub ... --env "A=B:C=x\\=1\\:y\\=2\\:z\\=3:D=ABC" ... --env "MY_NAME=cobalt' ...
 
 A would equal B
 
 C would equal x=1:y=2:z=3
 
 D would equal ABC
+
+and
+
+MY_NAME would be equal to "cobalt"
+
 .TP
 .B \-\-jobname [job name] - (jobid expansion)
 Sets Jobname. If this option is not provided then Jobname will be set to whatever -o option specified.'
@@ -116,7 +168,7 @@ submitting user is always able to run commands on a submitted job.
 Appends the list of users in a project to the list of users authorized to run
 commands on the submitted job. 
 .TP
-.B \-u \-\-umask'
+.B \-u \-\-umask
 set umask: octal number default(022)
 .TP
 .B \-t \-\-time [wallclock time] 
@@ -137,6 +189,12 @@ Run the job with the specified kernel profile.
 Run the job with the specified kernel options (equivalent to 
 .Impirun -kernel_options 
 on Blue Gene/L).
+.TP
+.B \-\-ion_kernel [kernel profile]
+Run the job with the specified IO Node kernel profile. (BlueGene/Q only)
+.TP
+.B \-\-ion_kerneloptions [kernel options]
+Run the job with the specified IO Node kernel options.  (BlueGene/Q only)
 .TP
 .B \-\-mode [mode]
 This is a platform-dependent setting that controls the execution mode of the 
