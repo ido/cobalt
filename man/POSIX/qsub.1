@@ -116,7 +116,7 @@ submitting user is always able to run commands on a submitted job.
 Appends the list of users in a project to the list of users authorized to run
 commands on the submitted job. 
 .TP
-.B \-u \-\-umask'
+.B \-u \-\-umask
 set umask: octal number default(022)
 .TP
 .B \-t \-\-time [wallclock time] 
@@ -137,6 +137,12 @@ Run the job with the specified kernel profile.
 Run the job with the specified kernel options (equivalent to 
 .Impirun -kernel_options 
 on Blue Gene/L).
+.TP
+.B \-\-ion_kernel [kernel profile]
+Run the job with the specified IO Node kernel profile. (BlueGene/Q only)
+.TP
+.B \-\-ion_kerneloptions [kernel options]
+Run the job with the specified IO Node kernel options.  (BlueGene/Q only)
 .TP
 .B \-\-mode [mode]
 This is a platform-dependent setting that controls the execution mode of the 
