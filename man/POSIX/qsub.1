@@ -9,14 +9,59 @@ qsub \- submit jobs to the queue manager for execution
 .B qsub
 submits a job to the queue manager for execution. 
 
-   jobid expansion:
-      If \\$jobid or \\$COBALT_JOBID is specified in any jobid expansion option then it will be converted to the actual jobid.
+.B JOBID EXPANSION ($jobid or $COBALT_JOBID):
 
-      Example: qsub ... --env myenv=\\$jobid_myval ... 
+If $jobid or $COBALT_JOBID is specified in any jobid expansion option 
+then it will be converted to the actual jobid. 
 
-               if the jobid is 123 then myenv will be set to '123_myval'
+Example: qsub ... --env myenv=\\$jobid_myval ... 
 
-      jobid expansion options: --env, --jobname, -o, -e, -O, --debuglog
+If the jobid is 123 then myenv will be set to '123_myval'
+
+jobid expansion options: --env, --jobname, -o, -e, -O, --debuglog
+
+Note: Remember to escape appropriately "\\$jobid" or "\\$COBALT_JOBID" 
+
+.B SCRIPT JOB DIRECTIVES (#COBALT):
+
+Command options can be entered in a script job by using #COBALT <options>.
+You can enter all in one directive or directives.
+The #COBALT tag should be right after the first line of the script.
+qsub will continue to read directives until it reads the first line that 
+does not contain the tag #COBALT.
+
+The command line options will take precedence over the Cobalt script jobx
+directives.
+
+Note: An error will occur if in the script the --mode option 
+is specified and it is not "script"
+
+Example: 
+
+  script.sh:
+     
+    #!bin/bash
+    #COBALT -t 50 -n 30
+    echo "SCRIPT JOB WITH DIRECTIVE"
+
+  or
+
+    #!bin/bash
+    #COBALT -t 50 
+    #COBALT -n 30
+    echo "SCRIPT JOB WITH DIRECTIVE"
+
+  qsub script.sh sargs 
+  is equivalent to 
+  qsub -t 50 -n 30 --mode script script.sh sargs
+
+  qsub -t 75 script.sh sargs 
+  is equivalent to 
+  qsub -t 75 -n 30 --mode script script.sh sargs
+
+  qsub -n 48 --mode script script.sh sargs 
+  is equivalent to 
+  qsub -t 75 -n 48 --mode script script.sh sargs
 
 .SH "OPTIONS"
 .TP

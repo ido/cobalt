@@ -4,7 +4,8 @@ Submit jobs to the queue manager for execution.
 
 Usage: %prog --help
 Usage: %prog [options] <executable> [<excutable options>]
-       Please refer to man pages for information on "jobid expansion" ($jobid or $COBALT_JOBID).
+
+Refer to man pages for JOBID EXPANSION and SCRIPT JOB DIRECTIVES.
 
 version: "%prog " + __revision__ + , Cobalt  + __version__
 

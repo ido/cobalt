@@ -364,7 +364,8 @@ def test_qsub_no_options_passed():
     cmdout    = \
 """Usage: qsub.py --help
 Usage: qsub.py [options] <executable> [<excutable options>]
-       Please refer to man pages for information on "jobid expansion" ($jobid or $COBALT_JOBID).
+
+Refer to man pages for JOBID EXPANSION and SCRIPT JOB DIRECTIVES.
 
 
 """
@@ -410,7 +411,8 @@ def test_qsub_non_existant_option():
     cmderr    = \
 """Usage: qsub.py --help
 Usage: qsub.py [options] <executable> [<excutable options>]
-       Please refer to man pages for information on "jobid expansion" ($jobid or $COBALT_JOBID).
+
+Refer to man pages for JOBID EXPANSION and SCRIPT JOB DIRECTIVES.
 
 
 qsub.py: error: no such option: -z
@@ -450,7 +452,8 @@ def test_qsub_debug_flag_only_1():
     cmdout    = \
 """Usage: qsub.py --help
 Usage: qsub.py [options] <executable> [<excutable options>]
-       Please refer to man pages for information on "jobid expansion" ($jobid or $COBALT_JOBID).
+
+Refer to man pages for JOBID EXPANSION and SCRIPT JOB DIRECTIVES.
 
 
 """
@@ -497,7 +500,8 @@ def test_qsub_debug_flag_only_2():
     cmdout    = \
 """Usage: qsub.py --help
 Usage: qsub.py [options] <executable> [<excutable options>]
-       Please refer to man pages for information on "jobid expansion" ($jobid or $COBALT_JOBID).
+
+Refer to man pages for JOBID EXPANSION and SCRIPT JOB DIRECTIVES.
 
 
 """
@@ -544,7 +548,8 @@ def test_qsub_verbose_flag_only():
     cmdout    = \
 """Usage: qsub.py --help
 Usage: qsub.py [options] <executable> [<excutable options>]
-       Please refer to man pages for information on "jobid expansion" ($jobid or $COBALT_JOBID).
+
+Refer to man pages for JOBID EXPANSION and SCRIPT JOB DIRECTIVES.
 
 
 """
@@ -5016,7 +5021,6 @@ def test_qsub_script_4():
 """
 qsub.py -d cobalt_script2.sh
 
-Script Directive Options: --mode script --mode vn -n 100 -t 75
 Mode already set to 'script' and trying to set it again to 'vn'
 """
 
