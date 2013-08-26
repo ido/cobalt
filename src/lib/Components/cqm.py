@@ -561,6 +561,8 @@ class Job (StateMachine):
         # StateMachine.__init__(self, spec, seas = seas, terminal_actions = [(self._sm_terminal, {})])
         StateMachine.__init__(self, spec, seas = seas)
 
+        logger.info(str(spec))
+
         self.jobid = spec.get("jobid")
         self.umask = spec.get("umask")
         self.jobname = spec.get("jobname", "N/A")
@@ -597,7 +599,7 @@ class Job (StateMachine):
         self.location = spec.get("location")
         self.__locations = []
         self.outputpath = spec.get("outputpath")
-        if self.outputpath:
+        if self.outputpath and self.jobname == 'N/A':
             jname = self.outputpath.split('/')[-1].split('.output')[0]
             if jname and jname != str(self.jobid):
                 self.jobname = jname
@@ -993,7 +995,7 @@ class Job (StateMachine):
     def _sm_check_job_timers(self):
         if self.__max_job_timer.has_expired:
             # if the job execution time has exceeded the wallclock time, then inform the task that it must terminate
-            self._sm_log_info("maximum execution time exceeded; initiating job terminiation", cobalt_log = True)
+            self._sm_log_info("maximum execution time exceeded; initiating job termination", cobalt_log = True)
             accounting_logger.info(accounting.abort(self.jobid))
             return Signal_Info(Signal_Info.Reason.time_limit, Signal_Map.terminate)
         else:
@@ -3112,6 +3114,15 @@ class JobList(DataList):
         for spec in specs:
             if "jobid" not in spec or spec['jobid'] == "*":
                 spec['jobid'] = self.id_gen.next()
+            jobid_expansion_options = ['outputprefix', 'errorpath', 'outputpath', 'cobalt_log_file', 'jobname']
+            for item in spec:
+                if item in jobid_expansion_options:
+                    spec[item] = spec[item].replace('$jobid', str(spec['jobid'])) if type(spec[item]) is str else spec[item]
+                    spec[item] = spec[item].replace('$COBALT_JOBID', str(spec['jobid'])) if type(spec[item]) is str else spec[item]
+            if 'envs' in spec:
+                for item in spec['envs']:
+                    spec['envs'][item] = spec['envs'][item].replace('$jobid', str(spec['jobid']))
+                    spec['envs'][item] = spec['envs'][item].replace('$COBALT_JOBID', str(spec['jobid']))
         jobs_added = DataList.q_add(self, specs, callback, cargs)
         if jobs_added:
             user = spec.get('user', None)
@@ -4151,10 +4162,13 @@ class JobDataMsg(object):
                      'path', 'mode', 'envs', 'queue', 'priority_core_hours',
                      'force_kill_delay', 'all_dependencies', 'attribute', 
                      'attrs', 'satisfied_dependencies', 'preemptable', 
-                     'user_list', 'dep_frac', 'resid', 'cwd'
+                     'user_list', 'dep_frac', 'resid', 'cwd', 'ion_kernel',
+                     'ion_kerneloptions', 'geometry'
                      ]
         small_clob_list = ['command', 'inputfile', 'kernel', 'outputpath',
-                           'outputdir', 'errorpath','path','cwd']
+                           'outputdir', 'errorpath', 'path', 'cwd',
+                           'ion_kernel', 'ion_kerneloptions'
+                           ]
 
         for attr in attr_list:
 
@@ -4164,6 +4178,9 @@ class JobDataMsg(object):
                 self.job_user = job.user
             elif attr == 'user_list':
                 self.job_user_list = job.user_list
+            elif attr == 'geometry':
+                if job.geometry is not None:
+                    self.geometry = 'x'.join([str(dim) for dim in job.geometry])
             elif attr in small_clob_list:
                 clob_str = job.__getattribute__(attr)
                 if clob_str != None:

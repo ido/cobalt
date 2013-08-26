@@ -51,4 +51,5 @@ test_argslist = [
     { "tc_name" : "add_res_10","args" : """-s 2013_03_9-10:10 -d 10:10:10 -p ANL-R00-R01-2048 --block_passthrough -q myq -A myproj --debug""",  'new_only': True, 'skip_list' : ['not_bsim'], },
     { "tc_name" : "add_res_11", "args" : """-n resname -s now -d 50 -c 10:10:10 ANL-R00-R01-2048 ANL-R00-1024""", 'new_only' : True, 'skip_list' : ['not_bsim'], },
     { "tc_name" : "add_res_12", "args" : """-n resname -s NOW -d 50 -c 10:10:10 ANL-R00-R01-2048 ANL-R00-1024""", 'new_only' : True, 'skip_list' : ['not_bsim'], },
+    { "tc_name" : "add_res_13", "args" : """-n resname -s NOW -d 50 -c 10:10:10 -p p1:p2:p3 p4""", 'new_only' : True, 'skip_list' : ['not_bsim'], },
     ]

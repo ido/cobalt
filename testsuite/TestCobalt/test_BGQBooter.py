@@ -18,10 +18,10 @@ from nose import *
 from nose.tools import timed, TimeExpired
 from TestCobalt.Utilities.Time import timeout
 import time
-import pybgsched
 from Cobalt.Components.BGQBooter import *
 import copy
 
+import pybgsched
 
 class test_BGQBoot(object):
 
@@ -31,6 +31,8 @@ class test_BGQBoot(object):
             self.name = name
             self.reserved = reserved
             self.block_type = 'normal'
+            self.current_kernel_options=" "
+            self.current_kernel = "default"
 
         def under_resource_reservation(self, job_id):
             return self.reserved
@@ -57,6 +59,8 @@ class test_BGQBooter(object):
             self.name = name
             self.reserved = reserved
             self.block_type = 'normal'
+            self.current_kernel_options=" "
+            self.current_kernel = "default"
 
         def under_resource_reservation(self, job_id):
             return self.reserved
@@ -64,6 +68,8 @@ class test_BGQBooter(object):
     class TestIOBlock(object):
         def __init__(self, name):
             self.name = name
+            self.current_kernel_options=" "
+            self.current_kernel = "default"
 
     def setup(self):
         pybgsched.Block('TB-1', 512)
@@ -83,8 +89,8 @@ class test_BGQBooter(object):
         self.booter.restore_boot_id(1)
 
     def teardown(self):
-        if self.booter.is_alive():
-            self.booter.close()
+        #if self.booter.is_alive():
+        #    self.booter.close()
         pybgsched.block_dict = {}
 
     @timeout(3)
@@ -133,6 +139,7 @@ class test_BGQBooter(object):
             if pybgsched.block_dict['TB-1'].statuses == [pybgsched.Block.Initialized]:
                 time.sleep(3)
                 break
+            #assert str(self.booter.stat('TB-1')[0].state) != 'failed'
         boot_state = str(self.booter.stat('TB-1')[0].state)
         assert boot_state == 'complete', 'Boot state not complete, is %s instead' % boot_state
 
@@ -157,8 +164,6 @@ class test_BGQBooter(object):
             if pybgsched.block_dict['TB-1'].statuses == [pybgsched.Block.Initialized]:
                 time.sleep(3)
                 break
-        for output in self.booter.stat('TB-1')[0].context.status_string:
-            print output
         boot_state = str(self.booter.stat('TB-1')[0].state)
         assert boot_state == 'complete', 'Boot state not complete, is %s instead' % boot_state
         reboot_count = self.booter.stat('TB-1')[0].context.reboot_attempts
@@ -190,8 +195,6 @@ class test_BGQBooter(object):
             if len(pybgsched.block_dict['TB-1'].statuses)== 1:
                 time.sleep(1)
                 break
-        for output in self.booter.stat('TB-1')[0].context.status_string:
-            print output
         boot_state = str(self.booter.stat('TB-1')[0].state)
         assert boot_state == 'failed', 'Boot state not failed, is %s instead' % boot_state
         reboot_count = self.booter.stat('TB-1')[0].context.reboot_attempts
@@ -220,7 +223,6 @@ class test_BGQBooter(object):
         self.booter.start()
         self.booter.initiate_io_boot('IO-1', 'testuser')
         while True:
-            #print "checking pending boots: %s", self.booter.pending_boots
             if self.booter.pending_boots != set([]):
                 break
         pybgsched.io_block_dict['IO-1'].set_action(pybgsched.Action._None)
@@ -313,6 +315,8 @@ class test_BootPending(object):
             self.name = name
             self.reserved = reserved
             self.block_type = 'normal'
+            self.current_kernel_options=" "
+            self.current_kernel = "default"
 
         def under_resource_reservation(self, job_id):
             return self.reserved
@@ -322,6 +326,7 @@ class test_BootPending(object):
         self.test_blocks = {}
         self.test_blocks['TB-1'] = test_BGQBooter.TestBlock('TB-1')
         self.block_lock = threading.Lock()
+        
 
     def teardown(self):
         pybgsched.block_dict = {}
@@ -377,6 +382,8 @@ class test_BootInitiating(object):
             self.name = name
             self.reserved = reserved
             self.block_type = 'normal'
+            self.current_kernel = "default"
+            self.current_kernel_options=" "
 
         def under_resource_reservation(self, job_id):
             return self.reserved
@@ -440,6 +447,8 @@ class test_BootRebooting(object):
             self.name = name
             self.reserved = reserved
             self.block_type = 'normal'
+            self.current_kernel_options=" "
+            self.current_kernel = "default"
 
         def under_resource_reservation(self, job_id):
             return self.reserved
@@ -507,6 +516,8 @@ class test_IOBootPending(object):
     class TestIOBlock(object):
         def __init__(self, name):
             self.name = name
+            self.current_kernel = "default"
+            self.current_kernel_options=" "
 
     def setup(self):
         pybgsched.IOBlock('IO-1', 8)
@@ -543,6 +554,8 @@ class test_IOBootInitiating(object):
     class TestIOBlock(object):
         def __init__(self, name):
             self.name = name
+            self.current_kernel_options=" "
+            self.current_kernel = "default"
 
     def setup(self):
         pybgsched.IOBlock('IO-1', 8)
@@ -574,13 +587,6 @@ class test_IOBootInitiating(object):
         pybgsched.io_block_dict['IO-1'].set_status(pybgsched.IOBlock.Booting)
         next_state = IOBootInitiating(context).progress()
         assert 'initiating' == str(next_state), "Returned state was %s" % next_state
-
-    def test_progress_initiating_initialized(self):
-        block = self.TestIOBlock('IO-1')
-        context = IOBlockBootContext('IO-1', user='testuser')
-        pybgsched.io_block_dict['IO-1'].set_status(pybgsched.IOBlock.Initialized)
-        next_state = IOBootInitiating(context).progress()
-        assert 'complete' == str(next_state), "Returned state was %s" % next_state
 
     def test_progress_initiating_initialized(self):
         block = self.TestIOBlock('IO-1')

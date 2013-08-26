@@ -863,7 +863,7 @@ def sec_to_str(t):
         tzname = os.environ.get('TZ','UTC')
         try:
             tz = timezone(tzname)
-        except pytz.exceptions.UnknownTimeZoneError:
+        except pytz.UnknownTimeZoneError:
             tz = timezone('UTC')
 
         dt = datetime.fromtimestamp(t, tz)

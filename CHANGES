@@ -1,5 +1,36 @@
 Changes from previous Cobalt Versions
 
+
+Changes for 0.99.27
+- Alternate kernel support for BG/Q compute nodes and IO nodes is available.
+  Numerous configuration settings have been added to support this.
+  (Cobalt ticket 621)
+- If $jobid is included in a job name specification or an environment variable,
+  at submission time, Cobalt will substitute the generated jobid for that job.
+  See man qsub for more details. (Cobalt ticket 617)
+- The Cobalt jobid is now explicitly added in the cobaltlog file. (Cobalt ticket 390)
+- The name of a job can now be specified seperately from naming the output
+  files. (Cobalt ticket 625)
+- Multiple locations can be passed to reservations through the -p option as a
+  ':'-delimited list. (Cobalt ticket 405)
+- cqadm can now be used to release user hold, as well as put jobs into a user hold
+  as well as an admin hold (Cobalt ticket 382)
+- The users field can be removed from a reservation using setres -m -u '*'. (Cobalt
+   ticket 381)
+- Releaseres should now report the correct partiton count on reservation release
+  (Cobalt ticket 470)
+- Reservations now show time remaining in showres once the reservation is active.
+  (Cobalt ticket 585)
+- Schedctl should handle flipping score and jobid arguments more gracefully and 
+  no longer silently discards invalid options. (Cobalt ticket 502)
+- ':' and '=' may now be escaped as '\:' and '\=' in the --envs argument (Cobalt
+  ticket 589)
+- Reservations may now take 'now' for the start time of a reservation (Cobalt
+  ticket 546)
+- "GEOMETRY", "ION_KERNEL" and "ION_KERNELOPTIONS have been added to the JOB_DATA
+  table of the Cobalt database and 
+
+
 Changes for 0.99.26
 - Corrected a bug that was causing messages in the clients that used to go to
   stdout to go to stderr instead
