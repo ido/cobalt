@@ -2,6 +2,7 @@ from Cobalt.StateMachine import StateMachine
 from Cobalt.Exceptions import DataStateError, DataStateTransitionError, StateMachineError, StateMachineIllegalEventError, \
     StateMachineNonexistentEventError
 import traceback
+from nose.tools import raises
 
 class TestStateMachine (object):
 
@@ -22,7 +23,7 @@ class TestStateMachine (object):
 
             def start2(self, args):
                 pass
-    
+
             def stop(self, args):
                 pass
 
@@ -63,7 +64,7 @@ class TestStateMachine (object):
         try:
             tsm = TSM()
             assert False
-        except StateMachineError:
+        except Exception:
             pass
 
     def test_init__initial_state_bad(self):
@@ -75,11 +76,10 @@ class TestStateMachine (object):
 
             def __init__(self):
                 StateMachine.__init__(self, {})
-
         try:
             tsm = TSM()
             assert False
-        except StateMachineError:
+        except Exception:
             pass
 
     def test_init_seas_not_dict(self):
