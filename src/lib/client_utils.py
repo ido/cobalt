@@ -715,6 +715,18 @@ def validate_conflicting_options(parser, option_lists):
             logger.error(errmsg)
             sys.exit(1)
 
+def parse_datetime(datetime_str):
+    """
+    wrapper for Util.parse_datetime
+    """
+    return Cobalt.Util.parse_datetime(datetime_str)
+
+def cobalt_date(date):
+    """
+    Convert date to Cobalt format
+    """
+    return time.strftime('%Y_%m_%d-%H:%M', date)
+
 #  
 # Callback fucntions for argument parsing defined below
 #
@@ -1130,21 +1142,19 @@ def cb_date(option,opt_str,value,parser,*args):
     parse date
     """
     try:
-        _value = value
-
+        _value     = value
         if args is not ():
-            allow_now = args[0]
             if _value.lower() == 'now':
+                allow_now = args[0]
                 if not allow_now: 
                     raise
-                nt        = time.localtime(time.time())
-                _value = "%04d_%02d_%02d-%02d:%02d" % (nt.tm_year,nt.tm_mon,nt.tm_mday,nt.tm_hour,nt.tm_min)
+                _value = cobalt_date(time.localtime(time.time()))
 
-        starttime = Cobalt.Util.parse_datetime(_value)
+        starttime = parse_datetime(_value)
         logger.info("Got starttime %s" % (sec_to_str(starttime)))
 
-    except:
-        logger.error("start time '%s' is invalid" % value)
+    except Exception, e:
+        logger.error("start time '%s. Error: %s' is invalid", value, e)
         logger.error("start time is expected to be in the format: YYYY_MM_DD-HH:MM")
         sys.exit(1)
     setattr(parser.values,option.dest,starttime)
