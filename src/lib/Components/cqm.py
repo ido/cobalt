@@ -283,9 +283,10 @@ def get_job_sm_states():
         'Hold',
         'Job_Prologue',
         'Job_Prologue_Retry',
+        'Job_Prologue_Retry_Release',
         'Resource_Prologue',
         'Resource_Prologue_Retry',
-        'Release_Resources_Retry',
+        'Resource_Prologue_Retry_Release',
         'Run_Retry',
         'Running',
         'Kill_Retry',
@@ -314,23 +315,23 @@ def get_job_sm_transitions():
         ('Job_Prologue', 'Resource_Prologue'),              # job_prologue scripts complete.  Starting Resource_prologue scripts
         ('Job_Prologue', 'Resource_Prologue_Retry'),        # error contacting forker component
         ('Job_Prologue', 'Job_Prologue_Retry'),             # Lost communication to forker during progress
-        ('Job_Prologue', 'Job_Epilogue'),                   # job_prologue failed.  Initiate job cleanup
-        ('Job_Prologue', 'Job_Epilogue_Retry'),             # job_prologue failed.  Error communicatiing with forker
-        ('Job_Prologue', 'Release_Resources_Retry'),   # kill; error contacting system component to release resource
+        ('Job_Prologue', 'Job_Epilogue'),                   # kill / job prologue failed
+        ('Job_Prologue', 'Job_Epilogue_Retry'),             # kill / job prologue failed.  Error communicating with forker
+        ('Job_Prologue', 'Job_Prologue_Retry_Release'),     # kill / job prologue failed.  error releasing system resources
         ('Job_Prologue_Retry', 'Job_Prologue'),             # forker starting job prologue scripts
         ('Job_Prologue_Retry', 'Terminal'),                 # kill; error contacting forker component
-        ('Resource_Prologue', 'Release_Resources_Retry'),   # kill; error contacting system component to release resource
+        ('Job_Prologue_Retry_Release', 'Job_Epilogue'),     # resource successfully released
+        ('Job_Prologue_Retry_Release', 'Job_Epilogue_Retry'),     # error contacting forker component
         ('Resource_Prologue', 'Run_Retry'),                 # prologue scripts complete; error contacting system component
         ('Resource_Prologue', 'Running'),                   # prologue scripts complete; system component starting task
         ('Resource_Prologue', 'Resource_Prologue_Retry'),   # Lost communication to forker during progress
-        ('Resource_Prologue', 'Resource_Epilogue'),         # kill; system component released resource
-        ('Resource_Prologue', 'Resource_Epilogue_Retry'),   # error contacting forker component
+        ('Resource_Prologue', 'Resource_Epilogue'),         # kill / resource prologue failed; system component released resource
+        ('Resource_Prologue', 'Resource_Epilogue_Retry'),   # kill / resource prologue failed; error contacting forker component
+        ('Resource_Prologue', 'Resource_Prologue_Retry_Release'), # kill / job_prologue failed.  error releasing system resources
         ('Resource_Prologue_Retry','Resource_Prologue'),    # run resource prologue scripts
         ('Resource_Prologue_Retry','Job_Epilogue'),         # kill; run any required job cleanup
-        ('Release_Resources_Retry', 'Resource_Epilogue'),   # resource successfully released
-        ('Release_Resources_Retry', 'Resource_Epilogue_Retry'), # error contacting forker component
-        ('Release_Resources_Retry', 'Job_Epilogue'),   # resource successfully released
-        ('Release_Resources_Retry', 'Job_Epilogue_Retry'), # error contacting forker component
+        ('Resource_Prologue_Retry_Release', 'Resource_Epilogue'),       # resource successfully released
+        ('Resource_Prologue_Retry_Release', 'Resource_Epilogue_Retry'), # error contacting forker component
         ('Run_Retry', 'Running'),                           # system component starting task
         ('Run_Retry', 'Resource_Epilogue'),                 # kill
         ('Run_Retry', 'Resource_Epilogue_Retry'),           # kill; error contacting forker component
@@ -417,21 +418,26 @@ def get_job_sm_seas(job):
             ('Job_Prologue_Retry', 'Release') : [job._sm_common__pending_release],
             ('Job_Prologue_Retry', 'Preempt') : [job._sm_common__pending_preempt], #Must go pending
             ('Job_Prologue_Retry', 'Kill') : [job._sm_job_prologue_retry__kill],
+            ('Job_Prologue_Retry_Release', 'Progress') : [job._sm_job_prologue_retry_release__progress],
+            ('Job_Prologue_Retry_Release', 'Hold') : [job._sm_exit_common__hold],
+            ('Job_Prologue_Retry_Release', 'Release') : [job._sm_exit_common__release],
+            ('Job_Prologue_Retry_Release', 'Preempt') : [job._sm_exit_common__preempt],
+            ('Job_Prologue_Retry_Release', 'Kill') : [job._sm_exit_common__kill],
             ('Resource_Prologue', 'Progress') : [job._sm_resource_prologue__progress],
             ('Resource_Prologue', 'Hold') : [job._sm_common__pending_hold],
             ('Resource_Prologue', 'Release') : [job._sm_common__pending_release],
             ('Resource_Prologue', 'Preempt') : [job._sm_common__pending_preempt], #custom?
             ('Resource_Prologue', 'Kill') : [job._sm_common__pending_kill],
-            ('Resource_Prologue_Retry', 'Progress') : [job._sm_job_prologue_retry__progress],
+            ('Resource_Prologue_Retry', 'Progress') : [job._sm_resource_prologue_retry__progress],
             ('Resource_Prologue_Retry', 'Hold') : [job._sm_common__pending_hold],
             ('Resource_Prologue_Retry', 'Release') : [job._sm_common__pending_release],
             ('Resource_Prologue_Retry', 'Preempt') : [job._sm_common__pending_preempt], #custom: go directly to preempted?
-            ('Resource_Prologue_Retry', 'Kill') : [job._sm_job_prologue_retry__kill],
-            ('Release_Resources_Retry', 'Progress') : [job._sm_release_resources_retry__progress],
-            ('Release_Resources_Retry', 'Hold') : [job._sm_exit_common__hold],
-            ('Release_Resources_Retry', 'Release') : [job._sm_exit_common__release],
-            ('Release_Resources_Retry', 'Preempt') : [job._sm_exit_common__preempt],
-            ('Release_Resources_Retry', 'Kill') : [job._sm_exit_common__kill],
+            ('Resource_Prologue_Retry', 'Kill') : [job._sm_resource_prologue_retry__kill],
+            ('Resource_Prologue_Retry_Release', 'Progress') : [job._sm_resource_prologue_retry_release__progress],
+            ('Resource_Prologue_Retry_Release', 'Hold') : [job._sm_exit_common__hold],
+            ('Resource_Prologue_Retry_Release', 'Release') : [job._sm_exit_common__release],
+            ('Resource_Prologue_Retry_Release', 'Preempt') : [job._sm_exit_common__preempt],
+            ('Resource_Prologue_Retry_Release', 'Kill') : [job._sm_exit_common__kill],
             ('Run_Retry', 'Progress') : [job._sm_run_retry__progress],
             ('Run_Retry', 'Hold') : [job._sm_common__pending_hold],
             ('Run_Retry', 'Release') : [job._sm_common__pending_release],
@@ -1773,10 +1779,14 @@ class Job (StateMachine):
                     self.log_script_failure(job_dict, "Job Prologue")
                     script_failed = True
             if script_failed:
-
                 dbwriter.log_to_db(None, "job_prologue_failed", 
                     "job_prog", JobProgMsg(self))
-                self._sm_start_job_epilogue_scripts(script_failed)
+                rc = self.__release_resources()
+                if rc == Job.__rc_success:
+                    self._sm_log_info("resources released; starting job epilogue scripts", cobalt_log=True)
+                    self._sm_start_job_epilogue_scripts(error=True)
+                else:
+                    self._sm_state = 'Job_Prologue_Retry_Release'
             else:
                 logger.info("Job %s/%s: Job Prologue scripts completed "
                     "successfuly.", self.jobid, self.user)
@@ -1792,14 +1802,20 @@ class Job (StateMachine):
                         cobalt_log = True)
                     rc = self.__release_resources()
                     if rc == Job.__rc_success:
-                        self._sm_log_info("resources released; initiating job cleanup "
-                            "and removal", cobalt_log = True)
+                        self._sm_log_info("resources released; starting job epilogue scripts", cobalt_log=True)
                         self._sm_start_job_epilogue_scripts()
                     else:
-                        self._sm_state = 'Release_Resources_Retry'
+                        self._sm_state = 'Job_Prologue_Retry_Release'
                     return
 
                 self._sm_start_resource_prologue_scripts()
+
+    def _sm_job_prologue_retry_release__progress(self, args):
+        self._sm_log_info("retrying release of resources")
+        rc = self.__release_resources()
+        if rc == Job.__rc_success:
+            self._sm_log_info("resources released; starting job epilogue scripts", cobalt_log = True)
+            self._sm_start_job_epilogue_scripts()
 
 
     def _sm_start_resource_prologue_scripts(self):
@@ -1896,7 +1912,12 @@ class Job (StateMachine):
                         "job_prog", JobProgMsg(self))
                 script_failed = True
         if script_failed:
-            self._sm_start_resource_epilogue_scripts(script_failed)
+            rc = self.__release_resources()
+            if rc == Job.__rc_success:
+                self._sm_log_info("resources released; starting resource epilogue scripts", cobalt_log=True)
+                self._sm_start_resource_epilogue_scripts(error=True)
+            else:
+                self._sm_state = 'Resource_Prologue_Retry_Release'
             return
         #and we're off and running.
 
@@ -1914,15 +1935,20 @@ class Job (StateMachine):
                     cobalt_log = True)
             rc = self.__release_resources()
             if rc == Job.__rc_success:
-                self._sm_log_info("resources released; initiating job cleanup "
-                        "and removal", cobalt_log = True)
+                self._sm_log_info("resources released; starting resource epilogue scripts", cobalt_log=True)
                 self._sm_start_resource_epilogue_scripts()
             else:
-                self._sm_state = 'Release_Resources_Retry'
+                self._sm_state = 'Resource_Prologue_Retry_Release'
             return
 
         self._start_run_from_prologue()
 
+    def _sm_resource_prologue_retry_release__progress(self, args):
+        self._sm_log_info("retrying release of resources")
+        rc = self.__release_resources()
+        if rc == Job.__rc_success:
+            self._sm_log_info("resources released; starting resource epilogue scripts", cobalt_log = True)
+            self._sm_start_resource_epilogue_scripts()
 
     def _start_run_from_prologue(self):
         # attempt to run task
@@ -1999,14 +2025,6 @@ class Job (StateMachine):
                 " ".join([str(id) for id in lost_children]))
 
         return children #Yay! Success!
-
-    def _sm_release_resources_retry__progress(self, args):
-        self._sm_log_info("retrying release of resources")
-        rc = self.__release_resources()
-        if rc == Job.__rc_success:
-            self._sm_log_info("resources released; initiating job cleanup and "
-                "removal", cobalt_log = True)
-            self._sm_start_resource_epilogue_scripts()
 
     def _sm_run_retry__progress(self, args):
         '''previous attempt to execute the task failed; attempt to run it again
@@ -2783,7 +2801,7 @@ class Job (StateMachine):
             return 'preempting'
         if self._sm_state == 'Preempted':
             return 'preempted'
-        if self._sm_state in ['Release_Resources_Retry', 'Finalize_Retry', 
+        if self._sm_state in ['Job_Prologue_Retry_Release', 'Resource_Prologue_Retry_Release', 'Finalize_Retry',
                 'Resource_Epilogue','Resource_Epilogue_Retry', 'Job_Epilogue',
                 'Job_Epilogue_Retry']:
             return "exiting"
@@ -2814,7 +2832,7 @@ class Job (StateMachine):
         if self._sm_state in ['Preempt_Retry', 'Preempting', 
                 'Preempt_Finalize_Retry', 'Preempt_Epilogue', 'Preempted']:
             return 'P'
-        if self._sm_state in ['Release_Resources_Retry', 'Finalize_Retry', 
+        if self._sm_state in ['Job_Prologue_Retry_Release', 'Resource_Prologue_Retry_Release', 'Finalize_Retry',
                 'Resource_Epilogue', 'Resource_Epilogue_Retry', 'Job_Epilogue',
                 'Job_Epilogue_Retry' 'Terminal']:
             return 'E'
