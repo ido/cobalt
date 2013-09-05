@@ -17,6 +17,7 @@ from Cobalt.DataTypes.ProcessGroup import ProcessGroupDict
 from Cobalt.Data import DataDict
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Components.base import Component, exposed, automatic
+from Cobalt.Util import config_true_values
 
 __all__ = [
     "ClusterBaseSystem",
@@ -102,7 +103,6 @@ class ClusterNodeDict(DataDict):
     item_cls = ClusterNode
     key = "name"
 
-#pylint: disable=R0921
 class ClusterBaseSystem (Component):
     """base system class.
 
@@ -127,8 +127,8 @@ class ClusterBaseSystem (Component):
 
         try:
             self.configure(cluster_hostfile)
-        except:
-            self.logger.error("unable to load hostfile")
+        except IOError:
+            self.logger.error("unable to load hostfile", exc_info=True)
 
         self.queue_assignments["default"] = set(self.all_nodes)
         self.alloc_only_nodes = {} # nodename:starttime
@@ -165,8 +165,10 @@ class ClusterBaseSystem (Component):
         self.node_order = {}
         try:
             self.configure(cluster_hostfile)
-        except:
+        except IOError:
             self.logger.error("unable to load hostfile", exc_info=True)
+        #make sure we can't try and schedule nodes that don't exist
+        
         self.alloc_only_nodes = {} # nodename:starttime
         if not state.has_key("cleaning_processes"):
             self.cleaning_processes = []
@@ -178,6 +180,7 @@ class ClusterBaseSystem (Component):
         self.logger.info("allocation timeout set to %d seconds." % self.alloc_timeout)
 
     def save_me(self):
+        '''Automatically write statefiles.'''
         Component.save(self)
     save_me = automatic(save_me)
 
@@ -221,30 +224,6 @@ class ClusterBaseSystem (Component):
     validate_job = exposed(validate_job)
 
 
-    #there is absolutely no reason for this to exist in cluster_systems at this point. --PMR
-    def run_diags(self, partition_list, test_name):
-
-        self.logger.error("Run_diags not used on cluster systems.")
-        return None
-
-    run_diags = exposed(run_diags)
-
-    def launch_diags(self, partition, test_name):
-        '''override this method in derived classes!'''
-        raise NotImplementedError("launch_diags is not implemented by this class.")
-
-    def finish_diags(self, partition, test_name, exit_value):
-        '''call this method somewhere in your derived class where you deal with the exit values of diags'''
-        raise NotImplementedError("Finish diags not implemented in this class.")
-
-    def handle_pending_diags(self):
-        '''implement to handle diags that are still running.
-
-        '''
-        raise NotImplementedError("handle_pending_diags not implemented in this class.")
-    #can't automate what isn't there
-    #handle_pending_diags = automatic(handle_pending_diags)
-
     def fail_partitions(self, specs):
         self.logger.error("Fail_partitions not used on cluster systems.")
         return ""
@@ -256,6 +235,9 @@ class ClusterBaseSystem (Component):
     unfail_partitions = exposed(unfail_partitions)
 
     def _find_job_location(self, args):
+        '''Get a list of nodes capable of running a job.
+
+        '''
         nodes = args['nodes']
         jobid = args['jobid']
 
@@ -267,6 +249,9 @@ class ClusterBaseSystem (Component):
             return None
 
     def _get_available_nodes(self, args):
+        '''Get all nodes required for a job, ignoring forbidden ones (i.e. reserved nodes).
+
+        '''
         queue = args['queue']
         forbidden = args.get("forbidden", [])
         required = args.get("required", [])
@@ -286,6 +271,10 @@ class ClusterBaseSystem (Component):
 
     # the argument "required" is used to pass in the set of locations allowed by a reservation;
     def find_job_location(self, arg_list, end_times):
+        '''Find the best location for a job and start the job allocation process (this is different from 
+        what happens on BlueGenes!)
+
+        '''
         best_location_dict = {}
         winner = arg_list[0]
 
@@ -346,18 +335,19 @@ class ClusterBaseSystem (Component):
     find_job_location = exposed(find_job_location)
 
     def check_alloc_only_nodes(self):
-        loc_to_release = []
+        '''Check to see if nodes that we have allocated but not run yet should be freed.
+
+        '''
         jobids = []
         check_time = time.time()
         dead_locations = []
         for location, start_time in self.alloc_only_nodes.iteritems():
             if int(check_time) - int(start_time) > self.alloc_timeout:
-                self.logger.warning("Location: %s: released.  Time between "\
-                        "allocation and run exceeded.", location)
+                self.logger.warning("Location: %s: released.  Time between allocation and run exceeded.", location)
                 dead_locations.append(location)
 
         if dead_locations == []:
-            #well we don't have anything dying this time.
+                    #well we don't have anything dying this time.
             return
 
         for jobid, locations in self.locations_by_jobid.iteritems():
@@ -371,26 +361,38 @@ class ClusterBaseSystem (Component):
             #cleaned so clear them out to make this faster
             if clear_from_dead_locations:
                 for location in locations:
-                    dead_locations.remove(location)
+                    if location in dead_locations:
+                        dead_locations.remove(location)
             if dead_locations == []:
                 #well we don't have anything dying this time.
                 break
         self.invoke_node_cleanup(jobids)
+        return
 
-    check_alloc_only_nodes = automatic(check_alloc_only_nodes,
-            get_cluster_system_config("automatic_method_interval",10.0))
+
+    check_alloc_only_nodes = automatic(check_alloc_only_nodes, get_cluster_system_config("automatic_method_interval", 10.0))
 
     def invoke_node_cleanup(self, jobids):
         '''Invoke cleanup for nodes that have exceeded their allocated time
 
         '''
+        found_locations = set()
         for jobid in jobids:
             user = self.jobid_to_user[jobid]
             locations = self.locations_by_jobid[jobid]
+            locations_to_clean = set()
             for location in locations:
-                del self.alloc_only_nodes[location]
+                if location not in found_locations:
+                    try:
+                        del self.alloc_only_nodes[location]
+                    except KeyError:
+                        self.logger.warning('WANING: Location: %s Jobid: %s; Location already removed from alloc_only_nodes',
+                            location, jobid)
+                    else:
+                        locations_to_clean.add(location)
+                        found_locations.add(location)
 
-            self.clean_nodes(locations, user, jobid)
+            self.clean_nodes(list(locations_to_clean), user, jobid)
 
 
     def _walltimecmp(self, dict1, dict2):
@@ -545,31 +547,36 @@ class ClusterBaseSystem (Component):
     verify_locations = exposed(verify_locations)
 
     def configure(self, filename):
-        f = open(filename)
+        '''Add nodes from hostfile to Cobalt's configuration of tracked nodes.
+
+        '''
+        hostfile = open(filename)
 
         counter = 0
-        for line in f:
+        for line in hostfile:
             name = line.strip()
             self.all_nodes.add(name)
             self.node_order[name] = counter
             counter += 1
 
-        f.close()
+        hostfile.close()
 
     # this gets called by bgsched in order to figure out if there are partition overlaps;
     # it was written to provide the data that bgsched asks for and raises an exception
     # if you try to ask for more
     def get_partitions (self, specs):
+        '''Fetch node information and their respective states.
 
+        '''
         partitions = []
         for spec in specs:
             item = {}
-            for n in self.all_nodes:
+            for node in self.all_nodes:
                 if "name" in spec:
                     if spec["name"] == '*':
-                        item.update( {"name": n} )
-                    elif spec["name"] == n:
-                        item.update( {"name": n} )
+                        item.update( {"name": node} )
+                    elif spec["name"] == node:
+                        item.update( {"name": node} )
 
             if "name" in spec:
                 spec.pop("name")
@@ -600,8 +607,7 @@ class ClusterBaseSystem (Component):
             group_name = grp.getgrgid(groupid)[0]
         except KeyError:
             group_name = ""
-            self.logger.error("Job %s/%s: unable to determine group name for "\
-                    "epilogue" % (user, jobid))
+            self.logger.error("Job %s/%s: unable to determine group name for epilogue" % (user, jobid))
 
         self.cleaning_host_count[jobid] = 0
         for host in locations:
@@ -638,9 +644,6 @@ class ClusterBaseSystem (Component):
                 self.down_nodes.add(h)
                 self.running_nodes.discard(h)
 
-
-
-
     def launch_script(self, config_option, host, jobid, user, group_name):
         '''Start our script processes used for node prep and cleanup.
 
@@ -652,9 +655,14 @@ class ClusterBaseSystem (Component):
                     user, jobid, config_option)
             return None
         else:
-            cmd = ["/usr/bin/ssh", host, script, str(jobid), user, group_name]
-            return ComponentProxy("system_script_forker").fork(cmd,
-                    "system epilogue", "Job %s/%s" % (jobid, user))
+            if (get_cluster_system_config("run_remote", 'true').lower() in config_true_values):
+                cmd = ["/usr/bin/ssh", host, script, str(jobid), user, group_name]
+            else:
+                cmd = script.split()
+                cmd.append(str(jobid))
+                cmd.append(user)
+                cmd.append(group_name)
+            return ComponentProxy("system_script_forker").fork(cmd, "system epilogue", "Job %s/%s" % (jobid, user))
 
 
     def retry_cleaning_scripts(self):

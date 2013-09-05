@@ -5,18 +5,14 @@ ProcessGroup -- a group of processes started with mpirun
 BGSystem -- Blue Gene system component
 """
 
-import pwd
-import grp
 import logging
-import thread
 import sys
 import os
-import re
 import ConfigParser
 import Cobalt
 import Cobalt.Data
 import Cobalt.Util
-from Cobalt.Components.base import Component, exposed, automatic, query, locking
+from Cobalt.Components.base import exposed, automatic, query, locking
 from Cobalt.Exceptions import ProcessGroupCreationError, ComponentLookupError
 from Cobalt.Components.cluster_base_system import ClusterBaseSystem
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
@@ -32,8 +28,8 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 config = ConfigParser.ConfigParser()
-config.read(Cobalt.CONFIG_FILES)
 
+config.read(Cobalt.CONFIG_FILES)
 if not config.has_section('cluster_system'):
     print '''"ERROR: cluster_system" section missing from cobalt config file'''
     sys.exit(1)
@@ -44,7 +40,6 @@ def get_cluster_system_config(option, default):
     except ConfigParser.NoOptionError:
         value = default
     return value
-
 
 
 class ClusterProcessGroup(ProcessGroup):
@@ -88,12 +83,10 @@ class ClusterProcessGroup(ProcessGroup):
                 logger.critical("Job: %s/%s: Executable for simulator not specified! This job will not run!")
                 raise RuntimeError("Unspecified simulation_executable in cobalt config")
         else:
-            #FIXME: Need to put launcher location into config
-            cmd_exe = '/usr/bin/cobalt-launcher.py'
+            cmd_exe = get_cluster_system_config('launcher','/usr/bin/cobalt-launcher.py')
 
         #run the user script off the login node, and on the compute node
-        if (get_cluster_system_config("run_remote", 'true').lower() in config_true_values and
-                not sim_mode):
+        if (get_cluster_system_config("run_remote", 'true').lower() in config_true_values and not sim_mode):
             cmd = ("/usr/bin/ssh", rank0, cmd_exe) + cmd_args + tuple(split_args)
         else:
             cmd = (cmd_exe,) + cmd_args + tuple(split_args)
@@ -107,10 +100,8 @@ class ClusterProcessGroup(ProcessGroup):
 
         return ret
 
-
-
-
 class ClusterSystem (ClusterBaseSystem):
+
 
     """cluster system component.
 
@@ -143,6 +134,7 @@ class ClusterSystem (ClusterBaseSystem):
     def __setstate__(self, state):
         ClusterBaseSystem.__setstate__(self, state)
         self.process_groups.item_cls = ClusterProcessGroup
+    
 
     def add_process_groups (self, specs):
         """Create a process group.
@@ -153,14 +145,13 @@ class ClusterSystem (ClusterBaseSystem):
 
         self.logger.info("add_process_groups(%r)", specs)
         process_groups = self.process_groups.q_add(specs)
-
         for pgroup in process_groups:
-            self.logger.info("Job %s/%s: process group %s created to track script",
-                    pgroup.user, pgroup.jobid, pgroup.id)
+            self.logger.info("Job %s/%s: process group %s created to track script", pgroup.user, pgroup.jobid, pgroup.id)
         #System has started the job.  We need remove them from the temp, alloc array
         #in cluster_base_system.
-        for pg in process_groups:
-            for location in pg.location:
+        self.apg_started = True
+        for pgroup in process_groups:
+            for location in pgroup.location:
                 try:
                     del self.alloc_only_nodes[location]
                 except KeyError:
