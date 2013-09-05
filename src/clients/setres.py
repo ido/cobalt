@@ -45,6 +45,16 @@ __version__ = '$Version$'
 SCHMGR = client_utils.SCHMGR
 SYSMGR = client_utils.SYSMGR
 
+def validate_starttime(parser):
+    """
+    make sure the start time plus duration is valid
+    """
+    _localtime = client_utils.parse_datetime(client_utils.cobalt_date(time.localtime(time.time())))
+    _res_st    = parser.options.start + parser.options.duration
+    if _res_st < _localtime:
+        client_utils.logger.error("Start time + duration %s already in the pass", client_utils.sec_to_str(_res_st))
+        sys.exit(1)
+
 def set_res_id(parser):
     """
     set res id
@@ -210,6 +220,8 @@ def add_reservation(parser,spec,user):
     """
     add reservation 
     """
+    validate_starttime(parser)
+
     spec['users']   = None if parser.options.users == '*' else parser.options.users
     spec['cycle']   = parser.options.cycle 
     spec['project'] = parser.options.project

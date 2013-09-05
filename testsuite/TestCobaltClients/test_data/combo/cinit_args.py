@@ -49,7 +49,7 @@ test_argslist = [
     {"tc_name" : "showres_1"                           , "command" : "showres", "args" : "-x"},
     {"tc_name" : "setres_2"                            , "command" : "setres" , "args" : "-n george -m -d 300"},
     {"tc_name" : "showres_2"                           , "command" : "showres", "args" : "-x"},
-    {"tc_name" : "setres_3"                            , "command" : "setres" , "args" : "-n res_passed -s 2010_12_1-10:30 -d 50  -q q_1 ANL-R00-R01-2048"},
+    {"tc_name" : "setres_3"                            , "command" : "setres" , "args" : "-n david -s 2022_12_1-10:30 -d 50  -q q_1 ANL-R00-R01-2048"},
     {"tc_name" : "showres_3"                           , "command" : "showres", "args" : "-x"},
     {"tc_name" : "qsub_1"                              , "command" : "qsub"   , "args" : "-h -t 50  -n 30 /bin/ls"},
     {"tc_name" : "qsub_2"                              , "command" : "qsub"   , "args" : "-h -t 100 -n 30 /bin/ls"},
