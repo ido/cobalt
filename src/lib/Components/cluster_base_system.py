@@ -153,22 +153,29 @@ class ClusterBaseSystem (Component):
 
     def __setstate__(self, state):
         Component.__setstate__(self, state)
-
-        self.queue_assignments = state.get('queue_assignments', {})
-        if self.queue_assignments == {}:
-            self.queue_assignments["default"] = set(self.all_nodes)
-        self.down_nodes = state.get('down_nodes', {})
-
-        self.process_groups = ProcessGroupDict()
         self.all_nodes = set()
-        self.running_nodes = set()
         self.node_order = {}
         try:
             self.configure(cluster_hostfile)
         except IOError:
             self.logger.error("unable to load hostfile", exc_info=True)
+        self.queue_assignments = state.get('queue_assignments', {})
+        nonexistent_queues = []
         #make sure we can't try and schedule nodes that don't exist
-        
+        if self.queue_assignments == {}:
+            self.queue_assignments["default"] = set(self.all_nodes)
+        else:
+            #remove nodes that have been removed from cobalt.hostfile
+            for queue, nodes in self.queue_assignments.iteritems():
+                corrected_nodes = self.all_nodes & set(nodes)
+                if corrected_nodes == set():
+                    nonexistent_queues.append(queue)
+                self.queue_assignments[queue] = corrected_nodes
+            for queue in nonexistent_queues:
+                del self.queue_assignments[queue]
+        self.down_nodes = self.all_nodes & set(state.get('down_nodes', set()))
+        self.process_groups = ProcessGroupDict()
+        self.running_nodes = set()
         self.alloc_only_nodes = {} # nodename:starttime
         if not state.has_key("cleaning_processes"):
             self.cleaning_processes = []
