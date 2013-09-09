@@ -9,12 +9,12 @@ def test_slpstat_arg_1():
         Command Output:
         Name                  Location                           Update Time               
         ===================================================================================
-        system                https://acheron.mcs.anl.gov:52192  Thu Jul 11 13:30:58 2013  
-        queue-manager         https://acheron.mcs.anl.gov:52178  Thu Jul 11 13:30:56 2013  
-        user_script_forker    https://acheron.mcs.anl.gov:52170  Thu Jul 11 13:31:00 2013  
-        scheduler             https://acheron.mcs.anl.gov:52176  Thu Jul 11 13:30:56 2013  
-        bg_mpirun_forker      https://acheron.mcs.anl.gov:52171  Thu Jul 11 13:31:00 2013  
-        system_script_forker  https://acheron.mcs.anl.gov:52174  Thu Jul 11 13:31:09 2013  
+        system                https://acheron.mcs.anl.gov:60604  Tue Sep  3 17:50:29 2013  
+        scheduler             https://acheron.mcs.anl.gov:60589  Tue Sep  3 17:50:27 2013  
+        user_script_forker    https://acheron.mcs.anl.gov:60583  Tue Sep  3 17:50:37 2013  
+        bg_mpirun_forker      https://acheron.mcs.anl.gov:60585  Tue Sep  3 17:50:37 2013  
+        queue-manager         https://acheron.mcs.anl.gov:60591  Tue Sep  3 17:50:27 2013  
+        system_script_forker  https://acheron.mcs.anl.gov:60587  Tue Sep  3 17:48:47 2013  
         
         Command Error/Debug:
         
@@ -53,12 +53,12 @@ def test_slpstat_arg_2():
         Command Output:
         Name                  Location                           Update Time               
         ===================================================================================
-        system                https://acheron.mcs.anl.gov:52192  Thu Jul 11 13:30:58 2013  
-        queue-manager         https://acheron.mcs.anl.gov:52178  Thu Jul 11 13:30:56 2013  
-        user_script_forker    https://acheron.mcs.anl.gov:52170  Thu Jul 11 13:31:00 2013  
-        scheduler             https://acheron.mcs.anl.gov:52176  Thu Jul 11 13:30:56 2013  
-        bg_mpirun_forker      https://acheron.mcs.anl.gov:52171  Thu Jul 11 13:31:00 2013  
-        system_script_forker  https://acheron.mcs.anl.gov:52174  Thu Jul 11 13:31:09 2013  
+        system                https://acheron.mcs.anl.gov:60604  Tue Sep  3 17:50:29 2013  
+        scheduler             https://acheron.mcs.anl.gov:60589  Tue Sep  3 17:50:27 2013  
+        user_script_forker    https://acheron.mcs.anl.gov:60583  Tue Sep  3 17:50:37 2013  
+        bg_mpirun_forker      https://acheron.mcs.anl.gov:60585  Tue Sep  3 17:50:37 2013  
+        queue-manager         https://acheron.mcs.anl.gov:60591  Tue Sep  3 17:50:27 2013  
+        system_script_forker  https://acheron.mcs.anl.gov:60587  Tue Sep  3 17:48:47 2013  
         
         Command Error/Debug:
         
@@ -97,12 +97,12 @@ def test_slpstat_arg_3():
         Command Output:
         Name                  Location                           Update Time               
         ===================================================================================
-        system                https://acheron.mcs.anl.gov:52192  Thu Jul 11 13:30:58 2013  
-        queue-manager         https://acheron.mcs.anl.gov:52178  Thu Jul 11 13:30:56 2013  
-        user_script_forker    https://acheron.mcs.anl.gov:52170  Thu Jul 11 13:31:00 2013  
-        scheduler             https://acheron.mcs.anl.gov:52176  Thu Jul 11 13:30:56 2013  
-        bg_mpirun_forker      https://acheron.mcs.anl.gov:52171  Thu Jul 11 13:31:00 2013  
-        system_script_forker  https://acheron.mcs.anl.gov:52174  Thu Jul 11 13:31:09 2013  
+        system                https://acheron.mcs.anl.gov:60604  Tue Sep  3 17:50:29 2013  
+        scheduler             https://acheron.mcs.anl.gov:60589  Tue Sep  3 17:50:27 2013  
+        user_script_forker    https://acheron.mcs.anl.gov:60583  Tue Sep  3 17:50:37 2013  
+        bg_mpirun_forker      https://acheron.mcs.anl.gov:60585  Tue Sep  3 17:50:37 2013  
+        queue-manager         https://acheron.mcs.anl.gov:60591  Tue Sep  3 17:50:27 2013  
+        system_script_forker  https://acheron.mcs.anl.gov:60587  Tue Sep  3 17:48:47 2013  
         
         Command Error/Debug:No arguments needed
         
@@ -142,12 +142,12 @@ def test_slpstat_debug_1():
         Command Output:
         Name                  Location                           Update Time               
         ===================================================================================
-        system                https://acheron.mcs.anl.gov:52192  Thu Jul 11 13:30:58 2013  
-        queue-manager         https://acheron.mcs.anl.gov:52178  Thu Jul 11 13:30:56 2013  
-        user_script_forker    https://acheron.mcs.anl.gov:52170  Thu Jul 11 13:31:00 2013  
-        scheduler             https://acheron.mcs.anl.gov:52176  Thu Jul 11 13:30:56 2013  
-        bg_mpirun_forker      https://acheron.mcs.anl.gov:52171  Thu Jul 11 13:31:00 2013  
-        system_script_forker  https://acheron.mcs.anl.gov:52174  Thu Jul 11 13:31:09 2013  
+        system                https://acheron.mcs.anl.gov:60604  Tue Sep  3 17:50:29 2013  
+        scheduler             https://acheron.mcs.anl.gov:60589  Tue Sep  3 17:50:27 2013  
+        user_script_forker    https://acheron.mcs.anl.gov:60583  Tue Sep  3 17:50:37 2013  
+        bg_mpirun_forker      https://acheron.mcs.anl.gov:60585  Tue Sep  3 17:50:37 2013  
+        queue-manager         https://acheron.mcs.anl.gov:60591  Tue Sep  3 17:50:27 2013  
+        system_script_forker  https://acheron.mcs.anl.gov:60587  Tue Sep  3 17:48:47 2013  
         
         Command Error/Debug:
         slpstat.py -d
@@ -195,12 +195,12 @@ def test_slpstat_debug_2():
         Command Output:
         Name                  Location                           Update Time               
         ===================================================================================
-        system                https://acheron.mcs.anl.gov:52192  Thu Jul 11 13:30:58 2013  
-        queue-manager         https://acheron.mcs.anl.gov:52178  Thu Jul 11 13:30:56 2013  
-        user_script_forker    https://acheron.mcs.anl.gov:52170  Thu Jul 11 13:31:00 2013  
-        scheduler             https://acheron.mcs.anl.gov:52176  Thu Jul 11 13:30:56 2013  
-        bg_mpirun_forker      https://acheron.mcs.anl.gov:52171  Thu Jul 11 13:31:00 2013  
-        system_script_forker  https://acheron.mcs.anl.gov:52174  Thu Jul 11 13:31:09 2013  
+        system                https://acheron.mcs.anl.gov:60604  Tue Sep  3 17:50:29 2013  
+        scheduler             https://acheron.mcs.anl.gov:60589  Tue Sep  3 17:50:27 2013  
+        user_script_forker    https://acheron.mcs.anl.gov:60583  Tue Sep  3 17:50:37 2013  
+        bg_mpirun_forker      https://acheron.mcs.anl.gov:60585  Tue Sep  3 17:50:37 2013  
+        queue-manager         https://acheron.mcs.anl.gov:60591  Tue Sep  3 17:50:27 2013  
+        system_script_forker  https://acheron.mcs.anl.gov:60587  Tue Sep  3 17:48:47 2013  
         
         Command Error/Debug:
         slpstat.py -d

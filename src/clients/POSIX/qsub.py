@@ -29,7 +29,7 @@ Option with values:
 '-q','--queue',dest='queue',type='string',help='set queue name'
 '-M','--notify',dest='notify',type='string',help='set notification email address'
 '--env',dest='envs',type='string', help='Set env variables. Refer to man pages for more detail information.', callback=cb_env
-'-t','--time',dest='walltime',type='string',help='set walltime (minutes or HH:MM:SS)',callback=cb_time
+'-t','--time',dest='walltime',type='string',help='set walltime (minutes or HH:MM:SS). For max walltime enter 0.',callback=cb_time
 '-u','--umask',dest='umask',type='string',help='set umask: octal number default(022)',callback=cb_umask
 '-O','--outputprefix',dest='outputprefix',type='string',help='output prefix for error,output or debuglog files',callback=cb_path
 '-e','--error',dest='errorpath',type='string',help='set error file path',callback=cb_path

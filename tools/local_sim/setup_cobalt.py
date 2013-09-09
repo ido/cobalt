@@ -111,13 +111,17 @@ def main():
 
         sysroot_etc = '%s/etc/' % sysroot
         local_sim   = parser.options.cobalt + '/tools/local_sim/'
-        subprocess.call(('cp','%s/simulator.xml' % local_sim, '.'))
-        subprocess.call(('cp','%s/cstart.sh'     % local_sim, '.'))
-        subprocess.call(('cp','%s/cinit.sh'      % local_sim, '.'))
-        subprocess.call(('cp','%s/cobalt.key'    % local_sim, sysroot_etc))
-        subprocess.call(('cp','%s/cobalt.cert'   % local_sim, sysroot_etc))
 
-        subprocess.call( ('cp', '%s/cobalt.conf' % local_sim, sysroot_etc))
+        subprocess.call(('cp', '%s/simulator.xml'           % local_sim, '.'))
+        subprocess.call(('cp', '%s/cstart.sh'               % local_sim, '.'))
+        subprocess.call(('cp', '%s/cinit.sh'                % local_sim, '.'))
+        subprocess.call(('cp', '%s/cobalt.key'              % local_sim, sysroot_etc))
+        subprocess.call(('cp', '%s/cobalt.cert'             % local_sim, sysroot_etc))
+        subprocess.call(('cp', '%s/cobalt.conf'             % local_sim, sysroot_etc))
+        subprocess.call(('cp', '%s/cobalt.utility'          % local_sim, sysroot_etc))
+        subprocess.call(('cp', '%s/test-filter.py'          % local_sim, sysroot_etc))
+        subprocess.call(('cp', '%s/test-script-fail.py'     % local_sim, sysroot_etc))
+        subprocess.call(('cp', '%s/test-script-succeed.py'  % local_sim, sysroot_etc))
 
         files = os.listdir(local_sim)
 

@@ -54,4 +54,5 @@ test_argslist = [
     { "tc_name" : "script_2", "args" : """-t 50 cobalt_script1.sh""", 'old_args' : """--env a=1:c=3:b=2 -t50 -n100 --mode script cobalt_script1.sh""", },
     { "tc_name" : "script_3", "args" : """--mode vn cobalt_script1.sh""", 'new_only' : True, },
     { "tc_name" : "script_4", "args" : """-d cobalt_script2.sh""", 'new_only' : True, },
+    { "tc_name" : "walltime_0", "args" : """-t0 -n 10 /bin/ls""", 'new_only' : True, },
     ]

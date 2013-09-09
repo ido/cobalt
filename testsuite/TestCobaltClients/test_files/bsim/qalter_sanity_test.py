@@ -207,6 +207,80 @@ def test_qalter_time_2():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
+def test_qalter_time_3():
+    """
+    qalter test run: time_3
+
+        Command Output:
+        
+        Command Error/Debug:Failed to match any jobs or queues
+        
+        
+    """
+
+    args      = """-v -n10 -t+20 1 2 3 4 5 6 7"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_qalter_time_4():
+    """
+    qalter test run: time_4
+
+        Command Output:
+        
+        Command Error/Debug:Failed to match any jobs or queues
+        
+        
+    """
+
+    args      = """-v -n10 -t30 1 2 3 4 5 6 7 10 15"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
 def test_qalter_time_5():
     """
     qalter test run: time_5
@@ -632,6 +706,43 @@ def test_qalter_invalid_nodecount():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
+def test_qalter_user_1():
+    """
+    qalter test run: user_1
+
+        Command Output:
+        
+        Command Error/Debug:user user1 does not exist.
+        
+        
+    """
+
+    args      = """-v --run_users user1:user2:user3 1 2 3 4 5"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
 def test_qalter_user_2():
     """
     qalter test run: user_2
@@ -780,6 +891,117 @@ def test_qalter_geometry_2():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
+def test_qalter_geometry_3():
+    """
+    qalter test run: geometry_3
+
+        Command Output:
+        
+        Command Error/Debug:Failed to match any jobs or queues
+        
+        
+    """
+
+    args      = """-v --geometry 04x04x04x04    1 2 3 4"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_qalter_geometry_4():
+    """
+    qalter test run: geometry_4
+
+        Command Output:
+        
+        Command Error/Debug:Failed to match any jobs or queues
+        
+        
+    """
+
+    args      = """-v --geometry 10x10x10x10x1  1 2 3 4 5"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_qalter_geometry_5():
+    """
+    qalter test run: geometry_5
+
+        Command Output:
+        
+        Command Error/Debug:Failed to match any jobs or queues
+        
+        
+    """
+
+    args      = """-v --geometry 04x04x04x04x2  1 2 3 4"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
 def test_qalter_preboot_1():
     """
     qalter test run: preboot_1
@@ -871,6 +1093,43 @@ def test_qalter_defer_1():
 
     args      = """--defer"""
     exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qalter.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_qalter_defer_2():
+    """
+    qalter test run: defer_2
+
+        Command Output:
+        no jobs matched
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--defer 1 2 3 4 5"""
+    exp_rs    = 0
 
     user    = pwd.getpwuid(os.getuid())[0] 
     _args   = args.replace('<USER>',user)

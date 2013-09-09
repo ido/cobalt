@@ -3698,6 +3698,14 @@ class QueueManager(Component):
         failed = False
         for spec in specs:
             if spec['queue'] in self.Queues:
+                if 'walltime' in spec:
+                    if float(spec['walltime']) <= 0 and 'maxtime' not in self.Queues[spec['queue']].restrictions:
+                        maxtime = get_cqm_config('max_walltime', None)
+                        if not maxtime:
+                            failure_msg = 'No Max Walltime default or for queue "%s" defined. Please contact system administrator' % spec['queue']
+                            logger.error(failure_msg)
+                            raise QueueError, failure_msg
+                    
                 spec.update({'adminemail':self.Queues[spec['queue']].adminemail})
                 if walltime_prediction_enabled:
                     spec['walltime_p'] = self.get_walltime_p(spec)        #*AdjEst*
@@ -3797,7 +3805,7 @@ class QueueManager(Component):
     set_jobs = exposed(query(set_jobs))
 
 
-    def run_jobs(self, specs, nodelist, user_name=None, resid=None):
+    def run_jobs(self, specs, nodelist, user_name=None, resid=None, walltime=None):
         """Run jobs.  Get a possible user_name if this is a forced-run, or
         a dict that contains resid's keyed by jobid.  Resid is for the
         reservation the job actually ran in, not the one, if any, it was queued
@@ -3811,6 +3819,23 @@ class QueueManager(Component):
             logger.info("%s using cqadm to start %s on %s", user_name, specs, nodelist)
 
         def _run_jobs(job, nodes):
+            # set new walltime if available
+            maxtime = None
+            if walltime is not None:
+                if walltime <= 0:
+                    if 'maxtime' in self.Queues[job.queue].restrictions:
+                        maxtime = self.Queues[job.queue].restrictions['maxtime'].value
+                        logger.info('Setting max queue time %s for jobid %s on queue %s' % (str(maxtime), str(job.jobid), job.queue))
+                    else:
+                        maxtime = get_cqm_config('max_walltime', None)
+                        if not maxtime:
+                            failure_msg = "No Queue Max Walltime Defined for queue: %s" % job.queue
+                            logger.error(failure_msg)
+                            raise QueueError, failure_msg
+                    job.walltime = maxtime
+                else:
+                    logger.info('Setting remaining reservation time %s for jobid %s on queue %s' % (str(walltime), str(job.jobid), job.queue))
+                    job.walltime = walltime
             try:
                 res_success = ComponentProxy("system").reserve_resources_until(
                     nodelist, time.time() + ((float(job.walltime) + float(job.force_kill_delay) + 1.0) * 60.0),
