@@ -73,7 +73,7 @@ def test_cqadm_getq_option_2():
              )
         
         
-        [{'maxuserjobs': None, 'priority': 0, 'name': 'q2', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_1', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_4', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q1', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_2', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'default', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'R.res2', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_3', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}]
+        [{'maxuserjobs': None, 'priority': 0, 'name': 'R.res2', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q2', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'default', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_2', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_1', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_4', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q1', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_3', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}]
         
         
     """
@@ -125,91 +125,6 @@ def test_cqadm_getq_option_3():
     """
 
     args      = """-f --getq"""
-    exp_rs    = 0
-
-    user    = pwd.getpwuid(os.getuid())[0] 
-    _args   = args.replace('<USER>',user)
-
-    results = testutils.run_cmd('cqadm.py',_args,None) 
-    rs      = results[0]
-    cmd_out = results[1]
-    cmd_err = results[3]
-
-    # Test Pass Criterias
-    no_rs_err     = (rs == exp_rs)
-    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
-
-    result = no_rs_err and no_fatal_exc
-
-    errmsg  = "\n\nFailed Data:\n\n" \
-        "Return Status %s, Expected Return Status %s\n\n" \
-        "Command Output:\n%s\n\n" \
-        "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
-
-    assert result, errmsg
-
-# ---------------------------------------------------------------------------------
-def test_cqadm_preempt_job_1():
-    """
-    cqadm test run: preempt_job_1
-
-        Command Output:
-        
-        Command Error/Debug:
-        cqadm.py -d --preempt 1 2 3
-        
-        component: "queue-manager.preempt_jobs", defer: True
-          preempt_jobs(
-             [{'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 1}, {'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 2}, {'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 3}],
-             georgerojas,
-             False,
-             )
-        
-        
-        Failed to match any jobs or queues
-        
-        
-    """
-
-    args      = """-d --preempt 1 2 3"""
-    exp_rs    = 0
-
-    user    = pwd.getpwuid(os.getuid())[0] 
-    _args   = args.replace('<USER>',user)
-
-    results = testutils.run_cmd('cqadm.py',_args,None) 
-    rs      = results[0]
-    cmd_out = results[1]
-    cmd_err = results[3]
-
-    # Test Pass Criterias
-    no_rs_err     = (rs == exp_rs)
-    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
-
-    result = no_rs_err and no_fatal_exc
-
-    errmsg  = "\n\nFailed Data:\n\n" \
-        "Return Status %s, Expected Return Status %s\n\n" \
-        "Command Output:\n%s\n\n" \
-        "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
-
-    assert result, errmsg
-
-# ---------------------------------------------------------------------------------
-def test_cqadm_preempt_job_2():
-    """
-    cqadm test run: preempt_job_2
-
-        Command Output:
-        
-        Command Error/Debug:Failed to match any jobs or queues
-        
-        
-    """
-
-    args      = """-f --preempt 1 2 3"""
     exp_rs    = 0
 
     user    = pwd.getpwuid(os.getuid())[0] 
@@ -1510,43 +1425,6 @@ def test_cqadm_run_option_2():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
-def test_cqadm_run_option_3():
-    """
-    cqadm test run: run_option_3
-
-        Command Output:
-        
-        Command Error/Debug:cannot find partition named 'mayaguez'
-        
-        
-    """
-
-    args      = """--run mayaguez 1 2 3"""
-    exp_rs    = 256
-
-    user    = pwd.getpwuid(os.getuid())[0] 
-    _args   = args.replace('<USER>',user)
-
-    results = testutils.run_cmd('cqadm.py',_args,None) 
-    rs      = results[0]
-    cmd_out = results[1]
-    cmd_err = results[3]
-
-    # Test Pass Criterias
-    no_rs_err     = (rs == exp_rs)
-    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
-
-    result = no_rs_err and no_fatal_exc
-
-    errmsg  = "\n\nFailed Data:\n\n" \
-        "Return Status %s, Expected Return Status %s\n\n" \
-        "Command Output:\n%s\n\n" \
-        "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
-
-    assert result, errmsg
-
-# ---------------------------------------------------------------------------------
 def test_cqadm_hold_option_1():
     """
     cqadm test run: hold_option_1
@@ -1991,44 +1869,6 @@ def test_cqadm_queue_option_2():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
-def test_cqadm_queue_option_3():
-    """
-    cqadm test run: queue_option_3
-
-        Command Output:
-        
-        Command Error/Debug:component error: XMLRPC failure <Fault 1001: "Error: queue 'myq' does not exist"> in queue-manager.set_jobs
-        
-        
-        
-    """
-
-    args      = """--queue myq 1 2 3"""
-    exp_rs    = 256
-
-    user    = pwd.getpwuid(os.getuid())[0] 
-    _args   = args.replace('<USER>',user)
-
-    results = testutils.run_cmd('cqadm.py',_args,None) 
-    rs      = results[0]
-    cmd_out = results[1]
-    cmd_err = results[3]
-
-    # Test Pass Criterias
-    no_rs_err     = (rs == exp_rs)
-    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
-
-    result = no_rs_err and no_fatal_exc
-
-    errmsg  = "\n\nFailed Data:\n\n" \
-        "Return Status %s, Expected Return Status %s\n\n" \
-        "Command Output:\n%s\n\n" \
-        "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
-
-    assert result, errmsg
-
-# ---------------------------------------------------------------------------------
 def test_cqadm_time_option_1():
     """
     cqadm test run: time_option_1
@@ -2123,82 +1963,6 @@ def test_cqadm_time_option_4():
 
     args      = """--time 50 1 2 3"""
     exp_rs    = 0
-
-    user    = pwd.getpwuid(os.getuid())[0] 
-    _args   = args.replace('<USER>',user)
-
-    results = testutils.run_cmd('cqadm.py',_args,None) 
-    rs      = results[0]
-    cmd_out = results[1]
-    cmd_err = results[3]
-
-    # Test Pass Criterias
-    no_rs_err     = (rs == exp_rs)
-    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
-
-    result = no_rs_err and no_fatal_exc
-
-    errmsg  = "\n\nFailed Data:\n\n" \
-        "Return Status %s, Expected Return Status %s\n\n" \
-        "Command Output:\n%s\n\n" \
-        "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
-
-    assert result, errmsg
-
-# ---------------------------------------------------------------------------------
-def test_cqadm_update_all_1():
-    """
-    cqadm test run: update_all_1
-
-        Command Output:
-        
-        Command Error/Debug:component error: XMLRPC failure <Fault 1001: "Error: queue 'myq' does not exist"> in queue-manager.set_jobs
-        
-        
-        
-    """
-
-    args      = """--hold --queue myq --time 50 4 5 6"""
-    exp_rs    = 256
-
-    user    = pwd.getpwuid(os.getuid())[0] 
-    _args   = args.replace('<USER>',user)
-
-    results = testutils.run_cmd('cqadm.py',_args,None) 
-    rs      = results[0]
-    cmd_out = results[1]
-    cmd_err = results[3]
-
-    # Test Pass Criterias
-    no_rs_err     = (rs == exp_rs)
-    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
-
-    result = no_rs_err and no_fatal_exc
-
-    errmsg  = "\n\nFailed Data:\n\n" \
-        "Return Status %s, Expected Return Status %s\n\n" \
-        "Command Output:\n%s\n\n" \
-        "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
-
-    assert result, errmsg
-
-# ---------------------------------------------------------------------------------
-def test_cqadm_update_all_2():
-    """
-    cqadm test run: update_all_2
-
-        Command Output:
-        
-        Command Error/Debug:component error: XMLRPC failure <Fault 1001: "Error: queue 'myq' does not exist"> in queue-manager.set_jobs
-        
-        
-        
-    """
-
-    args      = """--release --queue myq --time 50 4 5 6"""
-    exp_rs    = 256
 
     user    = pwd.getpwuid(os.getuid())[0] 
     _args   = args.replace('<USER>',user)
