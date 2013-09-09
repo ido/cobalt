@@ -1649,7 +1649,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         def _task_run(preempt):
             self.assert_next_op('reserve', BogusException1)
             self.qm_thr.pause_wait()
-            self.job_get_state(assert_spec = {'state':"exiting", 'sm_state':"Release_Resources_Retry"})
+            self.job_get_state(assert_spec = {'state':"exiting", 'sm_state':"Job_Prologue_Retry_Release"})
             self.qm_thr.resume()
             self.assert_next_op('reserve', BogusException2)
         self.job_exec_driver(job_pretask = _pretask, task_run = _task_run)
