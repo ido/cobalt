@@ -75,6 +75,9 @@ class ClusterProcessGroup(ProcessGroup):
                     '--cwd', str(self.cwd),
                     '--exe', str(self.executable))
 
+        qsub_env_list = ["%s=%s" % (key, val) for key, val in self.env.iteritems()]
+
+
         cmd_exe = None
         if sim_mode:
             logger.debug("We are setting up with simulation mode.")
@@ -87,9 +90,9 @@ class ClusterProcessGroup(ProcessGroup):
 
         #run the user script off the login node, and on the compute node
         if (get_cluster_system_config("run_remote", 'true').lower() in config_true_values and not sim_mode):
-            cmd = ("/usr/bin/ssh", rank0, cmd_exe) + cmd_args + tuple(split_args)
+            cmd = ("/usr/bin/ssh", rank0,) + qsub_env_list + cmd_exe + cmd_args + tuple(split_args)
         else:
-            cmd = (cmd_exe,) + cmd_args + tuple(split_args)
+            cmd = tuple(qsub_env_list) + cmd_exe + cmd_args + tuple(split_args)
 
         ret["cmd" ] = cmd
         ret["args"] = cmd[1:]
