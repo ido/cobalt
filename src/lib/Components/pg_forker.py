@@ -180,6 +180,9 @@ class PGChild (BaseChild):
         self.env['COBALT_JOBID'] = str(self.pg.jobid)
         if self.pg.resid != None:
             self.env['COBALT_RESID'] = str(self.pg.resid)
+        #All jobs should get the time when Cobalt will terminate them.
+        self.env['COBALT_STARTTIME'] = str(int(float(self.pg.starttime)))
+        self.env['COBALT_ENDTIME'] = str(int(float(self.pg.starttime)) + (60 * int(self.pg.walltime)))
 
         self.print_clf("")
         self.print_clf("Command: %s", self.cmd_string or convert_argv_to_quoted_command_string(self.args))
