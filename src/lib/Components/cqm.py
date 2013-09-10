@@ -814,7 +814,6 @@ class Job (StateMachine):
                     (e,))
                 return Job.__rc_xmlrpc
         except:
-            traceback.print_exc()
             self._sm_raise_exception("unexpected error from the system component; manual cleanup may be required")
             return Job.__rc_unknown
 
@@ -874,7 +873,6 @@ class Job (StateMachine):
             self._sm_log_warn("failed to execute the task (%s); retry pending" % (e,))
             return Job.__rc_retry
         except:
-            #print traceback.format_exec()
             self._sm_raise_exception("unexpected error returned from the system component when attempting to add task",
                 cobalt_log = True)
             return Job.__rc_unknown
@@ -1475,7 +1473,7 @@ class Job (StateMachine):
                     '%s_%s'%(self.jobid, self._sm_state))
         except ComponentLookupError:
             #Forker wasn't there, we need to go to the retry-state.
-            print "failing lookup for forker"
+            #print "failing lookup for forker"
             if self._sm_state != "Job_Prologue_Retry":
                 logger.warning("Job %s/%s: Unable to connect to forker "
                         "component to launch job prologue.  Will retry", 
@@ -3007,7 +3005,6 @@ class Job (StateMachine):
                 return False
         return True
 
-
     def preempt(self, user = None, force = False):
         '''process a preemption request for a job'''
         args = {}
@@ -3113,7 +3110,6 @@ class Job (StateMachine):
                     self.acctlog.LogMessage("Job %s/%s on %s nodes forcibly "
                             "terminated by user %s. %s" % (self.jobid, 
                                 self.user, self.nodes, user, stats))
-
 
     def task_end(self):
         '''handle the completion of a task'''
@@ -3571,25 +3567,26 @@ class QueueManager(Component):
 
     def __poll_process_groups (self):
         '''Resynchronize with the system'''
+        running_jobs = [j for queue in self.Queues.itervalues() for j in queue.jobs if j.task_running]
 
         try:
+            self.component_lock_release()
             pgroups = ComponentProxy("system").get_process_groups(
                     [{'id':'*', 'state':'running'}])
+            self.component_lock_acquire()
         except (ComponentLookupError, xmlrpclib.Fault):
+            self.component_lock_acquire()
             logger.error("Failed to communicate with the system component when"
                 " attempting to acquire a list of active process groups")
             return
 
-        self.component_lock_acquire()
-        try:
-            live = [item['id'] for item in pgroups]
-            for job in [j for queue in self.Queues.itervalues() for j in queue.jobs]:
-                if job.task_running and job.taskid not in live:
-                    logger.info("Job %s/%s: process group no longer executing" % (job.jobid, job.user))
-                    job.task_end()
-        finally:
-            self.component_lock_release()
-    __poll_process_groups = locking(automatic(__poll_process_groups, float(get_cqm_config('poll_process_groups_interval', 10))))
+        live = [item['id'] for item in pgroups]
+        for job in running_jobs:
+            if job.taskid not in live:
+                logger.info("Job %s/%s: process group no longer executing" % (job.jobid, job.user))
+                job.task_end()
+
+    __poll_process_groups = automatic(__poll_process_groups, float(get_cqm_config('poll_process_groups_interval', 10)))
 
     #
     # job operations
@@ -3668,7 +3665,7 @@ class QueueManager(Component):
                 walltime_prediction_enabled = True
             else:
                 walltime_prediction_enabled = False
-            print "test_history_manager: walltime_prediction_enabled=", walltime_prediction_enabled
+            self.logger.debug("test_history_manager: walltime_prediction_enabled=%s", walltime_prediction_enabled)
 
     test_history_manager = automatic(test_history_manager, 60)
 
