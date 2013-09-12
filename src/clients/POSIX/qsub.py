@@ -58,6 +58,7 @@ import string
 import os
 import sys
 import signal
+import xmlrpclib
 from Cobalt import client_utils
 from Cobalt.client_utils import \
     cb_debug, cb_env, cb_nodes, cb_time, cb_umask, cb_path, \
@@ -71,10 +72,22 @@ __version__  = '$Version$'
 SYSMGR           = client_utils.SYSMGR
 QUEMGR           = client_utils.QUEMGR
 
+CN_DEFAULT_KERNEL  = get_config_option('bgsystem', 'cn_default_kernel', 'default')
+ION_DEFAULT_KERNEL = get_config_option('bgsystem', 'ion_default_kernel', 'default')
+
 def validate_args(parser, spec):
     """
     If the argument is a script job it will validate it, and get the Cobalt directives
     """
+
+    #an executable cannot be specified for interactive jobs
+    if (parser.options.interactive is not None) and (not parser.no_args()):
+        client_utils.logger.error("An executable may not be specified if using the interactive option.")
+        sys.exit(1)
+    elif parser.options.interactive is not None:
+        #Bypass the rest of the checks for interactive jobs.
+        return
+
     # if no excecutable specified then flag it an exit
     if parser.no_args():
         client_utils.print_usage(parser, "No executable or script specified")
@@ -151,10 +164,10 @@ def update_outputprefix(parser,spec):
     """
     Update the the appropriate paths with the outputprefix path
     """
-    # If the paths for the error log, output log, or the debuglog are not provided 
+    # If the paths for the error log, output log, or the debuglog are not provided
     # then update them with what is provided in outputprefix.
     if parser.options.outputprefix != None:
-        # pop the value for outputrefix 
+        # pop the value for outputrefix
         op = spec.pop('outputprefix')
 
         # if error path, cobalt log path or output log path not provide then update them wiht outputprefix
@@ -274,6 +287,27 @@ def parse_options(parser, spec, opts, opt2spec, def_spec):
     opts['disable_preboot'] = not spec['script_preboot']
     return opt_count
 
+def get_interactive_command(parser, spec, opts, opt2spec, def_spec):
+    '''Interactive job checks and command update.  Set the sleeper job up to be submitted for the walltime.
+
+    '''
+    #update the auxillary environment variables here so that they are properly set for the job?
+
+    # Checks for interactive jobs: user must not specify a command,
+    # and we must be running on a cluster
+    if parser.options.interactive:
+        try:
+            impl = client_utils.component_call(SYSMGR, False, 'get_implementation', ())
+        except xmlrpclib.Fault:
+            client_utils.logger.error("Error: unable to connect to the system component")
+            sys.exit(1)
+
+        if "cluster_system" != impl:
+            client_utils.logger.error("Interactive jobs are only supported on cluster systems")
+            sys.exit(1)
+        else:
+            return ["/bin/sleep", str(parser.options.walltime * 60)]
+
 
 
 def main():
@@ -320,8 +354,8 @@ def main():
     def_spec['path']           = client_utils.getpath()
     def_spec['mode']           = False
     def_spec['cwd']            = client_utils.getcwd()
-    def_spec['kernel']         = get_config_option('bgsystem', 'cn_default_kernel', 'default')
-    def_spec['ion_kernel']     = get_config_option('bgsystem', 'ion_default_kernel', 'default')
+    def_spec['kernel']         = CN_DEFAULT_KERNEL
+    def_spec['ion_kernel']     = ION_DEFAULT_KERNEL
     def_spec['queue']          = 'default'
     def_spec['umask']          = 022
     def_spec['run_project']    = False
