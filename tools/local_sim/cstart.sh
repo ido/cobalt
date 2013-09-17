@@ -103,6 +103,7 @@ EOF
       >>"${COBALT_RUNTIME_DIR}/var/log/cobalt/$1.out" 2>&1 &
     if test $? -eq 0 ; then
 	echo "$1 component started; pid $!"
+	echo "$!" >"${COBALT_RUNTIME_DIR}/var/run/cobalt/$1"
     else
 	echo "ERROR: $1 component failed to start!" >>"${COBALT_RUNTIME_DIR}/var/log/cobalt/$1.out"
 	msg_error "$1 component failed to start!"
