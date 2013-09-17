@@ -89,7 +89,7 @@ CSIM = \
 source <SIMPATH>/rm_testlinks
 
 export COBALT_SOURCE_DIR="<SIMPATH>"/cobalt
-export COBALT_RUNTIME_DIR="<SYMPATH>"/sysroot
+export COBALT_RUNTIME_DIR="<SIMPATH>"/sysroot
 export COBALT_SYSTEM_TYPE=EAS
 
 cp "$COBALT_SOURCE_DIR"/tools/local_sim/bgq_cobalt.conf "$COBALT_RUNTIME_DIR/etc/cobalt.conf"
