@@ -43,8 +43,11 @@ export COBALT_SIM="<SIMPATH>"
 
 alias cobalt-client-sim='source "<SIMPATH>"/setup_client'
 alias cobalt-lsim='source "<SIMPATH>"/setup_lsim'
+alias cobalt-csim='source "<SIMPATH>"/setup_csim'
 alias cobalt-stop='kill `cat "<SIMPATH>"/sysroot/var/run/cobalt/*`'
 alias cobalt-clean='rm -rf "<SIMPATH>"/sysroot/var'
+
+ln -fs "$COBALT_RUNTIME_DIR"/etc/partlist-R00-R01.txt "$COBALT_RUNTIME_DIR"/etc/partlist.txt
 """
 
 CLIENT = \
@@ -104,9 +107,13 @@ export PYTHON_EXE=python
 #cetus local modification:
 source /home/bgqsysdb/sqllib/db2profile
 
+alias cobalt-client-sim='source "<SIMPATH>"/setup_client'
+alias cobalt-lsim='source "<SIMPATH>"/setup_lsim'
 alias cobalt-csim='source "<SIMPATH>"/setup_csim'
 alias cobalt-stop='kill `cat "<SIMPATH>"/sysroot/var/run/cobalt/*`'
 alias cobalt-clean='rm -rf "<SIMPATH>"/sysroot/var'
+
+rm "$COBALT_RUNTIME_DIR"/etc/partlist.txt
 """
 
 def main():
@@ -170,9 +177,6 @@ def main():
 
         os.chdir(cobalt_dir+'/src/components')
         subprocess.call( ('ln', '-s', '../../../simulator.xml', 'simulator.xml') )
-
-        os.chdir('../../../'+sysroot_etc)
-        subprocess.call(('ln', '-s', 'partlist-R00-R01.txt', 'partlist.txt'))
 
         os.chdir(curr_dir)
         fd = open('setup_lsim','w')
