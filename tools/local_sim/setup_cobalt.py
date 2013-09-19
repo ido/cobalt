@@ -113,7 +113,7 @@ alias cobalt-csim='source "<SIMPATH>"/setup_csim'
 alias cobalt-stop='kill `cat "<SIMPATH>"/sysroot/var/run/cobalt/*`'
 alias cobalt-clean='rm -rf "<SIMPATH>"/sysroot/var'
 
-rm "$COBALT_RUNTIME_DIR"/etc/partlist.txt
+rm "$COBALT_RUNTIME_DIR"/etc/partlist.txt 2> /dev/null
 """
 
 def main():
