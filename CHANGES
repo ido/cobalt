@@ -1,5 +1,8 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 0.99.29 ==
+ * Interactive jobs are experimentally available for cluster systems.
+
 == Changes to 0.99.28 ==
  * Cobalt now supports qsub options in script mode jobs similarly to other
    job scheduler scripts.  The form is #Cobalt <qsub option> <option argument>.
