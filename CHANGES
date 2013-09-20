@@ -1,5 +1,19 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 0.99.28 ==
+ * Cobalt now supports qsub options in script mode jobs similarly to other
+   job scheduler scripts.  The form is #Cobalt <qsub option> <option argument>.
+   Most qsub options are supported, except for mode.  Jobs using this feature must
+   be script mode jobs.  This is similar in style to PBS-directives. (Cobalt Ticket 354)
+ * Fixed a bug in cluster systems where a failure duing job startup could result
+   in all nodes for a job being stuck in the allocated state (Cobalt Ticket 662)
+ * $COBALT_STARTTIME and $COBALT_ENDTIME added to job's environments, these are
+   the Unix timestamp for when the job started, and when Cobalt will terminate
+   the job due to exceeding walltime. (Cobat Ticket 593)
+ * A requested walltime of 0 will set the job to run for the time remaining in
+   a reservation. (Cobalt Ticket 474)
+ * The --env flag to qsub now aggregates multiple instances of the flag rather
+   than overriding the prior instance (Cobalt Ticket 657)
 
 == Changes to 0.99.27 ==
  * Alternate kernel support for BG/Q compute nodes and IO nodes is available.
