@@ -779,7 +779,9 @@ def cb_gtzero(option,opt_str,value,parser,*args):
         _value = str(value)
     setattr(parser.values,option.dest,_value) # set the option
 
-def cb_score(option,opt_str,value,parser,*args):
+
+
+def cb_score(option, opt_str, value, parser, *args):
     """
     Validate the value entered is greater than zero
     """
