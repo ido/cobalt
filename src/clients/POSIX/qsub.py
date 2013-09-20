@@ -19,7 +19,7 @@ Option with no values:
 '--preemptable',dest='preemptable',help='make this job preemptable',action='store_true'
 '--run_project',dest='run_project',help='set run project flag for this job',action='store_true'
 '--disable_preboot',dest='script_preboot',help='disable script preboot',action='store_false'
-'-I', '--interactive', dest=interactive, help='run qsub in interactive mode (clusters only)'
+'-I','--interactive',dest='interactive',help='run qsub in interactive mode (clusters only)',action='store_true'
 
 Option with values:
 
@@ -69,9 +69,10 @@ from Cobalt.Util import get_config_option, init_cobalt_config, sleep
 __revision__ = '$Revision: 559 $'
 __version__  = '$Version$'
 
+#init cobalt config file for setting default kernels.
+init_cobalt_config()
 SYSMGR           = client_utils.SYSMGR
 QUEMGR           = client_utils.QUEMGR
-
 CN_DEFAULT_KERNEL  = get_config_option('bgsystem', 'cn_default_kernel', 'default')
 ION_DEFAULT_KERNEL = get_config_option('bgsystem', 'ion_default_kernel', 'default')
 
@@ -306,8 +307,8 @@ def get_interactive_command(parser, spec, opts, opt2spec, def_spec):
             client_utils.logger.error("Interactive jobs are only supported on cluster systems")
             sys.exit(1)
         else:
-            return ["/bin/sleep", str(parser.options.walltime * 60)]
-
+            spec['command'] = "/bin/sleep"
+            spec['args'] = [str(int(parser.options.walltime) * 60),]
 
 
 def main():
@@ -317,8 +318,6 @@ def main():
     # setup logging for client. The clients should call this before doing anything else.
     client_utils.setup_logging(logging.INFO)
 
-    #init cobalt config file for setting default kernels.
-    init_cobalt_config()
 
     spec     = {} # map of destination option strings and parsed values
     opts     = {} # old map
@@ -384,6 +383,7 @@ def main():
     filters = client_utils.get_filters()
     client_utils.process_filters(filters, spec)
     update_spec(opts, spec, opt2spec)
+    get_interactive_command(parser, spec, opts, opt2spec, def_spec)
     jobs = client_utils.component_call(QUEMGR, False, 'add_jobs',([spec],))
 
     def on_interrupt(sig, func=None):
