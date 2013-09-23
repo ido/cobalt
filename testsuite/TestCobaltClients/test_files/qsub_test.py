@@ -4734,18 +4734,132 @@ def test_qsub_script_1():
 
     args      = """cobalt_script1.sh"""
 
-    cmdout    = ''
-
-    cmderr    = \
-"""command /tmp/cobalt_script1.sh not found, or is not a file
+    cmdout    = \
+"""1
 """
 
-    stubout   = ''
+    cmderr    = ''
+
+    stubout   = \
+"""
+ADD_JOBS
+
+args:[]
+args type: <type 'list'>
+command:/tmp/cobalt_script1.sh
+command type: <type 'str'>
+cwd:/tmp
+cwd type: <type 'str'>
+envs:{'a': '1', 'c': '3', 'b': '2'}
+envs type: <type 'dict'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+jobid:*
+jobid type: <type 'str'>
+kernel:default
+kernel type: <type 'str'>
+mode:script
+mode type: <type 'str'>
+nodes:100
+nodes type: <type 'int'>
+outputdir:/tmp
+outputdir type: <type 'str'>
+path:/tmp
+path type: <type 'str'>
+procs:512
+procs type: <type 'str'>
+queue:default
+queue type: <type 'str'>
+run_project:False
+run_project type: <type 'bool'>
+script_preboot:True
+script_preboot type: <type 'bool'>
+tag:job
+tag type: <type 'str'>
+umask:18
+umask type: <type 'int'>
+user:gooduser
+user type: <type 'str'>
+user_list:['gooduser']
+user_list type: <type 'list'>
+walltime:75
+walltime type: <type 'str'>
+
+VALIDATE_JOB
+
+attrs:{}
+attrs type: <type 'dict'>
+cwd:/tmp
+cwd type: <type 'str'>
+debug:False
+debug type: <type 'bool'>
+debuglog:False
+debuglog type: <type 'bool'>
+dependencies:False
+dependencies type: <type 'bool'>
+disable_preboot:False
+disable_preboot type: <type 'bool'>
+env:a=1:c=3:b=2
+env type: <type 'str'>
+error:False
+error type: <type 'bool'>
+forcenoval:False
+forcenoval type: <type 'bool'>
+geometry:False
+geometry type: <type 'bool'>
+held:False
+held type: <type 'bool'>
+inputfile:False
+inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
+kernel:default
+kernel type: <type 'str'>
+kerneloptions:False
+kerneloptions type: <type 'bool'>
+mode:script
+mode type: <type 'str'>
+nodecount:100
+nodecount type: <type 'str'>
+notify:False
+notify type: <type 'bool'>
+output:False
+output type: <type 'bool'>
+outputprefix:False
+outputprefix type: <type 'bool'>
+preemptable:False
+preemptable type: <type 'bool'>
+proccount:False
+proccount type: <type 'bool'>
+project:False
+project type: <type 'bool'>
+queue:default
+queue type: <type 'str'>
+run_project:False
+run_project type: <type 'bool'>
+time:75
+time type: <type 'str'>
+umask:False
+umask type: <type 'bool'>
+user_list:False
+user_list type: <type 'bool'>
+verbose:False
+verbose type: <type 'bool'>
+version:False
+version type: <type 'bool'>
+
+"""
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       256, # Expected return status 
+                       0, # Expected return status 
                        cmdout, # Expected command output
                        stubout, # Expected stub functions output
                        cmderr, # Expected command error output 
@@ -4771,18 +4885,132 @@ def test_qsub_script_2():
 
     args      = """-t 50 cobalt_script1.sh"""
 
-    cmdout    = ''
-
-    cmderr    = \
-"""command /tmp/cobalt_script1.sh not found, or is not a file
+    cmdout    = \
+"""1
 """
 
-    stubout   = ''
+    cmderr    = ''
+
+    stubout   = \
+"""
+ADD_JOBS
+
+args:[]
+args type: <type 'list'>
+command:/tmp/cobalt_script1.sh
+command type: <type 'str'>
+cwd:/tmp
+cwd type: <type 'str'>
+envs:{'a': '1', 'c': '3', 'b': '2'}
+envs type: <type 'dict'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+jobid:*
+jobid type: <type 'str'>
+kernel:default
+kernel type: <type 'str'>
+mode:script
+mode type: <type 'str'>
+nodes:100
+nodes type: <type 'int'>
+outputdir:/tmp
+outputdir type: <type 'str'>
+path:/tmp
+path type: <type 'str'>
+procs:512
+procs type: <type 'str'>
+queue:default
+queue type: <type 'str'>
+run_project:False
+run_project type: <type 'bool'>
+script_preboot:True
+script_preboot type: <type 'bool'>
+tag:job
+tag type: <type 'str'>
+umask:18
+umask type: <type 'int'>
+user:gooduser
+user type: <type 'str'>
+user_list:['gooduser']
+user_list type: <type 'list'>
+walltime:50
+walltime type: <type 'str'>
+
+VALIDATE_JOB
+
+attrs:{}
+attrs type: <type 'dict'>
+cwd:/tmp
+cwd type: <type 'str'>
+debug:False
+debug type: <type 'bool'>
+debuglog:False
+debuglog type: <type 'bool'>
+dependencies:False
+dependencies type: <type 'bool'>
+disable_preboot:False
+disable_preboot type: <type 'bool'>
+env:a=1:c=3:b=2
+env type: <type 'str'>
+error:False
+error type: <type 'bool'>
+forcenoval:False
+forcenoval type: <type 'bool'>
+geometry:False
+geometry type: <type 'bool'>
+held:False
+held type: <type 'bool'>
+inputfile:False
+inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
+kernel:default
+kernel type: <type 'str'>
+kerneloptions:False
+kerneloptions type: <type 'bool'>
+mode:script
+mode type: <type 'str'>
+nodecount:100
+nodecount type: <type 'str'>
+notify:False
+notify type: <type 'bool'>
+output:False
+output type: <type 'bool'>
+outputprefix:False
+outputprefix type: <type 'bool'>
+preemptable:False
+preemptable type: <type 'bool'>
+proccount:False
+proccount type: <type 'bool'>
+project:False
+project type: <type 'bool'>
+queue:default
+queue type: <type 'str'>
+run_project:False
+run_project type: <type 'bool'>
+time:50
+time type: <type 'str'>
+umask:False
+umask type: <type 'bool'>
+user_list:False
+user_list type: <type 'bool'>
+verbose:False
+verbose type: <type 'bool'>
+version:False
+version type: <type 'bool'>
+
+"""
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       256, # Expected return status 
+                       0, # Expected return status 
                        cmdout, # Expected command output
                        stubout, # Expected stub functions output
                        cmderr, # Expected command error output 
@@ -4811,7 +5039,7 @@ def test_qsub_script_3():
     cmdout    = ''
 
     cmderr    = \
-"""command /tmp/cobalt_script1.sh not found, or is not a file
+"""Mode already set to 'script' and trying to set it again to 'vn'
 """
 
     stubout   = ''
@@ -4851,7 +5079,7 @@ def test_qsub_script_4():
 """
 qsub.py -d cobalt_script2.sh
 
-command /tmp/cobalt_script2.sh not found, or is not a file
+Mode already set to 'script' and trying to set it again to 'vn'
 """
 
     stubout   = ''
