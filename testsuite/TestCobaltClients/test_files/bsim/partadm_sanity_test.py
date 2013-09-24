@@ -911,6 +911,80 @@ def test_partadm_combo_options_14():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
+def test_partadm_combo_options_15():
+    """
+    partadm test run: combo_options_15
+
+        Command Output:
+        
+        Command Error/Debug:WARNING: IO Block information only exists on BG/Q-type systems.
+        
+        
+    """
+
+    args      = """--list_io -a"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_combo_options_16():
+    """
+    partadm test run: combo_options_16
+
+        Command Output:
+        
+        Command Error/Debug:WARNING: IO Block information only exists on BG/Q-type systems.
+        
+        
+    """
+
+    args      = """--list_io -a ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
 def test_partadm_combo_options_17():
     """
     partadm test run: combo_options_17
@@ -1027,7 +1101,7 @@ def test_partadm_add_option_1():
     partadm test run: add_option_1
 
         Command Output:
-        []
+        [{'scheduled': True, 'name': 'ANL-R00-R01-2048', 'functional': True, 'queue': 'q_1:q_4:q_3:q_2', 'tag': 'partition', 'deps': None, 'size': 2048}]
         
         Command Error/Debug:
         
@@ -1101,7 +1175,7 @@ def test_partadm_add_option_3():
     partadm test run: add_option_3
 
         Command Output:
-        []
+        [{'scheduled': True, 'name': 'ANL-R00-1024', 'functional': True, 'queue': 'q_1:q_2:q_4:q_3', 'tag': 'partition', 'deps': None, 'size': 1024}, {'scheduled': True, 'name': 'ANL-R01-1024', 'functional': True, 'queue': 'q_1:q_2:q_3:q_4', 'tag': 'partition', 'deps': None, 'size': 1024}]
         
         Command Error/Debug:
         
@@ -1133,12 +1207,85 @@ def test_partadm_add_option_3():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
+def test_partadm_add_option_4():
+    """
+    partadm test run: add_option_4
+
+        Command Output:
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """-a -b ANL-R00-R01-2048 ANL-R00-1024"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_add_option_5():
+    """
+    partadm test run: add_option_5
+
+        Command Output:
+        Force clenaing not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """-a -c ANL-R00-R01-2048 ANL-R00-1024"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
 def test_partadm_delete_option_1():
     """
     partadm test run: delete_option_1
 
         Command Output:
-        [{'tag': 'partition', 'name': 'ANL-R00-M1-512'}, {'tag': 'partition', 'name': 'ANL-R01-1024'}, {'tag': 'partition', 'name': 'ANL-R01-M0-512'}, {'tag': 'partition', 'name': 'ANL-R00-R01-2048'}, {'tag': 'partition', 'name': 'ANL-R00-1024'}, {'tag': 'partition', 'name': 'ANL-R00-M0-512'}]
+        [{'tag': 'partition', 'name': 'ANL-R00-M1-512'}, {'tag': 'partition', 'name': 'ANL-R00-M0-512'}, {'tag': 'partition', 'name': 'ANL-R01-1024'}, {'tag': 'partition', 'name': 'ANL-R00-1024'}, {'tag': 'partition', 'name': 'ANL-R01-M0-512'}, {'tag': 'partition', 'name': 'ANL-R00-R01-2048'}]
         
         Command Error/Debug:
         
@@ -1219,6 +1366,79 @@ def test_partadm_delete_option_3():
     """
 
     args      = """-d ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_delete_option_4():
+    """
+    partadm test run: delete_option_4
+
+        Command Output:
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """-d -b ANL-R00-R01-2048 ANL-R00-1024"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_delete_option_5():
+    """
+    partadm test run: delete_option_5
+
+        Command Output:
+        Force clenaing not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """-d -c ANL-R00-R01-2048 ANL-R00-1024"""
     exp_rs    = 0
 
     user    = pwd.getpwuid(os.getuid())[0] 
@@ -1355,6 +1575,79 @@ def test_partadm_enable_option_3():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
+def test_partadm_enable_option_4():
+    """
+    partadm test run: enable_option_4
+
+        Command Output:
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--enable -b ANL-R00-R01-2048 ANL-R00-1024"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_enable_option_5():
+    """
+    partadm test run: enable_option_5
+
+        Command Output:
+        Force clenaing not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--enable -c ANL-R00-R01-2048 ANL-R00-1024"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
 def test_partadm_disable_option_1():
     """
     partadm test run: disable_option_1
@@ -1441,6 +1734,79 @@ def test_partadm_disable_option_3():
     """
 
     args      = """--disable ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_disable_option_4():
+    """
+    partadm test run: disable_option_4
+
+        Command Output:
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--disable -b ANL-R00-R01-2048 ANL-R00-1024"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_disable_option_5():
+    """
+    partadm test run: disable_option_5
+
+        Command Output:
+        Force clenaing not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--disable -c ANL-R00-R01-2048 ANL-R00-1024"""
     exp_rs    = 0
 
     user    = pwd.getpwuid(os.getuid())[0] 
@@ -1577,6 +1943,79 @@ def test_partadm_activate_option_3():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
+def test_partadm_activate_option_4():
+    """
+    partadm test run: activate_option_4
+
+        Command Output:
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--activate -b ANL-R00-R01-2048 ANL-R00-1024"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_activate_option_5():
+    """
+    partadm test run: activate_option_5
+
+        Command Output:
+        Force clenaing not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--activate -c ANL-R00-R01-2048 ANL-R00-1024"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
 def test_partadm_deactivate_option_1():
     """
     partadm test run: deactivate_option_1
@@ -1663,6 +2102,79 @@ def test_partadm_deactivate_option_3():
     """
 
     args      = """--deactivate ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_deactivate_option_4():
+    """
+    partadm test run: deactivate_option_4
+
+        Command Output:
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--deactivate -b ANL-R00-R01-2048 ANL-R00-1024"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_deactivate_option_5():
+    """
+    partadm test run: deactivate_option_5
+
+        Command Output:
+        Force clenaing not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--deactivate -c ANL-R00-R01-2048 ANL-R00-1024"""
     exp_rs    = 0
 
     user    = pwd.getpwuid(os.getuid())[0] 
@@ -1802,6 +2314,79 @@ def test_partadm_fail_option_3():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
+def test_partadm_fail_option_4():
+    """
+    partadm test run: fail_option_4
+
+        Command Output:
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--fail -b ANL-R00-R01-2048 ANL-R00-1024"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_fail_option_5():
+    """
+    partadm test run: fail_option_5
+
+        Command Output:
+        Force clenaing not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--fail -c ANL-R00-R01-2048 ANL-R00-1024"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
 def test_partadm_unfail_option_1():
     """
     partadm test run: unfail_option_1
@@ -1891,6 +2476,79 @@ def test_partadm_unfail_option_3():
     """
 
     args      = """--unfail ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_unfail_option_4():
+    """
+    partadm test run: unfail_option_4
+
+        Command Output:
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--unfail -b ANL-R00-R01-2048 ANL-R00-1024"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_unfail_option_5():
+    """
+    partadm test run: unfail_option_5
+
+        Command Output:
+        Force clenaing not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--unfail -c ANL-R00-R01-2048 ANL-R00-1024"""
     exp_rs    = 0
 
     user    = pwd.getpwuid(os.getuid())[0] 
@@ -2045,6 +2703,345 @@ def test_partadm_savestate_option_3():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
+def test_partadm_savestate_option_4():
+    """
+    partadm test run: savestate_option_4
+
+        Command Output:
+        Force clenaing not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--savestate /tmp/save -c ANL-R00-M0-512"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_savestate_option_5():
+    """
+    partadm test run: savestate_option_5
+
+        Command Output:
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--savestate /tmp/save -b ANL-R00-M0-512"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_xml_option_1():
+    """
+    partadm test run: xml_option_1
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'generate_xml'> in system.generate_xml
+        
+        
+        
+    """
+
+    args      = """--xml"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_xml_option_2():
+    """
+    partadm test run: xml_option_2
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'generate_xml'> in system.generate_xml
+        
+        
+        
+    """
+
+    args      = """--xml ANL-R00-M0-512"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_xml_option_3():
+    """
+    partadm test run: xml_option_3
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'generate_xml'> in system.generate_xml
+        
+        
+        
+    """
+
+    args      = """--xml --recursive ANL-R00-M0-512"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_xml_option_4():
+    """
+    partadm test run: xml_option_4
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'generate_xml'> in system.generate_xml
+        
+        
+        
+    """
+
+    args      = """--xml --blockinfo"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_xml_option_5():
+    """
+    partadm test run: xml_option_5
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'generate_xml'> in system.generate_xml
+        
+        
+        
+    """
+
+    args      = """--xml --clean_block"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_xml_option_6():
+    """
+    partadm test run: xml_option_6
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'generate_xml'> in system.generate_xml
+        
+        
+        
+    """
+
+    args      = """--xml --recursive --blockinfo"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_xml_option_7():
+    """
+    partadm test run: xml_option_7
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'generate_xml'> in system.generate_xml
+        
+        
+        
+    """
+
+    args      = """--xml --recursive --clean_block"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
 def test_partadm_queue_option_1():
     """
     partadm test run: queue_option_1
@@ -2174,6 +3171,226 @@ def test_partadm_queue_option_3():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
+def test_partadm_queue_option_4():
+    """
+    partadm test run: queue_option_4
+
+        Command Output:
+        Force clenaing not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--queue q_1 -c ANL-R00-M0-512"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_queue_option_5():
+    """
+    partadm test run: queue_option_5
+
+        Command Output:
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--queue q_2 -b ANL-R00-M0-512"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_queue_option_6():
+    """
+    partadm test run: queue_option_6
+
+        Command Output:
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--queue q_1 -r -b ANL-R00-M0-512"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_queue_option_7():
+    """
+    partadm test run: queue_option_7
+
+        Command Output:
+        Force clenaing not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--queue q_2 -r -c ANL-R00-M0-512"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_queue_option_8():
+    """
+    partadm test run: queue_option_8
+
+        Command Output:
+        
+        Command Error/Debug:Option combinations not allowed with: appq, clean_block, appq option(s)
+        
+        
+    """
+
+    args      = """--queue q_1 --appq -r -c ANL-R00-M0-512"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_queue_option_9():
+    """
+    partadm test run: queue_option_9
+
+        Command Output:
+        
+        Command Error/Debug:Option combinations not allowed with: rmq, clean_block, rmq option(s)
+        
+        
+    """
+
+    args      = """--queue q_2 --rmq -r -c ANL-R00-M0-512"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
 def test_partadm_queue_option_10():
     """
     partadm test run: queue_option_10
@@ -2253,7 +3470,7 @@ def test_partadm_dump_option_1():
     partadm test run: dump_option_1
 
         Command Output:
-        []
+        [{'scheduled': True, 'name': 'ANL-R32-M1-512', 'functional': True, 'queue': 'default:q2', 'state': 'allocated', 'tag': 'partition', 'deps': None, 'size': 512}, {'scheduled': True, 'name': 'ANL-R32-1024', 'functional': True, 'queue': 'default', 'state': 'blocked (ANL-R32-M0-512)', 'tag': 'partition', 'deps': None, 'size': 1024}, {'scheduled': True, 'name': 'ANL-R32-M0-512', 'functional': True, 'queue': 'default:q1', 'state': 'allocated', 'tag': 'partition', 'deps': None, 'size': 512}, {'scheduled': True, 'name': 'ANL-R41-1024', 'functional': True, 'queue': 'default', 'state': 'allocated', 'tag': 'partition', 'deps': None, 'size': 1024}, {'scheduled': True, 'name': 'ANL-R32-R33-2048', 'functional': True, 'queue': 'default', 'state': 'blocked (ANL-R32-M0-512)', 'tag': 'partition', 'deps': None, 'size': 2048}]
         
         Command Error/Debug:
         
@@ -2290,7 +3507,7 @@ def test_partadm_dump_option_2():
     partadm test run: dump_option_2
 
         Command Output:
-        []
+        [{'scheduled': True, 'name': 'ANL-R32-M1-512', 'functional': True, 'queue': 'default:q2', 'state': 'allocated', 'tag': 'partition', 'deps': None, 'size': 512}, {'scheduled': True, 'name': 'ANL-R32-1024', 'functional': True, 'queue': 'default', 'state': 'blocked (ANL-R32-M0-512)', 'tag': 'partition', 'deps': None, 'size': 1024}, {'scheduled': True, 'name': 'ANL-R32-M0-512', 'functional': True, 'queue': 'default:q1', 'state': 'allocated', 'tag': 'partition', 'deps': None, 'size': 512}, {'scheduled': True, 'name': 'ANL-R41-1024', 'functional': True, 'queue': 'default', 'state': 'allocated', 'tag': 'partition', 'deps': None, 'size': 1024}, {'scheduled': True, 'name': 'ANL-R32-R33-2048', 'functional': True, 'queue': 'default', 'state': 'blocked (ANL-R32-M0-512)', 'tag': 'partition', 'deps': None, 'size': 2048}]
         
         Command Error/Debug:
         
@@ -2327,13 +3544,1047 @@ def test_partadm_dump_option_3():
     partadm test run: dump_option_3
 
         Command Output:
-        []
+        [{'scheduled': True, 'name': 'ANL-R32-M1-512', 'functional': True, 'queue': 'default:q2', 'state': 'allocated', 'tag': 'partition', 'deps': None, 'size': 512}, {'scheduled': True, 'name': 'ANL-R32-1024', 'functional': True, 'queue': 'default', 'state': 'blocked (ANL-R32-M0-512)', 'tag': 'partition', 'deps': None, 'size': 1024}, {'scheduled': True, 'name': 'ANL-R32-M0-512', 'functional': True, 'queue': 'default:q1', 'state': 'allocated', 'tag': 'partition', 'deps': None, 'size': 512}, {'scheduled': True, 'name': 'ANL-R41-1024', 'functional': True, 'queue': 'default', 'state': 'allocated', 'tag': 'partition', 'deps': None, 'size': 1024}, {'scheduled': True, 'name': 'ANL-R32-R33-2048', 'functional': True, 'queue': 'default', 'state': 'blocked (ANL-R32-M0-512)', 'tag': 'partition', 'deps': None, 'size': 2048}]
         
         Command Error/Debug:
         
     """
 
     args      = """--dump --recursive ANL-R00-M0-512"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_dump_option_4():
+    """
+    partadm test run: dump_option_4
+
+        Command Output:
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--dump --blockinfo"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_dump_option_5():
+    """
+    partadm test run: dump_option_5
+
+        Command Output:
+        Force clenaing not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--dump --clean_block"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_dump_option_6():
+    """
+    partadm test run: dump_option_6
+
+        Command Output:
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--dump --recursive --blockinfo"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_dump_option_7():
+    """
+    partadm test run: dump_option_7
+
+        Command Output:
+        Force clenaing not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--dump --recursive --clean_block"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_boot_stop_option_1():
+    """
+    partadm test run: boot_stop_option_1
+
+        Command Output:
+        Boot control not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--boot-stop"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_boot_stop_option_2():
+    """
+    partadm test run: boot_stop_option_2
+
+        Command Output:
+        Boot control not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--boot-stop ANL-R00-M0-512"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_boot_stop_option_3():
+    """
+    partadm test run: boot_stop_option_3
+
+        Command Output:
+        Boot control not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--boot-stop --recursive ANL-R00-M0-512"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_boot_stop_option_4():
+    """
+    partadm test run: boot_stop_option_4
+
+        Command Output:
+        Boot control not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--boot-stop --blockinfo"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_boot_stop_option_5():
+    """
+    partadm test run: boot_stop_option_5
+
+        Command Output:
+        Boot control not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--boot-stop --clean_block"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_boot_stop_option_6():
+    """
+    partadm test run: boot_stop_option_6
+
+        Command Output:
+        Boot control not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--boot-stop --recursive --blockinfo"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_boot_stop_option_7():
+    """
+    partadm test run: boot_stop_option_7
+
+        Command Output:
+        Boot control not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--boot-stop --recursive --clean_block"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_boot_start_option_1():
+    """
+    partadm test run: boot_start_option_1
+
+        Command Output:
+        Boot control not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--boot-start"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_boot_start_option_2():
+    """
+    partadm test run: boot_start_option_2
+
+        Command Output:
+        Boot control not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--boot-start ANL-R00-M0-512"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_boot_start_option_3():
+    """
+    partadm test run: boot_start_option_3
+
+        Command Output:
+        Boot control not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--boot-start --recursive ANL-R00-M0-512"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_boot_start_option_4():
+    """
+    partadm test run: boot_start_option_4
+
+        Command Output:
+        Boot control not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--boot-start --blockinfo"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_boot_start_option_5():
+    """
+    partadm test run: boot_start_option_5
+
+        Command Output:
+        Boot control not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--boot-start --clean_block"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_boot_start_option_6():
+    """
+    partadm test run: boot_start_option_6
+
+        Command Output:
+        Boot control not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--boot-start --recursive --blockinfo"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_boot_start_option_7():
+    """
+    partadm test run: boot_start_option_7
+
+        Command Output:
+        Boot control not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--boot-start --recursive --clean_block"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_boot_status_option_1():
+    """
+    partadm test run: boot_status_option_1
+
+        Command Output:
+        Boot control not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--boot-status"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_boot_status_option_2():
+    """
+    partadm test run: boot_status_option_2
+
+        Command Output:
+        Boot control not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--boot-status ANL-R00-M0-512"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_boot_status_option_3():
+    """
+    partadm test run: boot_status_option_3
+
+        Command Output:
+        Boot control not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--boot-status --recursive ANL-R00-M0-512"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_boot_status_option_4():
+    """
+    partadm test run: boot_status_option_4
+
+        Command Output:
+        Boot control not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--boot-status --blockinfo"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_boot_status_option_5():
+    """
+    partadm test run: boot_status_option_5
+
+        Command Output:
+        Boot control not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--boot-status --clean_block"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_boot_status_option_6():
+    """
+    partadm test run: boot_status_option_6
+
+        Command Output:
+        Boot control not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--boot-status --recursive --blockinfo"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_boot_status_option_7():
+    """
+    partadm test run: boot_status_option_7
+
+        Command Output:
+        Boot control not available for BG/P systems
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """--boot-status --recursive --clean_block"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_list_io_1():
+    """
+    partadm test run: list_io_1
+
+        Command Output:
+        
+        Command Error/Debug:WARNING: IO Block information only exists on BG/Q-type systems.
+        
+        
+    """
+
+    args      = """--list_io"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_list_io_2():
+    """
+    partadm test run: list_io_2
+
+        Command Output:
+        
+        Command Error/Debug:WARNING: IO Block information only exists on BG/Q-type systems.
+        
+        
+    """
+
+    args      = """--list_io ANL-R00-M0-512 ANL-R00-M1-512"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_list_io_3():
+    """
+    partadm test run: list_io_3
+
+        Command Output:
+        
+        Command Error/Debug:WARNING: IO Block information only exists on BG/Q-type systems.
+        
+        
+    """
+
+    args      = """-i"""
     exp_rs    = 0
 
     user    = pwd.getpwuid(os.getuid())[0] 
@@ -2396,6 +4647,44 @@ def test_partadm_add_io_block_1():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
+def test_partadm_add_io_block_2():
+    """
+    partadm test run: add_io_block_2
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'add_io_blocks'> in system.add_io_blocks
+        
+        
+        
+    """
+
+    args      = """--add_io_block ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
 def test_partadm_del_io_block_1():
     """
     partadm test run: del_io_block_1
@@ -2408,6 +4697,44 @@ def test_partadm_del_io_block_1():
     """
 
     args      = """--del_io_block"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_del_io_block_2():
+    """
+    partadm test run: del_io_block_2
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'del_io_blocks'> in system.del_io_blocks
+        
+        
+        
+    """
+
+    args      = """--del_io_block ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
     exp_rs    = 256
 
     user    = pwd.getpwuid(os.getuid())[0] 
@@ -2470,6 +4797,44 @@ def test_partadm_boot_io_block_1():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
+def test_partadm_boot_io_block_2():
+    """
+    partadm test run: boot_io_block_2
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'initiate_io_boot'> in system.initiate_io_boot
+        
+        
+        
+    """
+
+    args      = """--boot_io_block ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
 def test_partadm_free_io_block_1():
     """
     partadm test run: free_io_block_1
@@ -2482,6 +4847,44 @@ def test_partadm_free_io_block_1():
     """
 
     args      = """--free_io_block"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_free_io_block_2():
+    """
+    partadm test run: free_io_block_2
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'initiate_io_free'> in system.initiate_io_free
+        
+        
+        
+    """
+
+    args      = """--free_io_block ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
     exp_rs    = 256
 
     user    = pwd.getpwuid(os.getuid())[0] 
@@ -2544,6 +4947,44 @@ def test_partadm_set_io_autoboot_1():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
+def test_partadm_set_io_autoboot_2():
+    """
+    partadm test run: set_io_autoboot_2
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'set_autoreboot'> in system.set_autoreboot
+        
+        
+        
+    """
+
+    args      = """--set_io_autoboot ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
 def test_partadm_unset_io_autoboot_1():
     """
     partadm test run: unset_io_autoboot_1
@@ -2556,6 +4997,272 @@ def test_partadm_unset_io_autoboot_1():
     """
 
     args      = """--unset_io_autoboot"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_unset_io_autoboot_2():
+    """
+    partadm test run: unset_io_autoboot_2
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'unset_autoreboot'> in system.unset_autoreboot
+        
+        
+        
+    """
+
+    args      = """--unset_io_autoboot ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_io_autoboot_start_1():
+    """
+    partadm test run: io_autoboot_start_1
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'enable_io_autoreboot'> in system.enable_io_autoreboot
+        
+        
+        
+    """
+
+    args      = """--io_autoboot_start"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_io_autoboot_start_2():
+    """
+    partadm test run: io_autoboot_start_2
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'enable_io_autoreboot'> in system.enable_io_autoreboot
+        
+        
+        
+    """
+
+    args      = """--io_autoboot_start ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_io_autoboot_stop_1():
+    """
+    partadm test run: io_autoboot_stop_1
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'disable_io_autoreboot'> in system.disable_io_autoreboot
+        
+        
+        
+    """
+
+    args      = """--io_autoboot_stop"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_io_autoboot_stop_2():
+    """
+    partadm test run: io_autoboot_stop_2
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'disable_io_autoreboot'> in system.disable_io_autoreboot
+        
+        
+        
+    """
+
+    args      = """--io_autoboot_stop ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_io_autoboot_status_1():
+    """
+    partadm test run: io_autoboot_status_1
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'get_io_autoreboot_status'> in system.get_io_autoreboot_status
+        
+        
+        
+    """
+
+    args      = """--io_autoboot_status"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('partadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_io_autoboot_status_2():
+    """
+    partadm test run: io_autoboot_status_2
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'get_io_autoreboot_status'> in system.get_io_autoreboot_status
+        
+        
+        
+    """
+
+    args      = """--io_autoboot_status ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
     exp_rs    = 256
 
     user    = pwd.getpwuid(os.getuid())[0] 

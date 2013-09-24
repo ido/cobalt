@@ -25,7 +25,7 @@ component: "queue-manager.get_jobs", defer: True
 
 component: "system.validate_job", defer: False
   validate_job(
-     {'kernel': 'kernel', 'verbose': True, 'held': True, 'notify': 'myemal@gmail.com', 'ion_kerneloptions': False, 'project': 'myproj', 'preemptable': False, 'forcenoval': False, 'umask': False, 'version': False, 'env': 'v1=1:v2=2', 'cwd': '/tmp', 'run_project': True, 'outputprefix': '/tmp', 'kerneloptions': 'kopts', 'time': '10', 'jobname': False, 'debug': True, 'dependencies': '1:2:3', 'debuglog': '/tmp/d', 'ion_kernel': 'default', 'proccount': '10', 'disable_preboot': False, 'geometry': '198x198x198x198', 'queue': 'queue', 'mode': 'script', 'error': '/tmp/e', 'nodecount': '10', 'output': '/tmp/o', 'attrs': {'a': '1', 'b': '2'}, 'user_list': 'user1:user2:user3', 'inputfile': '/bin/ls'},
+     {'kernel': 'kernel', 'verbose': True, 'held': True, 'notify': 'myemal@gmail.com', 'ion_kerneloptions': False, 'project': 'myproj', 'preemptable': False, 'forcenoval': False, 'umask': False, 'version': False, 'env': 'v1=1:v2=2', 'cwd': '/tmp', 'run_project': True, 'outputprefix': '/tmp', 'kerneloptions': 'kopts', 'time': '10', 'jobname': False, 'debug': True, 'dependencies': '1:2:3', 'debuglog': '/tmp/d', 'ion_kernel': 'default', 'proccount': '10', 'disable_preboot': False, 'geometry': '198x198x198x198', 'queue': 'queue', 'mode': 'script', 'error': '/tmp/e', 'nodecount': '10', 'output': '/tmp/o', 'inputfile': '/bin/ls', 'attrs': {'a': '1', 'b': '2'}, 'user_list': 'user1:user2:user3', 'interactive': False},
      )
 
 
@@ -140,6 +140,8 @@ held:True
 held type: <type 'bool'>
 inputfile:/bin/ls
 inputfile type: <type 'str'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -289,6 +291,8 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -784,6 +788,8 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -933,6 +939,8 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -1082,6 +1090,8 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -1268,6 +1278,8 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -1454,6 +1466,8 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -1603,6 +1617,8 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -1752,6 +1768,8 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -1901,6 +1919,8 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -2050,6 +2070,8 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -2199,6 +2221,8 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -2348,6 +2372,8 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -2536,6 +2562,8 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -2687,6 +2715,8 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -2840,6 +2870,8 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -3026,6 +3058,8 @@ held:False
 held type: <type 'bool'>
 inputfile:y
 inputfile type: <type 'str'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -3175,6 +3209,8 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -3331,6 +3367,8 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -3515,6 +3553,8 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -3662,6 +3702,8 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -3811,6 +3853,8 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -3995,6 +4039,8 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -4144,6 +4190,8 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -4293,6 +4341,8 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -4375,7 +4425,7 @@ qsub.py --env var1=val1:var2=svar1\=sval1\:svar2\=sval2:var3=val3 -t50 -n10 -d /
 
 component: "system.validate_job", defer: False
   validate_job(
-     {'kernel': 'default', 'verbose': False, 'held': False, 'notify': False, 'ion_kerneloptions': False, 'project': False, 'preemptable': False, 'outputprefix': False, 'umask': False, 'version': False, 'env': 'var1=val1:var2=svar1\\=sval1\\:svar2\\=sval2:var3=val3', 'cwd': '/tmp', 'run_project': False, 'forcenoval': False, 'kerneloptions': False, 'time': '50', 'jobname': False, 'debug': True, 'dependencies': False, 'debuglog': False, 'ion_kernel': 'default', 'proccount': False, 'disable_preboot': False, 'geometry': False, 'queue': 'default', 'mode': False, 'error': False, 'nodecount': '10', 'output': False, 'attrs': {}, 'user_list': False, 'inputfile': False},
+     {'kernel': 'default', 'verbose': False, 'held': False, 'notify': False, 'ion_kerneloptions': False, 'project': False, 'preemptable': False, 'outputprefix': False, 'umask': False, 'version': False, 'env': 'var1=val1:var2=svar1\\=sval1\\:svar2\\=sval2:var3=val3', 'cwd': '/tmp', 'run_project': False, 'forcenoval': False, 'kerneloptions': False, 'time': '50', 'jobname': False, 'debug': True, 'dependencies': False, 'debuglog': False, 'ion_kernel': 'default', 'proccount': False, 'disable_preboot': False, 'geometry': False, 'queue': 'default', 'mode': False, 'error': False, 'nodecount': '10', 'output': False, 'inputfile': False, 'attrs': {}, 'user_list': False, 'interactive': False},
      )
 
 
@@ -4459,6 +4509,8 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -4608,6 +4660,8 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -4757,6 +4811,8 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -4906,6 +4962,8 @@ held:False
 held type: <type 'bool'>
 inputfile:False
 inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
 ion_kerneloptions:False
@@ -5030,6 +5088,155 @@ Mode already set to 'script' and trying to set it again to 'vn'
 
     expected_results = ( 
                        256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('qsub.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_qsub_walltime_0():
+    """
+    qsub test run: walltime_0
+
+    """
+
+    args      = """-t0 -n 10 /bin/ls"""
+
+    cmdout    = \
+"""1
+"""
+
+    cmderr    = ''
+
+    stubout   = \
+"""
+ADD_JOBS
+
+args:[]
+args type: <type 'list'>
+command:/bin/ls
+command type: <type 'str'>
+cwd:/tmp
+cwd type: <type 'str'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+jobid:*
+jobid type: <type 'str'>
+kernel:default
+kernel type: <type 'str'>
+mode:c1
+mode type: <type 'str'>
+nodes:10
+nodes type: <type 'int'>
+outputdir:/tmp
+outputdir type: <type 'str'>
+path:/tmp
+path type: <type 'str'>
+procs:512
+procs type: <type 'str'>
+queue:default
+queue type: <type 'str'>
+run_project:False
+run_project type: <type 'bool'>
+script_preboot:True
+script_preboot type: <type 'bool'>
+tag:job
+tag type: <type 'str'>
+umask:18
+umask type: <type 'int'>
+user:gooduser
+user type: <type 'str'>
+user_list:['gooduser']
+user_list type: <type 'list'>
+walltime:0
+walltime type: <type 'str'>
+
+VALIDATE_JOB
+
+attrs:{}
+attrs type: <type 'dict'>
+cwd:/tmp
+cwd type: <type 'str'>
+debug:False
+debug type: <type 'bool'>
+debuglog:False
+debuglog type: <type 'bool'>
+dependencies:False
+dependencies type: <type 'bool'>
+disable_preboot:False
+disable_preboot type: <type 'bool'>
+env:False
+env type: <type 'bool'>
+error:False
+error type: <type 'bool'>
+forcenoval:False
+forcenoval type: <type 'bool'>
+geometry:False
+geometry type: <type 'bool'>
+held:False
+held type: <type 'bool'>
+inputfile:False
+inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
+kernel:default
+kernel type: <type 'str'>
+kerneloptions:False
+kerneloptions type: <type 'bool'>
+mode:False
+mode type: <type 'bool'>
+nodecount:10
+nodecount type: <type 'str'>
+notify:False
+notify type: <type 'bool'>
+output:False
+output type: <type 'bool'>
+outputprefix:False
+outputprefix type: <type 'bool'>
+preemptable:False
+preemptable type: <type 'bool'>
+proccount:False
+proccount type: <type 'bool'>
+project:False
+project type: <type 'bool'>
+queue:default
+queue type: <type 'str'>
+run_project:False
+run_project type: <type 'bool'>
+time:0
+time type: <type 'str'>
+umask:False
+umask type: <type 'bool'>
+user_list:False
+user_list type: <type 'bool'>
+verbose:False
+verbose type: <type 'bool'>
+version:False
+version type: <type 'bool'>
+
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
                        cmdout, # Expected command output
                        stubout, # Expected stub functions output
                        cmderr, # Expected command error output 

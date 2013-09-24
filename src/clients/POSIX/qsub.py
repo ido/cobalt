@@ -19,6 +19,7 @@ Option with no values:
 '--preemptable',dest='preemptable',help='make this job preemptable',action='store_true'
 '--run_project',dest='run_project',help='set run project flag for this job',action='store_true'
 '--disable_preboot',dest='script_preboot',help='disable script preboot',action='store_false'
+'-I','--interactive',dest='interactive',help='run qsub in interactive mode (clusters only)',action='store_true'
 
 Option with values:
 
@@ -29,7 +30,7 @@ Option with values:
 '-q','--queue',dest='queue',type='string',help='set queue name'
 '-M','--notify',dest='notify',type='string',help='set notification email address'
 '--env',dest='envs',type='string', help='Set env variables. Refer to man pages for more detail information.', callback=cb_env
-'-t','--time',dest='walltime',type='string',help='set walltime (minutes or HH:MM:SS)',callback=cb_time
+'-t','--time',dest='walltime',type='string',help='set walltime (minutes or HH:MM:SS). For max walltime enter 0.',callback=cb_time
 '-u','--umask',dest='umask',type='string',help='set umask: octal number default(022)',callback=cb_umask
 '-O','--outputprefix',dest='outputprefix',type='string',help='output prefix for error,output or debuglog files',callback=cb_path
 '-e','--error',dest='errorpath',type='string',help='set error file path',callback=cb_path
@@ -56,23 +57,38 @@ import logging
 import string
 import os
 import sys
+import signal
+import xmlrpclib
 from Cobalt import client_utils
 from Cobalt.client_utils import \
     cb_debug, cb_env, cb_nodes, cb_time, cb_umask, cb_path, \
     cb_dep, cb_attrs, cb_user_list, cb_geometry, cb_gtzero, cb_mode
 from Cobalt.arg_parser import ArgParse
-from Cobalt.Util import get_config_option, init_cobalt_config
+from Cobalt.Util import get_config_option, init_cobalt_config, sleep
 
 __revision__ = '$Revision: 559 $'
 __version__  = '$Version$'
 
+#init cobalt config file for setting default kernels.
+init_cobalt_config()
 SYSMGR           = client_utils.SYSMGR
 QUEMGR           = client_utils.QUEMGR
+CN_DEFAULT_KERNEL  = get_config_option('bgsystem', 'cn_default_kernel', 'default')
+ION_DEFAULT_KERNEL = get_config_option('bgsystem', 'ion_default_kernel', 'default')
 
 def validate_args(parser, spec):
     """
     If the argument is a script job it will validate it, and get the Cobalt directives
     """
+
+    #an executable cannot be specified for interactive jobs
+    if (parser.options.interactive is not None) and (not parser.no_args()):
+        client_utils.logger.error("An executable may not be specified if using the interactive option.")
+        sys.exit(1)
+    elif parser.options.interactive is not None:
+        #Bypass the rest of the checks for interactive jobs.
+        return
+
     # if no excecutable specified then flag it an exit
     if parser.no_args():
         client_utils.print_usage(parser, "No executable or script specified")
@@ -149,10 +165,10 @@ def update_outputprefix(parser,spec):
     """
     Update the the appropriate paths with the outputprefix path
     """
-    # If the paths for the error log, output log, or the debuglog are not provided 
+    # If the paths for the error log, output log, or the debuglog are not provided
     # then update them with what is provided in outputprefix.
     if parser.options.outputprefix != None:
-        # pop the value for outputrefix 
+        # pop the value for outputrefix
         op = spec.pop('outputprefix')
 
         # if error path, cobalt log path or output log path not provide then update them wiht outputprefix
@@ -183,7 +199,7 @@ def update_paths(spec):
                     sys.exit(1)
                 spec[key] = _path
 
-def check_inputfile(parser,spec):
+def check_inputfile(parser, spec):
     """
     Verify the input file is an actual file
     """
@@ -192,16 +208,19 @@ def check_inputfile(parser,spec):
         if not os.path.isfile(inputfile):
             client_utils.logger.error("file %s not found, or is not a file" % inputfile)
             sys.exit(1)
+        if parser.options.interactive:
+            client_utils.logger.error("Cannot specify an input file for interactive jobs.")
+            sys.exit(1)
 
-def update_spec(opts,spec,opt2spec):
+def update_spec(opts, spec, opt2spec):
     """
     This function will update the appropriate spec values with the opts values
     """
     # Get the key validated values into spec dictionary
-    for opt in ['mode','proccount', 'nodecount']:
+    for opt in ['mode', 'proccount', 'nodecount']:
         spec[opt2spec[opt]] = opts[opt]
 
-def logjob(job,spec):
+def logjob(job, spec):
     """
     log job info
     """
@@ -253,12 +272,12 @@ def env_union():
         new_args[env_val_ndx] = ':'.join(env_values)
         sys.argv = new_args
     except:
-        client_utils.logger.error( "No values specified or invalid usage of --env option: %s",str(sys.argv))
+        client_utils.logger.error( "No values specified or invalid usage of --env option: %s", str(sys.argv))
         sys.exit(1)
 
 def parse_options(parser, spec, opts, opt2spec, def_spec):
     """
-    Will initialize the specs and then parse the command line options 
+    Will initialize the specs and then parse the command line options
     """
     opts.clear()
     for item in def_spec:
@@ -269,6 +288,29 @@ def parse_options(parser, spec, opts, opt2spec, def_spec):
     opts['disable_preboot'] = not spec['script_preboot']
     return opt_count
 
+def get_interactive_command(parser, spec, opts, opt2spec, def_spec):
+    '''Interactive job checks and command update.  Set the sleeper job up to be submitted for the walltime.
+
+    '''
+    #update the auxillary environment variables here so that they are properly set for the job?
+
+    # Checks for interactive jobs: user must not specify a command,
+    # and we must be running on a cluster
+    if parser.options.interactive:
+        try:
+            impl = client_utils.component_call(SYSMGR, False, 'get_implementation', ())
+        except xmlrpclib.Fault:
+            client_utils.logger.error("Error: unable to connect to the system component")
+            sys.exit(1)
+
+        if "cluster_system" != impl:
+            client_utils.logger.error("Interactive jobs are only supported on cluster systems")
+            sys.exit(1)
+        else:
+            spec['command'] = "/bin/sleep"
+            spec['args'] = [str(int(parser.options.walltime) * 60),]
+
+
 def main():
     """
     qsub main function.
@@ -276,8 +318,6 @@ def main():
     # setup logging for client. The clients should call this before doing anything else.
     client_utils.setup_logging(logging.INFO)
 
-    #init cobalt config file for setting default kernels.
-    init_cobalt_config()
 
     spec     = {} # map of destination option strings and parsed values
     opts     = {} # old map
@@ -301,8 +341,8 @@ def main():
         ( cb_geometry     , (opts,) )]
 
     # Get the version information
-    opt_def =  __doc__.replace('__revision__',__revision__)
-    opt_def =  opt_def.replace('__version__',__version__)
+    opt_def =  __doc__.replace('__revision__', __revision__)
+    opt_def =  opt_def.replace('__version__', __version__)
 
     user = client_utils.getuid()
 
@@ -313,8 +353,8 @@ def main():
     def_spec['path']           = client_utils.getpath()
     def_spec['mode']           = False
     def_spec['cwd']            = client_utils.getcwd()
-    def_spec['kernel']         = get_config_option('bgsystem', 'cn_default_kernel', 'default')
-    def_spec['ion_kernel']     = get_config_option('bgsystem', 'ion_default_kernel', 'default')
+    def_spec['kernel']         = CN_DEFAULT_KERNEL
+    def_spec['ion_kernel']     = ION_DEFAULT_KERNEL
     def_spec['queue']          = 'default'
     def_spec['umask']          = 022
     def_spec['run_project']    = False
@@ -322,37 +362,90 @@ def main():
     def_spec['procs']          = False
     def_spec['script_preboot'] = True
 
-    parser    = ArgParse(opt_def,callbacks)
+    parser    = ArgParse(opt_def, callbacks)
     opt_count = parse_options(parser, spec, opts, opt2spec, def_spec)
     reparse  = validate_args(parser, spec)
 
     if reparse:
         # re-parse with new sys.argv
-        # note: the first parse is necessary to make sure that 
+        # note: the first parse is necessary to make sure that
         #       the env syntax is correct for every --env option provided
-        #       If not parsed prior to the union then the union could result 
+        #       If not parsed prior to the union then the union could result
         #       in a valid syntax, but it would not be what the user would want.
         opt_count = parse_options(parser, spec, opts, opt2spec, def_spec)
 
     client_utils.setumask(spec['umask'])
     validate_options(parser, opt_count)
-    update_outputprefix(parser,spec)
+    update_outputprefix(parser, spec)
     update_paths(spec)
-    check_inputfile(parser,spec)
+    check_inputfile(parser, spec)
     opts = client_utils.component_call(SYSMGR, False, 'validate_job',(opts,))
     filters = client_utils.get_filters()
-    client_utils.process_filters(filters,spec)
-    update_spec(opts,spec,opt2spec)
+    client_utils.process_filters(filters, spec)
+    update_spec(opts, spec, opt2spec)
+    get_interactive_command(parser, spec, opts, opt2spec, def_spec)
     jobs = client_utils.component_call(QUEMGR, False, 'add_jobs',([spec],))
+
+    def on_interrupt(sig, func=None):
+        '''Handler to cleanup the queued 'dummy' job if the user interrupts
+        qsub -I forcibly
+
+        '''
+        try:
+            spec = [{'tag':'job', 'jobid':jobs[0]['jobid'], 'user':user}]
+        except NameError:
+            sys.exit(1)
+        except:
+            raise
+        client_utils.logger.info("Deleting job %d", (jobs[0]['jobid']))
+        del_jobs = client_utils.component_call(QUEMGR, False, 'del_jobs', (spec, False, user))
+        client_utils.logger.info("%s", del_jobs)
+        sys.exit(1)
+
+    #reset sigint and sigterm interrupt handlers to deal with interactive failures
+    signal.signal(signal.SIGINT, on_interrupt)
+    signal.signal(signal.SIGTERM, on_interrupt)
+
     if parser.options.envs:
-        client_utils.logger.debug("Environment Vars: %s",parser.options.envs)
-    logjob(jobs[0],spec)
-    
+        client_utils.logger.debug("Environment Vars: %s", parser.options.envs)
+    logjob(jobs[0], spec)
+
+    # If this is an interactive job, wait for it to start, then ssh in
+    if parser.options.interactive:
+        headnode = ""
+        query = [{'tag':'job', 'jobid':jobs[0]['jobid'], 'location':'*', 'state':"*"}]
+        while True:
+            response = client_utils.component_call(QUEMGR, False, 'get_jobs', (query, ))
+            state = response[0]['state']
+            location = response[0]['location']
+            if state == 'running' and location:
+                headnode = location[0]
+                client_utils.logger.info("Opening ssh session to %s", headnode)
+                break
+            elif state != 'running' and state != 'queued' and state != 'starting':
+                client_utils.logger.error("ERROR: Something went wrong with job submission, did not expect job to reach %s state.",
+                        response[0]['state'])
+                break
+            else:
+                #using Cobalt Utils sleep here
+                sleep(2)
+        if not headnode:
+            client_utils.logger.error("Unable to determine head node for job %d", (jobs[0]['jobid']))
+        else:
+            try:
+                os.putenv("COBALT_NODEFILE", "/var/tmp/cobalt.%s" % (response[0]['jobid']))
+                os.putenv("COBALT_JOBID", "%s" % (response[0]['jobid']))
+                os.system("/usr/bin/ssh -o \"SendEnv COBALT_NODEFILE COBALT_JOBID\" %s" % (headnode))
+            except:
+                client_utils.logger.error('Exception occurred during execution ssh session.  Job Terminated.')
+        spec = [{'tag':'job', 'jobid':jobs[0]['jobid'], 'user':user}]
+        jobs = client_utils.component_call(QUEMGR, False, 'del_jobs', (spec, False, user))
+
 if __name__ == '__main__':
     try:
         main()
     except SystemExit:
         raise
-    except Exception, e:
-        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", e)
+    except Exception, exc:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", exc)
         sys.exit(1)

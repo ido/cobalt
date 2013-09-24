@@ -187,20 +187,31 @@ class Reservation (Data):
             return False
 
         if job.queue == self.queue:
-            job_end = time.time() + 60 * float(job.walltime) + SLOP_TIME
+
+            res_end  = self.start + self.duration
+            cur_time = time.time()
+
+            # if the job is non zero then just use the walltime as is else give the max reservation time possible
+            _walltime = float(job.walltime)
+            
+            _walltime = _walltime if _walltime > 0 else (res_end - cur_time - 300)/60
+            logger.info('Walltime: %s' % str(_walltime))
+
+            job_end = cur_time + 60 * _walltime + SLOP_TIME
             if not self.cycle:
-                res_end = self.start + self.duration
                 if job_end < res_end:
+                    job.walltime = _walltime
                     return True
                 else:
                     return False
             else:
-                if 60 * float(job.walltime) + SLOP_TIME > self.duration:
+                if 60 * _walltime + SLOP_TIME > self.duration:
                     return False
 
-                relative_start = (time.time() - self.start) % self.cycle
-                relative_end = relative_start + 60 * float(job.walltime) + SLOP_TIME
+                relative_start = (cur_time - self.start) % self.cycle
+                relative_end = relative_start + 60 * _walltime + SLOP_TIME
                 if relative_end < self.duration:
+                    job.walltime = _walltime
                     return True
                 else:
                     return False
@@ -829,7 +840,7 @@ class BGSched (Component):
 
         try:
             self.logger.info("trying to start job %d on partition %r" % (job.jobid, partition_list))
-            cqm.run_jobs([{'tag':"job", 'jobid':job.jobid}], partition_list, None, resid)
+            cqm.run_jobs([{'tag':"job", 'jobid':job.jobid}], partition_list, None, resid, job.walltime)
         except ComponentLookupError:
             self.logger.error("failed to connect to queue manager")
             return
@@ -844,8 +855,6 @@ class BGSched (Component):
         in cqm.
 
         '''
-
-        started_scheduling = self.get_current_time()
 
         if not self.active:
             return
@@ -989,6 +998,7 @@ class BGSched (Component):
             for job in active_jobs:
                 forbidden_locations = set()
                 pt_blocking_locations = set()
+
                 for res_name in eq_class['reservations']:
                     cur_res = reservations_cache[res_name]
                     if cur_res.overlaps(self.get_current_time(), 60 * float(job.walltime) + SLOP_TIME):

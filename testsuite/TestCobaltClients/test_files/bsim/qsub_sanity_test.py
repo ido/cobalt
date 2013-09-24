@@ -17,7 +17,7 @@ def test_qsub_all_options_1():
              )
         
         
-        WARNING: dependencies 3:2 do not match jobs currently in the queue
+        WARNING: dependencies 1:3:2 do not match jobs currently in the queue
         user user1 does not exist.
         
         
@@ -94,7 +94,8 @@ def test_qsub_no_options_passed():
         Command Output:
         Usage: qsub.py --help
         Usage: qsub.py [options] <executable> [<excutable options>]
-               Please refer to man pages for information on "jobid expansion" ($jobid or $COBALT_JOBID).
+        
+        Refer to man pages for JOBID EXPANSION and SCRIPT JOB DIRECTIVES.
         
         
         
@@ -138,7 +139,8 @@ def test_qsub_non_existant_option():
         
         Command Error/Debug:Usage: qsub.py --help
         Usage: qsub.py [options] <executable> [<excutable options>]
-               Please refer to man pages for information on "jobid expansion" ($jobid or $COBALT_JOBID).
+        
+        Refer to man pages for JOBID EXPANSION and SCRIPT JOB DIRECTIVES.
         
         
         qsub.py: error: no such option: -z
@@ -179,7 +181,8 @@ def test_qsub_debug_flag_only_1():
         Command Output:
         Usage: qsub.py --help
         Usage: qsub.py [options] <executable> [<excutable options>]
-               Please refer to man pages for information on "jobid expansion" ($jobid or $COBALT_JOBID).
+        
+        Refer to man pages for JOBID EXPANSION and SCRIPT JOB DIRECTIVES.
         
         
         
@@ -225,7 +228,8 @@ def test_qsub_debug_flag_only_2():
         Command Output:
         Usage: qsub.py --help
         Usage: qsub.py [options] <executable> [<excutable options>]
-               Please refer to man pages for information on "jobid expansion" ($jobid or $COBALT_JOBID).
+        
+        Refer to man pages for JOBID EXPANSION and SCRIPT JOB DIRECTIVES.
         
         
         
@@ -271,7 +275,8 @@ def test_qsub_verbose_flag_only():
         Command Output:
         Usage: qsub.py --help
         Usage: qsub.py [options] <executable> [<excutable options>]
-               Please refer to man pages for information on "jobid expansion" ($jobid or $COBALT_JOBID).
+        
+        Refer to man pages for JOBID EXPANSION and SCRIPT JOB DIRECTIVES.
         
         
         
@@ -429,7 +434,7 @@ def test_qsub_invalid_geometry_2():
     qsub test run: invalid_geometry_2
 
         Command Output:
-        17
+        20
         
         Command Error/Debug:
         
@@ -466,7 +471,7 @@ def test_qsub_invalid_geometry_3():
     qsub test run: invalid_geometry_3
 
         Command Output:
-        18
+        21
         
         Command Error/Debug:
         
@@ -503,7 +508,7 @@ def test_qsub_invalid_geometry_4():
     qsub test run: invalid_geometry_4
 
         Command Output:
-        19
+        22
         
         Command Error/Debug:
         
@@ -577,7 +582,7 @@ def test_qsub_invalid_geometry_6():
     qsub test run: invalid_geometry_6
 
         Command Output:
-        20
+        23
         
         Command Error/Debug:
         
@@ -651,7 +656,7 @@ def test_qsub_project_specified():
     qsub test run: project_specified
 
         Command Output:
-        21
+        24
         
         Command Error/Debug:
         
@@ -688,7 +693,7 @@ def test_qsub_Check_attrs_1():
     qsub test run: Check_attrs_1
 
         Command Output:
-        22
+        25
         
         Command Error/Debug:
         
@@ -725,7 +730,7 @@ def test_qsub_Check_attrs_2():
     qsub test run: Check_attrs_2
 
         Command Output:
-        23
+        26
         
         Command Error/Debug:
         
@@ -762,7 +767,7 @@ def test_qsub_Check_attrs_3():
     qsub test run: Check_attrs_3
 
         Command Output:
-        24
+        27
         
         Command Error/Debug:
         
@@ -799,7 +804,7 @@ def test_qsub_Check_attrs_4():
     qsub test run: Check_attrs_4
 
         Command Output:
-        25
+        28
         
         Command Error/Debug:
         
@@ -836,7 +841,7 @@ def test_qsub_cwd_option_1():
     qsub test run: cwd_option_1
 
         Command Output:
-        26
+        29
         
         Command Error/Debug:
         
@@ -873,7 +878,7 @@ def test_qsub_cwd_option_2():
     qsub test run: cwd_option_2
 
         Command Output:
-        27
+        30
         
         Command Error/Debug:
         
@@ -947,7 +952,7 @@ def test_qsub_cwd_option_4():
     qsub test run: cwd_option_4
 
         Command Output:
-        28
+        31
         
         Command Error/Debug:
         
@@ -984,7 +989,7 @@ def test_qsub_cwd_option_5():
     qsub test run: cwd_option_5
 
         Command Output:
-        29
+        32
         
         Command Error/Debug:
         
@@ -1021,7 +1026,7 @@ def test_qsub_debuglog_option():
     qsub test run: debuglog_option
 
         Command Output:
-        30
+        33
         
         Command Error/Debug:
         
@@ -1095,7 +1100,7 @@ def test_qsub_inputfile_option_2():
     qsub test run: inputfile_option_2
 
         Command Output:
-        31
+        34
         
         Command Error/Debug:
         
@@ -1132,7 +1137,7 @@ def test_qsub_email_option():
     qsub test run: email_option
 
         Command Output:
-        32
+        35
         
         Command Error/Debug:
         
@@ -1169,7 +1174,7 @@ def test_qsub_outputprefix():
     qsub test run: outputprefix
 
         Command Output:
-        33
+        36
         
         Command Error/Debug:WARNING: failed to create cobalt log file at: /tmp.cobaltlog
                  Permission denied
@@ -1245,7 +1250,7 @@ def test_qsub_mode_option_1():
     qsub test run: mode_option_1
 
         Command Output:
-        34
+        37
         
         Command Error/Debug:
         
@@ -1282,7 +1287,7 @@ def test_qsub_mode_option_2():
     qsub test run: mode_option_2
 
         Command Output:
-        35
+        38
         
         Command Error/Debug:
         
@@ -1319,7 +1324,7 @@ def test_qsub_mode_option_3():
     qsub test run: mode_option_3
 
         Command Output:
-        36
+        39
         
         Command Error/Debug:
         
@@ -1393,7 +1398,7 @@ def test_qsub_preboot_option():
     qsub test run: preboot_option
 
         Command Output:
-        37
+        40
         
         Command Error/Debug:
         
@@ -1430,7 +1435,7 @@ def test_qsub_env_option_1():
     qsub test run: env_option_1
 
         Command Output:
-        38
+        41
         
         Command Error/Debug:
         
@@ -1467,7 +1472,7 @@ def test_qsub_env_option_2():
     qsub test run: env_option_2
 
         Command Output:
-        39
+        42
         
         Command Error/Debug:
         
@@ -1504,7 +1509,7 @@ def test_qsub_env_option_3():
     qsub test run: env_option_3
 
         Command Output:
-        40
+        43
         
         Command Error/Debug:
         qsub.py --env var1=val1:var2=svar1\=sval1\:svar2\=sval2:var3=val3 -t50 -n10 -d /bin/ls
@@ -1557,7 +1562,7 @@ def test_qsub_env_option_4():
     qsub test run: env_option_4
 
         Command Output:
-        41
+        44
         
         Command Error/Debug:
         
@@ -1594,7 +1599,7 @@ def test_qsub_script_1():
     qsub test run: script_1
 
         Command Output:
-        42
+        45
         
         Command Error/Debug:
         
@@ -1631,7 +1636,7 @@ def test_qsub_script_2():
     qsub test run: script_2
 
         Command Output:
-        43
+        46
         
         Command Error/Debug:
         
@@ -1716,6 +1721,43 @@ def test_qsub_script_4():
 
     args      = """-d cobalt_script2.sh"""
     exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('qsub.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_qsub_walltime_0():
+    """
+    qsub test run: walltime_0
+
+        Command Output:
+        47
+        
+        Command Error/Debug:
+        
+    """
+
+    args      = """-t0 -n 10 /bin/ls"""
+    exp_rs    = 0
 
     user    = pwd.getpwuid(os.getuid())[0] 
     _args   = args.replace('<USER>',user)

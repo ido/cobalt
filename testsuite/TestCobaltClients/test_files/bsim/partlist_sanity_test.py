@@ -83,8 +83,13 @@ def test_partlist_debug():
     partlist test run: debug
 
         Command Output:
-        Name  Queue  State  Backfill
-        ==============================
+        Name              Queue           State                     Backfill
+        ======================================================================
+        ANL-R32-R33-2048  default         blocked (ANL-R32-M0-512)  -       
+        ANL-R32-1024      default         blocked (ANL-R32-M0-512)  -       
+        ANL-R41-1024      default:R.res2  allocated                 -       
+        ANL-R32-M0-512    default:q1      allocated                 -       
+        ANL-R32-M1-512    default:q2:q2   allocated                 -       
         
         Command Error/Debug:
         partlist.py -d
@@ -296,8 +301,13 @@ def test_partlist_argument_2():
     partlist test run: argument_2
 
         Command Output:
-        Name  Queue  State  Backfill
-        ==============================
+        Name              Queue           State                     Backfill
+        ======================================================================
+        ANL-R32-R33-2048  default         blocked (ANL-R32-M0-512)  -       
+        ANL-R32-1024      default         blocked (ANL-R32-M0-512)  -       
+        ANL-R41-1024      default:R.res2  allocated                 -       
+        ANL-R32-M0-512    default:q1      allocated                 -       
+        ANL-R32-M1-512    default:q2:q2   allocated                 -       
         
         Command Error/Debug:
         

@@ -210,7 +210,7 @@ class ClusterBaseSystem (Component):
             raise JobValidationError("Non-integer node count")
         if not 0 < spec['nodecount'] <= max_nodes:
             raise JobValidationError("Node count out of realistic range")
-        if float(spec['time']) < 5:
+        if float(spec['time']) < 5 and float(spec['time']) > 0:
             raise JobValidationError("Walltime less than minimum")
         if spec['mode'] not in job_types:
             raise JobValidationError("%s is an invalid mode" % spec['mode'])

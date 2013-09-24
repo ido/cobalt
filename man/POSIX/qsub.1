@@ -174,7 +174,8 @@ set umask: octal number default(022)
 .B \-t \-\-time [wallclock time] 
 Specify the runtime for a job. If the job runs over this limit, it will be 
 killed. The time may be specified as eitehr an integer number of minutes or a 
-colon-delimited value of the format: HH:MM:SS.
+colon-delimited value of the format: HH:MM:SS. Enter 0 to get the max allowed 
+walltime.
 .TP
 
 
@@ -220,12 +221,12 @@ allows the user to
 .SH "NOTE"
 The only thing printed to STDOUT is the jobid, any other error or informational messages are printed to STDERR.
 .SH "SEE ALSO"
-.BR qstat(1),
-.BR qdel(1),
-.BR qhold(1),
-.BR qrls(1),
-.BR qalter(1),
-.BR qmove(1),
-.BR cqm(1),
-.BR cqwait(1)
+.BR qstat (1),
+.BR qdel (1),
+.BR qhold (1),
+.BR qrls (1),
+.BR qalter (1),
+.BR qmove (1),
+.BR cqm (1),
+.BR cqwait (1)
 .SH "BUGS"

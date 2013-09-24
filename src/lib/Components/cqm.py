@@ -814,7 +814,6 @@ class Job (StateMachine):
                     (e,))
                 return Job.__rc_xmlrpc
         except:
-            traceback.print_exc()
             self._sm_raise_exception("unexpected error from the system component; manual cleanup may be required")
             return Job.__rc_unknown
 
@@ -874,7 +873,6 @@ class Job (StateMachine):
             self._sm_log_warn("failed to execute the task (%s); retry pending" % (e,))
             return Job.__rc_retry
         except:
-            #print traceback.format_exec()
             self._sm_raise_exception("unexpected error returned from the system component when attempting to add task",
                 cobalt_log = True)
             return Job.__rc_unknown
@@ -1475,7 +1473,7 @@ class Job (StateMachine):
                     '%s_%s'%(self.jobid, self._sm_state))
         except ComponentLookupError:
             #Forker wasn't there, we need to go to the retry-state.
-            print "failing lookup for forker"
+            #print "failing lookup for forker"
             if self._sm_state != "Job_Prologue_Retry":
                 logger.warning("Job %s/%s: Unable to connect to forker "
                         "component to launch job prologue.  Will retry", 
@@ -3007,7 +3005,6 @@ class Job (StateMachine):
                 return False
         return True
 
-
     def preempt(self, user = None, force = False):
         '''process a preemption request for a job'''
         args = {}
@@ -3113,7 +3110,6 @@ class Job (StateMachine):
                     self.acctlog.LogMessage("Job %s/%s on %s nodes forcibly "
                             "terminated by user %s. %s" % (self.jobid, 
                                 self.user, self.nodes, user, stats))
-
 
     def task_end(self):
         '''handle the completion of a task'''
@@ -3571,25 +3567,26 @@ class QueueManager(Component):
 
     def __poll_process_groups (self):
         '''Resynchronize with the system'''
+        running_jobs = [j for queue in self.Queues.itervalues() for j in queue.jobs if j.task_running]
 
         try:
+            self.component_lock_release()
             pgroups = ComponentProxy("system").get_process_groups(
                     [{'id':'*', 'state':'running'}])
+            self.component_lock_acquire()
         except (ComponentLookupError, xmlrpclib.Fault):
+            self.component_lock_acquire()
             logger.error("Failed to communicate with the system component when"
                 " attempting to acquire a list of active process groups")
             return
 
-        self.component_lock_acquire()
-        try:
-            live = [item['id'] for item in pgroups]
-            for job in [j for queue in self.Queues.itervalues() for j in queue.jobs]:
-                if job.task_running and job.taskid not in live:
-                    logger.info("Job %s/%s: process group no longer executing" % (job.jobid, job.user))
-                    job.task_end()
-        finally:
-            self.component_lock_release()
-    __poll_process_groups = locking(automatic(__poll_process_groups, float(get_cqm_config('poll_process_groups_interval', 10))))
+        live = [item['id'] for item in pgroups]
+        for job in running_jobs:
+            if job.taskid not in live:
+                logger.info("Job %s/%s: process group no longer executing" % (job.jobid, job.user))
+                job.task_end()
+
+    __poll_process_groups = automatic(__poll_process_groups, float(get_cqm_config('poll_process_groups_interval', 10)))
 
     #
     # job operations
@@ -3668,7 +3665,7 @@ class QueueManager(Component):
                 walltime_prediction_enabled = True
             else:
                 walltime_prediction_enabled = False
-            print "test_history_manager: walltime_prediction_enabled=", walltime_prediction_enabled
+            self.logger.debug("test_history_manager: walltime_prediction_enabled=%s", walltime_prediction_enabled)
 
     test_history_manager = automatic(test_history_manager, 60)
 
@@ -3716,6 +3713,14 @@ class QueueManager(Component):
         failed = False
         for spec in specs:
             if spec['queue'] in self.Queues:
+                if 'walltime' in spec:
+                    if float(spec['walltime']) <= 0 and 'maxtime' not in self.Queues[spec['queue']].restrictions:
+                        maxtime = get_cqm_config('max_walltime', None)
+                        if not maxtime:
+                            failure_msg = 'No Max Walltime default or for queue "%s" defined. Please contact system administrator' % spec['queue']
+                            logger.error(failure_msg)
+                            raise QueueError, failure_msg
+                    
                 spec.update({'adminemail':self.Queues[spec['queue']].adminemail})
                 if walltime_prediction_enabled:
                     spec['walltime_p'] = self.get_walltime_p(spec)        #*AdjEst*
@@ -3815,7 +3820,7 @@ class QueueManager(Component):
     set_jobs = exposed(query(set_jobs))
 
 
-    def run_jobs(self, specs, nodelist, user_name=None, resid=None):
+    def run_jobs(self, specs, nodelist, user_name=None, resid=None, walltime=None):
         """Run jobs.  Get a possible user_name if this is a forced-run, or
         a dict that contains resid's keyed by jobid.  Resid is for the
         reservation the job actually ran in, not the one, if any, it was queued
@@ -3829,6 +3834,23 @@ class QueueManager(Component):
             logger.info("%s using cqadm to start %s on %s", user_name, specs, nodelist)
 
         def _run_jobs(job, nodes):
+            # set new walltime if available
+            maxtime = None
+            if walltime is not None:
+                if walltime <= 0:
+                    if 'maxtime' in self.Queues[job.queue].restrictions:
+                        maxtime = self.Queues[job.queue].restrictions['maxtime'].value
+                        logger.info('Setting max queue time %s for jobid %s on queue %s' % (str(maxtime), str(job.jobid), job.queue))
+                    else:
+                        maxtime = get_cqm_config('max_walltime', None)
+                        if not maxtime:
+                            failure_msg = "No Queue Max Walltime Defined for queue: %s" % job.queue
+                            logger.error(failure_msg)
+                            raise QueueError, failure_msg
+                    job.walltime = maxtime
+                else:
+                    logger.info('Setting remaining reservation time %s for jobid %s on queue %s' % (str(walltime), str(job.jobid), job.queue))
+                    job.walltime = walltime
             try:
                 res_success = ComponentProxy("system").reserve_resources_until(
                     nodelist, time.time() + ((float(job.walltime) + float(job.force_kill_delay) + 1.0) * 60.0),

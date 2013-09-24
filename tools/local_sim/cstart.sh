@@ -112,9 +112,9 @@ EOF
     ( \
         cd "${COBALT_SOURCE_DIR}/src/components"; "$prestart_cmd" ; \
         if test "$COBALT_SYSTEM_TYPE" = "BG" ; then \
-            if test "$1" == "bgqsystem" ; then \
+            if test "$1" == "bgqsystem" -o ! -f ~db2cat/sqllib/db2profile ; then \
                 source ~bgqsysdb/sqllib/db2profile ; \
-          else \
+            else \
                 source ~db2cat/sqllib/db2profile ; \
             fi ; \
         fi ; \

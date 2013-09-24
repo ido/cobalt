@@ -281,7 +281,7 @@ def test_releaseres_arg_8():
         
         component: "scheduler.get_reservations", defer: False
           get_reservations(
-             [{'name': 'p1'}, {'name': 's1'}, {'name': 's2'}, {'name': 's3'}],
+             [{'name': 'p1', 'partitions': '*'}, {'name': 's1', 'partitions': '*'}, {'name': 's2', 'partitions': '*'}, {'name': 's3', 'partitions': '*'}],
              )
         
         
@@ -327,7 +327,7 @@ def test_releaseres_arg_9():
         
         component: "scheduler.get_reservations", defer: False
           get_reservations(
-             [{'name': 'p1'}, {'name': 's1'}, {'name': 's2'}, {'name': 's3'}],
+             [{'name': 'p1', 'partitions': '*'}, {'name': 's1', 'partitions': '*'}, {'name': 's2', 'partitions': '*'}, {'name': 's3', 'partitions': '*'}],
              )
         
         
