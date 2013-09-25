@@ -36,6 +36,8 @@ rm -rf $RPM_BUILD_ROOT
 %files
 /usr/lib64/python2.6/site-packages/pybgsched.py
 /usr/lib64/python2.6/site-packages/_pybgsched.so
+/usr/lib64/python2.6/site-packages/pybgsched.pyc
+/usr/lib64/python2.6/site-packages/pybgsched.pyo
 
 %changelog
 * Fri Feb 15 2013 Paul Rich <richp@alcf.anl.gov> -
