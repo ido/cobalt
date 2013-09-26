@@ -70,13 +70,14 @@ class ClusterProcessGroup(ProcessGroup):
             raise ProcessGroupCreationError("no location")
 
         split_args = self.args
-        cmd_args = ('--nf', str(self.nodefile),
+        cmd_args = ['--nf', str(self.nodefile),
                     '--jobid', str(self.jobid),
-                    '--cwd', str(self.cwd),
-                    '--exe', str(self.executable))
+                    '--cwd', str(self.cwd),]
 
         qsub_env_list = ["%s=%s" % (key, val) for key, val in self.env.iteritems()]
-
+        for env in qsub_env_list:
+            cmd_args.extend(['--env', env])
+        cmd_args.append(self.executable)
 
         cmd_exe = None
         if sim_mode:
@@ -90,9 +91,9 @@ class ClusterProcessGroup(ProcessGroup):
 
         #run the user script off the login node, and on the compute node
         if (get_cluster_system_config("run_remote", 'true').lower() in config_true_values and not sim_mode):
-            cmd = ("/usr/bin/ssh", rank0,) + qsub_env_list + cmd_exe + cmd_args + tuple(split_args)
+            cmd = ("/usr/bin/ssh", rank0, cmd_exe, ) + tuple(cmd_args) + tuple(split_args)
         else:
-            cmd = tuple(qsub_env_list) + cmd_exe + cmd_args + tuple(split_args)
+            cmd = (cmd_exe,) + tuple(cmd_args) + tuple(split_args)
 
         ret["cmd" ] = cmd
         ret["args"] = cmd[1:]
