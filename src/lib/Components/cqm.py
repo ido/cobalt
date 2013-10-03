@@ -783,9 +783,11 @@ class Job (StateMachine):
         if not state.has_key("script_preboot"):
             self.script_preboot = True
         if not state.has_key('ion_kernel'):
+            #if ion kernel doesn't exist, neither will ion_kerneloptions
             self.ion_kernel = get_config_option('bgsystem', 'ion_default_kernel', 'default')
-        if not state.has_key('ion_kernel'):
-            self.ion_kerneloptions = get_config_option('bgsystem', 'ion_default_kernel_options', 'default')
+            self.ion_kerneloptions = get_config_option('bgsystem', 'ion_default_kernel_options', False)
+            if self.ion_kerneloptions == False:
+                self.ion_kerneloptions = None
         self.runid = state.get("runid", None)
         self.initializing = False
 

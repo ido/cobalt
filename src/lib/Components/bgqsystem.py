@@ -1845,18 +1845,19 @@ class BGSystem (BGBaseSystem):
                 except:
                     self.logger.error("Block %s: failed to clear kernel settings", b.name)
                 #ION kernel reset
-                reboot_candidates = self._get_io_blocks_to_reboot(b)
-                for io_block in reboot_candidates:
-                    if (io_block.current_kernel != get_config_option('bgsystem', 'ion_default_kernel', 'default') or
-                        io_block.current_kernel_options != get_config_option('bgsystem', 'ion_default_kernel_options', None)):
-                        self.logger.info('IO Block %s: initiating kernel reset and cleanup.', io_block.name)
-                        self._clear_kernel(io_block.name, 'ion')
-                        #should not have to force this, the compute blocks should also be cleaning.
-                        self.free_io_block(io_block.name, force=True)
-                        self.booter.initiate_io_boot(io_block.name, tag='io_boot', reboot=True,
-                                ion_kerneloptions=io_block.current_kernel_options)
-                    else:
-                        self.logger.debug("IO Block %s: no cleanup needed, already running default kernel.", io_block.name)
+                if get_config_option('bgsystem', 'allow_alternate_kernels', 'false').lower() in Cobalt.Util.config_true_values:
+                    reboot_candidates = self._get_io_blocks_to_reboot(b)
+                    for io_block in reboot_candidates:
+                        if (io_block.current_kernel != get_config_option('bgsystem', 'ion_default_kernel', 'default') or
+                            io_block.current_kernel_options != get_config_option('bgsystem', 'ion_default_kernel_options', None)):
+                            self.logger.info('IO Block %s: initiating kernel reset and cleanup.', io_block.name)
+                            self._clear_kernel(io_block.name, 'ion')
+                            #should not have to force this, the compute blocks should also be cleaning.
+                            self.free_io_block(io_block.name, force=True)
+                            self.booter.initiate_io_boot(io_block.name, tag='io_boot', reboot=True,
+                                    ion_kerneloptions=io_block.current_kernel_options)
+                        else:
+                            self.logger.debug("IO Block %s: no cleanup needed, already running default kernel.", io_block.name)
 
 
             Cobalt.Util.sleep(10)
@@ -2053,6 +2054,11 @@ class BGSystem (BGBaseSystem):
 
         Returns a list of IO Blocks to reboot due to changed kernels.
         '''
+        if get_config_option('bgsystem', 'allow_alternate_kernels', 'false').lower() not in Cobalt.Util.config_true_values:
+            # If we are not allowing alternate kernels to be booted, then we can't allow the IO Blocks to be rebooted at all,
+            # even if there are alternate ion_kerneloptions set.  IO Blocks should stay up if possible so don't reboot any in
+            # this case. --PMR
+            return []
         reboot_candidates = self._get_io_blocks_to_reboot(cn_block)
         io_blocks_to_reboot = []
         for io_block in reboot_candidates:
