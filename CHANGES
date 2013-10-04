@@ -1,5 +1,10 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 0.99.30 ==
+ * This is a fix release that corrects a bug that can be encountered when upgrading
+   to 0.99.27 from prior versions where ion_kerneloptions in cqm is improperly set.
+   (Cobalt Ticket #665)
+
 == Changes to 0.99.29 ==
  * Interactive jobs are experimentally available for cluster systems.
 
