@@ -201,9 +201,13 @@ class ClusterBaseSystem (Component):
         # spec has {nodes, walltime*, procs, mode, kernel}
 
         max_nodes = len(self.all_nodes)
-        sys_type = 'cluster'
-        job_types = ['co','vn','smp','dual','script']
-        spec['mode'] = 'script'
+
+        if spec['mode'] == 'interactive':
+            spec['command'] = "/bin/sleep"
+            spec['args']    = [str(int(spec['walltime']) * 60),]
+        else:
+            spec['mode'] = 'script'
+
         try:
             spec['nodecount'] = int(spec['nodecount'])
         except:
@@ -212,8 +216,6 @@ class ClusterBaseSystem (Component):
             raise JobValidationError("Node count out of realistic range")
         if float(spec['time']) < 5 and float(spec['time']) > 0:
             raise JobValidationError("Walltime less than minimum")
-        if spec['mode'] not in job_types:
-            raise JobValidationError("%s is an invalid mode" % spec['mode'])
         if not spec['proccount']:
             spec['proccount'] = spec['nodecount']
         else:
@@ -223,9 +225,7 @@ class ClusterBaseSystem (Component):
                 JobValidationError("non-integer proccount")
             if spec['proccount'] < 1:
                 raise JobValidationError("negative proccount")
-            if spec['proccount'] > spec['nodecount']:
-                if spec['mode'] not in ['vn', 'dual']:
-                    raise JobValidationError("proccount too large")
+
         # need to handle kernel
         return spec
     validate_job = exposed(validate_job)
