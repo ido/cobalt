@@ -204,7 +204,7 @@ class ClusterBaseSystem (Component):
 
         if spec['mode'] == 'interactive':
             spec['command'] = "/bin/sleep"
-            spec['args']    = [str(int(spec['walltime']) * 60),]
+            spec['args']    = [str(int(spec['time']) * 60),]
         else:
             spec['mode'] = 'script'
 
