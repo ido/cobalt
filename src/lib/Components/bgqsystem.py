@@ -2380,7 +2380,6 @@ class BGSystem (BGBaseSystem):
         for pg in self.process_groups.itervalues():
             if pg.mode  == 'interactive':
                 if pg.interactive_complete:
-                    logger.info("### GDR ### CLEAN BLOCK")
                     clean_block = True
                     pg.exit_status = 0 
                     self.reserve_resources_until(pg.location, None, pg.jobid)
@@ -2460,7 +2459,6 @@ class BGSystem (BGBaseSystem):
         for pg in my_process_groups:
             if pg.exit_status is None:
                 if pg.mode == 'interactive':
-                    logger.info("### GDR ### INTERACTIVE COMPLETE ABNORMALLY")
                     pg.interactive_complete = True
                 else:
                     try:
@@ -2484,7 +2482,6 @@ class BGSystem (BGBaseSystem):
             if pg.jobid == jobid:
                 job_not_found = False
                 if pg.mode == 'interactive':
-                    logger.info("### GDR ### INTERACTIVE COMPLETE NORMALLY")
                     pg.interactive_complete = True
                 else:
                     self.logger.error("%s: Job not an interactive job", str(jobid))
