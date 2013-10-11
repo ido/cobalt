@@ -211,13 +211,18 @@ def check_inputfile(parser, spec):
             client_utils.logger.error("file %s not found, or is not a file" % inputfile)
             sys.exit(1)
 
-def update_spec(opts, spec, opt2spec):
+def update_spec(parser, opts, spec, opt2spec):
     """
     This function will update the appropriate spec values with the opts values
     """
     # Get the key validated values into spec dictionary
     for opt in ['mode', 'proccount', 'nodecount']:
         spec[opt2spec[opt]] = opts[opt]
+    
+    if parser.options.mode == 'interactive' and 'command' in opts and 'args' in opts:
+        spec['command'] = opts['command']
+        spec['args']    = opts['args']
+
 
 def logjob(job, spec, logToConsole):
     """
@@ -294,6 +299,8 @@ def run_interactive_job(jobs, user, disable_preboot):
     This will create the shell or ssh session for user
     """
     force = True
+    impl = client_utils.component_call(SYSMGR, False, 'get_implementation', ())
+    cluster_system = True if impl == "cluster_system" else False
 
     class JobInterrupt(Exception):
         pass
@@ -301,7 +308,7 @@ def run_interactive_job(jobs, user, disable_preboot):
     def exit_job():
         """
         """
-        if force:
+        if force or cluster_system:
             job_to_del = [{'tag':'job', 'jobid':jobs[0]['jobid'], 'user':user}]
             client_utils.logger.info("Deleting interactive job %d", (jobs[0]['jobid']))
             del_jobs = client_utils.component_call(QUEMGR, False, 'del_jobs', (job_to_del, False, user))
@@ -325,8 +332,6 @@ def run_interactive_job(jobs, user, disable_preboot):
         os.putenv("COBALT_BLOCKNAME", location[0])
 
         client_utils.logger.info("Opening interactive session to %s", location[0])
-        impl = client_utils.component_call(SYSMGR, False, 'get_implementation', ())
-        cluster_system = True if impl == "cluster_system" else False
         if cluster_system:
             os.system("/usr/bin/ssh -o \"SendEnv COBALT_NODEFILE COBALT_JOBID\" %s" % (location[0]))
         else:
@@ -446,7 +451,7 @@ def main():
     opts = client_utils.component_call(SYSMGR, False, 'validate_job',(opts,))
     filters = client_utils.get_filters()
     client_utils.process_filters(filters, spec)
-    update_spec(opts, spec, opt2spec)
+    update_spec(parser, opts, spec, opt2spec)
     jobs = client_utils.component_call(QUEMGR, False, 'add_jobs',([spec],))
 
     if parser.options.envs:
