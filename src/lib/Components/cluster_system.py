@@ -44,6 +44,8 @@ def get_cluster_system_config(option, default):
 
 class ClusterProcessGroup(ProcessGroup):
 
+    logger = logger
+
     def __init__(self, spec):
         spec['forker'] = "user_script_forker"
         ProcessGroup.__init__(self, spec)
@@ -103,6 +105,17 @@ class ClusterProcessGroup(ProcessGroup):
         self.args = list(ret["args"])
 
         return ret
+
+    def start(self):
+        """Start the process group by contact the appropriate forker component"""
+        try:
+            data = self.prefork()
+            self.head_pid = ComponentProxy(self.forker, retry=False).fork([self.executable] + self.args, self.tag,
+                "Job %s/%s/%s" %(self.jobid, self.user, self.id), self.env, data, self.runid)
+        except:
+            self.logger.error("Job %s/%s/%s: problem forking; %s did not return a child id", self.jobid, self.user, self.id,
+                self.forker)
+            raise
 
 class ClusterSystem (ClusterBaseSystem):
 
