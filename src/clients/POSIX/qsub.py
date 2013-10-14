@@ -352,6 +352,8 @@ def run_interactive_job(jobs, user, disable_preboot):
     try:
         while True:
             response = client_utils.component_call(QUEMGR, False, 'get_jobs', (query, ))
+            if not response:
+                break
             state    = response[0]['state']
             location = response[0]['location']
             if state == 'running' and location:
