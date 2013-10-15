@@ -24,6 +24,9 @@ def stub_getcwd():
 def stub_getuser():
     return stub_getpwuid(1)[0]
 
+def stub_system(cmd):
+    return 0
+
 # redefine the standard time() function
 time.time = stub_time
 
@@ -41,6 +44,9 @@ os.getcwd = stub_getcwd
 
 # redfine getuser 
 getpass.getuser = stub_getuser
+
+# redfine system
+os.system = stub_system
 
 fn = 'stub.out'
 fd = open(fn,'w')
@@ -131,6 +137,11 @@ def get_parts(plist):
     return parts
 
 class SystemStub(object):
+
+    def interactive_job_complete(self, jobid):
+        logmsg("\INTERACTIVE_JOB_COMPLETE\n")
+        logmsg("jobid: %s, type = %s" % (str(jobid), str(type(jobid))))
+        return True
 
     def initiate_proxy_boot(self,block, user, jobid):
         logmsg("\nINITIATE_PROXY_BOOT\n")
@@ -516,6 +527,11 @@ class CqmStub(object):
 
     def get_jobs(self,job_specs):
         if len(job_specs) == 0: return
+
+        # get hooks f
+        thook = testutils.get_testhook()
+        job_running = True if thook.find("JOB_RUNNING") != -1 else False
+
         logmsg("\nGET_JOBS\n")
         logdiclist(job_specs)
         _job_specs = []
@@ -529,7 +545,10 @@ class CqmStub(object):
                 jobid += 1
             else:
                 j = job['jobid']
-            if 'state' in job:
+                
+            if job_running:
+                state = 'running'
+            elif 'state' in job:
                 state = job['state']
             else:
                 state = 'user_hold'

@@ -19,7 +19,7 @@ Option with no values:
 '--preemptable',dest='preemptable',help='make this job preemptable',action='store_true'
 '--run_project',dest='run_project',help='set run project flag for this job',action='store_true'
 '--disable_preboot',dest='script_preboot',help='disable script preboot',action='store_false'
-'-I','--interactive',dest='interactive',help='run qsub in interactive mode (clusters only)',action='store_true'
+'-I','--interactive',help='run qsub in interactive mode',callback=cb_interactive
 
 Option with values:
 
@@ -58,11 +58,10 @@ import string
 import os
 import sys
 import signal
-import xmlrpclib
 from Cobalt import client_utils
 from Cobalt.client_utils import \
-    cb_debug, cb_env, cb_nodes, cb_time, cb_umask, cb_path, \
-    cb_dep, cb_attrs, cb_user_list, cb_geometry, cb_gtzero, cb_mode
+    cb_debug, cb_env, cb_nodes, cb_time, cb_umask, cb_path, cb_dep, \
+    cb_attrs, cb_user_list, cb_geometry, cb_gtzero, cb_mode, cb_interactive
 from Cobalt.arg_parser import ArgParse
 from Cobalt.Util import get_config_option, init_cobalt_config, sleep
 
@@ -82,10 +81,10 @@ def validate_args(parser, spec):
     """
 
     #an executable cannot be specified for interactive jobs
-    if (parser.options.interactive is not None) and (not parser.no_args()):
+    if parser.options.mode == 'interactive' and (not parser.no_args()):
         client_utils.logger.error("An executable may not be specified if using the interactive option.")
         sys.exit(1)
-    elif parser.options.interactive is not None:
+    elif parser.options.mode == 'interactive':
         #Bypass the rest of the checks for interactive jobs.
         return
 
@@ -204,29 +203,35 @@ def check_inputfile(parser, spec):
     Verify the input file is an actual file
     """
     if parser.options.inputfile != None:
+        if parser.options.mode == 'interactive':
+            client_utils.logger.error("Cannot specify an input file for interactive jobs.")
+            sys.exit(1)
         inputfile = spec['inputfile']
         if not os.path.isfile(inputfile):
             client_utils.logger.error("file %s not found, or is not a file" % inputfile)
             sys.exit(1)
-        if parser.options.interactive:
-            client_utils.logger.error("Cannot specify an input file for interactive jobs.")
-            sys.exit(1)
 
-def update_spec(opts, spec, opt2spec):
+def update_spec(parser, opts, spec, opt2spec):
     """
     This function will update the appropriate spec values with the opts values
     """
     # Get the key validated values into spec dictionary
     for opt in ['mode', 'proccount', 'nodecount']:
         spec[opt2spec[opt]] = opts[opt]
+    
+    if parser.options.mode == 'interactive' and 'command' in opts and 'args' in opts:
+        spec['command'] = opts['command']
+        spec['args']    = opts['args']
 
-def logjob(job, spec):
+
+def logjob(job, spec, logToConsole):
     """
     log job info
     """
     # log jobid to stdout
     if job:
-        client_utils.logger.info(job['jobid'])
+        if logToConsole:
+            client_utils.logger.info(job['jobid'])
         if spec.has_key('cobalt_log_file'):
             filename = spec['cobalt_log_file']
             t = string.Template(filename)
@@ -236,8 +241,9 @@ def logjob(job, spec):
 
         try:
             cobalt_log_file = open(filename, "a")
+            
             print >> cobalt_log_file, "Jobid: %s\n" % job['jobid']
-            print >> cobalt_log_file, "%s\n" % (" ".join(sys.argv))
+            print >> cobalt_log_file, "qsub %s\n" % (" ".join(sys.argv[1:]))
             print >> cobalt_log_file, "submitted with cwd set to: %s\n" % spec['cwd']
             cobalt_log_file.close()
         except Exception, e:
@@ -288,28 +294,92 @@ def parse_options(parser, spec, opts, opt2spec, def_spec):
     opts['disable_preboot'] = not spec['script_preboot']
     return opt_count
 
-def get_interactive_command(parser, spec, opts, opt2spec, def_spec):
-    '''Interactive job checks and command update.  Set the sleeper job up to be submitted for the walltime.
+def run_interactive_job(jobs, user, disable_preboot):
+    """
+    This will create the shell or ssh session for user
+    """
+    force = True
+    impl = client_utils.component_call(SYSMGR, False, 'get_implementation', ())
+    cluster_system = True if impl == "cluster_system" else False
 
-    '''
-    #update the auxillary environment variables here so that they are properly set for the job?
+    class JobInterrupt(Exception):
+        pass
 
-    # Checks for interactive jobs: user must not specify a command,
-    # and we must be running on a cluster
-    if parser.options.interactive:
-        try:
-            impl = client_utils.component_call(SYSMGR, False, 'get_implementation', ())
-        except xmlrpclib.Fault:
-            client_utils.logger.error("Error: unable to connect to the system component")
-            sys.exit(1)
-
-        if "cluster_system" != impl:
-            client_utils.logger.error("Interactive jobs are only supported on cluster systems")
-            sys.exit(1)
+    def exit_job():
+        """
+        """
+        if force or cluster_system:
+            job_to_del = [{'tag':'job', 'jobid':jobs[0]['jobid'], 'user':user}]
+            client_utils.logger.info("Deleting interactive job %d", (jobs[0]['jobid']))
+            del_jobs = client_utils.component_call(QUEMGR, False, 'del_jobs', (job_to_del, False, user))
         else:
-            spec['command'] = "/bin/sleep"
-            spec['args'] = [str(int(parser.options.walltime) * 60),]
+            client_utils.logger.info("Exiting interactive job %d", jobs[0]['jobid'])
+            client_utils.component_call(SYSMGR, False, 'interactive_job_complete', (jobs[0]['jobid'],))
 
+    def on_interrupt(sig, func=None):
+        '''Handler to cleanup the queued 'dummy' job if the user interrupts
+        qsub -I forcibly
+        '''
+        raise JobInterrupt
+
+    def start_session():
+        """
+        start ssh or shell session
+        """
+        os.putenv("COBALT_NODEFILE", "/var/tmp/cobalt.%s" % (response[0]['jobid']))
+        os.putenv("COBALT_JOBID", "%s" % (response[0]['jobid']))
+        os.putenv("COBALT_PARTNAME", location[0])
+        os.putenv("COBALT_BLOCKNAME", location[0])
+
+        client_utils.logger.info("Opening interactive session to %s", location[0])
+        if cluster_system:
+            os.system("/usr/bin/ssh -o \"SendEnv COBALT_NODEFILE COBALT_JOBID\" %s" % (location[0]))
+        else:
+            notOk = client_utils.SUCCESS
+            if not disable_preboot:
+                client_utils.logger.info("booting %s...", location[0])
+                client_utils.boot_block(location[0], user, jobs[0]['jobid']) 
+            if not notOk:
+                os.system(os.environ['SHELL'])
+
+    #reset sigint and sigterm interrupt handlers to deal with interactive failures
+    signal.signal(signal.SIGINT, on_interrupt)
+    signal.signal(signal.SIGTERM, on_interrupt)
+
+    # Wait for job to start
+    query = [{'tag':'job', 'jobid':jobs[0]['jobid'], 'location':'*', 'state':"*"}]
+    display_wait_msg = True
+    try:
+        while True:
+            response = client_utils.component_call(QUEMGR, False, 'get_jobs', (query, ))
+            if not response:
+                break
+            state    = response[0]['state']
+            location = response[0]['location']
+            if state == 'running' and location:
+                start_session()
+                break
+            elif state != 'running' and state != 'queued' and state != 'starting':
+                client_utils.logger.error("ERROR: Something went wrong with job submission, did not expect job to reach %s state.",
+                                          response[0]['state'])
+                break
+            else:
+                #using Cobalt Utils sleep here
+                if display_wait_msg:
+                    client_utils.logger.info("Wait for job %s to start...", jobs[0]['jobid'])
+                    display_wait_msg = False
+                    # client_utils.logger.info("Job %s %s...", jobs[0]['jobid'], state)
+                sleep(2)
+        force = False
+
+    except JobInterrupt:
+        pass
+
+    except:
+        raise
+
+    finally:
+        exit_job()
 
 def main():
     """
@@ -328,6 +398,7 @@ def main():
     callbacks = [
         # <cb function>     <cb args (tuple) >
         ( cb_debug        , () ),
+        ( cb_interactive  , () ),
         ( cb_env          , (opts,) ),
         ( cb_nodes        , (False,) ), # return string
         ( cb_gtzero       , (False,) ), # return string
@@ -382,64 +453,18 @@ def main():
     opts = client_utils.component_call(SYSMGR, False, 'validate_job',(opts,))
     filters = client_utils.get_filters()
     client_utils.process_filters(filters, spec)
-    update_spec(opts, spec, opt2spec)
-    get_interactive_command(parser, spec, opts, opt2spec, def_spec)
+    update_spec(parser, opts, spec, opt2spec)
     jobs = client_utils.component_call(QUEMGR, False, 'add_jobs',([spec],))
-
-    def on_interrupt(sig, func=None):
-        '''Handler to cleanup the queued 'dummy' job if the user interrupts
-        qsub -I forcibly
-
-        '''
-        try:
-            spec = [{'tag':'job', 'jobid':jobs[0]['jobid'], 'user':user}]
-        except NameError:
-            sys.exit(1)
-        except:
-            raise
-        client_utils.logger.info("Deleting job %d", (jobs[0]['jobid']))
-        del_jobs = client_utils.component_call(QUEMGR, False, 'del_jobs', (spec, False, user))
-        client_utils.logger.info("%s", del_jobs)
-        sys.exit(1)
-
-    #reset sigint and sigterm interrupt handlers to deal with interactive failures
-    signal.signal(signal.SIGINT, on_interrupt)
-    signal.signal(signal.SIGTERM, on_interrupt)
 
     if parser.options.envs:
         client_utils.logger.debug("Environment Vars: %s", parser.options.envs)
-    logjob(jobs[0], spec)
 
     # If this is an interactive job, wait for it to start, then ssh in
-    if parser.options.interactive:
-        headnode = ""
-        query = [{'tag':'job', 'jobid':jobs[0]['jobid'], 'location':'*', 'state':"*"}]
-        while True:
-            response = client_utils.component_call(QUEMGR, False, 'get_jobs', (query, ))
-            state = response[0]['state']
-            location = response[0]['location']
-            if state == 'running' and location:
-                headnode = location[0]
-                client_utils.logger.info("Opening ssh session to %s", headnode)
-                break
-            elif state != 'running' and state != 'queued' and state != 'starting':
-                client_utils.logger.error("ERROR: Something went wrong with job submission, did not expect job to reach %s state.",
-                        response[0]['state'])
-                break
-            else:
-                #using Cobalt Utils sleep here
-                sleep(2)
-        if not headnode:
-            client_utils.logger.error("Unable to determine head node for job %d", (jobs[0]['jobid']))
-        else:
-            try:
-                os.putenv("COBALT_NODEFILE", "/var/tmp/cobalt.%s" % (response[0]['jobid']))
-                os.putenv("COBALT_JOBID", "%s" % (response[0]['jobid']))
-                os.system("/usr/bin/ssh -o \"SendEnv COBALT_NODEFILE COBALT_JOBID\" %s" % (headnode))
-            except:
-                client_utils.logger.error('Exception occurred during execution ssh session.  Job Terminated.')
-        spec = [{'tag':'job', 'jobid':jobs[0]['jobid'], 'user':user}]
-        jobs = client_utils.component_call(QUEMGR, False, 'del_jobs', (spec, False, user))
+    if parser.options.mode == 'interactive':
+        logjob(jobs[0], spec, False)
+        run_interactive_job(jobs, user,  opts['disable_preboot'])
+    else:
+        logjob(jobs[0], spec, True)
 
 if __name__ == '__main__':
     try:

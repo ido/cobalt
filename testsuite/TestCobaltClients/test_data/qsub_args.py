@@ -55,4 +55,11 @@ test_argslist = [
     { "tc_name" : "script_3", "args" : """--mode vn cobalt_script1.sh""",  },
     { "tc_name" : "script_4", "args" : """-d cobalt_script2.sh""",  },
     { "tc_name" : "walltime_0", "args" : """-t0 -n 10 /bin/ls""",  },
+    { "tc_name" : "interactive_1", "args" : """-I -t50 -n 1 /bin/ls""",  },
+    { "tc_name" : "interactive_2", "args" : """-I -t50 -n 1 -i inputfile""",  },
+    { "tc_name" : "interactive_3", "args" : """-I -t50 -n 1""", },
+    { "tc_name" : "interactive_4", "args" : """-I -t50 -n 1 --mode script""", },
+    { "tc_name" : "interactive_5", "args" : """-I -t50 -n 1""", "testhook" : "JOB_RUNNING"},
+    { "tc_name" : "interactive_6", "args" : """--interactive -t50 -n 1""", "testhook" : "JOB_RUNNING"},
+    { "tc_name" : "interactive_7", "args" : """--mode interactive -t50 -n 1""", "testhook" : "JOB_RUNNING"},
     ]
