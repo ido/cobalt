@@ -322,7 +322,7 @@ def run_interactive_job(jobs, user, disable_preboot):
             try:
                 client_utils.component_call(SYSMGR, False, 'interactive_job_complete', (jobs[0]['jobid'],), False)
             except xmlrpclib.Fault, fault:
-                client_utils.logger.error("Job %s not an interactive job", jobs[0]['jobid'])
+                client_utils.logger.error('Unexpected exception %s when trying to exit interactive job %s', fault, jobs[0]['jobid'])
 
     def on_interrupt(sig, func=None):
         """

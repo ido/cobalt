@@ -2484,8 +2484,9 @@ class BGSystem (BGBaseSystem):
                 if pg.mode == 'interactive':
                     pg.interactive_complete = True
                 else:
-                    self.logger.error("%s: Job not an interactive job", str(jobid))
-                    raise JobNotInteractive
+                    msg = "Job %s not an interactive" % str(jobid)
+                    self.logger.error(msg)
+                    raise JobNotInteractive(msg)
                 break
         if job_not_found:
             self.logger.warning("%s: Interactive job not found", str(jobid))
