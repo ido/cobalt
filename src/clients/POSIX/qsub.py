@@ -64,6 +64,7 @@ from Cobalt.client_utils import \
     cb_attrs, cb_user_list, cb_geometry, cb_gtzero, cb_mode, cb_interactive
 from Cobalt.arg_parser import ArgParse
 from Cobalt.Util import get_config_option, init_cobalt_config, sleep
+import xmlrpclib
 
 __revision__ = '$Revision: 559 $'
 __version__  = '$Version$'
@@ -298,7 +299,10 @@ def run_interactive_job(jobs, user, disable_preboot):
     """
     This will create the shell or ssh session for user
     """
+    # initialize to force exit 
     force = True
+
+    # save whether we are running on a cluster system
     impl = client_utils.component_call(SYSMGR, False, 'get_implementation', ())
     cluster_system = True if impl == "cluster_system" else False
 
@@ -307,6 +311,7 @@ def run_interactive_job(jobs, user, disable_preboot):
 
     def exit_job():
         """
+        Exit job normally or forcefully as specified 
         """
         if force or cluster_system:
             job_to_del = [{'tag':'job', 'jobid':jobs[0]['jobid'], 'user':user}]
@@ -314,35 +319,38 @@ def run_interactive_job(jobs, user, disable_preboot):
             del_jobs = client_utils.component_call(QUEMGR, False, 'del_jobs', (job_to_del, False, user))
         else:
             client_utils.logger.info("Exiting interactive job %d", jobs[0]['jobid'])
-            client_utils.component_call(SYSMGR, False, 'interactive_job_complete', (jobs[0]['jobid'],))
+            try:
+                client_utils.component_call(SYSMGR, False, 'interactive_job_complete', (jobs[0]['jobid'],), False)
+            except xmlrpclib.Fault, fault:
+                client_utils.logger.error("Job %s not an interactive job", jobs[0]['jobid'])
 
     def on_interrupt(sig, func=None):
-        '''Handler to cleanup the queued 'dummy' job if the user interrupts
-        qsub -I forcibly
-        '''
+        """
+        Handler to cleanup the interactive job if the user interrupts
+        """
         raise JobInterrupt
 
     def start_session():
         """
         start ssh or shell session
         """
+        # Create necesary env vars
         os.putenv("COBALT_NODEFILE", "/var/tmp/cobalt.%s" % (response[0]['jobid']))
         os.putenv("COBALT_JOBID", "%s" % (response[0]['jobid']))
         os.putenv("COBALT_PARTNAME", location[0])
         os.putenv("COBALT_BLOCKNAME", location[0])
 
         client_utils.logger.info("Opening interactive session to %s", location[0])
+
         if cluster_system:
             os.system("/usr/bin/ssh -o \"SendEnv COBALT_NODEFILE COBALT_JOBID\" %s" % (location[0]))
         else:
-            notOk = client_utils.SUCCESS
             if not disable_preboot:
                 client_utils.logger.info("booting %s...", location[0])
                 client_utils.boot_block(location[0], user, jobs[0]['jobid']) 
-            if not notOk:
-                os.system(os.environ['SHELL'])
+            os.system(os.environ['SHELL'])
 
-    #reset sigint and sigterm interrupt handlers to deal with interactive failures
+    # Reset sigint and sigterm interrupt handlers to deal with interactive failures
     signal.signal(signal.SIGINT, on_interrupt)
     signal.signal(signal.SIGTERM, on_interrupt)
 
@@ -354,22 +362,26 @@ def run_interactive_job(jobs, user, disable_preboot):
             response = client_utils.component_call(QUEMGR, False, 'get_jobs', (query, ))
             if not response:
                 break
+
             state    = response[0]['state']
             location = response[0]['location']
+
             if state == 'running' and location:
                 start_session()
                 break
-            elif state != 'running' and state != 'queued' and state != 'starting':
+
+            if state != 'running' and state != 'queued' and state != 'starting':
                 client_utils.logger.error("ERROR: Something went wrong with job submission, did not expect job to reach %s state.",
                                           response[0]['state'])
                 break
-            else:
-                #using Cobalt Utils sleep here
-                if display_wait_msg:
-                    client_utils.logger.info("Wait for job %s to start...", jobs[0]['jobid'])
-                    display_wait_msg = False
-                    # client_utils.logger.info("Job %s %s...", jobs[0]['jobid'], state)
-                sleep(2)
+
+            if display_wait_msg:
+                client_utils.logger.info("Wait for job %s to start...", jobs[0]['jobid'])
+                display_wait_msg = False
+
+            sleep(2)
+
+        # Exit normally
         force = False
 
     except JobInterrupt:

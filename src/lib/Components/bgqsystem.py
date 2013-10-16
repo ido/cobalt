@@ -25,7 +25,7 @@ import Cobalt.Data
 import Cobalt.Util
 from Cobalt.Util import get_config_option, disk_writer_thread 
 from Cobalt.Components.base import Component, exposed, automatic, query
-from Cobalt.Exceptions import ComponentLookupError
+from Cobalt.Exceptions import ComponentLookupError, JobNotInteractive
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Statistics import Statistics
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
@@ -2485,9 +2485,10 @@ class BGSystem (BGBaseSystem):
                     pg.interactive_complete = True
                 else:
                     self.logger.error("%s: Job not an interactive job", str(jobid))
+                    raise JobNotInteractive
                 break
         if job_not_found:
-            self.logger.error("%s: Interactive job not found", str(jobid))
+            self.logger.warning("%s: Interactive job not found", str(jobid))
         return
 
     @exposed
