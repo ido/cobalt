@@ -79,7 +79,10 @@ ION_DEFAULT_KERNEL = get_config_option('bgsystem', 'ion_default_kernel', 'defaul
 
 def on_interrupt(sig, func=None):
     """
-    Handler to cleanup the interactive job if the user interrupts
+    Interrupt Handler to cleanup the interactive job if the user interrupts
+    Will contain two static variables: count and exit.
+    'count' will keep track how many interruptions happened and 
+    'exit' flags whether we completely exit once the interrupt occurs.
     """
     if not hasattr(on_interrupt, 'count'):
         on_interrupt.count = 1
@@ -90,9 +93,11 @@ def on_interrupt(sig, func=None):
     if on_interrupt.exit:
         sys.exit(1)
 
-on_interrupt.count    = 0
-on_interrupt.exit = True
+# Initializing on_interrupt static variables
+on_interrupt.count = 0
+on_interrupt.exit  = True
 
+# lambda function to check if user interrupted
 interrupt_occured = lambda : on_interrupt.count > 0
 
 # Reset sigint and sigterm interrupt handlers to deal with interactive failures
@@ -430,7 +435,7 @@ def run_job(parser, user, spec, opts):
         if parser.options.envs:
             client_utils.logger.debug("Environment Vars: %s", parser.options.envs)
 
-        # If this is an interactive job, wait for it to start, then ssh in
+        # If this is an interactive job, wait for it to start, then start user shell
         if parser.options.mode == 'interactive':
             logjob(jobid, spec, False)
             force = run_interactive_job(jobid, user,  opts['disable_preboot'])

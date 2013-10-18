@@ -109,7 +109,7 @@ runtime.
 
 If multiple \-\-env options are specified then qsub will take the union.
 
-e.g. qsub ... --env "A=B:C=x\\=1\\:y\\=2\\:z\\=3:D=ABC" ... --env "MY_NAME=cobalt' ...
+e.g. qsub ... --env "A=B:C=x\\=1\\:y\\=2\\:z\\=3:D=ABC" ... --env "MY_NAME=cobalt" ...
 
 A would equal B
 
@@ -136,9 +136,14 @@ Submit job and immediately place it in the user hold state
 .B \-i \-\-inputfile [path to file]
 Send file to job's stdin.
 .TP
-.B \-I (NOT IMPLEMENTED)
+.B \-I \-\-interactive
 Run an interactive command. During job execution, the current tty will
-be connected with the running job. (Not available on Blue Gene systems.)
+be connected with the running job.
+To run interactive job you can use -I, --interactive or --mode interactive.
+Running qsub in "interactive" mode will create a shell for the user while running
+qsub.  If the user CTRL-D or performs an "exit" command from the shell then Cobalt
+will terminate the "interactive" job.
+
 .TP 
 .B \-M \-\-notify [email address]
 Send an email notification at the start and stop of the job to the
@@ -208,7 +213,7 @@ BG/L: Valid values are "co" (coprocessor),"vn" (virtual node) and "script".
 BG/P: Valid values are "smp", "dual", "vn" and "script".   "smp", "dual" and 
       "vn" correspond to the modes within mpirun. The default is "smp" 
 .TP
-BG/Q: Valid values are "c1","c2","c4","c8","c16","c32","c64", and "script".  
+BG/Q: Valid values are "c1","c2","c4","c8","c16","c32","c64","script" and "interactive".  
       The c(n) modes correspond to the "ranks-per-node" flag of runjob and 
       governs the MPI ranks started per node on the compute nodes.  Node memory
       is divided evenly between all processes.  n/64 threads will be available 
