@@ -287,15 +287,12 @@ class ClusterBaseSystem (Component):
             #bail out early, we don't have enough nodes to even consider this job!
             return {}, 0, False
 
-        print job_end_time, drain_time, job_end_time - drain_time
         if len(available_nodes) >= job['nodes'] and (job_end_time < drain_time or drain_time == 0):
             # do we have enough that are idle?  The job is smaller than our drain time.
             idle_nodes = available_nodes.difference(self.running_nodes)
             if len(idle_nodes) >= job['nodes']:
                 selected_locations = [idle_nodes.pop() for i in range(job['nodes'])]
                 ready_to_run = True
-
-
 
         if drain_time == 0 and ready_to_run == False: #go ahead and select locations for draining.
             #choose the idle nodes, iterate over times adding nodes until we have enough with the shortest wait.
@@ -313,6 +310,8 @@ class ClusterBaseSystem (Component):
                 if remaining_node_count == 0:
                     break
 
+        if selected_locations == set([]):
+            return {}, 0, False
         #Jobid has to be a string or else xmlrpc has trouble with the dict, apparently.
         return {str(job['jobid']): list(selected_locations)}, new_drain_time, ready_to_run
 

@@ -223,3 +223,18 @@ class TestClusterSystem(object):
                 new_drain_time)
         assert best_location == {'1':['vs1.test']}, "ERROR: Expected best location: %s\nGot:%s" % \
                 ({'1':['vs1.test']}, best_location)
+
+    def test__find_job_location_backfill_too_few_locs(self):
+        #Jobs that are longer than the backfill window should not be selected.
+        now = int(time.time())
+        end_time_list = [ now + 600, now + 700]
+        job = get_basic_job_dict()
+        job['walltime'] = 15
+        self.cluster_system.running_nodes.update(['vs2.test', 'vs3.test', 'vs4.test'])
+        self.cluster_system.init_drain_times([[['vs2.test'], end_time_list[0]], [['vs3.test', 'vs4.test'], end_time_list[1]]])
+        best_location, new_drain_time, ready_to_run = self.cluster_system._find_job_location(job, now, end_time_list[0])
+        assert not ready_to_run, "ERROR: No jobs should be backfilled."
+        assert new_drain_time == 0, "ERROR: Expected drain time %d, got %d instead" % (0,
+                new_drain_time)
+        assert best_location == {}, "ERROR: Expected best location: %s\nGot:%s" % \
+                ({}, best_location)
