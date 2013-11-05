@@ -101,33 +101,7 @@ def main():
                 break
 
     if not opts.free:
-        success = client_utils.component_call(SYSMGR, False, 'initiate_proxy_boot', (block, user, jobid))
-        if not success:
-            client_utils.logger.error("Boot request for block %s failed authorization." % (block, ))
-            sys.exit(AUTH_FAIL)
-        #give the system component a moment to initiate the boot
-        client_utils.sleep(3)
-        #wait for block to boot
-        failed = False
-        found = False
-        while True:
-            boot_id, status, status_strings = client_utils.component_call(SYSMGR, False, 'get_boot_statuses_and_strings', (block,))
-            if not found:
-                if boot_id != None:
-                    found = True
-            else:
-                if status_strings != [] and status_strings != None:
-                    print "\n".join(status_strings)
-                if status in ['complete', 'failed']:
-                    client_utils.component_call(SYSMGR, False, 'reap_boot', (block,))
-                    if status == 'failed':
-                        failed = True
-                    break
-            client_utils.sleep(1)
-        if failed:
-            client_utils.logger.error("Boot for locaiton %s failed."% (block,))
-        else:
-            client_utils.logger.info("Boot for locaiton %s complete."% (block,))
+        client_utils.boot_block(block, user, jobid)
 
 if __name__ == '__main__':
     try:

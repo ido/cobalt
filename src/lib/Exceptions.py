@@ -131,3 +131,10 @@ class ResourceReservationFailure (Exception):
     '''
     log = True
     fault_code = fault_code_counter.next()
+
+class JobNotInteractive(Exception):
+    """
+    Denote that we tried to terminate a non interactive job
+    """
+    log = True
+    fault_code = fault_code_counter.next()
