@@ -378,8 +378,8 @@ class ClusterBaseSystem (Component):
                 best_location_dict.update(location_data)
                 break
             elif drain_time != 0: #found a drain location
-                drain_locations = set(location_data[jobid])
-                self.logger.info("%s/%s: Is draining nodes %s", user, jobid, ":".join(location_data[jobid]))
+                drain_locations = set(location_data[str(jobid)])
+                self.logger.info("%s/%s: Is draining nodes %s", user, jobid, ":".join(location_data[str(jobid)]))
                 break
 
         #make a second pass to pick a job for the draining nodes

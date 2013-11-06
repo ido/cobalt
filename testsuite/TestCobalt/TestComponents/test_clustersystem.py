@@ -22,6 +22,10 @@ run_remote = false
 [system]
 size = 4
 
+[logging]
+to_syslog = True
+syslog_level = DEBUG
+
 '''
 STD_COBALT_HOSTFILE_NAME = 'cobalt.hostfile'
 STD_COBALT_HOSTFILE = '''vs1.test
@@ -61,6 +65,7 @@ def get_basic_job_dict():
             'nodes': 1,
             'queue': 'default',
             'walltime': 10,
+            'user': 'testuser'
             }
 
 class TestClusterSystem(object):
@@ -238,3 +243,27 @@ class TestClusterSystem(object):
                 new_drain_time)
         assert best_location == {}, "ERROR: Expected best location: %s\nGot:%s" % \
                 ({}, best_location)
+
+    #Test find_job_location.  Take list of jobs and end times, and find a valid location.
+    def test_find_job_locaiton_single_valid_job(self):
+        jobs = [get_basic_job_dict()]
+        best_location = self.cluster_system.find_job_location(jobs, [])
+        assert best_location == {'1':['vs2.test']}, "ERROR: Unexpected best_location.\nExpected %s\nGot %s" % \
+                ({'1':['vs2.test']}, best_location)
+
+    def test_find_job_locaiton_no_valid_job(self):
+        jobs = [get_basic_job_dict()]
+        jobs[0]['walltime'] = 300
+        self.cluster_system.running_nodes = self.full_node_set
+        end_times = [[list(self.full_node_set), int(time.time()) + 600]]
+        best_location = self.cluster_system.find_job_location(jobs, end_times)
+        assert best_location == {}, "ERROR: Unexpected best_location.\nExpected %s\nGot %s" % \
+                ({}, best_location)
+
+    def test_find_job_location_too_many_down_locs(self):
+        jobs = [get_basic_job_dict()]
+        self.cluster_system.nodes_down(list(self.full_node_set))
+        best_location = self.cluster_system.find_job_location(jobs, [])
+        assert best_location == {}, "ERROR: Unexpected best_location.\nExpected %s\nGot %s" % \
+                ({}, best_location)
+
