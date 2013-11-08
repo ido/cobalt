@@ -2167,7 +2167,10 @@ class BGSystem (BGBaseSystem):
         '''
         if pgroup.mode == 'interactive': 
             pgroup.forker = None
-
+            if pgroup.script_preboot:
+                self.booter.initiate_boot(pgroup.location[0], pgroup.jobid, pgroup.user,
+                                          self._blocks[pgroup.location[0]].subblock_parent, 
+                                          tag='internal')
         elif pgroup.mode == "script":
             pgroup.forker = 'user_script_forker'
             if pgroup.script_preboot == False:

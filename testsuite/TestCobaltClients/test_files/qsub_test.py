@@ -5102,178 +5102,6 @@ def test_qsub_interactive_2():
 
 
 # ---------------------------------------------------------------------------------
-def test_qsub_interactive_3():
-    """
-    qsub test run: interactive_3
-
-    """
-
-    args      = """-I -t50 -n 1"""
-
-    cmdout    = \
-"""Deleting interactive job 1
-"""
-
-    cmderr    = \
-"""ERROR: Something went wrong with job submission, did not expect job to reach * state.
-"""
-
-    stubout   = \
-"""
-ADD_JOBS
-
-cwd:/tmp
-cwd type: <type 'str'>
-ion_kernel:default
-ion_kernel type: <type 'str'>
-jobid:*
-jobid type: <type 'str'>
-kernel:default
-kernel type: <type 'str'>
-mode:interactive
-mode type: <type 'str'>
-nodes:1
-nodes type: <type 'int'>
-outputdir:/tmp
-outputdir type: <type 'str'>
-path:/tmp
-path type: <type 'str'>
-procs:512
-procs type: <type 'str'>
-queue:default
-queue type: <type 'str'>
-run_project:False
-run_project type: <type 'bool'>
-script_preboot:True
-script_preboot type: <type 'bool'>
-tag:job
-tag type: <type 'str'>
-umask:18
-umask type: <type 'int'>
-user:gooduser
-user type: <type 'str'>
-user_list:['gooduser']
-user_list type: <type 'list'>
-walltime:50
-walltime type: <type 'str'>
-
-VALIDATE_JOB
-
-attrs:{}
-attrs type: <type 'dict'>
-cwd:/tmp
-cwd type: <type 'str'>
-debug:False
-debug type: <type 'bool'>
-debuglog:False
-debuglog type: <type 'bool'>
-dependencies:False
-dependencies type: <type 'bool'>
-disable_preboot:False
-disable_preboot type: <type 'bool'>
-env:False
-env type: <type 'bool'>
-error:False
-error type: <type 'bool'>
-forcenoval:False
-forcenoval type: <type 'bool'>
-geometry:False
-geometry type: <type 'bool'>
-held:False
-held type: <type 'bool'>
-inputfile:False
-inputfile type: <type 'bool'>
-interactive:False
-interactive type: <type 'bool'>
-ion_kernel:default
-ion_kernel type: <type 'str'>
-ion_kerneloptions:False
-ion_kerneloptions type: <type 'bool'>
-jobname:False
-jobname type: <type 'bool'>
-kernel:default
-kernel type: <type 'str'>
-kerneloptions:False
-kerneloptions type: <type 'bool'>
-mode:interactive
-mode type: <type 'str'>
-nodecount:1
-nodecount type: <type 'str'>
-notify:False
-notify type: <type 'bool'>
-output:False
-output type: <type 'bool'>
-outputprefix:False
-outputprefix type: <type 'bool'>
-preemptable:False
-preemptable type: <type 'bool'>
-proccount:False
-proccount type: <type 'bool'>
-project:False
-project type: <type 'bool'>
-queue:default
-queue type: <type 'str'>
-run_project:False
-run_project type: <type 'bool'>
-time:50
-time type: <type 'str'>
-umask:False
-umask type: <type 'bool'>
-user_list:False
-user_list type: <type 'bool'>
-verbose:False
-verbose type: <type 'bool'>
-version:False
-version type: <type 'bool'>
-
-
-GET_IMPLEMENTATION
-
-
-GET_JOBS
-
-jobid:1
-jobid type: <type 'int'>
-location:*
-location type: <type 'str'>
-state:*
-state type: <type 'str'>
-tag:job
-tag type: <type 'str'>
-
-DEL_JOBS
-
-force:False
-whoami:gooduser
-jobid:1
-jobid type: <type 'int'>
-tag:job
-tag type: <type 'str'>
-user:gooduser
-user type: <type 'str'>
-"""
-
-    stubout_file = "stub.out"
-
-    expected_results = ( 
-                       0, # Expected return status 
-                       cmdout, # Expected command output
-                       stubout, # Expected stub functions output
-                       cmderr, # Expected command error output 
-                       ) 
-
-    testutils.save_testhook("")
-
-    results = testutils.run_cmd('qsub.py',args,stubout_file) 
-    result  = testutils.validate_results(results,expected_results)
-
-    testutils.remove_testhook()
-
-    correct = 1
-    assert result == correct, "Result:\n%s" % result
-
-
-# ---------------------------------------------------------------------------------
 def test_qsub_interactive_4():
     """
     qsub test run: interactive_4
@@ -5320,7 +5148,8 @@ def test_qsub_interactive_5():
     args      = """-I -t50 -n 1"""
 
     cmdout    = \
-"""Opening interactive session to /
+"""Wait for job 1 to start...
+Opening interactive session to /
 Deleting interactive job 1
 """
 
@@ -5491,7 +5320,8 @@ def test_qsub_interactive_6():
     args      = """--interactive -t50 -n 1"""
 
     cmdout    = \
-"""Opening interactive session to /
+"""Wait for job 1 to start...
+Opening interactive session to /
 Deleting interactive job 1
 """
 
@@ -5662,7 +5492,8 @@ def test_qsub_interactive_7():
     args      = """--mode interactive -t50 -n 1"""
 
     cmdout    = \
-"""Opening interactive session to /
+"""Wait for job 1 to start...
+Opening interactive session to /
 Deleting interactive job 1
 """
 

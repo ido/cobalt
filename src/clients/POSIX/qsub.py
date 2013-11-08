@@ -84,11 +84,6 @@ def on_interrupt(sig, func=None):
     'count' will keep track how many interruptions happened and 
     'exit' flags whether we completely exit once the interrupt occurs.
     """
-    if not hasattr(on_interrupt, 'count'):
-        on_interrupt.count = 1
-    if not hasattr(on_interrupt, 'exit'):
-        on_interrupt.exit = True
-
     on_interrupt.count += 1
     if on_interrupt.exit:
         sys.exit(1)
@@ -97,8 +92,19 @@ def on_interrupt(sig, func=None):
 on_interrupt.count = 0
 on_interrupt.exit  = True
 
-# lambda function to check if user interrupted
-interrupt_occured = lambda : on_interrupt.count > 0
+def exit_on_interrupt():
+    """
+    Set to exit when interrupt occurs
+    """
+    on_interrupt.exit = True
+    if on_interrupt.count > 0:
+        sys.exit(1)
+
+def not_exit_on_interrupt():
+    """
+    Set to not exit on interrupt
+    """
+    on_interrupt.exit = False
 
 # Reset sigint and sigterm interrupt handlers to deal with interactive failures
 signal.signal(signal.SIGINT, on_interrupt)
@@ -108,34 +114,21 @@ signal.signal(signal.SIGABRT, on_interrupt)
 signal.signal(signal.SIGXCPU, on_interrupt)
 signal.signal(signal.SIGPIPE, on_interrupt)
 
-def component_call(comp_name, defer, func_name, args, exit_on_error = True):
+def exit_interactive_job(deljob, jobid, user):
     """
-    wrap component_call to handle interrupts
+    Exit job normally or delete job
     """
-    on_interrupt.exit = False
-    retval = client_utils.component_call(comp_name, defer, func_name, args, exit_on_error)
-    on_interrupt.exit = True
-
-    return retval
-
-def exit_interactive_job(force, jobid, user):
-    """
-    Exit job normally or forcefully as specified 
-    """
+    not_exit_on_interrupt()
     # If no jobid assigned yet return
     if not jobid:
         return
-
-    try:
-        if force:
-            job_to_del = [{'tag':'job', 'jobid':jobid, 'user':user}]
-            client_utils.logger.info("Deleting interactive job %s", str(jobid))
-            component_call(QUEMGR, False, 'del_jobs', (job_to_del, False, user), False)
-        else:
-            client_utils.logger.info("Exiting interactive job %d", int(jobid))
-            component_call(SYSMGR, False, 'interactive_job_complete', (jobid,), False)
-    except xmlrpclib.Fault, fault:
-        client_utils.logger.error('Unexpected exception %s when trying to exit interactive job %s', fault, str(jobid))
+    if deljob:
+        job_to_del = [{'tag':'job', 'jobid':jobid, 'user':user}]
+        client_utils.logger.info("Deleting interactive job %s", str(jobid))
+        client_utils.component_call(QUEMGR, False, 'del_jobs', (job_to_del, False, user))
+    else:
+        client_utils.logger.info("Exiting interactive job %d", int(jobid))
+        client_utils.component_call(SYSMGR, False, 'interactive_job_complete', (jobid,))
 
 def validate_args(parser, spec):
     """
@@ -281,6 +274,7 @@ def update_spec(parser, opts, spec, opt2spec):
     for opt in ['mode', 'proccount', 'nodecount']:
         spec[opt2spec[opt]] = opts[opt]
     
+    # Hack until the Cluster Systems get re-written.
     if parser.options.mode == 'interactive' and 'command' in opts and 'args' in opts:
         spec['command'] = opts['command']
         spec['args']    = opts['args']
@@ -360,77 +354,67 @@ def run_interactive_job(jobid, user, disable_preboot):
     """
     This will create the shell or ssh session for user
     """
+    not_exit_on_interrupt()
     # save whether we are running on a cluster system
-    impl = component_call(SYSMGR, False, 'get_implementation', ())
-    if interrupt_occured():
-        sys.exit(1)
+    impl =  client_utils.component_call(SYSMGR, False, 'get_implementation', ())
+    exit_on_interrupt()
 
-    cluster_system = True if impl == "cluster_system" else False
+    deljob = True if impl == "cluster_system" else False
 
-    def start_session():
+    def start_session(loc):
         """
         start ssh or shell session
         """
         # Create necesary env vars
-        os.putenv("COBALT_NODEFILE", "/var/tmp/cobalt.%s" % (response[0]['jobid']))
-        os.putenv("COBALT_JOBID", "%s" % (response[0]['jobid']))
-        os.putenv("COBALT_PARTNAME", location[0])
-        os.putenv("COBALT_BLOCKNAME", location[0])
-
-        client_utils.logger.info("Opening interactive session to %s", location[0])
-
-        if cluster_system:
-            os.system("/usr/bin/ssh -o \"SendEnv COBALT_NODEFILE COBALT_JOBID\" %s" % (location[0]))
+        os.putenv("COBALT_NODEFILE", "/var/tmp/cobalt.%s" % (jobid))
+        os.putenv("COBALT_JOBID", "%s" % (jobid))
+        os.putenv("COBALT_PARTNAME", loc)
+        os.putenv("COBALT_BLOCKNAME", loc)
+        client_utils.logger.info("Opening interactive session to %s", loc)
+        if deljob:
+            os.system("/usr/bin/ssh -o \"SendEnv COBALT_NODEFILE COBALT_JOBID\" %s" % (loc))
         else:
-            if not disable_preboot:
-                client_utils.logger.info("booting %s...", location[0])
-                client_utils.boot_block(location[0], user, jobid) 
             os.system(os.environ['SHELL'])
 
     # Wait for job to start
     query = [{'tag':'job', 'jobid':jobid, 'location':'*', 'state':"*"}]
-    component_error  = True
-
     client_utils.logger.info("Wait for job %s to start...", str(jobid))
 
     while True:
         # If we get a ssl timeout error or component lookup error try again
         try:
-            response = component_call(QUEMGR, False, 'get_jobs', (query, ), False)
-            if not response or interrupt_occured():
-                sys.exit(1)
-            component_error = False
+            not_exit_on_interrupt()
+            response =  client_utils.component_call(QUEMGR, False, 'get_jobs', (query, ), False)
+            exit_on_interrupt()
+            # if jobid not found flag an error and exit
+            if not response:
+                client_utils.logger.error("Jobid %s not found after submission", str(jobid))
+                sys.exit()
         except (xmlrpclib.Fault, ComponentProxy) as fault:
-            pass
-
-        if component_error:
+            # This can happen if the component is down so try again
             client_utils.logger.error('Error getting job info: %s. Try again', fault)
             sleep(2)
-            continue
-            
         state    = response[0]['state']
         location = response[0]['location']
-
         if state == 'running' and location:
-            start_session()
+            start_session(location[0])
             break
-
+        client_utils.logger.debug('Current State "%s" for job %s', str(state), str(jobid))
         sleep(2)
 
-    return cluster_system
+    return deljob
 
 def run_job(parser, user, spec, opts):
     """
     run the job
     """
+    jobid = None
+    deljob = True
     try:
-        jobid = None
-        force = True
-        jobs  = component_call(QUEMGR, False, 'add_jobs',([spec],), False)
+        not_exit_on_interrupt()
+        jobs  =  client_utils.component_call(QUEMGR, False, 'add_jobs',([spec],), False)
         jobid = jobs[0]['jobid']
-
-        if interrupt_occured():
-            sys.exit(1)
+        exit_on_interrupt()
 
         if parser.options.envs:
             client_utils.logger.debug("Environment Vars: %s", parser.options.envs)
@@ -438,13 +422,12 @@ def run_job(parser, user, spec, opts):
         # If this is an interactive job, wait for it to start, then start user shell
         if parser.options.mode == 'interactive':
             logjob(jobid, spec, False)
-            force = run_interactive_job(jobid, user,  opts['disable_preboot'])
+            deljob = run_interactive_job(jobid, user,  opts['disable_preboot'])
         else:
             logjob(jobid, spec, True)
-
     finally:
         if parser.options.mode == 'interactive':
-            exit_interactive_job(force, jobid, user)
+            exit_interactive_job(deljob, jobid, user)
 
 def main():
     """
@@ -515,9 +498,9 @@ def main():
     update_paths(spec)
     check_inputfile(parser, spec)
 
-    opts = component_call(SYSMGR, False, 'validate_job',(opts,))
-    if interrupt_occured():
-        sys.exit(1)
+    not_exit_on_interrupt()
+    opts = client_utils.component_call(SYSMGR, False, 'validate_job',(opts,))
+    exit_on_interrupt()
 
     filters = client_utils.get_filters()
     client_utils.process_filters(filters, spec)
