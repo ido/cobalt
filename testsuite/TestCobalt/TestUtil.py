@@ -3,6 +3,7 @@ import os
 import pwd
 import errno
 import tempfile
+import re
 NamedTemporaryFile = tempfile.NamedTemporaryFile
 
 import Cobalt.Util
@@ -130,7 +131,8 @@ class TestDiskWriter(object):
         for line in f:
             count += 1
             success_line = line
-            if line == 'SUCCESS\n':
+            m = re.match(r'[a-zA-Z]+ [a-zA-Z]+ [0-9]+ [0-9]+:[0-9]+:[0-9]+ [0-9]+ [+-][0-9]+ \([a-zA-Z]+\) SUCCESS\n', line)
+            if m is not None:
                 success_found = True
         assert success_found, 'SUCCESS not written to file, found %s instead' % (success_line)
         
