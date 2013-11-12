@@ -1670,7 +1670,7 @@ def test_qstat_full_option_4():
     Queue             : hhh
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -1711,7 +1711,7 @@ JobID: 3
     Queue             : aaa
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -1752,7 +1752,7 @@ JobID: 1
     Queue             : jello
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -1793,7 +1793,7 @@ JobID: 2
     Queue             : bello
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -1834,7 +1834,7 @@ JobID: 4
     Queue             : bbb
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -2332,7 +2332,7 @@ def test_qstat_full_option_5():
     Queue             : bbb
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -2373,7 +2373,7 @@ JobID: 2
     Queue             : bello
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -2414,7 +2414,7 @@ JobID: 1
     Queue             : jello
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -2455,7 +2455,7 @@ JobID: 3
     Queue             : aaa
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -2496,7 +2496,7 @@ JobID: 5
     Queue             : hhh
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -2994,7 +2994,7 @@ def test_qstat_full_option_6():
     Queue             : bbb
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -3035,7 +3035,7 @@ JobID: 3
     Queue             : aaa
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -3076,7 +3076,7 @@ JobID: 5
     Queue             : hhh
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -3117,7 +3117,7 @@ JobID: 2
     Queue             : bello
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -3158,7 +3158,7 @@ JobID: 1
     Queue             : jello
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -3656,7 +3656,7 @@ def test_qstat_full_option_7():
     Queue             : jello
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -3697,7 +3697,7 @@ JobID: 2
     Queue             : bello
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -3738,7 +3738,7 @@ JobID: 5
     Queue             : hhh
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -3779,7 +3779,7 @@ JobID: 3
     Queue             : aaa
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -3820,7 +3820,7 @@ JobID: 4
     Queue             : bbb
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -4318,7 +4318,7 @@ def test_qstat_full_option_8():
     Queue             : aaa
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -4359,7 +4359,7 @@ JobID: 4
     Queue             : bbb
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -4400,7 +4400,7 @@ JobID: 2
     Queue             : bello
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -4441,7 +4441,7 @@ JobID: 5
     Queue             : hhh
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -4482,7 +4482,7 @@ JobID: 1
     Queue             : jello
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -4980,7 +4980,7 @@ def test_qstat_full_option_9():
     Queue             : jello
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -5021,7 +5021,7 @@ JobID: 5
     Queue             : hhh
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -5062,7 +5062,7 @@ JobID: 2
     Queue             : bello
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -5103,7 +5103,7 @@ JobID: 4
     Queue             : bbb
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
@@ -5144,7 +5144,7 @@ JobID: 3
     Queue             : aaa
     StartTime         : N/A
     Index             : -
-    SubmitTime        : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
     Path              : -
     OutputDir         : -
     ErrorPath         : /tmp
