@@ -66,10 +66,10 @@ def main():
         [ cb_debug        , () ] ]
 
     # Get the version information
-    opt_def =  __doc__.replace('__revision__',__revision__)
-    opt_def =  opt_def.replace('__version__',__version__)
+    opt_def =  __doc__.replace('__revision__', __revision__)
+    opt_def =  opt_def.replace('__version__', __version__)
 
-    parser = ArgParse(opt_def,callbacks)
+    parser = ArgParse(opt_def, callbacks)
 
     whoami = client_utils.getuid()
     parser.parse_it() # parse the command line
@@ -119,10 +119,10 @@ def main():
                     queues.append(queue)
             now = int(time.time()) #This comes back as a float in python
             for end_time in end_times_to_nodes:
-                if int(end_time) == 0:
+                if int(end_time) == 0 or status != 'idle':
                     pass
                 elif host_name in end_times_to_nodes[end_time]:
-                    print end_time, now
+                    print end_times_to_nodes[end_time]
                     raw_backfill_time = max(0, int(end_time) - now)
                     if raw_backfill_time <= 0:
                         backfill_time = "00:00:00"

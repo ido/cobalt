@@ -12,7 +12,7 @@ import grp
 import ConfigParser
 import os
 import Cobalt.Util
-from Cobalt.Exceptions import  JobValidationError, NotSupportedError, ComponentLookupError
+from Cobalt.Exceptions import  JobValidationError, NotSupportedError, ComponentLookupError, RequiredLocationError
 from Cobalt.DataTypes.ProcessGroup import ProcessGroupDict
 from Cobalt.Data import DataDict
 from Cobalt.Proxy import ComponentProxy
@@ -141,6 +141,7 @@ class ClusterBaseSystem (Component):
 
         self.alloc_timeout = int(get_cluster_system_config("allocation_timeout", 300))
         self.node_end_time_dict = {}
+        self.draining_nodes = {}
         self.logger.info("allocation timeout set to %d seconds." % self.alloc_timeout)
 
     def __getstate__(self):
@@ -187,6 +188,7 @@ class ClusterBaseSystem (Component):
         self.alloc_timeout = int(get_cluster_system_config("allocation_timeout", 300))
         self.logger.info("allocation timeout set to %d seconds." % self.alloc_timeout)
         self.node_end_time_dict = {}
+        self.draining_nodes = {}
 
     def save_me(self):
         '''Automatically write statefiles.'''
@@ -261,7 +263,6 @@ class ClusterBaseSystem (Component):
 
 
         '''
-        #renove these
         forbidden = set(job.get('forbidden', []))
         required = set(job.get('required', []))
         selected_locations = set([])
@@ -276,22 +277,21 @@ class ClusterBaseSystem (Component):
         if not required.issubset(available_nodes):
             self.logger.warning('%s/%s has locations %s that are not in the queue for this job.  Job will never run.',
                     job['user'], job['jobid'], ", ".join([str(s) for s in required.difference(available_nodes)]))
-            #TODO: make this a custom exception.  Will be derived from RuntimeError
-            raise RuntimeError('Required Locations not in queue')
+            raise RequiredLocationError('Required Locations are not available in this queue: %s',
+                    ''.join([str(node) for node in required.difference(available_nodes)]))
 
         #remove forbidden and down nodes from cosnideration
         available_nodes = available_nodes.difference(forbidden, self.down_nodes)
-        self.logger.debug('avail_nodes %s, drain time: %s', available_nodes, drain_time)
 
         if len(available_nodes) < int(job['nodes']):
             #bail out early, we don't have enough nodes to even consider this job!
             return {}, 0, False
 
-        if len(available_nodes) >= job['nodes'] and (job_end_time < drain_time or drain_time == 0):
+        if len(available_nodes) >= job['nodes'] and (int(job_end_time) < int(drain_time) or int(drain_time) == 0):
             # do we have enough that are idle?  The job is smaller than our drain time.
             idle_nodes = available_nodes.difference(self.running_nodes)
             if len(idle_nodes) >= job['nodes']:
-                selected_locations = [idle_nodes.pop() for i in range(job['nodes'])]
+                selected_locations = [idle_nodes.pop() for _ in range(job['nodes'])]
                 ready_to_run = True
 
         if drain_time == 0 and ready_to_run == False: #go ahead and select locations for draining.
@@ -372,8 +372,8 @@ class ClusterBaseSystem (Component):
             user = args['user']
             try:
                 location_data, drain_time, ready_to_run = self._find_job_location(args, now)
-            except RuntimeError:
-                raise
+            except RequiredLocationError:
+                self.logger.warning("%s/%s: Insufficent locations for job in its current queue.", jobid, user)
             if ready_to_run:
                 best_location_dict.update(location_data)
                 break
@@ -383,19 +383,23 @@ class ClusterBaseSystem (Component):
                 break
 
         #make a second pass to pick a job for the draining nodes
+        self.draining_nodes = {}
+        backfill_drain_time = drain_time
         if drain_locations is not None:
+            self.draining_nodes = {str(drain_time):list(drain_locations)}
             for args in arg_list:
                 jobid = int(args['jobid'])
                 user = args['user']
                 try:
-                    location_data, drain_time, ready_to_run = self._find_job_location(args, now, drain_time)
+                    location_data, drain_time, ready_to_run = self._find_job_location(args, now, backfill_drain_time)
                 except RuntimeError:
                     pass
                 if ready_to_run:
                     best_location_dict.update(location_data)
                     self.logger.info("%s/%s: job selected for backfill on locations %s", user, jobid,
-                            ':'.join(location_data[jobid]))
+                            ':'.join(location_data[str(jobid)]))
                     break
+
 
         # reserve the stuff in the best_partition_dict, as those partitions are allegedly going to
         # be running jobs very soon
@@ -408,7 +412,6 @@ class ClusterBaseSystem (Component):
             for location in location_list:
                 self.alloc_only_nodes[location] = now
             self.locations_by_jobid[jobid] = location_list
-        self.logger.debug("BLDict: %s", best_location_dict)
         return best_location_dict
     find_job_location = exposed(find_job_location)
 
@@ -432,7 +435,30 @@ class ClusterBaseSystem (Component):
                 else:
                     self.node_end_time_dict[int(end_time)].append(location)
                     self.node_end_time_dict[0].remove(location)
+        # add in locations that are being cleaned, but are not coming from the scheduling component
+        for locations in self.locations_by_jobid.itervalues():
+            self._append_cleanup_drain_shadow(locations)
         return
+
+    def _append_cleanup_drain_shadow(self, locations):
+        '''Append locations to our list of end times so that cleanup casts an appropriate backfill shadow.
+
+        '''
+        # add in locations that are being cleaned, but are not coming from the scheduling component
+        now = time.time()
+        #take the set of locations that we haven't assigned end-times to, and extend their times appropriately.
+        #these locations are in cleanup
+        cleaning_locations = set(locations) & set(self.node_end_time_dict[0])
+        if not cleaning_locations == set([]):
+            #cast a shadow 5 minutes in the future until these locations are no longer tracked.
+            #TODO: make this a config option
+            if self.node_end_time_dict.has_key(int(now) + 300):
+                self.node_end_time_dict[int(now) + 300].append(list(cleaning_locations))
+            else:
+                self.node_end_time_dict[int(now) + 300] = list(cleaning_locations)
+            for location in cleaning_locations:
+                if location in self.node_end_time_dict[0]:
+                    self.node_end_time_dict[0].remove(location)
 
     def check_alloc_only_nodes(self):
         '''Check to see if nodes that we have allocated but not run yet should be freed.
@@ -637,10 +663,10 @@ class ClusterBaseSystem (Component):
 
     def get_backfill_windows(self):
         '''Get the current drain limits for display'''
-        ret_dict = {}
-        for key, val in self.node_end_time_dict.iteritems():
-            ret_dict[str(key)] = val
-        return ret_dict
+        #ret_dict = {}
+        #for key, val in self.node_end_time_dict.iteritems():
+            #ret_dict[str(key)] = val
+        return self.draining_nodes
     get_backfill_windows = exposed(get_backfill_windows)
 
     def verify_locations(self, location_list):
@@ -706,6 +732,8 @@ class ClusterBaseSystem (Component):
 
         """
         self.logger.info("Job %s/%s: starting node cleanup." , user, jobid)
+        #Make sure we cast an appropriate backfill shadow.
+        self._append_cleanup_drain_shadow(locations)
         try:
             tmp_data = pwd.getpwnam(user)
             groupid = tmp_data.pw_gid
