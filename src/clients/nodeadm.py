@@ -102,36 +102,7 @@ def main():
                 client_utils.logger.info("   %s" %a)
 
     elif opt.list_nstates:
-        statuses = client_utils.component_call(SYSMGR, False, 'get_node_status', ())
-        queue_data = client_utils.component_call(SYSMGR, False, 'get_queue_assignments', ())
-        end_times_to_nodes = client_utils.component_call(SYSMGR, False, 'get_backfill_windows', ())
-
-        header = [['Host', 'Queue', 'State', 'Backfill']]
-        #build output list
-        output = []
-        for status in statuses:
-            host_name = status[0]
-            status = status[1]
-            queues = []
-            backfill_time = '-'
-            for queue in queue_data:
-                if host_name in queue_data[queue]:
-                    queues.append(queue)
-            now = int(time.time()) #This comes back as a float in python
-            for end_time in end_times_to_nodes:
-                if int(end_time) == 0 or status != 'idle':
-                    pass
-                elif host_name in end_times_to_nodes[end_time]:
-                    print end_times_to_nodes[end_time]
-                    raw_backfill_time = max(0, int(end_time) - now)
-                    if raw_backfill_time <= 0:
-                        backfill_time = "00:00:00"
-                    else:
-                        backfill_time = "%02d:%02d:%02d" % (raw_backfill_time / 3600, (raw_backfill_time % 3600) / 60,
-                                raw_backfill_time % 60)
-            output.append([host_name, ":".join(queues), status, backfill_time])
-
-
+        header, output = client_utils.cluster_display_node_info()
         client_utils.printTabular(header + output)
 
     elif opt.queue:
