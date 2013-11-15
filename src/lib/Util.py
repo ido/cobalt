@@ -365,7 +365,7 @@ def print_tabular(rows):
         except IOError:
             return
 
-def printTabular(rows, centered = []):
+def printTabular(rows, centered = [], with_header_info=True):
     '''print data in tabular format'''
     for row in rows:
         for index in xrange(len(row)):
@@ -384,8 +384,9 @@ def printTabular(rows, centered = []):
                 row[column] = str(row[column]).ljust(width)
         total += width + 2
     try:
-        print '  '.join(rows[0])
-        print total * '='
+        if with_header_info:
+            print '  '.join(rows[0])
+            print total * '='
         for row in rows[1:]:
             print '  '.join(row)
     except IOError:
