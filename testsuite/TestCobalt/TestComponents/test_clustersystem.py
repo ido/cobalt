@@ -130,7 +130,6 @@ class TestClusterSystem(object):
                 "ERROR: Mismatch between node_end_time_dict and full_node set for time %s!\nGenerated %s\nExpected %s\n" % \
                 (end_time_list[2], set(self.cluster_system.node_end_time_dict[end_time_list[2]]), set(['vs4.test']))
 
-
     def test__find_job_location_basic_job_no_drain(self):
         #Check that find job locations works with a basic job, clean resources, and sets job to run.
         now = int(time.time())
@@ -145,7 +144,6 @@ class TestClusterSystem(object):
         assert best_location != {}, "ERROR: Ready to run, but we have no best location."
         assert best_location == {'1':['vs2.test', 'vs4.test', 'vs1.test', 'vs3.test']}, "ERROR: Missing nodes from best location," \
             " got: %s" % best_location
-
 
     def test__find_job_location_job_all_down_locs(self):
         #ensure no attempt to run if all nodes are down.
@@ -172,7 +170,6 @@ class TestClusterSystem(object):
         assert not ready_to_run, "ERROR: marked ready to run when running impossible."
         assert new_drain_time == 0, "ERROR: No draining possible for this set of down hardware."
         assert best_location == {}, "ERROR: Best locaion found when no best loc possible! Tried %s" % best_location
-
 
     def test__find_job_location_drain_for_job(self):
         now = int(time.time())
@@ -264,6 +261,70 @@ class TestClusterSystem(object):
         jobs = [get_basic_job_dict()]
         self.cluster_system.nodes_down(list(self.full_node_set))
         best_location = self.cluster_system.find_job_location(jobs, [])
+        assert best_location == {}, "ERROR: Unexpected best_location.\nExpected %s\nGot %s" % \
+                ({}, best_location)
+
+    def test_find_job_locaiton_permit_short_job(self):
+        #Backfill a single elligible job
+        jobs = [get_basic_job_dict(), get_basic_job_dict()]
+        jobs[0]['walltime'] = 720
+        jobs[0]['score'] = 50000
+        jobs[0]['nodes'] = 2
+        jobs[1]['jobid'] = 2
+        jobs[1]['walltime'] = 5
+        jobs[1]['score'] = 10
+        self.cluster_system.running_nodes = set(['vs1.test', 'vs2.test', 'vs3.test'])
+        end_times = [[['vs1.test', 'vs2.test', 'vs3.test'], int(time.time()) + 400]]
+        best_location = self.cluster_system.find_job_location(jobs, end_times)
+        assert best_location == {'2':['vs4.test']}, "ERROR: Unexpected best_location.\nExpected %s\nGot %s" % \
+                ({'2':['vs4.test']}, best_location)
+
+    def test_find_job_location_backfill_only_eligible(self):
+        jobs = [get_basic_job_dict() for _ in range(3)]
+        jobs[0]['walltime'] = 720
+        jobs[0]['score'] = 50000
+        jobs[0]['nodes'] = 2
+        jobs[1]['jobid'] = 2
+        jobs[1]['walltime'] = 10
+        jobs[1]['score'] = 100
+        jobs[2]['jobid'] = 3
+        jobs[2]['walltime'] = 5
+        jobs[2]['score'] = 10
+        self.cluster_system.running_nodes = set(['vs1.test', 'vs2.test', 'vs3.test'])
+        end_times = [[['vs1.test', 'vs2.test', 'vs3.test'], int(time.time()) + 400]]
+        best_location = self.cluster_system.find_job_location(jobs, end_times)
+        assert best_location == {'3':['vs4.test']}, "ERROR: Unexpected best_location.\nExpected %s\nGot %s" % \
+                ({'3':['vs4.test']}, best_location)
+
+    def test_find_job_location_backfill_best_score(self):
+        #This is first.  It is assumed that jobs come in in priority order.
+        jobs = [get_basic_job_dict() for _ in range(3)]
+        jobs[0]['walltime'] = 720
+        jobs[0]['score'] = 50000
+        jobs[0]['nodes'] = 2
+        jobs[1]['jobid'] = 2
+        jobs[1]['walltime'] = 5
+        jobs[1]['score'] = 101
+        jobs[2]['jobid'] = 3
+        jobs[2]['walltime'] = 5
+        jobs[2]['score'] = 100
+        self.cluster_system.running_nodes = set(['vs1.test', 'vs2.test', 'vs3.test'])
+        end_times = [[['vs1.test', 'vs2.test', 'vs3.test'], int(time.time()) + 400]]
+        best_location = self.cluster_system.find_job_location(jobs, end_times)
+        assert best_location == {'2':['vs4.test']}, "ERROR: Unexpected best_location.\nExpected %s\nGot %s" % \
+                ({'2':['vs4.test']}, best_location)
+
+    def test_find_job_location_hold_for_cleanup(self):
+        #ensure that a job that is in a "cleanup" state doesn't get ignored for backfill scheduling
+        jobs = [get_basic_job_dict(), get_basic_job_dict()]
+        jobs[0]['walltime'] = 720
+        jobs[0]['nodes'] = 2
+        jobs[1]['jobid'] = 2
+        jobs[1]['walltime'] = 60
+        self.cluster_system.running_nodes = set(['vs1.test', 'vs2.test', 'vs3.test'])
+        self.cluster_system.locations_by_jobid = {100:['vs1.test', 'vs2.test', 'vs3.test']}
+        end_times = []
+        best_location = self.cluster_system.find_job_location(jobs, end_times)
         assert best_location == {}, "ERROR: Unexpected best_location.\nExpected %s\nGot %s" % \
                 ({}, best_location)
 

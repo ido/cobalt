@@ -263,12 +263,20 @@ class ClusterBaseSystem (Component):
 
 
         '''
-        forbidden = set(job.get('forbidden', []))
-        required = set(job.get('required', []))
+        forbidden = set(job.get('forbidden', [])) #These are locations the scheduler has decided are inelligible for running.
+        required = set(job.get('required', [])) #Always consider these nodes for scheduling, due to things being in a reservation
         selected_locations = set([])
         new_drain_time = 0
         ready_to_run = False
-        available_nodes = self.queue_assignments[job['queue']].difference(forbidden)
+        try:
+            available_nodes = self.queue_assignments[job['queue']].difference(forbidden)
+        except KeyError:
+            #The key error is due to the queue being a reservation queue.  Those have no resources assigned in the system
+            #component.  This should be changed in a later version, but for now, we can run straight off the "required"
+            #nodes list
+            available_nodes = set([])
+        finally:
+            available_nodes.update(set(required))
 
         #TODO: include bit to enable predicted walltimes to be used
         job_end_time = int(job['walltime']) * 60 + int(now)
@@ -291,7 +299,7 @@ class ClusterBaseSystem (Component):
             # do we have enough that are idle?  The job is smaller than our drain time.
             idle_nodes = available_nodes.difference(self.running_nodes)
             if len(idle_nodes) >= job['nodes']:
-                selected_locations = [idle_nodes.pop() for _ in range(job['nodes'])]
+                selected_locations = set([idle_nodes.pop() for _ in range(job['nodes'])])
                 ready_to_run = True
 
         if drain_time == 0 and ready_to_run == False: #go ahead and select locations for draining.
