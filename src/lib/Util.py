@@ -842,9 +842,10 @@ def sec_to_str(t):
     timestamp = None
     offset = None
     tzname = None
+    fmt    = "%a %b %d %H:%M:%S %Y"
 
     if no_pytz:
-        timestamp = time.strftime("%c", time.localtime(t))
+        timestamp = time.strftime(fmt, time.localtime(t))
 
         tzh = 0
         tzm = 0
@@ -869,7 +870,7 @@ def sec_to_str(t):
 
         dt = datetime.fromtimestamp(t, tz)
 
-        timestamp = dt.strftime("%c")
+        timestamp = dt.strftime(fmt)
         offset = dt.strftime("%z")
         tzname = dt.strftime("(%Z)")
 
@@ -1062,7 +1063,8 @@ class disk_writer_thread(Thread):
                     #Only you can prevent partial writes
                     count = 0
                     try:
-                        count = os.write(fd, file_msg.msg[file_msg.written:])
+                        _msg = "%s %s" % (sec_to_str(time.time()), file_msg.msg[file_msg.written:])
+                        count = os.write(fd, _msg)
                     except IOError:
                         logger.warn("Unable to complete write to ")
 

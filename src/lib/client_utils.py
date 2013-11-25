@@ -40,6 +40,12 @@ EQL_TAG = "<<*EQL*>>"
 ESC_COL = "\:"
 ESC_EQL = "\="
 
+# posix return statuses 
+AUTH_FAIL       = 2
+BAD_OPTION_FAIL = 3
+GENERAL_FAIL    = 1
+SUCCESS         = 0
+
 class Logger(object):
     """
     This class will handle logging to standard error or standard out
@@ -280,7 +286,7 @@ class header_info(object):
     long_header = ['JobID','JobName','User','WallTime','QueuedTime','RunTime','TimeRemaining','Nodes','State',
                    'Location','Mode','Procs','Preemptable','User_Hold','Admin_Hold','Queue','StartTime','Index',
                    'SubmitTime','Path','OutputDir','ErrorPath','OutputPath','Envs','Command','Args','Kernel',
-                   'KernelOptions','Project','Dependencies','short_state','Notify','Score','Maxtasktime','attrs',
+                   'KernelOptions', 'ION_Kernel', 'ION_KernelOptions', 'Project','Dependencies','short_state','Notify','Score','Maxtasktime','attrs',
                    'dep_frac','user_list','Geometry']
 
     custom_header      = None
@@ -657,9 +663,9 @@ def system_info():
     if sys_type == 'bgp':
         job_types = ['smp', 'co', 'dual', 'vn', 'script']
     if sys_type == 'bgq':
-        job_types = ['c1', 'c2', 'c4', 'c8', 'c16', 'c32', 'c64', 'script']
+        job_types = ['c1', 'c2', 'c4', 'c8', 'c16', 'c32', 'c64', 'script', 'interactive']
     else:
-        job_types = ['co', 'vn', 'script']
+        job_types = ['co', 'vn', 'script', 'interactive']
     return (sys_type,job_types)
 
 def get_jobids(args):
@@ -726,6 +732,39 @@ def cobalt_date(date):
     Convert date to Cobalt format
     """
     return time.strftime('%Y_%m_%d-%H:%M', date)
+
+def boot_block(block, user, jobid):
+    """
+    utility to boot specified block
+    """
+    success = component_call(SYSMGR, False, 'initiate_proxy_boot', (block, user, jobid), False)
+    if not success:
+        logger.error("Boot request for block %s failed authorization." % (block, ))
+        return AUTH_FAIL
+    #give the system component a moment to initiate the boot
+    sleep(3)
+    #wait for block to boot
+    failed = SUCCESS
+    found = False
+    while True:
+        boot_id, status, status_strings = component_call(SYSMGR, False, 'get_boot_statuses_and_strings', (block,))
+        if not found:
+            if boot_id != None:
+                found = True
+        else:
+            if status_strings != [] and status_strings != None:
+                print "\n".join(status_strings)
+            if status in ['complete', 'failed']:
+                component_call(SYSMGR, False, 'reap_boot', (block,))
+                if status == 'failed':
+                    failed = True
+                break
+        sleep(1)
+    if failed:
+        logger.error("Boot for locaiton %s failed."% (block,))
+    else:
+        logger.info("Boot for locaiton %s complete."% (block,))
+    return failed
 
 #  
 # Callback fucntions for argument parsing defined below
@@ -1008,9 +1047,9 @@ def cb_res_users(option, opt_str, value, parser, *args):
     users = value
     setattr(parser.values, option.dest, users)
     
-def cb_mode(option,opt_str,value,parser,*args):
+def _set_mode(option, opt_str, value, parser, *args):
     """
-    This callback will validate an store the system mode.
+    check mode
     """
     (sys_type,job_types) = system_info()
 
@@ -1027,7 +1066,19 @@ def cb_mode(option,opt_str,value,parser,*args):
         sys.exit(1)
     if mode == 'co' and sys_type == 'bgp':
         mode = 'SMP'
-    setattr(parser.values, option.dest, mode) # set the option
+    setattr(parser.values, 'mode', mode) # set the option
+
+def cb_interactive(option, opt_str, value, parser, *args):
+    """
+    Callback to handle interactive mode
+    """
+    _set_mode(option, opt_str, 'interactive', parser, *args)
+
+def cb_mode(option, opt_str, value, parser, *args):
+    """
+    This callback will validate an store the system mode.
+    """
+    _set_mode(option, opt_str, value, parser, *args)
 
 def cb_cwd(option,opt_str,value,parser,*args):
     """

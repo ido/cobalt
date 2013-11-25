@@ -17,6 +17,7 @@ import os
 import signal
 import sys
 import ConfigParser
+import time
 
 import Cobalt
 import Cobalt.Components.base
@@ -201,6 +202,7 @@ class BaseChild (object):
         self.print_clf("ERROR: " + fmt, *args, error=True)
 
     def print_clf(self, fmt, *args, **kwargs):
+        t = Cobalt.Util.sec_to_str(time.time()) + ' '
         if not self._cobalt_log_file:
             self._open_clf()
         if self._cobalt_log_file and not self._cobalt_log_failed:
@@ -218,7 +220,8 @@ class BaseChild (object):
                         print >>self._cobalt_log_file, ""
                         self._cobalt_log_have_blank_line = True
                     self._cobalt_log_reporting_errors = False
-                print >>self._cobalt_log_file, fmt % args
+                _msg = t + (fmt % args)
+                print >>self._cobalt_log_file, _msg
                 if fmt != "":
                     self._cobalt_log_have_blank_line = False
             except (IOError, OSError), e:

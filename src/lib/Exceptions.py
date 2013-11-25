@@ -132,6 +132,13 @@ class ResourceReservationFailure (Exception):
     log = True
     fault_code = fault_code_counter.next()
 
+class JobNotInteractive(Exception):
+    """
+    Denote that we tried to terminate a non interactive job
+    """
+    log = True
+    fault_code = fault_code_counter.next()
+
 class RequiredLocationError(LookupError):
     '''One or more required locations for resource allocation are unavailable.
 
