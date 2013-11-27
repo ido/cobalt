@@ -96,8 +96,9 @@ class BGRunjobChild (PGChild):
         if len(app_envs) > 0:
             for e in app_envs:
                 self.args.extend(['--envs', ("%s=%s" % e)])
-        #if self.pg.kerneloptions: FIXME: No kernel support yet
-        #    cmd.extend(['-kernel_options', self.pg.kerneloptions])
+        self.args.extend(['--envs', ('COBALT_STARTTIME=%s' % str(int(float(self.pg.starttime))))])
+        self.args.extend(['--envs', ('COBALT_ENDTIME=%s' % str(int(float(self.pg.starttime)) + (60 * int(self.pg.walltime))))])
+
         #munging for the "MPIRUN_LABEL" and the "MPIRUN_VERBOSE" fake envs.
         if set_label:
             self.args.extend(['--label', 'long'])
