@@ -273,6 +273,7 @@ class BGBaseSystem (Component):
         self.bridge_in_error = False
         self.cached_partitions = None
         self.offline_partitions = []
+        self.cached_offline_partitions = []
 
     def __getstate__(self):
         state = {}
