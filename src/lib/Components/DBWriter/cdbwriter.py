@@ -364,7 +364,8 @@ class DatabaseWriter(object):
          'QUEUE': logMsg.item.queue,
          'RESID': logMsg.item.res_id,
          'START': logMsg.item.start,
-         'PROJECT': logMsg.item.project
+         'PROJECT': logMsg.item.project,
+         'BLOCK_PASSTHROUGH': logMsg.item.block_passthrough
          })
       
       res_data_id = 1

@@ -497,7 +497,8 @@ class BGBaseSystem (Component):
             raise JobValidationError("Non-integer node count")
         if not 0 < spec['nodecount'] <= max_nodes:
             raise JobValidationError("Node count out of realistic range")
-        if float(spec['time']) < 5:
+        # if spec['time'] <= 0 then this is a trigger to Max out the walltime, so allow it
+        if float(spec['time']) < 5 and float(spec['time']) > 0:
             raise JobValidationError("Walltime less than minimum")
         if not spec['mode']:
             if sys_type == 'bgp':

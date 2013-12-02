@@ -5,18 +5,14 @@ ProcessGroup -- a group of processes started with mpirun
 BGSystem -- Blue Gene system component
 """
 
-import pwd
-import grp
 import logging
-import thread
 import sys
 import os
-import re
 import ConfigParser
 import Cobalt
 import Cobalt.Data
 import Cobalt.Util
-from Cobalt.Components.base import Component, exposed, automatic, query, locking
+from Cobalt.Components.base import exposed, automatic, query, locking
 from Cobalt.Exceptions import ProcessGroupCreationError, ComponentLookupError
 from Cobalt.Components.cluster_base_system import ClusterBaseSystem
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
@@ -32,8 +28,8 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 config = ConfigParser.ConfigParser()
-config.read(Cobalt.CONFIG_FILES)
 
+config.read(Cobalt.CONFIG_FILES)
 if not config.has_section('cluster_system'):
     print '''"ERROR: cluster_system" section missing from cobalt config file'''
     sys.exit(1)
@@ -46,8 +42,9 @@ def get_cluster_system_config(option, default):
     return value
 
 
-
 class ClusterProcessGroup(ProcessGroup):
+
+    logger = logger
 
     def __init__(self, spec):
         spec['forker'] = "user_script_forker"
@@ -75,28 +72,30 @@ class ClusterProcessGroup(ProcessGroup):
             raise ProcessGroupCreationError("no location")
 
         split_args = self.args
-        cmd_args = ('--nf', str(self.nodefile),
+        cmd_args = ['--nf', str(self.nodefile),
                     '--jobid', str(self.jobid),
-                    '--cwd', str(self.cwd),
-                    '--exe', str(self.executable))
+                    '--cwd', str(self.cwd),]
+
+        qsub_env_list = ["%s=%s" % (key, val) for key, val in self.env.iteritems()]
+        for env in qsub_env_list:
+            cmd_args.extend(['--env', env])
+        cmd_args.append(self.executable)
 
         cmd_exe = None
-        if sim_mode: 
+        if sim_mode:
             logger.debug("We are setting up with simulation mode.")
             cmd_exe = get_cluster_system_config("simulation_executable", None)
             if None == cmd_exe:
                 logger.critical("Job: %s/%s: Executable for simulator not specified! This job will not run!")
                 raise RuntimeError("Unspecified simulation_executable in cobalt config")
         else:
-            #FIXME: Need to put launcher location into config
-            cmd_exe = '/usr/bin/cobalt-launcher.py' 
+            cmd_exe = get_cluster_system_config('launcher','/usr/bin/cobalt-launcher.py')
 
         #run the user script off the login node, and on the compute node
-        if (get_cluster_system_config("run_remote", 'true').lower() in config_true_values and
-                not sim_mode):
-            cmd = ("/usr/bin/ssh", rank0, cmd_exe) + cmd_args + tuple(split_args)
+        if (get_cluster_system_config("run_remote", 'true').lower() in config_true_values and not sim_mode):
+            cmd = ("/usr/bin/ssh", rank0, cmd_exe, ) + tuple(cmd_args) + tuple(split_args)
         else:
-            cmd = (cmd_exe,) + cmd_args + tuple(split_args)
+            cmd = (cmd_exe,) + tuple(cmd_args) + tuple(split_args)
 
         ret["cmd" ] = cmd
         ret["args"] = cmd[1:]
@@ -107,10 +106,19 @@ class ClusterProcessGroup(ProcessGroup):
 
         return ret
 
-
-
+    def start(self):
+        """Start the process group by contact the appropriate forker component"""
+        try:
+            data = self.prefork()
+            self.head_pid = ComponentProxy(self.forker, retry=False).fork([self.executable] + self.args, self.tag,
+                "Job %s/%s/%s" %(self.jobid, self.user, self.id), self.env, data, self.runid)
+        except:
+            self.logger.error("Job %s/%s/%s: problem forking; %s did not return a child id", self.jobid, self.user, self.id,
+                self.forker)
+            raise
 
 class ClusterSystem (ClusterBaseSystem):
+
 
     """cluster system component.
 
@@ -137,12 +145,13 @@ class ClusterSystem (ClusterBaseSystem):
         state = {}
         state.update(ClusterBaseSystem.__getstate__(self))
         # state.update({
-        #         "cluster_system_version": 1 }) 
+        #         "cluster_system_version": 1 })
         return state
 
     def __setstate__(self, state):
         ClusterBaseSystem.__setstate__(self, state)
         self.process_groups.item_cls = ClusterProcessGroup
+    
 
     def add_process_groups (self, specs):
         """Create a process group.
@@ -153,14 +162,13 @@ class ClusterSystem (ClusterBaseSystem):
 
         self.logger.info("add_process_groups(%r)", specs)
         process_groups = self.process_groups.q_add(specs)
-
         for pgroup in process_groups:
-            self.logger.info("Job %s/%s: process group %s created to track script", 
-                    pgroup.user, pgroup.jobid, pgroup.id)
+            self.logger.info("Job %s/%s: process group %s created to track script", pgroup.user, pgroup.jobid, pgroup.id)
         #System has started the job.  We need remove them from the temp, alloc array
         #in cluster_base_system.
-        for pg in process_groups:
-            for location in pg.location:
+        self.apg_started = True
+        for pgroup in process_groups:
+            for location in pgroup.location:
                 try:
                     del self.alloc_only_nodes[location]
                 except KeyError:
@@ -218,8 +226,8 @@ class ClusterSystem (ClusterBaseSystem):
                     #self.reserve_resources_until(pg.location, None, pg.jobid)
                     #self._mark_partition_for_cleaning(pg.location[0], pg.jobid)
 
-        # check for children that no longer have a process group associated 
-        # with them and add them to the cleanup list.  This might have 
+        # check for children that no longer have a process group associated
+        # with them and add them to the cleanup list.  This might have
         # happpened if a previous cleanup attempt failed and the process group
         # has already been waited upon
         for forker, child_id in children.keys():
@@ -236,14 +244,14 @@ class ClusterSystem (ClusterBaseSystem):
                 except:
                     self.logger.error("unexpected exception while requesting that the %s component perform cleanup",
                         forker, exc_info=True)
-    _get_exit_status = automatic(_get_exit_status, 
+    _get_exit_status = automatic(_get_exit_status,
             float(get_cluster_system_config('get_exit_status_interval', 10)))
 
     def wait_process_groups (self, specs):
         self._get_exit_status()
         process_groups = [pg for pg in self.process_groups.q_get(specs) if pg.exit_status is not None]
         for process_group in process_groups:
-            self.clean_nodes(process_group.location, process_group.user, process_group.jobid) 
+            self.clean_nodes(process_group.location, process_group.user, process_group.jobid)
         return process_groups
     wait_process_groups = locking(exposed(query(wait_process_groups)))
 

@@ -113,7 +113,7 @@ component: "queue-manager.get_queues", defer: True
 
 component: "queue-manager.get_jobs", defer: False
   get_jobs(
-     [{'timeremaining': '*', 'kernel': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': '*', 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}],
+     [{'timeremaining': '*', 'kernel': '*', 'ion_kerneloptions': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'ion_kernel': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': '*', 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}],
      )
 
 
@@ -150,6 +150,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 jobname:*
@@ -261,7 +265,7 @@ component: "queue-manager.get_queues", defer: True
 
 component: "queue-manager.get_jobs", defer: False
   get_jobs(
-     [{'timeremaining': '*', 'kernel': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': 1, 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}, {'timeremaining': '*', 'kernel': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': 2, 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}, {'timeremaining': '*', 'kernel': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': 3, 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}, {'timeremaining': '*', 'kernel': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': 4, 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}, {'timeremaining': '*', 'kernel': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': 5, 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}],
+     [{'timeremaining': '*', 'kernel': '*', 'ion_kerneloptions': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'ion_kernel': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': 1, 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}, {'timeremaining': '*', 'kernel': '*', 'ion_kerneloptions': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'ion_kernel': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': 2, 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}, {'timeremaining': '*', 'kernel': '*', 'ion_kerneloptions': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'ion_kernel': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': 3, 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}, {'timeremaining': '*', 'kernel': '*', 'ion_kerneloptions': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'ion_kernel': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': 4, 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}, {'timeremaining': '*', 'kernel': '*', 'ion_kerneloptions': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'ion_kernel': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': 5, 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}],
      )
 
 
@@ -298,6 +302,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
 jobname:*
@@ -376,6 +384,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
 jobname:*
@@ -454,6 +466,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
 jobname:*
@@ -532,6 +548,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
 jobname:*
@@ -610,6 +630,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
 jobname:*
@@ -742,6 +766,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
 jobname:*
@@ -820,6 +848,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
 jobname:*
@@ -898,6 +930,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
 jobname:*
@@ -976,6 +1012,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
 jobname:*
@@ -1054,6 +1094,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
 jobname:*
@@ -1186,6 +1230,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
 jobname:*
@@ -1264,6 +1312,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
 jobname:*
@@ -1342,6 +1394,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
 jobname:*
@@ -1420,6 +1476,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
 jobname:*
@@ -1498,6 +1558,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
 jobname:*
@@ -1589,199 +1653,209 @@ def test_qstat_full_option_4():
 
     cmdout    = \
 """JobID: 5
-    JobName       : -
-    User          : henry
-    WallTime      : 00:25:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 2560
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 2560
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : hhh
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  30.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : henry
+    WallTime          : 00:25:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 2560
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 2560
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : hhh
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  30.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 JobID: 3
-    JobName       : -
-    User          : dog
-    WallTime      : 00:15:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 1536
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 1536
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : aaa
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  40.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : dog
+    WallTime          : 00:15:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 1536
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 1536
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : aaa
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  40.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 JobID: 1
-    JobName       : -
-    User          : land
-    WallTime      : 00:05:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 512
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 512
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : jello
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  50.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : land
+    WallTime          : 00:05:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 512
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 512
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : jello
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  50.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 JobID: 2
-    JobName       : -
-    User          : house
-    WallTime      : 00:10:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 1024
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 1024
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : bello
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  55.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : house
+    WallTime          : 00:10:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 1024
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 1024
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : bello
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  55.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 JobID: 4
-    JobName       : -
-    User          : cat
-    WallTime      : 00:20:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 2048
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 2048
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : bbb
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  60.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : cat
+    WallTime          : 00:20:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 2048
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 2048
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : bbb
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  60.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 """
 
@@ -1818,6 +1892,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
 jobname:*
@@ -1896,6 +1974,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
 jobname:*
@@ -1974,6 +2056,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
 jobname:*
@@ -2052,6 +2138,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
 jobname:*
@@ -2130,6 +2220,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
 jobname:*
@@ -2221,199 +2315,209 @@ def test_qstat_full_option_5():
 
     cmdout    = \
 """JobID: 4
-    JobName       : -
-    User          : cat
-    WallTime      : 00:20:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 2048
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 2048
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : bbb
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  60.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : cat
+    WallTime          : 00:20:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 2048
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 2048
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : bbb
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  60.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 JobID: 2
-    JobName       : -
-    User          : house
-    WallTime      : 00:10:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 1024
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 1024
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : bello
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  55.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : house
+    WallTime          : 00:10:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 1024
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 1024
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : bello
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  55.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 JobID: 1
-    JobName       : -
-    User          : land
-    WallTime      : 00:05:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 512
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 512
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : jello
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  50.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : land
+    WallTime          : 00:05:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 512
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 512
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : jello
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  50.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 JobID: 3
-    JobName       : -
-    User          : dog
-    WallTime      : 00:15:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 1536
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 1536
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : aaa
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  40.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : dog
+    WallTime          : 00:15:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 1536
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 1536
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : aaa
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  40.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 JobID: 5
-    JobName       : -
-    User          : henry
-    WallTime      : 00:25:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 2560
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 2560
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : hhh
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  30.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : henry
+    WallTime          : 00:25:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 2560
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 2560
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : hhh
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  30.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 """
 
@@ -2450,6 +2554,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
 jobname:*
@@ -2528,6 +2636,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
 jobname:*
@@ -2606,6 +2718,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
 jobname:*
@@ -2684,6 +2800,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
 jobname:*
@@ -2762,6 +2882,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
 jobname:*
@@ -2853,199 +2977,209 @@ def test_qstat_full_option_6():
 
     cmdout    = \
 """JobID: 4
-    JobName       : -
-    User          : cat
-    WallTime      : 00:20:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 2048
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 2048
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : bbb
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  60.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : cat
+    WallTime          : 00:20:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 2048
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 2048
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : bbb
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  60.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 JobID: 3
-    JobName       : -
-    User          : dog
-    WallTime      : 00:15:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 1536
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 1536
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : aaa
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  40.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : dog
+    WallTime          : 00:15:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 1536
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 1536
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : aaa
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  40.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 JobID: 5
-    JobName       : -
-    User          : henry
-    WallTime      : 00:25:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 2560
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 2560
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : hhh
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  30.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : henry
+    WallTime          : 00:25:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 2560
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 2560
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : hhh
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  30.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 JobID: 2
-    JobName       : -
-    User          : house
-    WallTime      : 00:10:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 1024
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 1024
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : bello
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  55.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : house
+    WallTime          : 00:10:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 1024
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 1024
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : bello
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  55.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 JobID: 1
-    JobName       : -
-    User          : land
-    WallTime      : 00:05:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 512
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 512
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : jello
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  50.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : land
+    WallTime          : 00:05:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 512
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 512
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : jello
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  50.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 """
 
@@ -3082,6 +3216,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
 jobname:*
@@ -3160,6 +3298,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
 jobname:*
@@ -3238,6 +3380,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
 jobname:*
@@ -3316,6 +3462,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
 jobname:*
@@ -3394,6 +3544,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
 jobname:*
@@ -3485,199 +3639,209 @@ def test_qstat_full_option_7():
 
     cmdout    = \
 """JobID: 1
-    JobName       : -
-    User          : land
-    WallTime      : 00:05:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 512
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 512
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : jello
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  50.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : land
+    WallTime          : 00:05:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 512
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 512
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : jello
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  50.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 JobID: 2
-    JobName       : -
-    User          : house
-    WallTime      : 00:10:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 1024
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 1024
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : bello
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  55.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : house
+    WallTime          : 00:10:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 1024
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 1024
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : bello
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  55.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 JobID: 5
-    JobName       : -
-    User          : henry
-    WallTime      : 00:25:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 2560
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 2560
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : hhh
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  30.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : henry
+    WallTime          : 00:25:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 2560
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 2560
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : hhh
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  30.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 JobID: 3
-    JobName       : -
-    User          : dog
-    WallTime      : 00:15:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 1536
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 1536
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : aaa
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  40.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : dog
+    WallTime          : 00:15:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 1536
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 1536
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : aaa
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  40.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 JobID: 4
-    JobName       : -
-    User          : cat
-    WallTime      : 00:20:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 2048
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 2048
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : bbb
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  60.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : cat
+    WallTime          : 00:20:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 2048
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 2048
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : bbb
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  60.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 """
 
@@ -3714,6 +3878,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
 jobname:*
@@ -3792,6 +3960,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
 jobname:*
@@ -3870,6 +4042,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
 jobname:*
@@ -3948,6 +4124,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
 jobname:*
@@ -4026,6 +4206,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
 jobname:*
@@ -4117,199 +4301,209 @@ def test_qstat_full_option_8():
 
     cmdout    = \
 """JobID: 3
-    JobName       : -
-    User          : dog
-    WallTime      : 00:15:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 1536
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 1536
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : aaa
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  40.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : dog
+    WallTime          : 00:15:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 1536
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 1536
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : aaa
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  40.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 JobID: 4
-    JobName       : -
-    User          : cat
-    WallTime      : 00:20:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 2048
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 2048
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : bbb
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  60.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : cat
+    WallTime          : 00:20:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 2048
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 2048
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : bbb
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  60.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 JobID: 2
-    JobName       : -
-    User          : house
-    WallTime      : 00:10:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 1024
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 1024
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : bello
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  55.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : house
+    WallTime          : 00:10:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 1024
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 1024
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : bello
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  55.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 JobID: 5
-    JobName       : -
-    User          : henry
-    WallTime      : 00:25:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 2560
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 2560
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : hhh
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  30.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : henry
+    WallTime          : 00:25:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 2560
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 2560
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : hhh
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  30.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 JobID: 1
-    JobName       : -
-    User          : land
-    WallTime      : 00:05:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 512
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 512
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : jello
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  50.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : land
+    WallTime          : 00:05:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 512
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 512
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : jello
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  50.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 """
 
@@ -4346,6 +4540,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
 jobname:*
@@ -4424,6 +4622,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
 jobname:*
@@ -4502,6 +4704,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
 jobname:*
@@ -4580,6 +4786,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
 jobname:*
@@ -4658,6 +4868,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
 jobname:*
@@ -4749,199 +4963,209 @@ def test_qstat_full_option_9():
 
     cmdout    = \
 """JobID: 1
-    JobName       : -
-    User          : land
-    WallTime      : 00:05:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 512
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 512
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : jello
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  50.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : land
+    WallTime          : 00:05:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 512
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 512
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : jello
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  50.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 JobID: 5
-    JobName       : -
-    User          : henry
-    WallTime      : 00:25:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 2560
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 2560
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : hhh
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  30.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : henry
+    WallTime          : 00:25:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 2560
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 2560
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : hhh
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  30.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 JobID: 2
-    JobName       : -
-    User          : house
-    WallTime      : 00:10:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 1024
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 1024
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : bello
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  55.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : house
+    WallTime          : 00:10:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 1024
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 1024
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : bello
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  55.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 JobID: 4
-    JobName       : -
-    User          : cat
-    WallTime      : 00:20:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 2048
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 2048
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : bbb
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  60.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : cat
+    WallTime          : 00:20:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 2048
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 2048
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : bbb
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  60.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 JobID: 3
-    JobName       : -
-    User          : dog
-    WallTime      : 00:15:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 1536
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 1536
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : aaa
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  40.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
+    JobName           : -
+    User              : dog
+    WallTime          : 00:15:00
+    QueuedTime        : 378981:57:19
+    RunTime           : N/A
+    TimeRemaining     : N/A
+    Nodes             : 1536
+    State             : *
+    Location          : /tmp
+    Mode              : smp
+    Procs             : 1536
+    Preemptable       : -
+    User_Hold         : False
+    Admin_Hold        : -
+    Queue             : aaa
+    StartTime         : N/A
+    Index             : -
+    SubmitTime        : Thu Jan 01 00:01:00 1970 +0000 (UTC)
+    Path              : -
+    OutputDir         : -
+    ErrorPath         : /tmp
+    OutputPath        : /tmp
+    Envs              : 
+    Command           : -
+    Args              : 
+    Kernel            : -
+    KernelOptions     : -
+    ION_Kernel        : -
+    ION_KernelOptions : -
+    Project           : my_project
+    Dependencies      : -
+    S                 : -
+    Notify            : myemail@gmail.com
+    Score             :  40.0  
+    Maxtasktime       : -
+    attrs             : -
+    dep_frac          : -
+    user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry          : Any
 
 """
 
@@ -4978,6 +5202,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
 jobname:*
@@ -5056,6 +5284,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
 jobname:*
@@ -5134,6 +5366,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
 jobname:*
@@ -5212,6 +5448,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
 jobname:*
@@ -5290,6 +5530,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
 jobname:*
@@ -5418,6 +5662,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 jobname:*
@@ -5548,6 +5796,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
 jobname:*
@@ -5626,6 +5878,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
 jobname:*
@@ -5704,6 +5960,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
 jobname:*
@@ -5836,6 +6096,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 jobname:*
@@ -5996,6 +6260,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
 jobname:*
@@ -6074,6 +6342,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
 jobname:*
@@ -6152,6 +6424,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
 jobname:*
@@ -6230,6 +6506,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
 jobname:*
@@ -6308,6 +6588,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
 jobname:*
@@ -6468,6 +6752,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
 jobname:*
@@ -6546,6 +6834,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
 jobname:*
@@ -6624,6 +6916,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
 jobname:*
@@ -6702,6 +6998,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
 jobname:*
@@ -6780,6 +7080,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
 jobname:*
@@ -6940,6 +7244,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
 jobname:*
@@ -7018,6 +7326,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
 jobname:*
@@ -7096,6 +7408,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
 jobname:*
@@ -7174,6 +7490,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
 jobname:*
@@ -7252,6 +7572,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
 jobname:*
@@ -7412,6 +7736,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
 jobname:*
@@ -7490,6 +7818,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
 jobname:*
@@ -7568,6 +7900,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
 jobname:*
@@ -7646,6 +7982,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
 jobname:*
@@ -7724,6 +8064,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
 jobname:*
@@ -7884,6 +8228,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
 jobname:*
@@ -7962,6 +8310,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
 jobname:*
@@ -8040,6 +8392,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
 jobname:*
@@ -8118,6 +8474,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
 jobname:*
@@ -8196,6 +8556,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
 jobname:*
@@ -8333,6 +8697,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
 jobname:*
@@ -8411,6 +8779,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
 jobname:*
@@ -8489,6 +8861,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
 jobname:*
@@ -10233,6 +10609,10 @@ geometry:*
 geometry type: <type 'str'>
 index:*
 index type: <type 'str'>
+ion_kernel:*
+ion_kernel type: <type 'str'>
+ion_kerneloptions:*
+ion_kerneloptions type: <type 'str'>
 jobid:*
 jobid type: <type 'str'>
 jobname:*

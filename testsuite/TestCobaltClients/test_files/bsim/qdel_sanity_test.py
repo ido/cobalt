@@ -130,10 +130,6 @@ def test_qdel_jobid_2():
     qdel test run: jobid_2
 
         Command Output:
-              Deleted Jobs
-        JobID  User         
-        ====================
-        4      georgerojas  
         
         Command Error/Debug:
         

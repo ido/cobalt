@@ -42,6 +42,44 @@ def test_get_bootable_blocks_arg_1():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
+def test_get_bootable_blocks_arg_2():
+    """
+    get-bootable-blocks test run: arg_2
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'get_idle_blocks'> in system.get_idle_blocks
+        
+        
+        
+    """
+
+    args      = """arg"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('get-bootable-blocks.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
 def test_get_bootable_blocks_size_1():
     """
     get-bootable-blocks test run: size_1
@@ -57,6 +95,44 @@ def test_get_bootable_blocks_size_1():
     """
 
     args      = """--size 1024"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('get-bootable-blocks.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_get_bootable_blocks_size_2():
+    """
+    get-bootable-blocks test run: size_2
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'get_idle_blocks'> in system.get_idle_blocks
+        
+        
+        
+    """
+
+    args      = """--size 1024 arg"""
     exp_rs    = 256
 
     user    = pwd.getpwuid(os.getuid())[0] 
@@ -267,6 +343,120 @@ def test_get_bootable_blocks_geometry_5():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
+def test_get_bootable_blocks_geometry_6():
+    """
+    get-bootable-blocks test run: geometry_6
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'get_idle_blocks'> in system.get_idle_blocks
+        
+        
+        
+    """
+
+    args      = """--geometry 9x10x11x12x2   arg"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('get-bootable-blocks.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_get_bootable_blocks_geometry_7():
+    """
+    get-bootable-blocks test run: geometry_7
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'get_idle_blocks'> in system.get_idle_blocks
+        
+        
+        
+    """
+
+    args      = """--geometry 90x90x90x90x1  arg"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('get-bootable-blocks.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_get_bootable_blocks_geometry_8():
+    """
+    get-bootable-blocks test run: geometry_8
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'get_idle_blocks'> in system.get_idle_blocks
+        
+        
+        
+    """
+
+    args      = """--geometry 90x90x90x90x2  arg"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('get-bootable-blocks.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
 def test_get_bootable_blocks_geometry_9():
     """
     get-bootable-blocks test run: geometry_9
@@ -316,6 +506,272 @@ def test_get_bootable_blocks_geometry_10():
     """
 
     args      = """--geometry 90x90x90x90x11 arg"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('get-bootable-blocks.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_get_bootable_blocks_geometry_11():
+    """
+    get-bootable-blocks test run: geometry_11
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'get_idle_blocks'> in system.get_idle_blocks
+        
+        
+        
+    """
+
+    args      = """--geometry 99x99x99x99x2  arg"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('get-bootable-blocks.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_get_bootable_blocks_geometry_12():
+    """
+    get-bootable-blocks test run: geometry_12
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'get_idle_blocks'> in system.get_idle_blocks
+        
+        
+        
+    """
+
+    args      = """--geometry 00x00x00x00x2  arg"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('get-bootable-blocks.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_get_bootable_blocks_geometry_13():
+    """
+    get-bootable-blocks test run: geometry_13
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'get_idle_blocks'> in system.get_idle_blocks
+        
+        
+        
+    """
+
+    args      = """--geometry 100x00x00x00x2 arg"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('get-bootable-blocks.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_get_bootable_blocks_geometry_14():
+    """
+    get-bootable-blocks test run: geometry_14
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'get_idle_blocks'> in system.get_idle_blocks
+        
+        
+        
+    """
+
+    args      = """--geometry 00x100x00x00x2 arg"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('get-bootable-blocks.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_get_bootable_blocks_geometry_15():
+    """
+    get-bootable-blocks test run: geometry_15
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'get_idle_blocks'> in system.get_idle_blocks
+        
+        
+        
+    """
+
+    args      = """--geometry 00x00x100x00x2 arg"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('get-bootable-blocks.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_get_bootable_blocks_geometry_16():
+    """
+    get-bootable-blocks test run: geometry_16
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'get_idle_blocks'> in system.get_idle_blocks
+        
+        
+        
+    """
+
+    args      = """--geometry 00x00x00x100x2 arg"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('get-bootable-blocks.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_get_bootable_blocks_combo():
+    """
+    get-bootable-blocks test run: combo
+
+        Command Output:
+        
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'get_idle_blocks'> in system.get_idle_blocks
+        
+        
+        
+    """
+
+    args      = """--geometry 00x00x00x00x2 --size 2048 arg"""
     exp_rs    = 256
 
     user    = pwd.getpwuid(os.getuid())[0] 

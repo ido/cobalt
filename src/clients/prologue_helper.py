@@ -7,6 +7,7 @@ import Cobalt
 import subprocess
 import logging
 import time
+import signal
 import Cobalt.Util
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -44,7 +45,7 @@ for s in sys.argv[1:]:
     key, value = s.split("=")
     args[key] = value
 
-if not sim_mode: 
+if not sim_mode:
     nodefile_dir = get_cluster_system_config("nodefile_dir", "/var/tmp")
     nodefile = os.path.join(nodefile_dir, "cobalt.%s" % args['jobid'])
 else:
@@ -67,7 +68,7 @@ processes = []
 for host in location:
     h = host.split(":")[0]
     try:
-        p = subprocess.Popen(["/usr/bin/scp", nodefile, "%s:%s" % (h, nodefile_dir)], 
+        p = subprocess.Popen(["/usr/bin/scp", nodefile, "%s:%s" % (h, nodefile_dir)],
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p.host = h
         p.action = "nodefile copy"
@@ -76,7 +77,7 @@ for host in location:
         logging.error("Job %s/%s failed to copy nodefile %s to host %s", jobid, user, nodefile, h)
 
     try:
-        p = subprocess.Popen(["/usr/bin/ssh", h, prologue, jobid, user, "no_group"], 
+        p = subprocess.Popen(["/usr/bin/ssh", h, prologue, jobid, user, "no_group"],
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p.host = h
         p.action = "prologue"
@@ -93,10 +94,10 @@ while True:
         if p.poll() is None:
             running = True
             break
-    
+
     if not running:
         break
-    
+
     if time.time() - start > prologue_timeout:
         for p in processes:
             if p.poll() is None:

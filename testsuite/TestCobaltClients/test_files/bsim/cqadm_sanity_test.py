@@ -9,7 +9,10 @@ def test_cqadm_getq_option_1():
         Command Output:
         Queue    Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  AdminEmail  State    Cron  Policy   Priority  
         ===============================================================================================================================================
+        R.res2   None   None     None     None        None       None          None          None        None        running  None  default  0         
         default  None   None     None     None        None       None          None          None        None        running  None  default  0         
+        q1       None   None     None     None        None       None          None          None        None        running  None  default  0         
+        q2       None   None     None     None        None       None          None          None        None        running  None  default  0         
         q_1      None   None     None     None        None       None          None          None        None        running  None  default  0         
         q_2      None   None     None     None        None       None          None          None        None        running  None  default  0         
         q_3      None   None     None     None        None       None          None          None        None        running  None  default  0         
@@ -52,7 +55,10 @@ def test_cqadm_getq_option_2():
         Command Output:
         Queue    Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  AdminEmail  State    Cron  Policy   Priority  
         ===============================================================================================================================================
+        R.res2   None   None     None     None        None       None          None          None        None        running  None  default  0         
         default  None   None     None     None        None       None          None          None        None        running  None  default  0         
+        q1       None   None     None     None        None       None          None          None        None        running  None  default  0         
+        q2       None   None     None     None        None       None          None          None        None        running  None  default  0         
         q_1      None   None     None     None        None       None          None          None        None        running  None  default  0         
         q_2      None   None     None     None        None       None          None          None        None        running  None  default  0         
         q_3      None   None     None     None        None       None          None          None        None        running  None  default  0         
@@ -67,7 +73,7 @@ def test_cqadm_getq_option_2():
              )
         
         
-        [{'maxuserjobs': None, 'priority': 0, 'name': 'default', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_4', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_3', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_1', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_2', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}]
+        [{'maxuserjobs': None, 'priority': 0, 'name': 'R.res2', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q2', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'default', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_2', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_1', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_4', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q1', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_3', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}]
         
         
     """
@@ -105,7 +111,10 @@ def test_cqadm_getq_option_3():
         Command Output:
         Queue    Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  AdminEmail  State    Cron  Policy   Priority  
         ===============================================================================================================================================
+        R.res2   None   None     None     None        None       None          None          None        None        running  None  default  0         
         default  None   None     None     None        None       None          None          None        None        running  None  default  0         
+        q1       None   None     None     None        None       None          None          None        None        running  None  default  0         
+        q2       None   None     None     None        None       None          None          None        None        running  None  default  0         
         q_1      None   None     None     None        None       None          None          None        None        running  None  default  0         
         q_2      None   None     None     None        None       None          None          None        None        running  None  default  0         
         q_3      None   None     None     None        None       None          None          None        None        running  None  default  0         
@@ -117,93 +126,6 @@ def test_cqadm_getq_option_3():
 
     args      = """-f --getq"""
     exp_rs    = 0
-
-    user    = pwd.getpwuid(os.getuid())[0] 
-    _args   = args.replace('<USER>',user)
-
-    results = testutils.run_cmd('cqadm.py',_args,None) 
-    rs      = results[0]
-    cmd_out = results[1]
-    cmd_err = results[3]
-
-    # Test Pass Criterias
-    no_rs_err     = (rs == exp_rs)
-    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
-
-    result = no_rs_err and no_fatal_exc
-
-    errmsg  = "\n\nFailed Data:\n\n" \
-        "Return Status %s, Expected Return Status %s\n\n" \
-        "Command Output:\n%s\n\n" \
-        "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
-
-    assert result, errmsg
-
-# ---------------------------------------------------------------------------------
-def test_cqadm_preempt_job_1():
-    """
-    cqadm test run: preempt_job_1
-
-        Command Output:
-        
-        Command Error/Debug:
-        cqadm.py -d --preempt 1 2 3
-        
-        component: "queue-manager.preempt_jobs", defer: True
-          preempt_jobs(
-             [{'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 1}, {'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 2}, {'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 3}],
-             georgerojas,
-             False,
-             )
-        
-        
-        component error: XMLRPC failure <Fault 1007: '("Jobs in the \'queued\' state may not be preempted.", 1, \'georgerojas\', False)'> in queue-manager.preempt_jobs
-        
-        
-        
-    """
-
-    args      = """-d --preempt 1 2 3"""
-    exp_rs    = 256
-
-    user    = pwd.getpwuid(os.getuid())[0] 
-    _args   = args.replace('<USER>',user)
-
-    results = testutils.run_cmd('cqadm.py',_args,None) 
-    rs      = results[0]
-    cmd_out = results[1]
-    cmd_err = results[3]
-
-    # Test Pass Criterias
-    no_rs_err     = (rs == exp_rs)
-    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
-
-    result = no_rs_err and no_fatal_exc
-
-    errmsg  = "\n\nFailed Data:\n\n" \
-        "Return Status %s, Expected Return Status %s\n\n" \
-        "Command Output:\n%s\n\n" \
-        "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
-
-    assert result, errmsg
-
-# ---------------------------------------------------------------------------------
-def test_cqadm_preempt_job_2():
-    """
-    cqadm test run: preempt_job_2
-
-        Command Output:
-        
-        Command Error/Debug:component error: XMLRPC failure <Fault 1007: '("Jobs in the \'queued\' state may not be preempted.", 1, \'georgerojas\', True)'> in queue-manager.preempt_jobs
-        
-        
-        
-    """
-
-    args      = """-f --preempt 1 2 3"""
-    exp_rs    = 256
 
     user    = pwd.getpwuid(os.getuid())[0] 
     _args   = args.replace('<USER>',user)
@@ -245,7 +167,7 @@ def test_cqadm_kill_job_1():
              )
         
         
-        [{'tag': 'job', 'location': None, 'walltime': 65, 'jobid': 1}]
+        Failed to match any jobs or queues
         
         
     """
@@ -1314,7 +1236,7 @@ def test_cqadm_setjobid_option_3():
 
         Command Output:
         
-        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'The new jobid must be greater than the next jobid (9)'> in queue-manager.set_jobid
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'The new jobid must be greater than the next jobid (20)'> in queue-manager.set_jobid
         
         
         
@@ -1352,7 +1274,7 @@ def test_cqadm_setjobid_option_4():
 
         Command Output:
         
-        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'The new jobid must be greater than the next jobid (9)'> in queue-manager.set_jobid
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'The new jobid must be greater than the next jobid (20)'> in queue-manager.set_jobid
         
         
         
@@ -1390,7 +1312,7 @@ def test_cqadm_setjobid_option_5():
 
         Command Output:
         
-        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'The new jobid must be greater than the next jobid (9)'> in queue-manager.set_jobid
+        Command Error/Debug:component error: XMLRPC failure <Fault 1: 'The new jobid must be greater than the next jobid (20)'> in queue-manager.set_jobid
         
         
         
@@ -2337,6 +2259,658 @@ def test_cqadm_combine_addq_and_startq():
 
     args      = """--startq --addq q1 q2"""
     exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_user_hold_option_1():
+    """
+    cqadm test run: user_hold_option_1
+
+        Command Output:
+        Usage: cqadm.py --help
+        Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+        
+        
+        Command Error/Debug:No arguments or options provided
+        
+        
+        
+    """
+
+    args      = """--user-hold"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_user_hold_option_2():
+    """
+    cqadm test run: user_hold_option_2
+
+        Command Output:
+        
+        Command Error/Debug:Failed to match any jobs or queues
+        
+        
+    """
+
+    args      = """--user-hold 1 2 3"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_user_hold_option_3():
+    """
+    cqadm test run: user_hold_option_3
+
+        Command Output:
+        
+        Command Error/Debug:
+        cqadm.py -d --user-hold 1 2 3
+        
+        component: "queue-manager.set_jobs", defer: False
+          set_jobs(
+             [{'user_hold': False, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 1}, {'user_hold': False, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 2}, {'user_hold': False, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 3}],
+             {'user_hold': True},
+             georgerojas,
+             )
+        
+        
+        Failed to match any jobs or queues
+        
+        
+    """
+
+    args      = """-d --user-hold  1 2 3"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_user_hold_option_4():
+    """
+    cqadm test run: user_hold_option_4
+
+        Command Output:
+        
+        Command Error/Debug:Failed to match any jobs or queues
+        
+        
+    """
+
+    args      = """-f --user-hold  1 2 3"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_user_release_option_1():
+    """
+    cqadm test run: user_release_option_1
+
+        Command Output:
+        Usage: cqadm.py --help
+        Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+        
+        
+        Command Error/Debug:No arguments or options provided
+        
+        
+        
+    """
+
+    args      = """--user-release"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_user_release_option_2():
+    """
+    cqadm test run: user_release_option_2
+
+        Command Output:
+        
+        Command Error/Debug:Failed to match any jobs or queues
+        
+        
+    """
+
+    args      = """--user-release 1 2 3"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_user_release_option_3():
+    """
+    cqadm test run: user_release_option_3
+
+        Command Output:
+        
+        Command Error/Debug:
+        cqadm.py -d --user-release 1 2 3
+        
+        component: "queue-manager.set_jobs", defer: False
+          set_jobs(
+             [{'user_hold': True, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 1}, {'user_hold': True, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 2}, {'user_hold': True, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 3}],
+             {'user_hold': False},
+             georgerojas,
+             )
+        
+        
+        Failed to match any jobs or queues
+        
+        
+    """
+
+    args      = """-d --user-release 1 2 3"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_user_release_option_4():
+    """
+    cqadm test run: user_release_option_4
+
+        Command Output:
+        
+        Command Error/Debug:Failed to match any jobs or queues
+        
+        
+    """
+
+    args      = """-f --user-release 1 2 3"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_admin_hold_option_1():
+    """
+    cqadm test run: admin_hold_option_1
+
+        Command Output:
+        Usage: cqadm.py --help
+        Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+        
+        
+        Command Error/Debug:No arguments or options provided
+        
+        
+        
+    """
+
+    args      = """--admin-hold"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_admin_hold_option_2():
+    """
+    cqadm test run: admin_hold_option_2
+
+        Command Output:
+        
+        Command Error/Debug:Failed to match any jobs or queues
+        
+        
+    """
+
+    args      = """--admin-hold 1 2 3"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_admin_hold_option_3():
+    """
+    cqadm test run: admin_hold_option_3
+
+        Command Output:
+        
+        Command Error/Debug:
+        cqadm.py -d --admin-hold 1 2 3
+        
+        component: "queue-manager.set_jobs", defer: False
+          set_jobs(
+             [{'admin_hold': False, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 1}, {'admin_hold': False, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 2}, {'admin_hold': False, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 3}],
+             {'admin_hold': True},
+             georgerojas,
+             )
+        
+        
+        Failed to match any jobs or queues
+        
+        
+    """
+
+    args      = """-d --admin-hold  1 2 3"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_admin_hold_option_4():
+    """
+    cqadm test run: admin_hold_option_4
+
+        Command Output:
+        
+        Command Error/Debug:Failed to match any jobs or queues
+        
+        
+    """
+
+    args      = """-f --admin-hold  1 2 3"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_admin_release_option_1():
+    """
+    cqadm test run: admin_release_option_1
+
+        Command Output:
+        Usage: cqadm.py --help
+        Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+        
+        
+        Command Error/Debug:No arguments or options provided
+        
+        
+        
+    """
+
+    args      = """--admin-release"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_admin_release_option_2():
+    """
+    cqadm test run: admin_release_option_2
+
+        Command Output:
+        
+        Command Error/Debug:Failed to match any jobs or queues
+        
+        
+    """
+
+    args      = """--admin-release 1 2 3"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_admin_release_option_3():
+    """
+    cqadm test run: admin_release_option_3
+
+        Command Output:
+        
+        Command Error/Debug:
+        cqadm.py -d --admin-release 1 2 3
+        
+        component: "queue-manager.set_jobs", defer: False
+          set_jobs(
+             [{'admin_hold': True, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 1}, {'admin_hold': True, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 2}, {'admin_hold': True, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 3}],
+             {'admin_hold': False},
+             georgerojas,
+             )
+        
+        
+        Failed to match any jobs or queues
+        
+        
+    """
+
+    args      = """-d --admin-release 1 2 3"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('cqadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_cqadm_admin_release_option_4():
+    """
+    cqadm test run: admin_release_option_4
+
+        Command Output:
+        
+        Command Error/Debug:Failed to match any jobs or queues
+        
+        
+    """
+
+    args      = """-f --admin-release 1 2 3"""
+    exp_rs    = 0
 
     user    = pwd.getpwuid(os.getuid())[0] 
     _args   = args.replace('<USER>',user)

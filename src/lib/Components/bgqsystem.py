@@ -18,13 +18,14 @@ import ConfigParser
 import traceback
 import pybgsched
 import errno
+import re
 
 import Cobalt
 import Cobalt.Data
 import Cobalt.Util
 from Cobalt.Util import get_config_option, disk_writer_thread 
 from Cobalt.Components.base import Component, exposed, automatic, query
-from Cobalt.Exceptions import ComponentLookupError
+from Cobalt.Exceptions import ComponentLookupError, JobNotInteractive
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Statistics import Statistics
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
@@ -103,11 +104,19 @@ class BGProcessGroup(ProcessGroup):
         self.ions_pending_reboot = None
         self.ion_boot_failed = False
 
+        self.interactive_complete = False
+
     def __repr__(self):
         return "<BGProcessGroup id=%s, jobid=%s, location=%s>" % (self.id, self.jobid, self.location)
 
     def __str__(self):
         return self.__repr__()
+
+    def __setstate__(self, data):
+        ProcessGroup.__setstate(self, data)
+        if not hasattr(self, 'interactive_complete'):
+            self.interactive_complete = False
+        
 
 # convenience function used several times below
 def _get_state(bridge_partition):
@@ -144,6 +153,7 @@ class BGSystem (BGBaseSystem):
     wait_process_groups -- get process groups that have exited, and remove them from the system (exposed, query)
     signal_process_groups -- send a signal to the head process of the specified process groups (exposed, query)
     update_block_state -- update partition state from the bridge API (runs as a thread)
+    interactive_job_complete -- this will will flag that an interactive job has terminated normally
     """
 
     name = "system"
@@ -916,7 +926,15 @@ class BGSystem (BGBaseSystem):
                     if pybgsched.hardware_in_error_state(nc):
                         state = "error"
                     nodecard_list.append(self._get_node_card(nc.getLocation(), state))
-            io_node_list.extend([link.getDestinationLocation() for link in SWIG_vector_to_list(pybgsched.getIOLinks(midplane_id))])
+            #Get IO nodes this block attaches to.
+            if block_def.isLarge():
+                io_node_list.extend([link.getDestinationLocation() for link in SWIG_vector_to_list(pybgsched.getIOLinks(midplane_id))])
+            else:
+                #the block is smaller than a midplane, so figure out which IONs we're really attached to.
+                io_link_list = SWIG_vector_to_list(pybgsched.getIOLinks(midplane_id))
+                for io_link in io_link_list:
+                    if re.match(r'R..-M.-N..', io_link.getLocation()).group(0) in [str(nc) for nc in nodecard_list]:
+                        io_node_list.append(io_link.getDestinationLocation())
 
         # Add in passthrough switches
         for midplane_id in passthrough_ids:
@@ -1836,18 +1854,19 @@ class BGSystem (BGBaseSystem):
                 except:
                     self.logger.error("Block %s: failed to clear kernel settings", b.name)
                 #ION kernel reset
-                reboot_candidates = self._get_io_blocks_to_reboot(b)
-                for io_block in reboot_candidates:
-                    if (io_block.current_kernel != get_config_option('bgsystem', 'ion_default_kernel', 'default') or
-                        io_block.current_kernel_options != get_config_option('bgsystem', 'ion_default_kernel_options', None)):
-                        self.logger.info('IO Block %s: initiating kernel reset and cleanup.', io_block.name)
-                        self._clear_kernel(io_block.name, 'ion')
-                        #should not have to force this, the compute blocks should also be cleaning.
-                        self.free_io_block(io_block.name, force=True)
-                        self.booter.initiate_io_boot(io_block.name, tag='io_boot', reboot=True,
-                                ion_kerneloptions=io_block.current_kernel_options)
-                    else:
-                        self.logger.debug("IO Block %s: no cleanup needed, already running default kernel.", io_block.name)
+                if get_config_option('bgsystem', 'allow_alternate_kernels', 'false').lower() in Cobalt.Util.config_true_values:
+                    reboot_candidates = self._get_io_blocks_to_reboot(b)
+                    for io_block in reboot_candidates:
+                        if (io_block.current_kernel != get_config_option('bgsystem', 'ion_default_kernel', 'default') or
+                            io_block.current_kernel_options != get_config_option('bgsystem', 'ion_default_kernel_options', None)):
+                            self.logger.info('IO Block %s: initiating kernel reset and cleanup.', io_block.name)
+                            self._clear_kernel(io_block.name, 'ion')
+                            #should not have to force this, the compute blocks should also be cleaning.
+                            self.free_io_block(io_block.name, force=True)
+                            self.booter.initiate_io_boot(io_block.name, tag='io_boot', reboot=True,
+                                    ion_kerneloptions=io_block.current_kernel_options)
+                        else:
+                            self.logger.debug("IO Block %s: no cleanup needed, already running default kernel.", io_block.name)
 
 
             Cobalt.Util.sleep(10)
@@ -2044,6 +2063,11 @@ class BGSystem (BGBaseSystem):
 
         Returns a list of IO Blocks to reboot due to changed kernels.
         '''
+        if get_config_option('bgsystem', 'allow_alternate_kernels', 'false').lower() not in Cobalt.Util.config_true_values:
+            # If we are not allowing alternate kernels to be booted, then we can't allow the IO Blocks to be rebooted at all,
+            # even if there are alternate ion_kerneloptions set.  IO Blocks should stay up if possible so don't reboot any in
+            # this case. --PMR
+            return []
         reboot_candidates = self._get_io_blocks_to_reboot(cn_block)
         io_blocks_to_reboot = []
         for io_block in reboot_candidates:
@@ -2141,7 +2165,13 @@ class BGSystem (BGBaseSystem):
         '''Start booting compute nodes, or if prebooting is disabled on this pgroup, start the user's script.
 
         '''
-        if pgroup.mode == "script":
+        if pgroup.mode == 'interactive': 
+            pgroup.forker = None
+            if pgroup.script_preboot:
+                self.booter.initiate_boot(pgroup.location[0], pgroup.jobid, pgroup.user,
+                                          self._blocks[pgroup.location[0]].subblock_parent, 
+                                          tag='internal')
+        elif pgroup.mode == "script":
             pgroup.forker = 'user_script_forker'
             if pgroup.script_preboot == False:
                 self.logger.info("%s: no preboot requested.  Starting job immediately. Block %s allocated for this job.",
@@ -2351,6 +2381,11 @@ class BGSystem (BGBaseSystem):
                 self.logger.error("unexpected exception while getting a list of children from the %s component",
                     forker, exc_info=True)
         for pg in self.process_groups.itervalues():
+            if pg.mode  == 'interactive':
+                if pg.interactive_complete:
+                    clean_block = True
+                    pg.exit_status = 0 
+                    self.reserve_resources_until(pg.location, None, pg.jobid)
             if pg.forker in cleanup:
                 clean_block = False
                 if (pg.forker, pg.head_pid) in children:
@@ -2426,17 +2461,39 @@ class BGSystem (BGBaseSystem):
         my_process_groups = self.process_groups.q_get(specs)
         for pg in my_process_groups:
             if pg.exit_status is None:
-                try:
-                    if pg.head_pid != None:
-                        self.logger.warning("%s: sending signal %s via %s", pg.label, signame, pg.forker)
-                        ComponentProxy(pg.forker).signal(pg.head_pid, signame)
-                    else:
-                        self.logger.warning("%s: attempted to send a signal to job that never started", pg.label)
-                except:
-                    self.logger.error("%s: failed to communicate with %s when signaling job", pg.label, pg.forker)
+                if pg.mode == 'interactive':
+                    pg.interactive_complete = True
+                else:
+                    try:
+                        if pg.head_pid != None:
+                            self.logger.warning("%s: sending signal %s via %s", pg.label, signame, pg.forker)
+                            ComponentProxy(pg.forker).signal(pg.head_pid, signame)
+                        else:
+                            self.logger.warning("%s: attempted to send a signal to job that never started", pg.label)
+                    except:
+                        self.logger.error("%s: failed to communicate with %s when signaling job", pg.label, pg.forker)
 
         return my_process_groups
     signal_process_groups = exposed(query(signal_process_groups))
+
+    @exposed
+    def interactive_job_complete (self, jobid):
+        """Will terminate the specified interactive job
+        """
+        job_not_found = True
+        for pg in self.process_groups.itervalues():
+            if pg.jobid == jobid:
+                job_not_found = False
+                if pg.mode == 'interactive':
+                    pg.interactive_complete = True
+                else:
+                    msg = "Job %s not an interactive" % str(jobid)
+                    self.logger.error(msg)
+                    raise JobNotInteractive(msg)
+                break
+        if job_not_found:
+            self.logger.warning("%s: Interactive job not found", str(jobid))
+        return
 
     @exposed
     def validate_job(self, spec):

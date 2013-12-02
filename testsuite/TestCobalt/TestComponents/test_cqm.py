@@ -33,7 +33,6 @@ import os
 import os.path
 import pwd
 import tempfile
-import time
 from threading import Lock, Condition
 import traceback
 import types
@@ -49,7 +48,7 @@ import Cobalt.Exceptions
 from Cobalt.Exceptions import QueueError, ComponentLookupError, DataCreationError, \
     JobRunError, JobPreemptionError, JobDeleteError
 from Cobalt.Proxy import ComponentProxy
-from Cobalt.Util import Timer
+from Cobalt.Util import Timer, sleep
 
 from test_base import TestComponent
 from TestCobalt.Utilities.ThreadSupport import *
@@ -498,12 +497,18 @@ class SimulatedSystem (SimulatedTaskManager):
         self.tasks.item_cls = SystemTask
 
     def add_process_groups(self, specs):
-        return self.add_tasks(specs)
+        self.logger.debug("add_process_groups called: %s", specs)
+        tasks = self.add_tasks(specs)
+        self.logger.debug("add_process_groups returning: %s", [t.id for t in tasks])
+        return tasks
 
     add_process_groups = exposed(query(add_process_groups))
 
     def get_process_groups(self, specs):
-        return self.get_tasks(specs)
+        self.logger.debug("get_process_groups called: %s", specs)
+        tasks = self.get_tasks(specs)
+        self.logger.debug("get_process_groups returning: %s", [t.id for t in tasks])
+        return tasks
 
     get_process_groups = exposed(query(get_process_groups))
 
@@ -743,7 +748,7 @@ def wait_output_files(fn_bases):
         for fn_base in fn_bases:
             out_fn = "%s.out" % (fn_base,)
             while not os.path.exists(out_fn):
-                time.sleep(POLL_INTERVAL)
+                sleep(POLL_INTERVAL)
     finally:
         delete_output_files(fn_bases)
 
@@ -1058,7 +1063,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
             assert self.job['is_active'] == True
             assert self.job['is_runnable'] == False
             assert self.job['has_completed'] == False
-            time.sleep(POLL_INTERVAL)
+            sleep(POLL_INTERVAL)
 
     def job_preempted_wait(self):
         while True:
@@ -1070,7 +1075,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
             assert self.job['is_active'] == True
             assert self.job['is_runnable'] == False
             assert self.job['has_completed'] == False
-            time.sleep(POLL_INTERVAL)
+            sleep(POLL_INTERVAL)
 
     def job_kill(self, force = False, user = None, signame = Signal_Map.terminate):
         jobs = self.cqm.del_jobs([self.get_job_query_spec()], force, user, signame)
@@ -1096,7 +1101,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
             assert (self.job['is_active'] == True and self.job['has_completed'] == False) or \
                 self.job['is_active'] == False and self.job['has_completed'] == True, \
                 "unexpected state: is_active=%s, has_completed=%s" % (self.job['is_active'], self.job['has_completed'])
-            time.sleep(POLL_INTERVAL)
+            sleep(POLL_INTERVAL)
 
     def job_exec_driver(
             self, spec = {}, config_opts = {}, job_queued = None, job_pretask = None, resource_pretask = None, exec_task = True,
@@ -1657,7 +1662,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         def _task_run(preempt):
             self.assert_next_op('reserve', BogusException1)
             self.qm_thr.pause_wait()
-            self.job_get_state(assert_spec = {'state':"exiting", 'sm_state':"Release_Resources_Retry"})
+            self.job_get_state(assert_spec = {'state':"exiting", 'sm_state':"Job_Prologue_Retry_Release"})
             self.qm_thr.resume()
             self.assert_next_op('reserve', BogusException2)
         self.job_exec_driver(job_pretask = _pretask, task_run = _task_run)
@@ -1753,6 +1758,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
             self.job_get_state(assert_spec = {'state':"killing", 'sm_state':"Killing"})
         self.job_exec_driver(task_active = _task_active)
 
+    @timeout(60)
     def test_nonpreempt_running__force_kill(self):
         # a task is running; let's forcibly kill it
         def _task_active():
@@ -2365,19 +2371,19 @@ class CQMIntegrationTestBase (TestCQMComponent):
     @timeout(60)
     def test_nonpreempt_validate_script_states(self):
         def _job_queued():
-            time.sleep(1)
+            sleep(1)
             check_output_files(self.job_prescripts, False, "job prologue script run prematurely")
         def _job_pretask():
-            time.sleep(1)
+            sleep(1)
             check_output_files(self.resource_prescripts, False, "resource prologue script run prematurely")
         def _resource_pretask():
             # force state test
             pass
         def _task_active():
-            time.sleep(1)
+            sleep(1)
             check_output_files(self.resource_postscripts, False, "resource epilogue script run prematurely")
         def _resource_posttask():
-            time.sleep(1)
+            sleep(1)
             check_output_files(self.job_postscripts, False, "job epilogue script run prematurely")
         def _job_posttask():
             # force state test
@@ -3484,10 +3490,10 @@ class CQMIntegrationTestBase (TestCQMComponent):
     @disabled #Preemption 
     def test_preempt_validate_script_states(self):
         def _job_queued():
-            time.sleep(1)
+            sleep(1)
             check_output_files(self.job_prescripts, False, "job prologue script run prematurely")
         def _job_pretask():
-            time.sleep(1)
+            sleep(1)
             check_output_files(self.resource_prescripts, False, "resource prologue script run prematurely")
         def _resource_pretask():
             # force state test
@@ -3498,19 +3504,19 @@ class CQMIntegrationTestBase (TestCQMComponent):
             self.job_preempt()
             self.assert_next_task_op('signal')
             self.job_preempting_wait()
-            time.sleep(1)
+            sleep(1)
             check_output_files(self.resource_postscripts, False, "resource epilogue script run prematurely")
         def _preempt_posttask():
             # force state test
             pass
         def _job_preempted():
-            time.sleep(1)
+            sleep(1)
             check_output_files(self.resource_prescripts, False, "resource prologue script run prematurely")
         def _preempt_pretask():
             # force state test
             pass
         def _resource_posttask():
-            time.sleep(1)
+            sleep(1)
             check_output_files(self.job_postscripts, False, "job epilogue script run prematurely")
         def _job_posttask():
             # force state test

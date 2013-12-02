@@ -54,7 +54,6 @@ The following options are only valid on IBM BlueGene architecture platforms:
 
 """
 import logging
-import time
 import string
 import os
 import sys
@@ -299,12 +298,13 @@ def logjob(jobid, spec, logToConsole):
         try:
             cobalt_log_file = open(filename, "a")
             
-            print >> cobalt_log_file, "Jobid: %s" % jobid
-            print >> cobalt_log_file, "qsub %s" % (" ".join(sys.argv[1:]))
-            print >> cobalt_log_file, "%s submitted with cwd set to: %s" % ( client_utils.sec_to_str(time.time()), spec['cwd'])
+            print >> cobalt_log_file, "Jobid: %s\n" % jobid
+            print >> cobalt_log_file, "qsub %s\n" % (" ".join(sys.argv[1:]))
+            print >> cobalt_log_file, "submitted with cwd set to: %s\n" % spec['cwd']
             cobalt_log_file.close()
         except Exception, e:
-            client_utils.logger.error("WARNING: failed to create cobalt log file at: %s: %s", filename, e)
+            client_utils.logger.error("WARNING: failed to create cobalt log file at: %s" % filename)
+            client_utils.logger.error("         %s" % e.strerror)
     else:
         client_utils.logger.error("failed to create the job.  Maybe a queue isn't there?")
 

@@ -30,16 +30,24 @@ else
     partlist_file="$COBALT_RUNTIME_DIR/etc/partlist.txt"
 fi
 
-if test ! -f $partlist_file ; then
+if test ! -f $partlist_file && [ $partlist_file != 'all' ] ; then
     msg_error "$partlist_file does not exist."
 fi
 
 $PYTHON_EXE $COBALT_SOURCE_DIR/src/clients/partadm.py -d '*'
-for p in `cat $partlist_file` ; do
-    $PYTHON_EXE $COBALT_SOURCE_DIR/src/clients/partadm.py -a $p
-    $PYTHON_EXE $COBALT_SOURCE_DIR/src/clients/partadm.py --enable $p
-    $PYTHON_EXE $COBALT_SOURCE_DIR/src/clients/partadm.py --activate $p
-done
+
+if [ $partlist_file == 'all' ] ; then
+    $PYTHON_EXE $COBALT_SOURCE_DIR/src/clients/partadm.py -a '*'
+    $PYTHON_EXE $COBALT_SOURCE_DIR/src/clients/partadm.py --enable '*'
+    $PYTHON_EXE $COBALT_SOURCE_DIR/src/clients/partadm.py --activate '*'
+else
+    for p in `cat $partlist_file` ; do
+	$PYTHON_EXE $COBALT_SOURCE_DIR/src/clients/partadm.py -a $p
+	$PYTHON_EXE $COBALT_SOURCE_DIR/src/clients/partadm.py --enable $p
+	$PYTHON_EXE $COBALT_SOURCE_DIR/src/clients/partadm.py --activate $p
+    done
+fi
+
 $PYTHON_EXE $COBALT_SOURCE_DIR/src/clients/partadm.py -l
 
 $PYTHON_EXE $COBALT_SOURCE_DIR/src/clients/cqadm.py --delq default

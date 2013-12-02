@@ -1,6 +1,6 @@
 Summary: Python bindings to IBM's BlueGene/Q control system scheduler interface 
 Name: pybgsched
-Version: 0.1.0
+Version: 0.1.3
 
 Release: 1
 License: None
@@ -20,7 +20,8 @@ scheduler interface of the BlueGene/Q control system.
 %setup -q
 
 %build
-make 
+make swig
+make
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -35,8 +36,19 @@ rm -rf $RPM_BUILD_ROOT
 %files
 /usr/lib64/python2.6/site-packages/pybgsched.py
 /usr/lib64/python2.6/site-packages/_pybgsched.so
+/usr/lib64/python2.6/site-packages/pybgsched.pyc
+/usr/lib64/python2.6/site-packages/pybgsched.pyo
 
 %changelog
-* Thu Feb  2 2012 Paul Rich <richp@alcf.anl.gov> - 
+* Fri Feb 15 2013 Paul Rich <richp@alcf.anl.gov> -
+- adding support for Action field in Blocks
+- V1R2M0 additions for compilation and linking of library
+- required for Cobalt v0.99.19 and later
+- library now releases the GIL when operating on the database
+* Fri Sep 21 2012 Paul Rich <richp@alcf.anl.gov> -
+- rev 4: recompilation and relink wtih V1R1M2
+* Thu Jul 26 2012 Paul Rich <richp@alcf.anl.gov> -
+- Additions for V1R1M1
+* Thu Feb  2 2012 Paul Rich <richp@alcf.anl.gov> -
 - Initial build.
 

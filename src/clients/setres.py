@@ -11,7 +11,7 @@ OPTIONS DEFINITIONS:
 '-A','--project',dest='project',type='string',help='set project name for partitions in args'
 '-D','--defer',dest='defer',help='defer flag. needs to be used with -m',action='store_true'
 '-c','--cycletime',dest='cycle',type='string',help='set cycle time in minutes or HH:MM:SS',callback=cb_time
-'-d','--duration',dest='duration',type='string',help='duration time in minutes or HH:MM:SS>',callback=cb_time
+'-d','--duration',dest='duration',type='string',help='duration time in minutes or HH:MM:SS',callback=cb_time
 '-m','--modify_res',dest='modify_res',help='modify current reservation specified in -n',action='store_true'
 '-n','--name',dest='name',type='string',help='reservation name to add or modify'
 '-p','--partitions',dest='partitions',type='string',help='partition(s) (now optional) part1:..:partN'
@@ -44,6 +44,16 @@ __version__ = '$Version$'
 
 SCHMGR = client_utils.SCHMGR
 SYSMGR = client_utils.SYSMGR
+
+def validate_starttime(parser):
+    """
+    make sure the start time plus duration is valid
+    """
+    _localtime = client_utils.parse_datetime(client_utils.cobalt_date(time.localtime(time.time())))
+    _res_st    = parser.options.start + parser.options.duration
+    if _res_st < _localtime:
+        client_utils.logger.error("Start time + duration %s already in the pass", client_utils.sec_to_str(_res_st))
+        sys.exit(1)
 
 def set_res_id(parser):
     """
@@ -210,6 +220,8 @@ def add_reservation(parser,spec,user):
     """
     add reservation 
     """
+    validate_starttime(parser)
+
     spec['users']   = None if parser.options.users == '*' else parser.options.users
     spec['cycle']   = parser.options.cycle 
     spec['project'] = parser.options.project

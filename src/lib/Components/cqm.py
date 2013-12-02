@@ -283,9 +283,10 @@ def get_job_sm_states():
         'Hold',
         'Job_Prologue',
         'Job_Prologue_Retry',
+        'Job_Prologue_Retry_Release',
         'Resource_Prologue',
         'Resource_Prologue_Retry',
-        'Release_Resources_Retry',
+        'Resource_Prologue_Retry_Release',
         'Run_Retry',
         'Running',
         'Kill_Retry',
@@ -314,23 +315,23 @@ def get_job_sm_transitions():
         ('Job_Prologue', 'Resource_Prologue'),              # job_prologue scripts complete.  Starting Resource_prologue scripts
         ('Job_Prologue', 'Resource_Prologue_Retry'),        # error contacting forker component
         ('Job_Prologue', 'Job_Prologue_Retry'),             # Lost communication to forker during progress
-        ('Job_Prologue', 'Job_Epilogue'),                   # job_prologue failed.  Initiate job cleanup
-        ('Job_Prologue', 'Job_Epilogue_Retry'),             # job_prologue failed.  Error communicatiing with forker
-        ('Job_Prologue', 'Release_Resources_Retry'),   # kill; error contacting system component to release resource
+        ('Job_Prologue', 'Job_Epilogue'),                   # kill / job prologue failed
+        ('Job_Prologue', 'Job_Epilogue_Retry'),             # kill / job prologue failed.  Error communicating with forker
+        ('Job_Prologue', 'Job_Prologue_Retry_Release'),     # kill / job prologue failed.  error releasing system resources
         ('Job_Prologue_Retry', 'Job_Prologue'),             # forker starting job prologue scripts
         ('Job_Prologue_Retry', 'Terminal'),                 # kill; error contacting forker component
-        ('Resource_Prologue', 'Release_Resources_Retry'),   # kill; error contacting system component to release resource
+        ('Job_Prologue_Retry_Release', 'Job_Epilogue'),     # resource successfully released
+        ('Job_Prologue_Retry_Release', 'Job_Epilogue_Retry'),     # error contacting forker component
         ('Resource_Prologue', 'Run_Retry'),                 # prologue scripts complete; error contacting system component
         ('Resource_Prologue', 'Running'),                   # prologue scripts complete; system component starting task
         ('Resource_Prologue', 'Resource_Prologue_Retry'),   # Lost communication to forker during progress
-        ('Resource_Prologue', 'Resource_Epilogue'),         # kill; system component released resource
-        ('Resource_Prologue', 'Resource_Epilogue_Retry'),   # error contacting forker component
+        ('Resource_Prologue', 'Resource_Epilogue'),         # kill / resource prologue failed; system component released resource
+        ('Resource_Prologue', 'Resource_Epilogue_Retry'),   # kill / resource prologue failed; error contacting forker component
+        ('Resource_Prologue', 'Resource_Prologue_Retry_Release'), # kill / job_prologue failed.  error releasing system resources
         ('Resource_Prologue_Retry','Resource_Prologue'),    # run resource prologue scripts
         ('Resource_Prologue_Retry','Job_Epilogue'),         # kill; run any required job cleanup
-        ('Release_Resources_Retry', 'Resource_Epilogue'),   # resource successfully released
-        ('Release_Resources_Retry', 'Resource_Epilogue_Retry'), # error contacting forker component
-        ('Release_Resources_Retry', 'Job_Epilogue'),   # resource successfully released
-        ('Release_Resources_Retry', 'Job_Epilogue_Retry'), # error contacting forker component
+        ('Resource_Prologue_Retry_Release', 'Resource_Epilogue'),       # resource successfully released
+        ('Resource_Prologue_Retry_Release', 'Resource_Epilogue_Retry'), # error contacting forker component
         ('Run_Retry', 'Running'),                           # system component starting task
         ('Run_Retry', 'Resource_Epilogue'),                 # kill
         ('Run_Retry', 'Resource_Epilogue_Retry'),           # kill; error contacting forker component
@@ -417,21 +418,26 @@ def get_job_sm_seas(job):
             ('Job_Prologue_Retry', 'Release') : [job._sm_common__pending_release],
             ('Job_Prologue_Retry', 'Preempt') : [job._sm_common__pending_preempt], #Must go pending
             ('Job_Prologue_Retry', 'Kill') : [job._sm_job_prologue_retry__kill],
+            ('Job_Prologue_Retry_Release', 'Progress') : [job._sm_job_prologue_retry_release__progress],
+            ('Job_Prologue_Retry_Release', 'Hold') : [job._sm_exit_common__hold],
+            ('Job_Prologue_Retry_Release', 'Release') : [job._sm_exit_common__release],
+            ('Job_Prologue_Retry_Release', 'Preempt') : [job._sm_exit_common__preempt],
+            ('Job_Prologue_Retry_Release', 'Kill') : [job._sm_exit_common__kill],
             ('Resource_Prologue', 'Progress') : [job._sm_resource_prologue__progress],
             ('Resource_Prologue', 'Hold') : [job._sm_common__pending_hold],
             ('Resource_Prologue', 'Release') : [job._sm_common__pending_release],
             ('Resource_Prologue', 'Preempt') : [job._sm_common__pending_preempt], #custom?
             ('Resource_Prologue', 'Kill') : [job._sm_common__pending_kill],
-            ('Resource_Prologue_Retry', 'Progress') : [job._sm_job_prologue_retry__progress],
+            ('Resource_Prologue_Retry', 'Progress') : [job._sm_resource_prologue_retry__progress],
             ('Resource_Prologue_Retry', 'Hold') : [job._sm_common__pending_hold],
             ('Resource_Prologue_Retry', 'Release') : [job._sm_common__pending_release],
             ('Resource_Prologue_Retry', 'Preempt') : [job._sm_common__pending_preempt], #custom: go directly to preempted?
-            ('Resource_Prologue_Retry', 'Kill') : [job._sm_job_prologue_retry__kill],
-            ('Release_Resources_Retry', 'Progress') : [job._sm_release_resources_retry__progress],
-            ('Release_Resources_Retry', 'Hold') : [job._sm_exit_common__hold],
-            ('Release_Resources_Retry', 'Release') : [job._sm_exit_common__release],
-            ('Release_Resources_Retry', 'Preempt') : [job._sm_exit_common__preempt],
-            ('Release_Resources_Retry', 'Kill') : [job._sm_exit_common__kill],
+            ('Resource_Prologue_Retry', 'Kill') : [job._sm_resource_prologue_retry__kill],
+            ('Resource_Prologue_Retry_Release', 'Progress') : [job._sm_resource_prologue_retry_release__progress],
+            ('Resource_Prologue_Retry_Release', 'Hold') : [job._sm_exit_common__hold],
+            ('Resource_Prologue_Retry_Release', 'Release') : [job._sm_exit_common__release],
+            ('Resource_Prologue_Retry_Release', 'Preempt') : [job._sm_exit_common__preempt],
+            ('Resource_Prologue_Retry_Release', 'Kill') : [job._sm_exit_common__kill],
             ('Run_Retry', 'Progress') : [job._sm_run_retry__progress],
             ('Run_Retry', 'Hold') : [job._sm_common__pending_hold],
             ('Run_Retry', 'Release') : [job._sm_common__pending_release],
@@ -777,9 +783,11 @@ class Job (StateMachine):
         if not state.has_key("script_preboot"):
             self.script_preboot = True
         if not state.has_key('ion_kernel'):
+            #if ion kernel doesn't exist, neither will ion_kerneloptions
             self.ion_kernel = get_config_option('bgsystem', 'ion_default_kernel', 'default')
-        if not state.has_key('ion_kernel'):
-            self.ion_kerneloptions = get_config_option('bgsystem', 'ion_default_kernel_options', 'default')
+            self.ion_kerneloptions = get_config_option('bgsystem', 'ion_default_kernel_options', False)
+            if self.ion_kerneloptions == False:
+                self.ion_kerneloptions = None
         self.runid = state.get("runid", None)
         self.initializing = False
 
@@ -808,7 +816,6 @@ class Job (StateMachine):
                     (e,))
                 return Job.__rc_xmlrpc
         except:
-            traceback.print_exc()
             self._sm_raise_exception("unexpected error from the system component; manual cleanup may be required")
             return Job.__rc_unknown
 
@@ -868,7 +875,6 @@ class Job (StateMachine):
             self._sm_log_warn("failed to execute the task (%s); retry pending" % (e,))
             return Job.__rc_retry
         except:
-            #print traceback.format_exec()
             self._sm_raise_exception("unexpected error returned from the system component when attempting to add task",
                 cobalt_log = True)
             return Job.__rc_unknown
@@ -1469,7 +1475,7 @@ class Job (StateMachine):
                     '%s_%s'%(self.jobid, self._sm_state))
         except ComponentLookupError:
             #Forker wasn't there, we need to go to the retry-state.
-            print "failing lookup for forker"
+            #print "failing lookup for forker"
             if self._sm_state != "Job_Prologue_Retry":
                 logger.warning("Job %s/%s: Unable to connect to forker "
                         "component to launch job prologue.  Will retry", 
@@ -1773,10 +1779,14 @@ class Job (StateMachine):
                     self.log_script_failure(job_dict, "Job Prologue")
                     script_failed = True
             if script_failed:
-
                 dbwriter.log_to_db(None, "job_prologue_failed", 
                     "job_prog", JobProgMsg(self))
-                self._sm_start_job_epilogue_scripts(script_failed)
+                rc = self.__release_resources()
+                if rc == Job.__rc_success:
+                    self._sm_log_info("resources released; starting job epilogue scripts", cobalt_log=True)
+                    self._sm_start_job_epilogue_scripts(error=True)
+                else:
+                    self._sm_state = 'Job_Prologue_Retry_Release'
             else:
                 logger.info("Job %s/%s: Job Prologue scripts completed "
                     "successfuly.", self.jobid, self.user)
@@ -1792,14 +1802,20 @@ class Job (StateMachine):
                         cobalt_log = True)
                     rc = self.__release_resources()
                     if rc == Job.__rc_success:
-                        self._sm_log_info("resources released; initiating job cleanup "
-                            "and removal", cobalt_log = True)
+                        self._sm_log_info("resources released; starting job epilogue scripts", cobalt_log=True)
                         self._sm_start_job_epilogue_scripts()
                     else:
-                        self._sm_state = 'Release_Resources_Retry'
+                        self._sm_state = 'Job_Prologue_Retry_Release'
                     return
 
                 self._sm_start_resource_prologue_scripts()
+
+    def _sm_job_prologue_retry_release__progress(self, args):
+        self._sm_log_info("retrying release of resources")
+        rc = self.__release_resources()
+        if rc == Job.__rc_success:
+            self._sm_log_info("resources released; starting job epilogue scripts", cobalt_log = True)
+            self._sm_start_job_epilogue_scripts()
 
 
     def _sm_start_resource_prologue_scripts(self):
@@ -1896,7 +1912,12 @@ class Job (StateMachine):
                         "job_prog", JobProgMsg(self))
                 script_failed = True
         if script_failed:
-            self._sm_start_resource_epilogue_scripts(script_failed)
+            rc = self.__release_resources()
+            if rc == Job.__rc_success:
+                self._sm_log_info("resources released; starting resource epilogue scripts", cobalt_log=True)
+                self._sm_start_resource_epilogue_scripts(error=True)
+            else:
+                self._sm_state = 'Resource_Prologue_Retry_Release'
             return
         #and we're off and running.
 
@@ -1914,15 +1935,20 @@ class Job (StateMachine):
                     cobalt_log = True)
             rc = self.__release_resources()
             if rc == Job.__rc_success:
-                self._sm_log_info("resources released; initiating job cleanup "
-                        "and removal", cobalt_log = True)
+                self._sm_log_info("resources released; starting resource epilogue scripts", cobalt_log=True)
                 self._sm_start_resource_epilogue_scripts()
             else:
-                self._sm_state = 'Release_Resources_Retry'
+                self._sm_state = 'Resource_Prologue_Retry_Release'
             return
 
         self._start_run_from_prologue()
 
+    def _sm_resource_prologue_retry_release__progress(self, args):
+        self._sm_log_info("retrying release of resources")
+        rc = self.__release_resources()
+        if rc == Job.__rc_success:
+            self._sm_log_info("resources released; starting resource epilogue scripts", cobalt_log = True)
+            self._sm_start_resource_epilogue_scripts()
 
     def _start_run_from_prologue(self):
         # attempt to run task
@@ -1999,14 +2025,6 @@ class Job (StateMachine):
                 " ".join([str(id) for id in lost_children]))
 
         return children #Yay! Success!
-
-    def _sm_release_resources_retry__progress(self, args):
-        self._sm_log_info("retrying release of resources")
-        rc = self.__release_resources()
-        if rc == Job.__rc_success:
-            self._sm_log_info("resources released; initiating job cleanup and "
-                "removal", cobalt_log = True)
-            self._sm_start_resource_epilogue_scripts()
 
     def _sm_run_retry__progress(self, args):
         '''previous attempt to execute the task failed; attempt to run it again
@@ -2783,7 +2801,7 @@ class Job (StateMachine):
             return 'preempting'
         if self._sm_state == 'Preempted':
             return 'preempted'
-        if self._sm_state in ['Release_Resources_Retry', 'Finalize_Retry', 
+        if self._sm_state in ['Job_Prologue_Retry_Release', 'Resource_Prologue_Retry_Release', 'Finalize_Retry',
                 'Resource_Epilogue','Resource_Epilogue_Retry', 'Job_Epilogue',
                 'Job_Epilogue_Retry']:
             return "exiting"
@@ -2814,7 +2832,7 @@ class Job (StateMachine):
         if self._sm_state in ['Preempt_Retry', 'Preempting', 
                 'Preempt_Finalize_Retry', 'Preempt_Epilogue', 'Preempted']:
             return 'P'
-        if self._sm_state in ['Release_Resources_Retry', 'Finalize_Retry', 
+        if self._sm_state in ['Job_Prologue_Retry_Release', 'Resource_Prologue_Retry_Release', 'Finalize_Retry',
                 'Resource_Epilogue', 'Resource_Epilogue_Retry', 'Job_Epilogue',
                 'Job_Epilogue_Retry' 'Terminal']:
             return 'E'
@@ -2989,7 +3007,6 @@ class Job (StateMachine):
                 return False
         return True
 
-
     def preempt(self, user = None, force = False):
         '''process a preemption request for a job'''
         args = {}
@@ -3096,7 +3113,6 @@ class Job (StateMachine):
                             "terminated by user %s. %s" % (self.jobid, 
                                 self.user, self.nodes, user, stats))
 
-
     def task_end(self):
         '''handle the completion of a task'''
         self.task_running = False
@@ -3118,9 +3134,11 @@ class JobList(DataList):
             for item in spec:
                 if item in jobid_expansion_options:
                     spec[item] = spec[item].replace('$jobid', str(spec['jobid'])) if type(spec[item]) is str else spec[item]
+                    spec[item] = spec[item].replace('$COBALT_JOBID', str(spec['jobid'])) if type(spec[item]) is str else spec[item]
             if 'envs' in spec:
                 for item in spec['envs']:
                     spec['envs'][item] = spec['envs'][item].replace('$jobid', str(spec['jobid']))
+                    spec['envs'][item] = spec['envs'][item].replace('$COBALT_JOBID', str(spec['jobid']))
         jobs_added = DataList.q_add(self, specs, callback, cargs)
         if jobs_added:
             user = spec.get('user', None)
@@ -3551,25 +3569,26 @@ class QueueManager(Component):
 
     def __poll_process_groups (self):
         '''Resynchronize with the system'''
+        running_jobs = [j for queue in self.Queues.itervalues() for j in queue.jobs if j.task_running]
 
         try:
+            self.component_lock_release()
             pgroups = ComponentProxy("system").get_process_groups(
                     [{'id':'*', 'state':'running'}])
+            self.component_lock_acquire()
         except (ComponentLookupError, xmlrpclib.Fault):
+            self.component_lock_acquire()
             logger.error("Failed to communicate with the system component when"
                 " attempting to acquire a list of active process groups")
             return
 
-        self.component_lock_acquire()
-        try:
-            live = [item['id'] for item in pgroups]
-            for job in [j for queue in self.Queues.itervalues() for j in queue.jobs]:
-                if job.task_running and job.taskid not in live:
-                    logger.info("Job %s/%s: process group no longer executing" % (job.jobid, job.user))
-                    job.task_end()
-        finally:
-            self.component_lock_release()
-    __poll_process_groups = locking(automatic(__poll_process_groups, float(get_cqm_config('poll_process_groups_interval', 10))))
+        live = [item['id'] for item in pgroups]
+        for job in running_jobs:
+            if job.taskid not in live:
+                logger.info("Job %s/%s: process group no longer executing" % (job.jobid, job.user))
+                job.task_end()
+
+    __poll_process_groups = automatic(__poll_process_groups, float(get_cqm_config('poll_process_groups_interval', 10)))
 
     #
     # job operations
@@ -3648,7 +3667,7 @@ class QueueManager(Component):
                 walltime_prediction_enabled = True
             else:
                 walltime_prediction_enabled = False
-            print "test_history_manager: walltime_prediction_enabled=", walltime_prediction_enabled
+            self.logger.debug("test_history_manager: walltime_prediction_enabled=%s", walltime_prediction_enabled)
 
     test_history_manager = automatic(test_history_manager, 60)
 
@@ -3696,6 +3715,14 @@ class QueueManager(Component):
         failed = False
         for spec in specs:
             if spec['queue'] in self.Queues:
+                if 'walltime' in spec:
+                    if float(spec['walltime']) <= 0 and 'maxtime' not in self.Queues[spec['queue']].restrictions:
+                        maxtime = get_cqm_config('max_walltime', None)
+                        if not maxtime:
+                            failure_msg = 'No Max Walltime default or for queue "%s" defined. Please contact system administrator' % spec['queue']
+                            logger.error(failure_msg)
+                            raise QueueError, failure_msg
+                    
                 spec.update({'adminemail':self.Queues[spec['queue']].adminemail})
                 if walltime_prediction_enabled:
                     spec['walltime_p'] = self.get_walltime_p(spec)        #*AdjEst*
@@ -3795,7 +3822,7 @@ class QueueManager(Component):
     set_jobs = exposed(query(set_jobs))
 
 
-    def run_jobs(self, specs, nodelist, user_name=None, resid=None):
+    def run_jobs(self, specs, nodelist, user_name=None, resid=None, walltime=None):
         """Run jobs.  Get a possible user_name if this is a forced-run, or
         a dict that contains resid's keyed by jobid.  Resid is for the
         reservation the job actually ran in, not the one, if any, it was queued
@@ -3809,6 +3836,23 @@ class QueueManager(Component):
             logger.info("%s using cqadm to start %s on %s", user_name, specs, nodelist)
 
         def _run_jobs(job, nodes):
+            # set new walltime if available
+            maxtime = None
+            if walltime is not None:
+                if walltime <= 0:
+                    if 'maxtime' in self.Queues[job.queue].restrictions:
+                        maxtime = self.Queues[job.queue].restrictions['maxtime'].value
+                        logger.info('Setting max queue time %s for jobid %s on queue %s' % (str(maxtime), str(job.jobid), job.queue))
+                    else:
+                        maxtime = get_cqm_config('max_walltime', None)
+                        if not maxtime:
+                            failure_msg = "No Queue Max Walltime Defined for queue: %s" % job.queue
+                            logger.error(failure_msg)
+                            raise QueueError, failure_msg
+                    job.walltime = maxtime
+                else:
+                    logger.info('Setting remaining reservation time %s for jobid %s on queue %s' % (str(walltime), str(job.jobid), job.queue))
+                    job.walltime = walltime
             try:
                 res_success = ComponentProxy("system").reserve_resources_until(
                     nodelist, time.time() + ((float(job.walltime) + float(job.force_kill_delay) + 1.0) * 60.0),
@@ -4160,10 +4204,13 @@ class JobDataMsg(object):
                      'path', 'mode', 'envs', 'queue', 'priority_core_hours',
                      'force_kill_delay', 'all_dependencies', 'attribute', 
                      'attrs', 'satisfied_dependencies', 'preemptable', 
-                     'user_list', 'dep_frac', 'resid', 'cwd'
+                     'user_list', 'dep_frac', 'resid', 'cwd', 'ion_kernel',
+                     'ion_kerneloptions', 'geometry'
                      ]
         small_clob_list = ['command', 'inputfile', 'kernel', 'outputpath',
-                           'outputdir', 'errorpath','path','cwd']
+                           'outputdir', 'errorpath', 'path', 'cwd',
+                           'ion_kernel', 'ion_kerneloptions'
+                           ]
 
         for attr in attr_list:
 
@@ -4173,6 +4220,9 @@ class JobDataMsg(object):
                 self.job_user = job.user
             elif attr == 'user_list':
                 self.job_user_list = job.user_list
+            elif attr == 'geometry':
+                if job.geometry is not None:
+                    self.geometry = 'x'.join([str(dim) for dim in job.geometry])
             elif attr in small_clob_list:
                 clob_str = job.__getattribute__(attr)
                 if clob_str != None:

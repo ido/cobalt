@@ -1,181 +1,242 @@
-Changes from previous Cobalt Versions
+= Changes from previous Cobalt Versions =
 
-Changes for 0.99.26
-- Corrected a bug that was causing messages in the clients that used to go to
+== Changes to 0.99.31 == 
+ * Interactive mode jobs (qsub -I) are now supported on the BlueGene/Q.
+   (Cobalt Ticket #107)
+ * Timestamps are now included in cobaltlog lines (Cobalt Ticket #344 and #669)
+ * Multiple mode arguments will result in a qsub rejection (Cobalt Ticket #664)
+ * Fixed an issue that was causing COBALT_STARTTIME and COBALT_ENDTIME to not be
+    set for compute node jobs in cX jobs. (Cobalt Ticket #673)
+
+== Changes to 0.99.30 ==
+ * This is a fix release that corrects a bug that can be encountered when upgrading
+   to 0.99.27 from prior versions where ion_kerneloptions in cqm is improperly set.
+   (Cobalt Ticket #665)
+
+== Changes to 0.99.29 ==
+ * Interactive jobs are experimentally available for cluster systems.
+
+== Changes to 0.99.28 ==
+ * Cobalt now supports qsub options in script mode jobs similarly to other
+   job scheduler scripts.  The form is #Cobalt <qsub option> <option argument>.
+   Most qsub options are supported, except for mode.  Jobs using this feature must
+   be script mode jobs.  This is similar in style to PBS-directives. (Cobalt Ticket 354)
+ * Fixed a bug in cluster systems where a failure duing job startup could result
+   in all nodes for a job being stuck in the allocated state (Cobalt Ticket 662)
+ * $COBALT_STARTTIME and $COBALT_ENDTIME added to job's environments, these are
+   the Unix timestamp for when the job started, and when Cobalt will terminate
+   the job due to exceeding walltime. (Cobat Ticket 593)
+ * A requested walltime of 0 will set the job to run for the time remaining in
+   a reservation. (Cobalt Ticket 474)
+ * The --env flag to qsub now aggregates multiple instances of the flag rather
+   than overriding the prior instance (Cobalt Ticket 657)
+
+== Changes to 0.99.27 ==
+ * Alternate kernel support for BG/Q compute nodes and IO nodes is available.
+  Numerous configuration settings have been added to support this.
+  (Cobalt ticket 621)
+ * If $jobid is included in a job name specification or an environment variable,
+  at submission time, Cobalt will substitute the generated jobid for that job.
+  See man qsub for more details. (Cobalt ticket 617)
+ * The Cobalt jobid is now explicitly added in the cobaltlog file. (Cobalt ticket 390)
+ * The name of a job can now be specified seperately from naming the output
+  files. (Cobalt ticket 625)
+ * Multiple locations can be passed to reservations through the -p option as a
+  ':'-delimited list. (Cobalt ticket 405)
+ * cqadm can now be used to release user hold, as well as put jobs into a user hold
+  as well as an admin hold (Cobalt ticket 382)
+ * The users field can be removed from a reservation using setres -m -u '*'. (Cobalt
+   ticket 381)
+ * Releaseres should now report the correct partiton count on reservation release
+  (Cobalt ticket 470)
+ * Reservations now show time remaining in showres once the reservation is active.
+  (Cobalt ticket 585)
+ * Schedctl should handle flipping score and jobid arguments more gracefully and 
+  no longer silently discards invalid options. (Cobalt ticket 502)
+ * ':' and '=' may now be escaped as '\:' and '\=' in the --envs argument (Cobalt
+  ticket 589)
+ * Reservations may now take 'now' for the start time of a reservation (Cobalt
+  ticket 546)
+ * "GEOMETRY", "ION_KERNEL" and "ION_KERNELOPTIONS have been added to the JOB_DATA
+  table of the Cobalt database 
+
+
+== Changes to 0.99.26 ==
+ * Corrected a bug that was causing messages in the clients that used to go to
   stdout to go to stderr instead
 
-Changes for 0.99.25
-- Fixes for clients that were causing erronious default values for proccount
+== Changes to 0.99.25 ==
+ * Fixes for clients that were causing erronious default values for proccount
   have been fixed.
-- The setgid wrapper now calls a site-selectable python interperter with the
+ * The setgid wrapper now calls a site-selectable python interperter with the
   '-E' flag by default.
-- A bug that could cause TimeRemaining to show negative values has been fixed
-- Queues may be added or removed from blocks without overwriting the entire
+ * A bug that could cause TimeRemaining to show negative values has been fixed
+ * Queues may be added or removed from blocks without overwriting the entire
   list with new options in partadm using --rmq or --appq with the --queue option.
 
 
-Changes for 0.99.24
-* Reverting client changes.  Found some issues when deploying to test systems
-* --defer flag has been reverted with these as a casualty.
+== Changes to 0.99.24 ==
+ * Reverting client changes.  Found some issues when deploying to test systems
+ * --defer flag has been reverted with these as a casualty.
 
-Changes for 0.99.23
-* Client code has undergone a refactor.  Numerous bugs have been addressed
+== Changes to 0.99.23 ==
+ * Client code has undergone a refactor.  Numerous bugs have been addressed
   with these that were found while improving test coverage of this code
-* IO Block booting and automatic control has been added.  Please consult the
+ * IO Block booting and automatic control has been added.  Please consult the
   partadm manpage for details
-* This release requires pybgsched-0.1.3
-* A user may voluntarily set their job's score to 0 and let it re-accrue using
+ * This release requires pybgsched-0.1.3
+ * A user may voluntarily set their job's score to 0 and let it re-accrue using
   qalter --defer (Ticket #590)
 
-Changes to 0.99.22
-* Fix for a deadlock that could occur due to a race condition in the 
+== Changes to 0.99.22 ==
+ * Fix for a deadlock that could occur due to a race condition in the 
   boot-reaping code.
-* Fix for a pid collision that could occur after a forced delete of a job in
+ * Fix for a pid collision that could occur after a forced delete of a job in
   the system-script-forker component leading to a job getting stuck in the
   Job_Epilogue state.
-* python 2.7 and it's change to the XMLRPC libraries are now supported.
+ * python 2.7 and it's change to the XMLRPC libraries are now supported.
 
-Changes to 0.99.21
-* Minor fix release to correct a failure mode where we can lose a process group
+== Changes to 0.99.21 ==
+ * Minor fix release to correct a failure mode where we can lose a process group
   if a job's boot is delayed.
 
-Changes to 0.99.20
-* Small changeset to fix a race condition that was hanging jobs that came in
+== Changes to 0.99.20 ==
+ * Small changeset to fix a race condition that was hanging jobs that came in
    on 0.99.19
-* Better error logging for situations where the boots and the process group
+ * Better error logging for situations where the boots and the process group
   information haven't lined up yet.  This usually happens during high-load and
   can result in block boot completion never being detected.
 
-Changes to 0.99.19
-* Manual boot control has been added
-* major refactor of compute block rebooting
+== Changes to 0.99.19 ==
+ * Manual boot control has been added
+ * major refactor of compute block rebooting
 
-Changes to 0.99.18
-* Fix for other systems that were seeing erronious geometry data
-* SoftwareFailure now accurately reported
+== Changes to 0.99.18 ==
+ * Fix for other systems that were seeing erronious geometry data
+ * SoftwareFailure now accurately reported
 
-Changes to 0.99.17
+== Changes to 0.99.17 ==
 
-* Support for --geometry has been added.  This will constrain a job to run 
+ * Support for --geometry has been added.  This will constrain a job to run 
 blocks having a specific geometry in nodes, partadm, partlist and qstat have
 been updated to show this.
-* Support for passthrough blocking reservations has been added.
-* Fixed a bug where a job run outside of Cobalt would not properly block resources.
-* Removed autoreboot in the event of a block entering a control system 
+ * Support for passthrough blocking reservations has been added.
+ * Fixed a bug where a job run outside of Cobalt would not properly block resources.
+ * Removed autoreboot in the event of a block entering a control system 
   SoftwareFalure state on BG/Q.  Normal cleanup should handle this now.
 
-Changes to 0.99.15
-* Fix for an issue that was causing partadm to malfunction when reservations
+== Changes to 0.99.15 ==
+ * Fix for an issue that was causing partadm to malfunction when reservations
 were set on the system.
 
-Changes to 0.99.12
-* As a note, this is a release of fixes and backported features from BG/Q
-* Fixed issues that could cause a bad hardware state to be overridden as 
+== Changes to 0.99.12 ==
+ * As a note, this is a release of fixes and backported features from BG/Q
+ * Fixed issues that could cause a bad hardware state to be overridden as 
 "blocked" allowing the block to be drained
-* Fix for a situation where a partition that is inelligible to run due to a
+ * Fix for a situation where a partition that is inelligible to run due to a
 pending reservation is selected for draining.
 
-Changes to 0.99.11
-* Fix for an additional circumstance that can cause a small reservation to
+== Changes to 0.99.11 ==
+ * Fix for an additional circumstance that can cause a small reservation to
 collapse a backfill window to zero.
 
-Changes to 0.99.10
-* Fixed an issue that was introduced in 0.99.6 where children were not being
+== Changes to 0.99.10 ==
+ * Fixed an issue that was introduced in 0.99.6 where children were not being
 properly added to a block.  This caused strange behavior in reservations,
 including failure to run jobs smaller than the reservation or a small job
 running on the largest block in a reservation
-* Refactored the update_block_state code to operate more similarly to the way
+ * Refactored the update_block_state code to operate more similarly to the way
 BG/P is currently doing it.  This should correct an issue where a block can
 have an error state overridden.
-* Cleaned up a circumstance where wires between passthrough midplanes can be
+ * Cleaned up a circumstance where wires between passthrough midplanes can be
 added to a block's wire list.  This can cause erronious wiring conflicts to be
 detected.
-* Fixed an issue where duplicate wires were being added
+ * Fixed an issue where duplicate wires were being added
 
-Changes to 0.99.9
+== Changes to 0.99.9 ==
 
-* Fixed an issue where a job could choose a block for draining that is blocked
+ * Fixed an issue where a job could choose a block for draining that is blocked
 by a pending reservation.  This would cause the backfill time to collapse to zero.
-* Added code to take blocks offline if passthrough nodeboards reported their state
+ * Added code to take blocks offline if passthrough nodeboards reported their state
 as in error.  It does not offline them if it is only a compute node down, it must
 be the nodeboard itself in error as would be set by a BOARD_IN_ERROR control action.
 
-Changes to 0.99.8
+== Changes to 0.99.8 ==
 
-* Fixed an issue where dimensions without cables (like the A,B, and C
+ * Fixed an issue where dimensions without cables (like the A,B, and C
   dimensions on a 2 midplane system) would cause the system component to fail
   on boot.
 
-Changes to 0.99.7
+== Changes to 0.99.7 ==
 
-* Cable errors are now properly detected
-* IO Node errors in available links are detected
-* Due to changes, libpybgsched v 0.1.1 is required.  This also
+ * Cable errors are now properly detected
+ * IO Node errors in available links are detected
+ * Due to changes, libpybgsched v 0.1.1 is required.  This also
   means the V1R1M1 driver changes can also be enabled.
 
-Changes to 0.99.6
+== Changes to 0.99.6 ==
 
-* Performance improvements over 0.99.5 in update_block_state and wiring 
+ * Performance improvements over 0.99.5 in update_block_state and wiring 
   conflict detection.  This makes the partadm commands far more responsive.
-* Corrected an error in a block's children that affected cold (non-statefile)
+ * Corrected an error in a block's children that affected cold (non-statefile)
   startup.
 
-Changes to 0.99.0pre36
+== Changes to 0.99.0pre36 ==
 
-* Fixed bug in resource reservation that would leave a reserved partition in
+ * Fixed bug in resource reservation that would leave a reserved partition in
   the 'idle' state
-* Updated the code that sets the kernel profile for a partition to set the
+ * Updated the code that sets the kernel profile for a partition to set the
   profile even if no profile is currently set
 
 
-Changes to 0.99.0pre35
+== Changes to 0.99.0pre35 ==
 
-* Fixed bug where pickling IncrID could fail when deleting db related
+ * Fixed bug where pickling IncrID could fail when deleting db related
   attributes from the object's dictionary
 
 
-Changes to 0.99.0pre34
+== Changes to 0.99.0pre34 ==
 
-* Time spent in the hold state is now exported to the utility function
-* bgsystem now tracks forked tasks using a (forker, id) tuple instead of just
+ * Time spent in the hold state is now exported to the utility function
+ * bgsystem now tracks forked tasks using a (forker, id) tuple instead of just
   id in order to prevent id collisions in the active jobs list
-* Updated cleanup and resource reservation in bgsystem updated to prevent
+ * Updated cleanup and resource reservation in bgsystem updated to prevent
   multiple partition cleanups for a single job
-* Forker classes updated so that logging messages properly identify the
+ * Forker classes updated so that logging messages properly identify the
   component from which they came
-* Added LOGNAME and SHELL to the environment of script jobs
-* Resolved a bug in the cdbwriter-api where a job object which had no data
+ * Added LOGNAME and SHELL to the environment of script jobs
+ * Resolved a bug in the cdbwriter-api where a job object which had no data
   records could endless recurse in _jr_obj.__getattr__ looking for valid fields
-* Implemented support for common job ID pool through database ID generation
-* PYTHONPATH may now be explicitly set when building the wrapper program
-* Fix for cobalt-mpirun where the -env flag was being improperly handled
-* Updated Cobalt's database documentation diagrams
+ * Implemented support for common job ID pool through database ID generation
+ * PYTHONPATH may now be explicitly set when building the wrapper program
+ * Fix for cobalt-mpirun where the -env flag was being improperly handled
+ * Updated Cobalt's database documentation diagrams
 
 
-Changes to 0.99.0pre31
+== Changes to 0.99.0pre31 ==
 
-* Cleaned up reservation logging and database logging
-* Reservations can now be tagged by adding a -A flag to setres
-* A view of reservations with resid, cycleid and project can be obtained via
+ * Cleaned up reservation logging and database logging
+ * Reservations can now be tagged by adding a -A flag to setres
+ * A view of reservations with resid, cycleid and project can be obtained via
     the -x flag to showres.
 
 
-Changes to 0.99.0pre30
+== Changes to 0.99.0pre30 ==
 
-* Improved logging of reservations to the cobalt database.
-    - "ending" event changed to "terminated"  indicates that the reservaiton 
+ * Improved logging of reservations to the cobalt database.
+    * "ending" event changed to "terminated"  indicates that the reservaiton 
         has been ended and cleaned up.
-    - added "deferred" event for when reservations are deferred (setres -D)
-    - added "deactivating" event for when reservation come to a natural end
+    * added "deferred" event for when reservations are deferred (setres -D)
+    * added "deactivating" event for when reservation come to a natural end
         (i.e. run out of time)
-    - added "releasing" event for a user-requested release of a reservation
-    - deferrals of reservations now no longer cause new reservation_data 
+    * added "releasing" event for a user-requested release of a reservation
+    * deferrals of reservations now no longer cause new reservation_data 
         table entries to be generated.  The subsequent cycle does that.
-* cluster_system has had a variety of enhancements.  Notably:
-    - setting simulation_mode true in the cobalt config file will allow the
+ * cluster_system has had a variety of enhancements.  Notably:
+    * setting simulation_mode true in the cobalt config file will allow the
         cluster_system component to enter a test mode, where it can be run
         on a development machine without a supporting cluster.
-    - nodes are now recognized as being allocated when a location is selected 
+    * nodes are now recognized as being allocated when a location is selected 
         and sent back to the scheduler component as a runnable location.
         A timeout is set for the partition, and by default this is 300 seconds
         (5 minutes).  This can be changed reset at execution time from the 
@@ -183,103 +244,102 @@ Changes to 0.99.0pre30
         terminated prior to a run (prescript failure due to a dead node, or 
         a hasty user kill, for instance), this will ensure that the nodes are
         released.
-* Jobs submitted to cluster_system will now have arguments passed to the job
+ * Jobs submitted to cluster_system will now have arguments passed to the job
     recognized, as they are on BlueGene type systems.
 
 
-Changes to 0.99.0pre29
+== Changes to 0.99.0pre29 ==
 
-* Arguments that get passed to scripts (not script jobs but pre and 
+ * Arguments that get passed to scripts (not script jobs but pre and 
     postscripts) are now being properly escaped.
-* Cobaltlogs are now being written to by cqm in a separate thread, and
+ * Cobaltlogs are now being written to by cqm in a separate thread, and
     should allow scheduling to continue in the event of a filesystem hang.
-* qalter has had a bug fixed where it was passing back nodecounts and proccounts
+ * qalter has had a bug fixed where it was passing back nodecounts and proccounts
     as a string rather than an int.
-* jobs in cqm that do not have a timer are appropriately destroyed rather
+ * jobs in cqm that do not have a timer are appropriately destroyed rather
     than entering into an infinite loop of attempting to run the job.
-* Fix for the situation where a resid can be duplicated in the case of a
+ * Fix for the situation where a resid can be duplicated in the case of a
     cycling reservation
 
 
-Changes to 0.99.0pre28
+== Changes to 0.99.0pre28 ==
 
-* Modification to the XMLRPC base proxy class that allows you to turn off 
+ * Modification to the XMLRPC base proxy class that allows you to turn off 
     automatic retries from the cobalt side on the proxy by requesting no
     retries.  This should be used for non-idempotent tasks like job-launching.
-* Modified cqm's retry behavior to include a runid when running a job, so and 
+ * Modified cqm's retry behavior to include a runid when running a job, so and 
     retrying so that bgforker doesn't try to start the same job twice.
-* Timezone display corrected.  If available, cobalt will try to use the pytz
+ * Timezone display corrected.  If available, cobalt will try to use the pytz
     library (Olsen Timezone Database).
 
 
-Changes to 0.99.0pre27
+== Changes to 0.99.0pre27 ==
 
-* Restored COBALT_JOBID and COBALT_RESID in back-end jobs. This was erroniously
+ * Restored COBALT_JOBID and COBALT_RESID in back-end jobs. This was erroniously
     removed in 0.99.0pre26.
 
 
-Changes to 0.99.0pre26
+== Changes to 0.99.0pre26 ==
 
-* Fixed bug where environmental variables passed into a job from the --env flag
+ * Fixed bug where environmental variables passed into a job from the --env flag
     of qsub and qalter would leak into the environment of bgforker and from 
     there into subsequent mpirun process environments.  These did not leak 
     into the backend-job environments.  Cluster-system component jobs did not
     see issues with this due to an apparent bug in envrionment handling.
-* A job's exit status is now added to the Cobalt Database as exit_status
-* COBALT_RESID is set in mpirun jobs
+ * A job's exit status is now added to the Cobalt Database as exit_status
+ * COBALT_RESID is set in mpirun jobs
 
 
-Changes to 0.99.0pre25
+== Changes to 0.99.0pre25 ==
 
-* Various timezone formatting changes including:
-    - setres takes the reservation time depending on what TZ is set to
-    - qstat and showres show times in a unified format, that includes
+ * Various timezone formatting changes including:
+    * setres takes the reservation time depending on what TZ is set to
+    * qstat and showres show times in a unified format, that includes
         offset and three-letter timezone designation
-    - showres has a flag --oldts where it shows timestamps in the original
+    * showres has a flag --oldts where it shows timestamps in the original
         format for compatibility with old scripts
-* Forker was not handling spaces in arguments to scripts correctly
-* schedctl no longer gives an erronious error message about requiring a job id 
+ * Forker was not handling spaces in arguments to scripts correctly
+ * schedctl no longer gives an erronious error message about requiring a job id 
     for --start, --stop 
-* Statemachine state-transition function pointers are now regenerated at 
+ * Statemachine state-transition function pointers are now regenerated at 
     restart as well as job initialization, to allow for transparent state-
     machine adjustments
 
 
-Changes to 0.99.0pre24
+== Changes to 0.99.0pre24 ==
 
-* Fixes for arguments to pre and post scripts for jobs
-* showres reverted to not include id's
-* Fixes for script-mode jobs
+ * Fixes for arguments to pre and post scripts for jobs
+ * showres reverted to not include id's
+ * Fixes for script-mode jobs
 
 
-changes to 0.99.0pre23
+== Changes to 0.99.0pre23 ==
 
-* Script jobs run with their own shells from forker to prevent 32/64 bit execution environment issues
+ * Script jobs run with their own shells from forker to prevent 32/64 bit execution environment issues
 
-changes to 0.99.0pre22
+== Changes to 0.99.0pre22 ==
 
-* Bgforker modified so that helper scripts can be run
-* KNOWN ISSUE: job preemption is not working correctly in this version.  
-* Resid now added to jobs at runtime, if they are run in a reservation.
-* Fix for partially overlapping partitions being scheduled at the same time
+ * Bgforker modified so that helper scripts can be run
+ * KNOWN ISSUE: job preemption is not working correctly in this version.  
+ * Resid now added to jobs at runtime, if they are run in a reservation.
+ * Fix for partially overlapping partitions being scheduled at the same time
     and properly detecting reservations.
 
-changes to 0.99.0pre21
+== Changes to 0.99.0pre21 ==
 
-* Fix to reduce chance of cluster system nodes from being hung-up on job exit.
-* Adding in backfill prediction functionality.  This is by default disabled.
-* Various fixes and updates to the mk_* cobalt backup scripts.  These can be 
+ * Fix to reduce chance of cluster system nodes from being hung-up on job exit.
+ * Adding in backfill prediction functionality.  This is by default disabled.
+ * Various fixes and updates to the mk_* cobalt backup scripts.  These can be 
     used to restore state should a change that is destructive to statefiles is
     made (like the 0.99.0pre16 to 0.99.0pre17 change).
-* resid and cycleid can be set via setres
-* time.sleep() wrapped to prevent kernel level IOError from creeping out on 
+ * resid and cycleid can be set via setres
+ * time.sleep() wrapped to prevent kernel level IOError from creeping out on 
     ppc64 linux platforms.  
 
 
-changes to 0.99.0pre20
+== Changes to 0.99.0pre20 ==
 
-* stderr log messages now contain timestamps
-* ensemble jobs that use -nofree without a -wait free are now cleaned up properly
-* environment variables in cert, key and ca options in config files are expanded
+ * stderr log messages now contain timestamps
+ * ensemble jobs that use -nofree without a -wait free are now cleaned up properly
+ * environment variables in cert, key and ca options in config files are expanded
 
-changes to 0.99.0pre19

@@ -9,14 +9,59 @@ qsub \- submit jobs to the queue manager for execution
 .B qsub
 submits a job to the queue manager for execution. 
 
-   jobid expansion:
-      If \\$jobid is specified in any jobid expansion option then it will be converted to the actual jobid.
+.B JOBID EXPANSION ($jobid or $COBALT_JOBID):
 
-      Example: qsub ... --env myenv=\\$jobid_myval ... 
+If $jobid or $COBALT_JOBID is specified in any jobid expansion option 
+then it will be converted to the actual jobid. 
 
-               if the jobid is 123 then myenv will be set to '123_myval'
+Example: qsub ... --env myenv=\\$jobid_myval ... 
 
-      jobid expansion options: --env, --jobname, -o, -e, -O, --debuglog
+If the jobid is 123 then myenv will be set to '123_myval'
+
+jobid expansion options: --env, --jobname, -o, -e, -O, --debuglog
+
+Note: Remember to escape appropriately "\\$jobid" or "\\$COBALT_JOBID" 
+
+.B SCRIPT JOB DIRECTIVES (#COBALT):
+
+Command options can be entered in a script job by using #COBALT <options>.
+You can enter all in one directive or directives.
+The #COBALT tag should be right after the first line of the script.
+qsub will continue to read directives until it reads the first line that 
+does not contain the tag #COBALT.
+
+The command line options will take precedence over the Cobalt script jobx
+directives.
+
+Note: An error will occur if in the script the --mode option 
+is specified and it is not "script"
+
+Example: 
+
+  script.sh:
+     
+    #!bin/bash
+    #COBALT -t 50 -n 30
+    echo "SCRIPT JOB WITH DIRECTIVE"
+
+  or
+
+    #!bin/bash
+    #COBALT -t 50 
+    #COBALT -n 30
+    echo "SCRIPT JOB WITH DIRECTIVE"
+
+  qsub script.sh sargs 
+  is equivalent to 
+  qsub -t 50 -n 30 --mode script script.sh sargs
+
+  qsub -t 75 script.sh sargs 
+  is equivalent to 
+  qsub -t 75 -n 30 --mode script script.sh sargs
+
+  qsub -n 48 --mode script script.sh sargs 
+  is equivalent to 
+  qsub -t 75 -n 48 --mode script script.sh sargs
 
 .SH "OPTIONS"
 .TP
@@ -57,18 +102,25 @@ booting the block first.  By default the script is executed after the requested 
 Send job stderr to file specified.
 .TP
 .B \-\-env [<var1=value1>:<var=value2>] - (jobid expansion)
-Set environment variables that will be passed into the job's environment at 
+Set environment variables that will be passed into the job's environment.
 If the the characters ":" and "=" are within the value, right hand side (rhs) of a environment variable assignment,
 then need to quote the entire string and precede any ":" and "=" characters that are in the rhs with "\\". 
 runtime. 
 
-e.g. qsub ... --env "A=B:C=x\\=1\\:y\\=2\\:z\\=3:D=ABC" ...
+If multiple \-\-env options are specified then qsub will take the union.
+
+e.g. qsub ... --env "A=B:C=x\\=1\\:y\\=2\\:z\\=3:D=ABC" ... --env "MY_NAME=cobalt" ...
 
 A would equal B
 
 C would equal x=1:y=2:z=3
 
 D would equal ABC
+
+and
+
+MY_NAME would be equal to "cobalt"
+
 .TP
 .B \-\-jobname [job name] - (jobid expansion)
 Sets Jobname. If this option is not provided then Jobname will be set to whatever -o option specified.'
@@ -84,9 +136,14 @@ Submit job and immediately place it in the user hold state
 .B \-i \-\-inputfile [path to file]
 Send file to job's stdin.
 .TP
-.B \-I (NOT IMPLEMENTED)
+.B \-I \-\-interactive
 Run an interactive command. During job execution, the current tty will
-be connected with the running job. (Not available on Blue Gene systems.)
+be connected with the running job.
+To run interactive job you can use -I, --interactive or --mode interactive.
+Running qsub in "interactive" mode will create a shell for the user while running
+qsub.  If the user CTRL-D or performs an "exit" command from the shell then Cobalt
+will terminate the "interactive" job.
+
 .TP 
 .B \-M \-\-notify [email address]
 Send an email notification at the start and stop of the job to the
@@ -116,13 +173,14 @@ submitting user is always able to run commands on a submitted job.
 Appends the list of users in a project to the list of users authorized to run
 commands on the submitted job. 
 .TP
-.B \-u \-\-umask'
+.B \-u \-\-umask
 set umask: octal number default(022)
 .TP
 .B \-t \-\-time [wallclock time] 
 Specify the runtime for a job. If the job runs over this limit, it will be 
 killed. The time may be specified as eitehr an integer number of minutes or a 
-colon-delimited value of the format: HH:MM:SS.
+colon-delimited value of the format: HH:MM:SS. Enter 0 to get the max allowed 
+walltime.
 .TP
 
 
@@ -138,6 +196,12 @@ Run the job with the specified kernel options (equivalent to
 .Impirun -kernel_options 
 on Blue Gene/L).
 .TP
+.B \-\-ion_kernel [kernel profile]
+Run the job with the specified IO Node kernel profile. (BlueGene/Q only)
+.TP
+.B \-\-ion_kerneloptions [kernel options]
+Run the job with the specified IO Node kernel options.  (BlueGene/Q only)
+.TP
 .B \-\-mode [mode]
 This is a platform-dependent setting that controls the execution mode of the 
 submitted job and the division of cores and memory on the compute nodes.  
@@ -149,7 +213,7 @@ BG/L: Valid values are "co" (coprocessor),"vn" (virtual node) and "script".
 BG/P: Valid values are "smp", "dual", "vn" and "script".   "smp", "dual" and 
       "vn" correspond to the modes within mpirun. The default is "smp" 
 .TP
-BG/Q: Valid values are "c1","c2","c4","c8","c16","c32","c64", and "script".  
+BG/Q: Valid values are "c1","c2","c4","c8","c16","c32","c64","script" and "interactive".  
       The c(n) modes correspond to the "ranks-per-node" flag of runjob and 
       governs the MPI ranks started per node on the compute nodes.  Node memory
       is divided evenly between all processes.  n/64 threads will be available 
@@ -162,12 +226,12 @@ allows the user to
 .SH "NOTE"
 The only thing printed to STDOUT is the jobid, any other error or informational messages are printed to STDERR.
 .SH "SEE ALSO"
-.BR qstat(1),
-.BR qdel(1),
-.BR qhold(1),
-.BR qrls(1),
-.BR qalter(1),
-.BR qmove(1),
-.BR cqm(1),
-.BR cqwait(1)
+.BR qstat (1),
+.BR qdel (1),
+.BR qhold (1),
+.BR qrls (1),
+.BR qalter (1),
+.BR qmove (1),
+.BR cqm (1),
+.BR cqwait (1)
 .SH "BUGS"

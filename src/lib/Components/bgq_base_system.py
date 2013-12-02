@@ -932,7 +932,7 @@ class BGBaseSystem (Component):
         except:
             sys_type = 'bgq'
         if sys_type == 'bgq':
-            job_types = ['c1', 'c2', 'c4', 'c8','c16','c32','c64', 'script']
+            job_types = ['c1', 'c2', 'c4', 'c8','c16','c32','c64', 'script', 'interactive']
         else:
             raise JobValidationError("[bgq_base_system]: Unsupported System Type.")
         try:
@@ -941,7 +941,8 @@ class BGBaseSystem (Component):
             raise JobValidationError("Non-integer node count")
         if not 0 < spec['nodecount'] <= max_nodes:
             raise JobValidationError("Node count out of realistic range")
-        if float(spec['time']) < 5:
+        # if spec['time'] <= 0 then this is a trigger to Max out the walltime, so allow it
+        if float(spec['time']) < 5 and float(spec['time']) > 0:
             raise JobValidationError("Walltime less than minimum")
         if not spec['mode']:
             if sys_type == 'bgq':
@@ -957,14 +958,14 @@ class BGBaseSystem (Component):
         #spec['proccount'] = spec['nodecount']
         rpn_re  = re.compile(r'c(?P<pos>[0-9]*)')
         if not spec['proccount']:
-            if spec['mode'] != 'script':
+            if spec['mode'] != 'script' and spec['mode'] != 'interactive':
                 ranks_per_node = int(rpn_re.match(spec['mode']).groups()[0])
                 spec['proccount'] = str(int(spec['nodecount']) * ranks_per_node)
             else:
                 spec['proccount'] = str(spec['nodecount'])
 
         else:
-            if spec['mode'] == 'script':
+            if spec['mode'] == 'script' or spec['mode'] == 'interactive':
                 ranks_per_node = int(spec['nodecount']) #proccount doesn't matter for script
             else:
                 ranks_per_node = int(rpn_re.match(spec['mode']).groups()[0])
@@ -979,7 +980,7 @@ class BGBaseSystem (Component):
 
         # have to set ranks per node based on mode:
 
-        if spec['mode'] == 'script':
+        if spec['mode'] == 'script' or spec['mode'] == 'interactive':
             spec['ranks_per_node'] = None
         else: #remember c1 is default, so ranks_per_node defaults to 1
             spec['ranks_per_node'] = int(rpn_re.match(spec['mode']).groups()[0])
@@ -1371,7 +1372,7 @@ class BGBaseSystem (Component):
                         self.cached_blocks[p_name].draining = True
                     drain_blocks.add(location)
                     self.logger.debug("job %s is draining %s backfill ends at %s" % (job['jobid'], location.name, \
-                        time.strftime('%Y-%M-%d %H:%m:%S', time.gmtime(location.backfill_time))))
+                        time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(location.backfill_time))))
                     location.draining = True
 
         # the next time through, try to backfill, but only if we couldn't find anything to start
