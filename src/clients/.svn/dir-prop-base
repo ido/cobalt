@@ -1,0 +1,28 @@
+K 10
+svn:ignore
+V 202
+*.pyc
+wrapper
+cobalt-admin
+cobalt-launcher
+cobalt-mpirun
+cqadm
+cqdel
+cqhist
+cqstat
+cqsub
+cqwait
+partadm
+partlist
+releaseres
+schedctl
+setres
+slpstat
+showres
+userres
+Mslpstat
+*.output
+*.error
+*.cobaltlog
+
+END

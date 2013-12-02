@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_wsrf_gram_service_java_setup_cobalt/pkgdata
+END
+pkg_data_src.gpt.in
+K 25
+svn:wc:ra_dav:version-url
+V 120
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_wsrf_gram_service_java_setup_cobalt/pkgdata/pkg_data_src.gpt.in
+END
+Makefile.in
+K 25
+svn:wc:ra_dav:version-url
+V 112
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_wsrf_gram_service_java_setup_cobalt/pkgdata/Makefile.in
+END
+Makefile.am
+K 25
+svn:wc:ra_dav:version-url
+V 112
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_wsrf_gram_service_java_setup_cobalt/pkgdata/Makefile.am
+END

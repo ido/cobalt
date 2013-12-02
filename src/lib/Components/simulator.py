@@ -197,7 +197,7 @@ class Simulator (BGBaseSystem):
     def configure (self, config_file):
         """
         Configure simulated partitions.
-        
+
         Arguments:
         config_file -- xml configuration file
         """
@@ -354,7 +354,7 @@ class Simulator (BGBaseSystem):
 
     def release_partition (self, name):
         """Release a reserved partition.
-        
+
         Arguments:
         name -- name of the partition to release
         """
@@ -407,7 +407,6 @@ class Simulator (BGBaseSystem):
                 success.append(name)
             except KeyError:
                 pass
-
         return success
     del_failed_components = exposed(del_failed_components)
 

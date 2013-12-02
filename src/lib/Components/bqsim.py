@@ -45,9 +45,14 @@ YIELD_THRESHOLD = 0
 
 BESTFIT_BACKFILL = False
 SJF_BACKFILL = True
+
+MIN_WALLTIME = 60
+MAX_WALLTIME = 43200
+
+BALANCE_FACTOR = 1
     
 class BGQsim(Simulator):
-    '''Cobalt Queue Simulator for cluster systems'''
+    '''Cobalt Queue Simulator for Blue Gene systems'''
     
     implementation = "qsim"
     name = "queue-manager"
@@ -88,11 +93,7 @@ class BGQsim(Simulator):
 
 ###-------Job related
         self.workload_file =  kwargs.get("bgjob")
-        outputlog = kwargs.get("outputlog", "")
-        if outputlog:
-            self.output_log = MACHINE_NAME + "-" + outputlog
-        else:
-            self.output_log = MACHINE_NAME
+        self.output_log = MACHINE_NAME + "-" + kwargs.get("outputlog", "")
         
         self.event_manager = ComponentProxy("event-manager")
         
@@ -229,6 +230,26 @@ class BGQsim(Simulator):
         self.reset_rack_matrix()
         
         self.batch = kwargs.get("batch", False)
+        
+######adaptive metric-aware cheduling
+        self.metric_aware = kwargs.get("metrica", False)
+        self.balance_factor = float(kwargs.get("balance_factor")) 
+        self.window_size = kwargs.get("window_size", 1)
+        
+        self.history_wait = {}
+        self.history_slowdown = {}
+        self.history_utilization = {}
+        
+        self.delivered_node_hour = 0
+        self.delivered_node_hour2 = 0
+        self.jobcount = 0
+        self.counted_jobs = []
+        self.num_started = 0
+        self.started_job_dict = {}
+        self.queue_depth_data = []
+        self.adaptive = kwargs.get("adaptive", False)
+        if self.adaptive:
+            print "adaptive scheme=", self.adaptive  
             
 ####----print some configuration            
         if self.wass_scheme:
@@ -623,7 +644,7 @@ class BGQsim(Simulator):
                 self.log_job_event("Q", self.get_current_time_date(), tempspec)
                 
                   
-                del self.unsubmitted_job_spec_dict[Id]
+                #del self.unsubmitted_job_spec_dict[Id]
                 
                 
 
@@ -680,7 +701,7 @@ class BGQsim(Simulator):
         #print "run job ", specs, " on nodes", nodelist
         if specs == None:
             return 0
-        
+               
         for spec in specs:
             
             action = "start"
@@ -825,8 +846,29 @@ class BGQsim(Simulator):
         self.insert_time_stamp(end, "E", {'jobid':jobspec['jobid']})
         
         updates.update(newattr)
+         
+         
+         
+        #self.update_jobdict(str(jobid), 'start_time', start)
+        #self.update_jobdict(str(jobid), 'end_time', end)
+        #self.update_jobdict(str(jobid), 'location', location)
+        self.num_started += 1
+        #print "start job %s" % self.num_started
+        partsize = int(location[0].split('-')[-1])
+        #print "now=%s, jobid=%s, start=%s, end=%s, partsize=%s" % (self.get_current_time_date(), jobspec['jobid'], sec_to_date(start), sec_to_date(end), partsize)
+        
+        started_job_spec = {'jobid':str(jobspec['jobid']), 'submittime': jobspec['submittime'], 'start_time': start, 'end_time': end, 'location': location, 'partsize': partsize}
+        self.started_job_dict[str(jobspec['jobid'])] = started_job_spec
+        
+        self.delivered_node_hour2 += (end-start)* partsize / 3600.0
     
         return updates
+    
+    def update_jobdict(self, jobid, _key, _value):
+        '''update self.unsubmitted_jobdict'''
+        self.unsubmitted_job_spec_dict[jobid][_key] = _value
+        if jobid == '280641':
+            print "update job %s=, _key=%s, _value=%s, afterupdate=%s" % (jobid, _key, _value, self.unsubmitted_job_spec_dict[jobid][_key]) 
     
 ##### system related   
     def init_partition(self, namelist):
@@ -853,7 +895,7 @@ class BGQsim(Simulator):
                 {'scheduled':False})
         apply(func, args)
         
-    def _find_job_location(self, args, drain_partitions=set(), backfilling=False):
+    def _find_job_location(self, args, drain_partitions=set(), taken_partition=set(), backfilling=False):
         jobid = args['jobid']
         nodes = args['nodes']
         queue = args['queue']
@@ -973,7 +1015,7 @@ class BGQsim(Simulator):
         if best_partition:
             return {jobid: [best_partition.name]}
 
-    def find_job_location(self, arg_list, end_times):
+    def find_job_location0(self, arg_list, end_times):
         best_partition_dict = {}
         
         if self.bridge_in_error:
@@ -1064,7 +1106,260 @@ class BGQsim(Simulator):
 #        print "best_partition_dict", best_partition_dict
 
         return best_partition_dict
-    find_job_location = locking(exposed(find_job_location))
+    find_job_location0 = locking(exposed(find_job_location0))
+    
+    def permute(inputData, outputSoFar):
+        for a in inputData:
+            if a not in outputSoFar:
+                if len(outputSoFar) == len(inputData) - 1:
+                    yield outputSoFar + [a]
+                else:
+                    for b in permute(inputData, outputSoFar + [a]): # --- Recursion
+                        yield b
+                        
+    def find_job_location(self, arg_list, end_times):
+        best_partition_dict = {}
+        minimum_makespan = 100000
+        
+        if self.bridge_in_error:
+            return {}
+        
+        # build the cached_partitions structure first  (in simulation conducted in init_part()
+#        self._build_locations_cache()
+
+        # first, figure out backfilling cutoffs per partition (which we'll also use for picking which partition to drain)
+        job_end_times = {}
+        for item in end_times:
+            job_end_times[item[0][0]] = item[1]
+            
+        now = self.get_current_time()
+        for p in self.cached_partitions.itervalues():
+            if p.state == "idle":
+                p.backfill_time = now
+            else:
+                p.backfill_time = now + 5*60
+            p.draining = False
+            
+        for p in self.cached_partitions.itervalues():    
+            if p.name in job_end_times:
+                if job_end_times[p.name] > p.backfill_time:
+                    p.backfill_time = job_end_times[p.name]
+                for parent_name in p.parents:
+                    parent_partition = self.cached_partitions[parent_name]
+                    if p.backfill_time > parent_partition.backfill_time:
+                        parent_partition.backfill_time = p.backfill_time
+        
+        for p in self.cached_partitions.itervalues():
+            if p.backfill_time == now:
+                continue
+            
+            for child_name in p.children:
+                child_partition = self.cached_partitions[child_name]
+                if child_partition.backfill_time == now or child_partition.backfill_time > p.backfill_time:
+                    child_partition.backfill_time = p.backfill_time
+                    
+        def permute(inputData, outputSoFar):
+            for a in inputData:
+                if a not in outputSoFar:
+                    if len(outputSoFar) == len(inputData) - 1:
+                        yield outputSoFar + [a]
+                    else:
+                        for b in permute(inputData, outputSoFar + [a]): # --- Recursion
+                            yield b
+
+        def permute_first_N(inputData, window_size):
+            if window_size == 1:
+                yield inputData
+            else:
+                list1 = inputData[0:window_size]
+                list2 = inputData[window_size:]
+                for i in permute(list1, []):
+                    list3 = i + list2
+                    yield list3
+                
+        
+        ###print self.get_current_time_date()
+        #print [job.jobid for job in self.queuing_jobs]
+        
+        ###print "length of arg_list=", len(arg_list)
+        #print arg_list
+        permutes = []
+        for i in permute_first_N(arg_list, self.window_size):
+            permutes.append(i) 
+        
+        ###for perm in permutes:
+            ###print [item.get('jobid') for item in perm],
+        ###print ""
+        
+        perm_count = 1
+                
+        for perm in permutes:
+            
+           # print "round=", perm_count
+            #print "perm=", perm
+            perm_count += 1
+            # first time through, try for starting jobs based on utility scores
+            drain_partitions = set()
+        
+            pos = 0
+            last_end = 0
+            
+            jl_matches = {}
+            
+            for job in perm:
+                
+            ###    print "try jobid %s" % job.get('jobid')
+                
+                pos += 1
+                job_partition_match = self._find_job_location(job, drain_partitions)
+                if job_partition_match:  # partition found
+               ###     print "found a match=", job_partition_match
+                    jl_matches.update(job_partition_match)
+                    #logging the scheduled job's postion in the queue, used for measuring fairness, 
+                    #e.g. pos=1 means job scheduled from the head of the queue
+                    dbgmsg = "%s;S;%s;%s;%s;%s" % (self.get_current_time_date(), job['jobid'], pos, job.get('utility_score', -1), job_partition_match)
+                    self.dbglog.LogMessage(dbgmsg)
+                    
+                    #pre-allocate job
+                    for partnames in job_partition_match.values():
+                        for partname in partnames:
+                            self.allocate_partition(partname)
+                    #break
+                    
+                    #calculate makespan this job contribute
+                    if pos <= self.window_size:
+                        expected_end = int(job.get("walltime"))*60
+                        if expected_end > last_end:
+                            last_end = expected_end 
+                            
+              ###          print "expected_end=", expected_end
+                    
+                else:  # partition not found, start draining
+
+                    location = self._find_drain_partition(job)
+                    if location is not None:
+                       # print "match not found, draing location %s for job %s " % (location, job.get("jobid"))
+                        for p_name in location.parents:
+                            drain_partitions.add(self.cached_partitions[p_name])
+                        for p_name in location.children:
+                            drain_partitions.add(self.cached_partitions[p_name])
+                            self.cached_partitions[p_name].draining = True
+                        drain_partitions.add(location)
+                        #self.logger.info("job %s is draining %s" % (winning_job['jobid'], location.name))
+                        location.draining = True
+                        
+                        expected_start = location.backfill_time - self.get_current_time_sec()
+                 ###       print "expected_start=", expected_start
+                        expected_end = expected_start + int(job.get("walltime"))*60
+                 ###       print "expected_end=", expected_end
+                        if expected_end > last_end:
+                            last_end = expected_end
+                            
+            ###print "matches for round ", perm_count-1, jl_matches
+            ###print "last_end=%s, min makespan=%s" % (last_end, minimum_makespan)
+            
+            #deallocate in order to reallocate for a next round 
+            for partnames in jl_matches.values():
+                for partname in partnames:
+                    self.deallocate_partition(partname)            
+            
+            if last_end < minimum_makespan:
+                minimum_makespan = last_end
+                best_partition_dict = jl_matches 
+                    
+###            print "best_partition_dict=", best_partition_dict 
+   ###         if len(best_partition_dict.keys()) > 1:
+      ###          print "****************"
+                
+
+        
+        # the next time through, try to backfill, but only if we couldn't find anything to start
+        if not best_partition_dict:
+         ###   print "start backfill-----"
+            # arg_list.sorlst(self._walltimecmp)
+            
+            #for best-fit backfilling (large job first and then longer job first)
+            if not self.backfill == "ff":
+                if self.backfill == "bf":
+                    arg_list = sorted(arg_list, key=lambda d: (-int(d['nodes'])*float(d['walltime'])))
+                elif self.backfill == "sjfb":
+                    arg_list = sorted(arg_list, key=lambda d:float(d['walltime']))
+
+            for args in arg_list:
+                partition_name = self._find_job_location(args, backfilling=True)
+                if partition_name:
+                    self.logger.info("backfilling job %s" % args['jobid'])
+                    best_partition_dict.update(partition_name)
+                    #logging the starting postion in the queue, 0 means backfilled
+           #         dbgmsg = "%s;S;%s;0;%s;%s" % (self.get_current_time_date(), args['jobid'], args.get('utility_score', -1), partition_name)
+            #        self.dbglog.LogMessage(dbgmsg)
+                    break
+                
+#        print "best_partition_dict", best_partition_dict
+
+        return best_partition_dict
+    find_job_location = locking(exposed(find_job_location))   
+ 
+    def allocate_partition(self, name):
+        """temperarly allocate a partition avoiding being allocated by other job"""
+        #print "in allocate_partition, name=", name
+        try:
+            part = self.partitions[name]
+        except KeyError:
+            self.logger.error("reserve_partition(%r, %r) [does not exist]" % (name, size))
+            return False
+        if part.state == "idle":
+            part.state = "allocated"
+            for p in part._parents:
+                if p.state == "idle":
+                    p.state = "temp_blocked"
+            for p in part._children:
+                if p.state == "idle":
+                    p.state = "temp_blocked"
+                
+    def deallocate_partition(self, name):
+        """the reverse process of allocate_partition"""
+        part = self.partitions[name]
+        
+        if part.state == "allocated":
+            part.state = "idle"
+            
+            for p in part._parents:
+                if p.state == "temp_blocked":
+                    p.state = "idle"
+            for p in part._children:
+                if p.state != "temp_blocked":
+                    p.state = "idle"
+    
+    def release_partition (self, name):
+        """Release a reserved partition.
+        
+        Arguments:
+        name -- name of the partition to release
+        """
+        try:
+            partition = self.partitions[name]
+        except KeyError:
+            self.logger.error("release_partition(%r) [already free]" % (name))
+            return False
+        if not partition.state == "busy":
+            self.logger.info("release_partition(%r) [not busy]" % (name))
+            return False
+                
+        self._partitions_lock.acquire()
+        try:
+            partition.state = "idle"
+        except:
+            self.logger.error("error in release_partition", exc_info=True)
+        self._partitions_lock.release()
+        
+        # explicitly unblock the blocked partitions
+        self.update_partition_state()
+
+        self.logger.info("release_partition(%r)" % (name))
+        return True
+    release_partition = exposed(release_partition)
+        
     
     def reserve_partition (self, name, size=None):
         """Reserve a partition and block all related partitions.
@@ -1117,9 +1412,15 @@ class BGQsim(Simulator):
     def compute_utility_scores (self):
         utility_scores = []
         current_time = self.get_current_time_sec()
+        
+        #for balanced utility computing
+        if self.metric_aware:
+            max_wait, avg_wait = self.get_current_max_avg_queue_time()
+            max_walltime, min_walltime = self.get_current_max_min_walltime()
             
         for job in self.queues.get_jobs([{'is_runnable':True}]):    
             utility_name = self.queues[job.queue].policy
+            
             args = {'queued_time':current_time - float(job.submittime), 
                     'wall_time': 60*float(job.walltime),    
                     'wall_time_p':  60*float(job.walltime_p), ##  *AdjEst*
@@ -1138,8 +1439,16 @@ class BGQsim(Simulator):
                     utility_func = self.builtin_utility_functions[utility_name]
                 else:
                     utility_func = self.user_utility_functions[utility_name]
+                    
+                if self.metric_aware:
+                    utility_func = self.comput_utility_score_balanced
+                                
                 utility_func.func_globals.update(args)
-                score = utility_func()
+                
+                if self.metric_aware:
+                    score = utility_func(self.balance_factor, max_wait, max_walltime, min_walltime)
+                else:
+                    score = utility_func()
             except KeyError:
                 # do something sensible when the requested utility function doesn't exist
                 # probably go back to the "default" one
@@ -1161,6 +1470,7 @@ class BGQsim(Simulator):
             
             try:
                 job.score = score #in trunk it is job.score += score, (coscheduling need to temperally change score)
+                #print "job id=%s, score=%s" % (job.jobid, job.score)
             except:
                 self.logger.error("utility function '%s' named by queue '%s' returned a non-number" % (utility_name, job.queue), \
                     exc_info=True)
@@ -1212,19 +1522,19 @@ class BGQsim(Simulator):
             val = queue_priority + 0.1
             return val
         
-        def default1():
+        def default():
             '''FCFS'''
             val = queued_time
             return val
         
-        def default():
+        def default1():
             '''WFP'''
             if self.predict_queue:
                 wall_time_sched = wall_time_p
             else:
                 wall_time_sched = wall_time
                             
-            val = ( queued_time / wall_time_sched)**3 * (size/40960)
+            val = ( queued_time / wall_time_sched)**3 * size
             
             return val
         
@@ -1281,11 +1591,12 @@ class BGQsim(Simulator):
         loss  = 0
         current_time = self.get_current_time_sec()
         next_time = self.event_manager.get_next_event_time_sec()
-        time_length = next_time - current_time
         
-        idle_midplanes = len(self.get_midplanes_by_state('idle'))
-        idle_node = idle_midplanes * MIDPLANE_SIZE
-        loss = time_length * idle_node
+        if next_time > current_time:
+            time_length = next_time - current_time
+            idle_midplanes = len(self.get_midplanes_by_state('idle'))
+            idle_node = idle_midplanes * MIDPLANE_SIZE
+            loss = time_length * idle_node
         return loss
     
     def total_capacity_loss_rate(self):
@@ -1825,7 +2136,13 @@ class BGQsim(Simulator):
         
         self.show_resource()
          
-        print "number of waiting jobs: ", self.num_waiting
+#        print "number of waiting jobs: ", self.num_waiting
+
+        
+#        max_wait, avg_wait = self.get_current_max_avg_queue_time()
+        
+        #print "maxium waiting time (min): ", int(max_wait / 60.0)
+        #print "average waiting time (min): ", int(avg_wait / 60.0)
         
         waiting_job_bar = REDS
         for i in range(self.num_waiting):
@@ -1892,8 +2209,14 @@ class BGQsim(Simulator):
             progress_bar += "-"
         progress_bar += "|"
         print progress_bar
+        
+        #if self.get_current_time_sec() > 1275393600:
+         #   time.sleep(1)
+             
         if self.sleep_interval:
             time.sleep(self.sleep_interval)
+            
+        print "waiting jobs:", [(job.jobid, job.nodes) for job in self.queuing_jobs]
             
 #        wait_jobs = [job for job in self.queues.get_jobs([{'is_runnable':True}])]
 #        
@@ -1917,5 +2240,241 @@ class BGQsim(Simulator):
         capacity_loss_rate = self.total_capacity_loss_rate()
         msg  = "capacity_loss:%f" % capacity_loss_rate 
         self.dbglog.LogMessage(msg)
-        pass
-    post_simulation_handling = exposed(post_simulation_handling)    
+               
+        #calculate avgwait
+        total_wait = 0
+        count = 0
+        for job in self.started_job_dict.itervalues():
+            total_wait += job.get('start_time') - job.get('submittime')
+            count += 1
+        print "average waiting=", (total_wait / count)/60.0
+        
+        if self.adaptive:
+            for qd in self.queue_depth_data:
+                avg_qd = sum(self.queue_depth_data) / len(self.queue_depth_data)
+            print "average queue depth=", avg_qd
+    post_simulation_handling = exposed(post_simulation_handling)
+    
+#############metric-aware###
+    
+    def get_current_max_avg_queue_time(self):
+        '''return the average waiting time of jobs in the current queue'''
+        current_time = self.get_current_time_sec()
+        queued_times =[current_time - float(job.submittime) for job in self.queuing_jobs]
+        if len(queued_times) > 0:
+            max_wait = max(queued_times)
+            avg_wait = sum(queued_times) / len(queued_times)
+        else:
+            max_wait = 0
+            avg_wait = 0
+        return max_wait, avg_wait
+    
+    def get_current_max_min_walltime(self):
+        '''return the max and min walltime in the current queue (in seconds)'''
+        current_time = self.get_current_time_sec()
+        wall_times =[60*float(job.walltime) for job in self.queuing_jobs]
+        if len(wall_times) > 0:
+            max_walltime = max(wall_times)
+            min_walltime = min(wall_times)
+        else:
+            max_walltime = 0
+            min_walltime = 0
+        return max_walltime, min_walltime
+        
+    def comput_utility_score_balanced(self, balance_factor, max_wait, max_walltime, min_walltime):
+        '''compute utility score balancing FCFS and SJF using a balance factor [0, 1]'''
+        if max_wait == 0:
+            wait_score = 0
+        else:
+            wait_score = 100.0 * queued_time / max_wait
+        
+        if max_walltime == min_walltime:
+            length_score = 0
+        else:
+            length_score = 100.0 * (max_walltime - wall_time)/(max_walltime - min_walltime)
+        
+        balanced_score = wait_score * balance_factor + length_score * (1.0 - balance_factor)
+        
+        #print "wait=%s, max_wait=%s" % (queued_time, max_wait)
+        #print "walltime=%s, MAX_WALLTIME=%s, MIN_WALLTIME=%s" % (wall_time, max_walltime, min_walltime)
+        #print "wait_score=%s, length_score=%s, balanced_score=%s" % (wait_score, length_score, balanced_score)
+        
+        return balanced_score
+    
+    def monitor_metrics(self):
+        '''main function of metrics monitoring'''
+        
+        self.monitor_metrics_util()
+        self.monitor_metrics_wait()
+        
+    monitor_metrics = exposed(monitor_metrics)
+               
+            
+    def monitor_metrics_wait(self):
+        '''main function of metrics monitoring activities for wait'''
+    #    print self.get_current_time_date(), " metrics monitor invoked"
+        #self.get_utilization_rate(3600*24)
+        #current_avg_wait = self.get_avg_wait_last_period(0)
+        aggr_wait = self.get_aggr_wait_last_period(0)
+        
+        if self.adaptive in ["10", "11"]:
+            if aggr_wait > 1000:
+                self.balance_factor = 0.5
+            else:
+                self.balance_factor = 1
+                print aggr_wait / 60
+
+        self.queue_depth_data.append(aggr_wait / 60)
+#        if self.balance_factor != before:
+#            print "balance_factor changed to:", self.balance_factor
+    
+    def monitor_metrics_util(self):
+        '''main function of metrics monitoring actitivies for utilization'''
+        util_instant = self.get_utilization_rate(0)
+        util_1h = self.get_utilization_rate(3600)
+        util_10h = self.get_utilization_rate(3600*10)
+        util_24h = self.get_utilization_rate(3600*24)
+        
+        #print util_instant, util_1h, util_10h, util_24h
+
+        if self.adaptive in ["01", "11"]:
+            if util_10h > util_24h:
+                self.window_size = 1
+            else:
+                self.window_size = 4
+        
+    def get_utilization_rate(self, period):
+        '''get the average utilization rate in the last 'period' of time'''
+                
+        now = self.get_current_time_sec()
+
+        utilization = 0
+        if period==0:
+            utilization = float(self.num_busy) / TOTAL_NODES
+            return utilization
+        elif period > 0:
+            start_point = now - period
+            total_busy_node_sec = 0
+            
+            for k, v in self.started_job_dict.iteritems():
+                jobid = k
+                if jobid != v.get('jobid'):
+                    print "jobid=", jobid, "valueid=", v.get('jobid')
+                jobstart = float(v.get("start_time"))
+                jobend = float(v.get("end_time"))
+                partitions = v.get("location")
+                partsize = int(partitions[0].split('-')[-1])
+                
+                #jobs totally within the period
+                if jobstart > start_point and jobend < now:
+                    node_sec =  (jobend - jobstart) * partsize 
+                    total_busy_node_sec += node_sec
+                    self.delivered_node_hour += node_sec / 3600
+                    #print "1 now=%s, jobid=%s, start=%s, end=%s, partsize=%s, nodehour=%s" % (sec_to_date(now), jobid, sec_to_date(jobstart), sec_to_date(jobend), partsize, node_sec /(40960*3600))
+                              
+                #jobs starting in the period but not ended yet
+                if jobstart > start_point and jobstart < now and jobend >= now:
+                    node_sec = (now - jobstart) * partsize
+                    total_busy_node_sec += node_sec
+                    self.delivered_node_hour += node_sec / 3600
+                    #print "2 now=%s, jobid=%s, start=%s, end=%s, partsize=%s, nodehour=%s" % (sec_to_date(now), jobid, sec_to_date(jobstart), sec_to_date(jobend), partsize, node_sec /(40960*3600))           
+                    
+                #jobs started before the period start but ended in the period
+                if jobstart <= start_point and jobend > start_point and jobend < now:
+                    node_sec = (jobend - start_point) * partsize
+                    total_busy_node_sec += node_sec  
+                    self.delivered_node_hour += node_sec / 3600
+                    #print "3 now=%s, jobid=%s, start=%s, end=%s, partsize=%s, nodehour=%s" % (sec_to_date(now), jobid, sec_to_date(jobstart), sec_to_date(jobend), partsize, node_sec /(40960*3600))
+                    
+                #jobs started before the period start but ended after the period end
+                if jobstart <= start_point and jobend >= now:
+                    node_sec = period * partsize
+                    total_busy_node_sec += node_sec   
+                    self.delivered_node_hour += node_sec / 3600
+                    #print "4 now=%s, jobid=%s, start=%s, end=%s, partsize=%s, nodehour=%s" % (sec_to_date(now), jobid, sec_to_date(jobstart), sec_to_date(jobend), partsize, node_sec /(40960.0*3600))
+                     
+            avg_utilization = float(total_busy_node_sec) / (period*TOTAL_NODES)
+            
+            return avg_utilization
+            
+    def get_avg_wait_last_period(self, period):
+        '''get the average waiting in the last 'period' of time'''
+
+        total_wait = 0
+        now = self.get_current_time_sec()
+        
+        if period==0: #calculate the average waiting of current queuing jobs
+            count = 0        
+            for job in self.queuing_jobs:
+                submittime = job.submittime
+                wait = now - submittime
+                total_wait += wait
+                count += 1
+            
+            if count > 0:
+                avg_wait = total_wait / count
+            else:
+                avg_wait = 0
+                    
+        elif period > 0:  #calculate the average waiting of jobs *started* within last period winodw
+            start_point = now - period
+            count = 0
+            
+            for k, v in self.started_job_dict.iteritems():
+                jobid = k
+                jobsubmit = float(v.get("submittime"))
+                jobstart = float(v.get("start_time"))
+                
+                #jobs started within the period
+                if jobstart > start_point and jobstart < now:
+                    jobwait = jobstart - jobsubmit
+                    total_wait += jobwait
+                    count += 1
+            
+            if count > 0:
+                avg_wait = total_wait / count
+            else:
+                avg_wait = 0
+            
+        print avg_wait
+        return avg_wait
+    
+    def get_aggr_wait_last_period(self, period=0):
+        '''get the queue depth (aggregate waiting) in the last 'period' of time (in minutes)'''
+
+        total_wait = 0
+        now = self.get_current_time_sec()
+        
+        if period==0: #calculate the aggr waiting of current queuing jobs
+            count = 0        
+            for job in self.queuing_jobs:
+                submittime = job.submittime
+                wait = now - submittime
+                total_wait += wait
+                count += 1
+            
+            #agg_wait = total_wait
+                    
+        elif period > 0:  #calculate the aggr waiting of jobs *started* within last period winodw
+            start_point = now - period
+            count = 0
+            
+            for k, v in self.started_job_dict.iteritems():
+                jobid = k
+                jobsubmit = float(v.get("submittime"))
+                jobstart = float(v.get("start_time"))
+                
+                #jobs started within the period
+                if jobstart > start_point and jobstart < now:
+                    jobwait = jobstart - jobsubmit
+                    total_wait += jobwait
+                    count += 1
+            
+            if count > 0:
+                avg_wait = total_wait / count
+            else:
+                avg_wait = 0
+            
+        #print total_wait / 60
+        return total_wait / 60 
+                    

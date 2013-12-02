@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 40
+/repos/cobalt/!svn/ver/1649/trunk/debian
+END
+control
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/repos/cobalt/!svn/ver/1629/trunk/debian/control
+END
+cobalt.init
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/repos/cobalt/!svn/ver/1638/trunk/debian/cobalt.init
+END
+changelog
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/repos/cobalt/!svn/ver/1631/trunk/debian/changelog
+END
+rules
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/repos/cobalt/!svn/ver/1649/trunk/debian/rules
+END

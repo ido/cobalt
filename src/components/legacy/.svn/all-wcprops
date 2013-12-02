@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/repos/cobalt/!svn/ver/1387/trunk/src/components/legacy
+END
+csched.py
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/repos/cobalt/!svn/ver/1064/trunk/src/components/legacy/csched.py
+END
+mpdpm.py
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/repos/cobalt/!svn/ver/1064/trunk/src/components/legacy/mpdpm.py
+END
+bbpm.py
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/repos/cobalt/!svn/ver/1064/trunk/src/components/legacy/bbpm.py
+END
+bgsched2.py
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/repos/cobalt/!svn/ver/1064/trunk/src/components/legacy/bgsched2.py
+END
+bgbase.py
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/repos/cobalt/!svn/ver/1064/trunk/src/components/legacy/bgbase.py
+END
+bgpm.py
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/repos/cobalt/!svn/ver/1100/trunk/src/components/legacy/bgpm.py
+END

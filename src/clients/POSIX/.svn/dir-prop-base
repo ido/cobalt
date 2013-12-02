@@ -1,0 +1,17 @@
+K 10
+svn:ignore
+V 83
+*.pyc
+*.output
+*.error
+*.cobaltlog
+qrls
+qdel
+qmove
+qalter
+qstat
+qselect
+qhold
+qsub
+
+END

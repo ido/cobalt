@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt/pkgdata
+END
+pkg_data_src.gpt.in
+K 25
+svn:wc:ra_dav:version-url
+V 117
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt/pkgdata/pkg_data_src.gpt.in
+END
+Makefile.in
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt/pkgdata/Makefile.in
+END
+Makefile.am
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt/pkgdata/Makefile.am
+END
