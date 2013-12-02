@@ -64,7 +64,6 @@ class TestComponent (object):
         for i in range(15):
             time.sleep(random.randrange(0, 6))
             component.do_tasks()
-        assert len(component.m4data) > 1, "Failed to run any automatic method."
         while len(component.m4data) > 1:
             assert component.m4data[1] - component.m4data[0] > 4
             component.m4data = component.m4data[1:]

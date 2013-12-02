@@ -1,0 +1,49 @@
+<chapter>
+  <title>Component Specific Notes</title>
+
+  <para>
+    This chapter describes component specific issues.
+  </para>
+
+  <section>
+    <title>bgsched</title>
+
+    <para>
+      bgsched keeps an internal representation of the partitions
+      it has to schedule. These partitions can be queried with the
+      <filename>partadm.py</filename> command. These partitions must be 
+      manually defined. By default, no partitions are
+      definied. Partition definitions contain information including
+      partition name, size, dependencies (contained partitions), and a
+      list of valid queues. Other information is also tracked about
+      partitions. An overall state is maintained (idle or busy). Note
+      that partition dependencies cannot contain nonexistant
+      partitions; that is, if a partition is deleted, it must be
+      removed from any dependency lists it is in. 
+    </para>
+
+    <para>
+      The standard operations of bgsched are fairly simple. The
+      scheduler queries the queue manager, compares the list of jobs
+      it received with the list of jobs that it already knew about,
+      and appropriately deals with any discrepancies. When partitions
+      are free and idle jobs are in the queue, it attempts to
+      schedule. When jobs disappear, the partition previously occupied
+      by the job is freed.
+    </para>
+
+    <section>
+      <title>Potential Problems</title>
+
+      <para>
+	Several sorts of problems can occur to cause problems with the
+	scheduler. Some of its data is maintained in other components
+	or in the DB2 database for BG/L. Failures in this other
+	software can render the scheduler unable to function
+	properly. In case of either failure, odds are good that
+	scheduling will be the least of your worries. There are error
+	messages bgsched will report upon connection failures.
+      </para>
+    </section>
+  </section>
+</chapter>

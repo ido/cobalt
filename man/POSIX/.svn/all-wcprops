@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/repos/cobalt/!svn/ver/1362/trunk/man/POSIX
+END
+qselect.1
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/repos/cobalt/!svn/ver/1124/trunk/man/POSIX/qselect.1
+END
+qrls.1
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/repos/cobalt/!svn/ver/1124/trunk/man/POSIX/qrls.1
+END
+qdel.1
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/repos/cobalt/!svn/ver/1124/trunk/man/POSIX/qdel.1
+END
+qhold.1
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/repos/cobalt/!svn/ver/1362/trunk/man/POSIX/qhold.1
+END
+qmove.1
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/repos/cobalt/!svn/ver/1124/trunk/man/POSIX/qmove.1
+END
+qalter.1
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/repos/cobalt/!svn/ver/1339/trunk/man/POSIX/qalter.1
+END
+qsub.1
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/repos/cobalt/!svn/ver/1350/trunk/man/POSIX/qsub.1
+END
+qstat.1
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/repos/cobalt/!svn/ver/1124/trunk/man/POSIX/qstat.1
+END

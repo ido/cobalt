@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-'''Some base definitions for Qsim'''
+'''Cobalt Queue Simulator (for Blue Gene systems) library'''
 
 import ConfigParser
 import copy

@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup/doxygen
+END
+Doxyfile-internal.in
+K 25
+svn:wc:ra_dav:version-url
+V 124
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup/doxygen/Doxyfile-internal.in
+END
+Makefile.in
+K 25
+svn:wc:ra_dav:version-url
+V 115
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup/doxygen/Makefile.in
+END
+Doxyfile.in
+K 25
+svn:wc:ra_dav:version-url
+V 115
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup/doxygen/Doxyfile.in
+END
+Makefile.am
+K 25
+svn:wc:ra_dav:version-url
+V 115
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup/doxygen/Makefile.am
+END

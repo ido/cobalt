@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 36
+/repos/cobalt/!svn/ver/838/trunk/doc
+END
+operations.xml
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/repos/cobalt/!svn/ver/838/trunk/doc/operations.xml
+END
+components.xml
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/repos/cobalt/!svn/ver/838/trunk/doc/components.xml
+END
+install.xml
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/repos/cobalt/!svn/ver/838/trunk/doc/install.xml
+END
+troubleshooting.xml
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/repos/cobalt/!svn/ver/838/trunk/doc/troubleshooting.xml
+END
+component_refactor
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/repos/cobalt/!svn/ver/838/trunk/doc/component_refactor
+END
+manual.xml
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/repos/cobalt/!svn/ver/838/trunk/doc/manual.xml
+END
+Makefile
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/repos/cobalt/!svn/ver/838/trunk/doc/Makefile
+END

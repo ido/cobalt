@@ -1,0 +1,4 @@
+These tests will not be run automatically by nose,
+because they are not in a python package.
+
+Merge them into the testsuite proper.

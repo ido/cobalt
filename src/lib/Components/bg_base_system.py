@@ -273,6 +273,7 @@ class BGBaseSystem (Component):
         self.bridge_in_error = False
         self.cached_partitions = None
         self.offline_partitions = []
+        self.cached_offline_partitions = []
 
     def __getstate__(self):
         state = {}
@@ -1183,6 +1184,7 @@ class BGBaseSystem (Component):
                             if eq_class['data'].intersection(self.partitions[dep_name].node_card_names):
                                 eq_class['reservations'].add(res_name)
                                 break
+
 
             # convert set data into lists for transmission.  XML-RPC doesn't 
             # marshall sets.
