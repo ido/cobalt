@@ -125,6 +125,7 @@ class ClusterBaseSystem (Component):
         self.down_nodes = set()
         self.queue_assignments = {}
         self.node_order = {}
+        self.MINIMUM_BACKFILL_WINDOW = 300
 
         try:
             self.configure(cluster_hostfile)
@@ -143,6 +144,7 @@ class ClusterBaseSystem (Component):
         self.node_end_time_dict = {}
         self.draining_nodes = {}
         self.logger.info("allocation timeout set to %d seconds." % self.alloc_timeout)
+        self.logger.info("Minimum Backfill Window set to %d seconds." % self.MINIMUM_BACKFILL_WINDOW)
 
     def __getstate__(self):
         state = {}
@@ -157,6 +159,7 @@ class ClusterBaseSystem (Component):
         Component.__setstate__(self, state)
         self.all_nodes = set()
         self.node_order = {}
+        self.MINIMUM_BACKFILL_WINDOW = 300
         try:
             self.configure(cluster_hostfile)
         except IOError:
@@ -189,6 +192,7 @@ class ClusterBaseSystem (Component):
         self.logger.info("allocation timeout set to %d seconds." % self.alloc_timeout)
         self.node_end_time_dict = {}
         self.draining_nodes = {}
+        self.logger.info("Minimum Backfill Window set to %d seconds." % self.MINIMUM_BACKFILL_WINDOW)
 
     def save_me(self):
         '''Automatically write statefiles.'''
@@ -460,10 +464,10 @@ class ClusterBaseSystem (Component):
         if not cleaning_locations == set([]):
             #cast a shadow 5 minutes in the future until these locations are no longer tracked.
             #TODO: make this a config option
-            if self.node_end_time_dict.has_key(int(now) + 300):
-                self.node_end_time_dict[int(now) + 300].append(list(cleaning_locations))
+            if self.node_end_time_dict.has_key(int(now) + self.MINIMUM_BACKFILL_WINDOW):
+                self.node_end_time_dict[int(now) + self.MINIMUM_BACKFILL_WINDOW].append(list(cleaning_locations))
             else:
-                self.node_end_time_dict[int(now) + 300] = list(cleaning_locations)
+                self.node_end_time_dict[int(now) + self.MINIMUM_BACKFILL_WINDOW] = list(cleaning_locations)
             for location in cleaning_locations:
                 if location in self.node_end_time_dict[0]:
                     self.node_end_time_dict[0].remove(location)
@@ -700,6 +704,9 @@ class ClusterBaseSystem (Component):
             counter += 1
 
         hostfile.close()
+
+        #On configuration call, set minimum backfill window.
+        self.MINIMUM_BACKFILL_WINDOW = int(get_cluster_system_config("minimum_backfill_window", 300))
 
     # this gets called by bgsched in order to figure out if there are partition overlaps;
     # it was written to provide the data that bgsched asks for and raises an exception

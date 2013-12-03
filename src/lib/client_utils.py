@@ -1241,7 +1241,6 @@ def cluster_display_node_info():
             if int(end_time) == 0 or status != 'idle':
                 pass
             elif host_name in end_times_to_nodes[end_time]:
-                print end_times_to_nodes[end_time]
                 raw_backfill_time = max(0, int(end_time) - now)
                 if raw_backfill_time <= 0:
                     backfill_time = "00:00:00"
