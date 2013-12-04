@@ -269,9 +269,10 @@ class ClusterBaseSystem (Component):
         '''
         forbidden = set(job.get('forbidden', [])) #These are locations the scheduler has decided are inelligible for running.
         required = set(job.get('required', [])) #Always consider these nodes for scheduling, due to things being in a reservation
-        selected_locations = set([])
+        selected_locations = set()
         new_drain_time = 0
         ready_to_run = False
+        nodes = int(job['nodes'])
         try:
             available_nodes = self.queue_assignments[job['queue']].difference(forbidden)
         except KeyError:
@@ -283,32 +284,33 @@ class ClusterBaseSystem (Component):
             available_nodes.update(set(required))
 
         #TODO: include bit to enable predicted walltimes to be used
+        #Remember, until we fix it, walltimes are in minutes, not seconds.
         job_end_time = int(job['walltime']) * 60 + int(now)
 
         #check to make sure all required nodes are currently in the queue that this job belongs to
         if not required.issubset(available_nodes):
-            self.logger.warning('%s/%s has locations %s that are not in the queue for this job.  Job will never run.',
-                    job['user'], job['jobid'], ", ".join([str(s) for s in required.difference(available_nodes)]))
-            raise RequiredLocationError('Required Locations are not available in this queue: %s',
-                    ''.join([str(node) for node in required.difference(available_nodes)]))
+            err_str = '%s/%s has locations %s that are not in the queue for this job.  Job will never run.' % \
+                    (job['user'], job['jobid'], ", ".join([str(s) for s in required.difference(available_nodes)]))
+            self.logger.warning(err_str)
+            raise RequiredLocationError(err_str)
 
-        #remove forbidden and down nodes from cosnideration
+        #remove forbidden and down nodes from consideration
         available_nodes = available_nodes.difference(forbidden, self.down_nodes)
 
-        if len(available_nodes) < int(job['nodes']):
+        if len(available_nodes) < nodes:
             #bail out early, we don't have enough nodes to even consider this job!
             return {}, 0, False
 
-        if len(available_nodes) >= job['nodes'] and (int(job_end_time) < int(drain_time) or int(drain_time) == 0):
+        if len(available_nodes) >= nodes and (int(job_end_time) < int(drain_time) or int(drain_time) == 0):
             # do we have enough that are idle?  The job is smaller than our drain time.
             idle_nodes = available_nodes.difference(self.running_nodes)
-            if len(idle_nodes) >= job['nodes']:
-                selected_locations = set([idle_nodes.pop() for _ in range(job['nodes'])])
+            if len(idle_nodes) >= nodes:
+                selected_locations = set([idle_nodes.pop() for _ in range(nodes)])
                 ready_to_run = True
 
         if drain_time == 0 and ready_to_run == False: #go ahead and select locations for draining.
             #choose the idle nodes, iterate over times adding nodes until we have enough with the shortest wait.
-            remaining_node_count = job['nodes']
+            remaining_node_count = nodes
             ready_times = self.node_end_time_dict.keys()
             ready_times.sort() # make sure we're getting the soonest available.
             for ready_time in ready_times:
@@ -324,7 +326,7 @@ class ClusterBaseSystem (Component):
 
         if selected_locations == set([]):
             return {}, 0, False
-        #Jobid has to be a string or else xmlrpc has trouble with the dict, apparently.
+        #Jobid has to be a string or else xmlrpc has trouble with the dict. XMLRPC also doesn't like sets.
         return {str(job['jobid']): list(selected_locations)}, new_drain_time, ready_to_run
 
     def _get_available_nodes(self, args):
@@ -350,11 +352,11 @@ class ClusterBaseSystem (Component):
         return available_nodes.difference(self.down_nodes)
 
     # the argument "required" is used to pass in the set of locations allowed by a reservation;
-    def find_job_location(self, arg_list, end_times):
+    def find_job_location(self, job_list, end_times):
         '''Find the best location for a job and start the job allocation process (this is different from
         what happens on BlueGenes!)
 
-        arg_list = list of dictionaries of job data.  Each entry has the following fields:
+        job_list = list of dictionaries of job data.  Each entry has the following fields:
         user -- username of the job
         pt_forbidden -- (ignored for cluster_systems)
         geometry -- (ignored for cluster_systems)
@@ -379,13 +381,13 @@ class ClusterBaseSystem (Component):
         self.init_drain_times(end_times)
 
         # first time through, try for starting jobs based on utility scores
-        for args in arg_list:
-            jobid = int(args['jobid'])
-            user = args['user']
+        for jobs in job_list:
+            jobid = int(jobs['jobid'])
+            user = jobs['user']
             try:
-                location_data, drain_time, ready_to_run = self._find_job_location(args, now)
+                location_data, drain_time, ready_to_run = self._find_job_location(jobs, now)
             except RequiredLocationError:
-                self.logger.warning("%s/%s: Insufficent locations for job in its current queue.", jobid, user)
+                continue #location_data, drain_time and ready_to_run not set.
             if ready_to_run:
                 best_location_dict.update(location_data)
                 break
@@ -399,13 +401,13 @@ class ClusterBaseSystem (Component):
         backfill_drain_time = drain_time
         if drain_locations is not None:
             self.draining_nodes = {str(drain_time):list(drain_locations)}
-            for args in arg_list:
-                jobid = int(args['jobid'])
-                user = args['user']
+            for jobs in job_list:
+                jobid = int(jobs['jobid'])
+                user = jobs['user']
                 try:
-                    location_data, drain_time, ready_to_run = self._find_job_location(args, now, backfill_drain_time)
-                except RuntimeError:
-                    pass
+                    location_data, drain_time, ready_to_run = self._find_job_location(jobs, now, backfill_drain_time)
+                except RequiredLocationError:
+                    continue #location_data, drain_time and ready_to_run not set.
                 if ready_to_run:
                     best_location_dict.update(location_data)
                     self.logger.info("%s/%s: job selected for backfill on locations %s", user, jobid,
@@ -439,14 +441,14 @@ class ClusterBaseSystem (Component):
         #all nodes init to 0-time.  (ready immediately)
         self.node_end_time_dict = {0:list(self.all_nodes)}
         #All currently running nodes should have their times marked
-        for locations, end_time in end_times:
+        for locations, float_end_time in end_times:
+            end_time = int(float_end_time)
             for location in locations:
-                if int(end_time) not in self.node_end_time_dict.keys():
-                    self.node_end_time_dict[int(end_time)] = [location]
-                    self.node_end_time_dict[0].remove(location)
+                if end_time not in self.node_end_time_dict.keys():
+                    self.node_end_time_dict[end_time] = [location]
                 else:
-                    self.node_end_time_dict[int(end_time)].append(location)
-                    self.node_end_time_dict[0].remove(location)
+                    self.node_end_time_dict[end_time].append(location)
+                self.node_end_time_dict[0].remove(location)
         # add in locations that are being cleaned, but are not coming from the scheduling component
         for locations in self.locations_by_jobid.itervalues():
             self._append_cleanup_drain_shadow(locations)
@@ -457,17 +459,18 @@ class ClusterBaseSystem (Component):
 
         '''
         # add in locations that are being cleaned, but are not coming from the scheduling component
-        now = time.time()
+        now = int(time.time())
         #take the set of locations that we haven't assigned end-times to, and extend their times appropriately.
         #these locations are in cleanup
-        cleaning_locations = set(locations) & set(self.node_end_time_dict[0])
-        if not cleaning_locations == set([]):
+        cleaning_locations = list(set(locations) & set(self.node_end_time_dict[0]))
+        if not cleaning_locations == []:
             #cast a shadow 5 minutes in the future until these locations are no longer tracked.
-            #TODO: make this a config option
-            if self.node_end_time_dict.has_key(int(now) + self.MINIMUM_BACKFILL_WINDOW):
-                self.node_end_time_dict[int(now) + self.MINIMUM_BACKFILL_WINDOW].append(list(cleaning_locations))
+            if self.node_end_time_dict.has_key(now + self.MINIMUM_BACKFILL_WINDOW):
+                #TODO ADD TEST CASE
+                # Don't stomp on times from a job that ends at the same time as cleanup would.
+                self.node_end_time_dict[now + self.MINIMUM_BACKFILL_WINDOW].extend(cleaning_locations)
             else:
-                self.node_end_time_dict[int(now) + self.MINIMUM_BACKFILL_WINDOW] = list(cleaning_locations)
+                self.node_end_time_dict[now + self.MINIMUM_BACKFILL_WINDOW] = cleaning_locations
             for location in cleaning_locations:
                 if location in self.node_end_time_dict[0]:
                     self.node_end_time_dict[0].remove(location)
