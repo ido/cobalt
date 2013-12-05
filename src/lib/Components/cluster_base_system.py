@@ -466,7 +466,6 @@ class ClusterBaseSystem (Component):
         if not cleaning_locations == []:
             #cast a shadow 5 minutes in the future until these locations are no longer tracked.
             if self.node_end_time_dict.has_key(now + self.MINIMUM_BACKFILL_WINDOW):
-                #TODO ADD TEST CASE
                 # Don't stomp on times from a job that ends at the same time as cleanup would.
                 self.node_end_time_dict[now + self.MINIMUM_BACKFILL_WINDOW].extend(cleaning_locations)
             else:

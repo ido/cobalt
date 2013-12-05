@@ -328,3 +328,19 @@ class TestClusterSystem(object):
         assert best_location == {}, "ERROR: Unexpected best_location.\nExpected %s\nGot %s" % \
                 ({}, best_location)
 
+    def test__append_cleanup_drain_shadow_basic(self):
+        expected_dict = {0:['vs3.test', 'vs4.test'], int(time.time()) + 300: ['vs2.test', 'vs1.test']}
+        locations = ['vs1.test', 'vs2.test']
+        self.cluster_system.node_end_time_dict = {0:['vs1.test', 'vs2.test', 'vs3.test', 'vs4.test']}
+        self.cluster_system._append_cleanup_drain_shadow(locations)
+        assert self.cluster_system.node_end_time_dict == expected_dict, \
+            "ERROR: locations was %s\n Expected: %s" % (self.cluster_system.node_end_time_dict, expected_dict)
+
+    def test__append_cleanup_drain_shadow_existing_time(self):
+        expected_dict = {0:['vs3.test'], int(time.time()) + 300: ['vs4.test', 'vs2.test', 'vs1.test']}
+        locations = ['vs1.test', 'vs2.test']
+        self.cluster_system.node_end_time_dict = {0:['vs1.test', 'vs2.test', 'vs3.test'], int(time.time()) + 300:['vs4.test']}
+        self.cluster_system._append_cleanup_drain_shadow(locations)
+        assert self.cluster_system.node_end_time_dict == expected_dict, \
+            "ERROR: locations was %s\n Expected: %s\n %s" % (self.cluster_system.node_end_time_dict, expected_dict,
+                    self.cluster_system.node_end_time_dict == expected_dict)
