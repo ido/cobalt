@@ -18,7 +18,7 @@ import logging
 import sys
 from Cobalt import client_utils
 from Cobalt.client_utils import cb_debug
-
+import time
 from Cobalt.arg_parser import ArgParse
 
 __revision__ = ''
@@ -39,7 +39,7 @@ def validate_args(parser):
     if (parser.no_args() and not parser.options.list_nstates) or opt_count == 0:
         client_utils.print_usage(parser)
         sys.exit(1)
-    
+
     impl = client_utils.component_call(SYSMGR, False, 'get_implementation', ())
 
     # make sure we're on a cluster-system
@@ -66,10 +66,10 @@ def main():
         [ cb_debug        , () ] ]
 
     # Get the version information
-    opt_def =  __doc__.replace('__revision__',__revision__)
-    opt_def =  opt_def.replace('__version__',__version__)
+    opt_def =  __doc__.replace('__revision__', __revision__)
+    opt_def =  opt_def.replace('__version__', __version__)
 
-    parser = ArgParse(opt_def,callbacks)
+    parser = ArgParse(opt_def, callbacks)
 
     whoami = client_utils.getuid()
     parser.parse_it() # parse the command line
@@ -89,7 +89,7 @@ def main():
         for a in args:
             if a not in delta:
                 client_utils.logger.info("   %s" % a)
-    
+
     elif opt.up:
         delta = client_utils.component_call(SYSMGR, False, 'nodes_up', (args, whoami))
         client_utils.logger.info("nodes marked up:")
@@ -100,23 +100,9 @@ def main():
         for a in args:
             if a not in delta:
                 client_utils.logger.info("   %s" %a)
-    
-    elif opt.list_nstates:
-        status = client_utils.component_call(SYSMGR, False, 'get_node_status', ())
-        queue_data = client_utils.component_call(SYSMGR, False, 'get_queue_assignments', ())
 
-        header = [['Host', 'Queue', 'State']]
-        #build output list
-        output = []
-        for t in status:
-            host_name = t[0]
-            status = t[1]
-            queues = []
-            for q in queue_data:
-                if host_name in queue_data[q]:
-                    queues.append(q) 
-            output.append([host_name, ":".join(queues), status])
-            
+    elif opt.list_nstates:
+        header, output = client_utils.cluster_display_node_info()
         client_utils.printTabular(header + output)
 
     elif opt.queue:

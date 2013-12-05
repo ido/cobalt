@@ -17,6 +17,8 @@ from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ReservationError, DataCreationError, ComponentLookupError
 
 import Cobalt.SchedulerPolicies
+import traceback
+
 
 logger = logging.getLogger("Cobalt.Components.scheduler")
 config = ConfigParser.ConfigParser()
@@ -1024,6 +1026,7 @@ class BGSched (Component):
                 best_partition_dict = ComponentProxy("system").find_job_location(job_location_args, end_times)
             except:
                 self.logger.error("failed to connect to system component")
+                self.logger.debug("%s", traceback.format_exc())
                 best_partition_dict = {}
 
             for jobid in best_partition_dict:
