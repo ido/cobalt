@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/repos/cobalt/!svn/ver/1387/trunk/testsuite/oldtests
+END
+test-scriptm.py
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/repos/cobalt/!svn/ver/838/trunk/testsuite/oldtests/test-scriptm.py
+END
+btest.py
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/repos/cobalt/!svn/ver/838/trunk/testsuite/oldtests/btest.py
+END
+test-failure.py
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/repos/cobalt/!svn/ver/838/trunk/testsuite/oldtests/test-failure.py
+END
+README
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/repos/cobalt/!svn/ver/838/trunk/testsuite/oldtests/README
+END

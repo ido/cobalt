@@ -24,6 +24,7 @@ import Cobalt.Util
 import Cobalt.Components.bgsched
 
 from Cobalt.Components.bgsched import BGSched
+from Cobalt.Components.metric_mon import metricmon
 from Cobalt.Components.base import Component, exposed, automatic, query, locking
 from Cobalt.Components.cqm import QueueDict, Queue
 from Cobalt.Components.simulator import Simulator
@@ -39,7 +40,9 @@ no_of_machine = 2
 INTREPID = 0
 EUREKA = 1
 BOTH = 2
+MMON = 4
 UNHOLD_INTERVAL = 1200
+MMON_INTERVAL = 1800
 
 SHOW_SCREEN_LOG = False
 
@@ -135,9 +138,9 @@ class EventSimulator(Component):
         self.finished = False
                 
         self.bgsched = Sim_bg_Sched(**kwargs)
+        self.csched = Sim_Cluster_Sched()
         
-        #inhibit coscheduling and cluster simulation feature before bgsched.py makes change
-        #self.csched = Sim_Cluster_Sched()
+        self.mmon = metricmon()
         
         self.go_next = True
         
@@ -224,7 +227,7 @@ class EventSimulator(Component):
         if self.time_stamp < len(self.event_list) - 1:
             return self.event_list[self.time_stamp + 1].get('unixtime')
         else:
-            return self.get_current_time_date()
+            return -1
     get_next_event_time_sec = exposed(get_next_event_time_sec)
     
         
@@ -278,7 +281,34 @@ class EventSimulator(Component):
             self.add_event(evspec)
             
             unhold_point += UNHOLD_INTERVAL + machine_id
-    init_unhold_events = exposed(init_unhold_events)        
+    init_unhold_events = exposed(init_unhold_events)
+    
+    def init_mmon_events(self):
+        """add metrics monitor points into time stamps"""
+        if not self.event_list:
+            return
+                 
+        first_time_sec = self.get_first_mmon_point(self.event_list[1]['datetime'])
+        last_time_sec = self.event_list[-1]['unixtime']
+        machine_id = MMON
+        
+        mmon_point = first_time_sec + MMON_INTERVAL
+        while mmon_point < last_time_sec:
+            evspec = {}
+            evspec['machine'] = machine_id
+            evspec['unixtime'] = mmon_point
+            evspec['datetime'] = sec_to_date(mmon_point)
+            self.add_event(evspec)
+            mmon_point += MMON_INTERVAL        
+    init_mmon_events = exposed(init_mmon_events) 
+    
+    def get_first_mmon_point(self, date_time):
+        "based on the input date time (%m/%d/%Y %H:%M:%S), get the next epoch time that is at the beginning of an hour"
+        segs = date_time.split()
+        hours = segs[1].split(":")
+        new_datetime = "%s %s:%s:%s" %  (segs[0], hours[0], '00', '00')
+        new_epoch = date_to_sec(new_datetime) + 3600
+        return new_epoch    
     
     def print_events(self):
         print "total events:", len(self.event_list) 
@@ -309,6 +339,8 @@ class EventSimulator(Component):
             self.bgsched.schedule_jobs()
         if machine == EUREKA:
             self.csched.schedule_jobs()
+        if machine == MMON:
+            self.mmon.metric_monitor()
         
         if self.go_next:
             ComponentProxy("queue-manager").calc_loss_of_capacity()

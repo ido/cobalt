@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/repos/cobalt/!svn/ver/2180/trunk/src/lib/Components/DBWriter
+END
+__init__.py
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/repos/cobalt/!svn/ver/1927/trunk/src/lib/Components/DBWriter/__init__.py
+END
+cdbMessages.py
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/repos/cobalt/!svn/ver/2154/trunk/src/lib/Components/DBWriter/cdbMessages.py
+END
+cdbwriter.py
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/repos/cobalt/!svn/ver/2180/trunk/src/lib/Components/DBWriter/cdbwriter.py
+END

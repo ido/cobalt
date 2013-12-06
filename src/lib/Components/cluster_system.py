@@ -59,6 +59,10 @@ class ClusterProcessGroup(ProcessGroup):
         ret = ProcessGroup.prefork(self)
 
         sim_mode  = get_cluster_system_config("simulation_mode", 'false').lower() in config_true_values
+        logger.debug("true values: %s", config_true_values)
+        logger.debug("CSConfig has: %s %s %s", type(get_cluster_system_config("simulation_mode", None).lower()),
+                get_cluster_system_config("simulation_mode", None).lower(),
+        get_cluster_system_config('simulation_mode', None).lower() in config_true_values)
         if not sim_mode:
             nodefile_dir = get_cluster_system_config("nodefile_dir", "/var/tmp")
             self.nodefile = os.path.join(nodefile_dir, "cobalt.%s" % self.jobid)
@@ -81,6 +85,7 @@ class ClusterProcessGroup(ProcessGroup):
             cmd_args.extend(['--env', env])
         cmd_args.append(self.executable)
 
+        logger.debug("sim mode: %s", sim_mode)
         cmd_exe = None
         if sim_mode:
             logger.debug("We are setting up with simulation mode.")

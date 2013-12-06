@@ -8,6 +8,7 @@ version: "%prog " + __revision__ + , Cobalt  + __version__
 OPTIONS DEFINITIONS: None
 
 '-d','--debug',dest='debug',help='turn on communication debugging',callback=cb_debug
+'--noheader',dest='noheader',action='store_true',help='disable display of header information'
 
 """
 import logging
@@ -46,7 +47,7 @@ def main():
 
     if not parser.no_args():
         client_utils.logger.error("No arguments needed")
-    
+
     impl = client_utils.component_call(SYSMGR, False, 'get_implementation', ())
 
     # make sure we're on a cluster-system
@@ -54,22 +55,12 @@ def main():
         client_utils.logger.error("nodelist is only supported on cluster systems.  Try partlist instead.")
         sys.exit(0)
 
-    status     = client_utils.component_call(SYSMGR, False, 'get_node_status', ())
-    queue_data = client_utils.component_call(SYSMGR, False, 'get_queue_assignments', ())
 
-    header = [['Host', 'Queue', 'State']]
-    #build output list
-    output = []
-    for t in status:
-        host_name = t[0]
-        status = t[1]
-        queues = []
-        for q in queue_data:
-            if host_name in queue_data[q]:
-                queues.append(q) 
-        output.append([host_name, ":".join(queues), status])
-        
-    client_utils.printTabular(header + output)
+    header, output = client_utils.cluster_display_node_info()
+    if parser.options.noheader is not None:
+        client_utils.printTabular(header + output, with_header_info=False)
+    else:
+        client_utils.printTabular(header + output)
 
 if __name__ == '__main__':
     try:

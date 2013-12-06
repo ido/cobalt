@@ -1538,6 +1538,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         self.job_exec_driver(job_queued = _job_queued, exec_task = False)
 
 
+
     @timeout(60)
     def test_nonpreempt_hold__force_kill(self):
         # the job is in the hold state; forcibly killing the job should result in immediate termination
@@ -1547,6 +1548,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
             self.assert_job_state("user_hold")
             self.job_kill(force = True)
         self.job_exec_driver(job_queued = _job_queued, exec_task = False)
+
 
 
     @timeout(60)
@@ -1565,6 +1567,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
             self.assert_job_state("done")
         self.job_exec_driver(job_queued = _job_queued, exec_task = False)
 
+
     @timeout(60)
     def test_nonpreempt_hold__walltime_adjustment(self):
         # change the walltime of a queued job
@@ -1580,6 +1583,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         new_walltime = 903245832
         self.job_exec_driver(job_queued = _job_queued, task_active = _task_active)
 
+
     @timeout(60)
     def test_nonpreempt_starting__hold(self):
         # the job is starting; attempts to place a hold on a non-preemptable job should be ignored
@@ -1590,6 +1594,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
             self.assert_job_state("starting")
         self.job_exec_driver(job_pretask = _pretask, resource_pretask = _pretask)
 
+
     @timeout(60)
     def test_nonpreempt_starting__release(self):
         # the job is starting; attempts to release a hold on a non-preemptable job should be ignored
@@ -1599,6 +1604,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
             self.job_admin_release(new_hold = False)
             self.assert_job_state("starting")
         self.job_exec_driver(job_pretask = _pretask, resource_pretask = _pretask)
+
 
     @timeout(60)
     def test_nonpreempt_starting__run(self):
@@ -1612,7 +1618,9 @@ class CQMIntegrationTestBase (TestCQMComponent):
         self.job_exec_driver(job_pretask = _pretask)
         self.job_exec_driver(resource_pretask = _pretask)
 
+
     @timeout(60)
+
     def test_nonpreempt_starting__kill(self):
         # the job is starting but a task has not been started; attempts to kill the job should succeed without the task ever
         # starting
@@ -1675,6 +1683,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         self.job_exec_driver(job_pretask = _pretask, task_run = _task_run)
         self.job_exec_driver(resource_pretask = _pretask, task_run = _task_run)
 
+
     @timeout(60)
     def test_nonpreempt_starting__preempt(self):
         # the job is starting; attempts to preempt a non-preemptable job should fail
@@ -1686,6 +1695,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
                 assert e.faultCode == JobPreemptionError.fault_code
         self.job_exec_driver(job_pretask = _pretask)
         self.job_exec_driver(resource_pretask = _pretask)
+
 
     @timeout(180)
     def test_nonpreempt_starting__walltime_adjustment(self):
@@ -1705,6 +1715,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         timer.stop()
         assert timer.elapsed_time > new_walltime * 60 - 5
 
+
     @timeout(60)
     def test_nonpreempt_running__hold(self):
         # a task is running; attempts to place a hold on a non-preemptable job should be ignored
@@ -1714,6 +1725,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
             self.job_admin_hold(new_hold = False)
             self.assert_job_state("running")
         self.job_exec_driver(task_active = _task_active)
+
 
     @timeout(60)
     def test_nonpreempt_running__release(self):
@@ -1851,6 +1863,8 @@ class CQMIntegrationTestBase (TestCQMComponent):
         def _task_active():
             self.job_update({}, {'walltime':new_walltime})
             assert self.job['walltime'] == new_walltime
+
+
             op = self.assert_next_task_op('signal')
             self.job_get_state(assert_spec = {'state':"killing", 'sm_state':"Killing"})
             assert op[3] == Signal_Map.terminate
@@ -2318,6 +2332,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         self.job_exec_driver(job_posttask = _posttask)
         self.job_exec_driver(resource_posttask = _posttask)
 
+
     blockcomment = """
     @timeout(60)
     def test_nonpreempt_validate_multiple_scripts(self):
@@ -2465,7 +2480,6 @@ class CQMIntegrationTestBase (TestCQMComponent):
             self.assert_job_state("starting")
         self.job_exec_driver(num_preempts = 1, job_pretask = _pretask, resource_pretask = _pretask)
 
-
     @timeout(60)
     @disabled #Preemption 
     def test_preempt_starting__kill(self):
@@ -2530,6 +2544,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         assert self.test_task_count == num_preempts + 1, "tasks executed should have been %d, but %d were executed instead" % \
             (num_preempts + 1, self.test_task_count,)
         del self.test_task_count
+
 
     @timeout(60)
     @disabled #Preemption 
@@ -2981,6 +2996,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         del self.test_preempted_count
         del self.test_fault_count
 
+
     @timeout(60)
     @disabled #Preemption 
     def test_preempt_preempting__hold(self):
@@ -3005,6 +3021,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
             (num_preempts, self.test_preempt_count,)
         del self.test_preempt_count
 
+
     @timeout(60)
     @disabled #Preemption 
     def test_preempt_preempting__release(self):
@@ -3021,6 +3038,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
             self.task_finished(0)
             self.assert_next_task_op('wait')
         self.job_exec_driver(num_preempts = 1, job_preempting = _job_preempting)
+
 
     @timeout(60)
     @disabled #Preemption 
@@ -3041,6 +3059,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         num_preempts = 10
         self.job_exec_driver(num_preempts = num_preempts, job_preempt = _job_preempt, job_preempting = _job_preempting)
 
+
     @timeout(60)
     @disabled #Preemption 
     def test_preempt_preempting__kill_demoted_signal(self):
@@ -3057,6 +3076,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
             return False
         num_preempts = 10
         self.job_exec_driver(num_preempts = num_preempts, job_preempt = _job_preempt, job_preempting = _job_preempting)
+
 
     @timeout(60)
     @disabled #Preemption 
@@ -3078,6 +3098,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         self.job_exec_driver(num_preempts = num_preempts, spec = {'maxcptime':1}, job_preempt = _job_preempt, 
             job_preempting = _job_preempting)
 
+
     @timeout(60)
     @disabled #Preemption 
     def test_preempt_preempting__force_kill(self):
@@ -3095,6 +3116,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
             return False
         num_preempts = 10
         self.job_exec_driver(num_preempts = num_preempts, job_preempt = _job_preempt, job_preempting = _job_preempting)
+
 
     @timeout(60)
     @disabled #Preemption 
@@ -3445,7 +3467,9 @@ class CQMIntegrationTestBase (TestCQMComponent):
             self.job_preempted_wait()
             self.assert_next_task_op('wait')
             check_output_files(resource_postscripts)
+
         self.system_thr.start()
+
             check_output_files(job_postscripts, False)
             self.job_run(["R01"])
             self.job_running_wait()
@@ -3517,3 +3541,4 @@ class TestCQMIntegration (CQMIntegrationTestBase):
     def teardown(self):
         del self.taskman
         CQMIntegrationTestBase.teardown(self)
+

@@ -138,3 +138,11 @@ class JobNotInteractive(Exception):
     """
     log = True
     fault_code = fault_code_counter.next()
+
+class RequiredLocationError(LookupError):
+    '''One or more required locations for resource allocation are unavailable.
+
+
+    '''
+    log = True
+    fault_code = fault_code_counter.next()

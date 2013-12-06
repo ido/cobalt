@@ -1,0 +1,173 @@
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/repos/cobalt/!svn/ver/1714/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt
+END
+LICENSE.LGPL
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt/LICENSE.LGPL
+END
+find-cobalt-tools
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt/find-cobalt-tools
+END
+mkinstalldirs
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt/mkinstalldirs
+END
+setup-globus-job-manager-cobalt.in
+K 25
+svn:wc:ra_dav:version-url
+V 121
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt/setup-globus-job-manager-cobalt.in
+END
+configure
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt/configure
+END
+Makefile.in
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt/Makefile.in
+END
+LICENSE
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt/LICENSE
+END
+AUTHORS
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt/AUTHORS
+END
+setup-globus-job-manager-cobalt.pl
+K 25
+svn:wc:ra_dav:version-url
+V 121
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt/setup-globus-job-manager-cobalt.pl
+END
+configure.in
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt/configure.in
+END
+globus_automake_post
+K 25
+svn:wc:ra_dav:version-url
+V 107
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt/globus_automake_post
+END
+LICENSE.GTPL
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt/LICENSE.GTPL
+END
+globus_automake_pre
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt/globus_automake_pre
+END
+config.guess
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt/config.guess
+END
+config.sub
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt/config.sub
+END
+README
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt/README
+END
+CREDITS
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt/CREDITS
+END
+ltmain.sh
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt/ltmain.sh
+END
+LICENSE.APACHE
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt/LICENSE.APACHE
+END
+ltconfig
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt/ltconfig
+END
+globus_automake_post_top
+K 25
+svn:wc:ra_dav:version-url
+V 111
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt/globus_automake_post_top
+END
+cobalt.in
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/repos/cobalt/!svn/ver/1714/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt/cobalt.in
+END
+Makefile.am
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt/Makefile.am
+END
+globus_automake_pre_top
+K 25
+svn:wc:ra_dav:version-url
+V 110
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt/globus_automake_pre_top
+END
+missing
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt/missing
+END
+bootstrap
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt/bootstrap
+END
+aclocal.m4
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt/aclocal.m4
+END
+install-sh
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt/install-sh
+END

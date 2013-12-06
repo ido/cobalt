@@ -355,11 +355,15 @@ class SystemStub(object):
 
     def disable_io_autoreboot(self):
         logmsg("\nDISABLE_IO_AUTOREBOOT\n")
-        return True
+        return 
 
     def get_io_autoreboot_status(self):
         logmsg("\nGET_IO_AUTOREBOOT_STATUS\n")
         return True
+
+    def get_backfill_windows(self):
+        logmsg("\nGET_BACKFILL_WINDOWS\n")
+        return {}
 
 def change_jobs(ojoblist, newjob,user):
     logmsg("\nOriginal Jobs:\n")

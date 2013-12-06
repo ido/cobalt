@@ -21,8 +21,8 @@ test_argslist = [
     { "tc_name" : "down_1", "args" : """--down p1 p2 p3""", },
     { "tc_name" : "down_2", "args" : """-d --down p1 p2 p3""", "new_only" : True,},
     { "tc_name" : "down_3", "args" : """--down D1 D2 D5 p1""", },
-    { "tc_name" : "list_1", "args" : """-l""", },
-    { "tc_name" : "list_2", "args" : """-l p1""", },
+    { "tc_name" : "list_1", "args" : """-l""", "new_only": True },
+    { "tc_name" : "list_2", "args" : """-l p1""", "new_only": True},
     { "tc_name" : "queue_1", "args" : """--queue QU1""", "new_only" : True, },
     { "tc_name" : "queue_2", "args" : """--queue "QU1 QD1" U1 D1 P1""", },
     ]

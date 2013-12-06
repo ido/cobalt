@@ -12,7 +12,7 @@ import grp
 import ConfigParser
 import os
 import Cobalt.Util
-from Cobalt.Exceptions import  JobValidationError, NotSupportedError, ComponentLookupError
+from Cobalt.Exceptions import  JobValidationError, NotSupportedError, ComponentLookupError, RequiredLocationError
 from Cobalt.DataTypes.ProcessGroup import ProcessGroupDict
 from Cobalt.Data import DataDict
 from Cobalt.Proxy import ComponentProxy
@@ -112,6 +112,7 @@ class ClusterBaseSystem (Component):
     del_partitions -- tell the system not to manage partitions (exposed, query)
     set_partitions -- change random attributes of partitions (exposed, query)
     update_relatives -- should be called when partitions are added and removed from the managed list
+
     """
 
     global cluster_hostfile
@@ -124,6 +125,7 @@ class ClusterBaseSystem (Component):
         self.down_nodes = set()
         self.queue_assignments = {}
         self.node_order = {}
+        self.MINIMUM_BACKFILL_WINDOW = 300
 
         try:
             self.configure(cluster_hostfile)
@@ -139,8 +141,10 @@ class ClusterBaseSystem (Component):
         self.jobid_to_user = {} #jobid:username
 
         self.alloc_timeout = int(get_cluster_system_config("allocation_timeout", 300))
-
+        self.node_end_time_dict = {}
+        self.draining_nodes = {}
         self.logger.info("allocation timeout set to %d seconds." % self.alloc_timeout)
+        self.logger.info("Minimum Backfill Window set to %d seconds." % self.MINIMUM_BACKFILL_WINDOW)
 
     def __getstate__(self):
         state = {}
@@ -155,6 +159,7 @@ class ClusterBaseSystem (Component):
         Component.__setstate__(self, state)
         self.all_nodes = set()
         self.node_order = {}
+        self.MINIMUM_BACKFILL_WINDOW = 300
         try:
             self.configure(cluster_hostfile)
         except IOError:
@@ -185,12 +190,14 @@ class ClusterBaseSystem (Component):
 
         self.alloc_timeout = int(get_cluster_system_config("allocation_timeout", 300))
         self.logger.info("allocation timeout set to %d seconds." % self.alloc_timeout)
+        self.node_end_time_dict = {}
+        self.draining_nodes = {}
+        self.logger.info("Minimum Backfill Window set to %d seconds." % self.MINIMUM_BACKFILL_WINDOW)
 
     def save_me(self):
         '''Automatically write statefiles.'''
         Component.save(self)
     save_me = automatic(save_me)
-
 
     def validate_job(self, spec):
         """validate a job for submission
@@ -230,7 +237,6 @@ class ClusterBaseSystem (Component):
         return spec
     validate_job = exposed(validate_job)
 
-
     def fail_partitions(self, specs):
         self.logger.error("Fail_partitions not used on cluster systems.")
         return ""
@@ -241,19 +247,87 @@ class ClusterBaseSystem (Component):
         return ""
     unfail_partitions = exposed(unfail_partitions)
 
-    def _find_job_location(self, args):
+    def _find_job_location(self, job, now, drain_time=0):
         '''Get a list of nodes capable of running a job.
 
+        job - data about the job under consideration
+        drain_location_times - the set of locations that are being drained this pass
+        drain_time - the time remaining on the drain locaitons.  If 0 do not consider
+                     drain locations
+
+        return:
+        jobid: locations - map of jobid to locations for this job
+        new_drain_time - if we selected a job to drain, this is the new time
+        ready_to_run - no longer have to drain for this job, it's ready to run
+
+        NOTES:
+        - This method assumes that the job is the highest scored job under consideration.
+        - Call with a drain_time of 0 (default if not passed) to generate a list of drain
+          locations if we can't fit the high-scoring job we want to run.
+
+
         '''
-        nodes = args['nodes']
-        jobid = args['jobid']
+        forbidden = set(job.get('forbidden', [])) #These are locations the scheduler has decided are inelligible for running.
+        required = set(job.get('required', [])) #Always consider these nodes for scheduling, due to things being in a reservation
+        selected_locations = set()
+        new_drain_time = 0
+        ready_to_run = False
+        nodes = int(job['nodes'])
+        try:
+            available_nodes = self.queue_assignments[job['queue']].difference(forbidden)
+        except KeyError:
+            #The key error is due to the queue being a reservation queue.  Those have no resources assigned in the system
+            #component.  This should be changed in a later version, but for now, we can run straight off the "required"
+            #nodes list
+            available_nodes = set([])
+        finally:
+            available_nodes.update(set(required))
 
-        available_nodes = self._get_available_nodes(args)
+        #TODO: include bit to enable predicted walltimes to be used
+        #Remember, until we fix it, walltimes are in minutes, not seconds.
+        job_end_time = int(job['walltime']) * 60 + int(now)
 
-        if nodes <= len(available_nodes):
-            return {jobid: [available_nodes.pop() for i in range(nodes)]}
-        else:
-            return None
+        #check to make sure all required nodes are currently in the queue that this job belongs to
+        if not required.issubset(available_nodes):
+            err_str = '%s/%s has locations %s that are not in the queue for this job.  Job will never run.' % \
+                    (job['user'], job['jobid'], ", ".join([str(s) for s in required.difference(available_nodes)]))
+            self.logger.warning(err_str)
+            raise RequiredLocationError(err_str)
+
+        #remove forbidden and down nodes from consideration
+        available_nodes = available_nodes.difference(forbidden, self.down_nodes)
+
+        if len(available_nodes) < nodes:
+            #bail out early, we don't have enough nodes to even consider this job!
+            return {}, 0, False
+
+        if len(available_nodes) >= nodes and (int(job_end_time) < int(drain_time) or int(drain_time) == 0):
+            # do we have enough that are idle?  The job is smaller than our drain time.
+            idle_nodes = available_nodes.difference(self.running_nodes)
+            if len(idle_nodes) >= nodes:
+                selected_locations = set([idle_nodes.pop() for _ in range(nodes)])
+                ready_to_run = True
+
+        if drain_time == 0 and ready_to_run == False: #go ahead and select locations for draining.
+            #choose the idle nodes, iterate over times adding nodes until we have enough with the shortest wait.
+            remaining_node_count = nodes
+            ready_times = self.node_end_time_dict.keys()
+            ready_times.sort() # make sure we're getting the soonest available.
+            for ready_time in ready_times:
+                new_drain_time = ready_time
+                locations = self.node_end_time_dict[ready_time]
+                for location in locations:
+                    selected_locations.add(location)
+                    remaining_node_count -= 1
+                    if remaining_node_count == 0:
+                        break
+                if remaining_node_count == 0:
+                    break
+
+        if selected_locations == set([]):
+            return {}, 0, False
+        #Jobid has to be a string or else xmlrpc has trouble with the dict. XMLRPC also doesn't like sets.
+        return {str(job['jobid']): list(selected_locations)}, new_drain_time, ready_to_run
 
     def _get_available_nodes(self, args):
         '''Get all nodes required for a job, ignoring forbidden ones (i.e. reserved nodes).
@@ -268,61 +342,78 @@ class ClusterBaseSystem (Component):
         else:
             available_nodes = self.queue_assignments[queue].difference(forbidden)
 
-        available_nodes = available_nodes.difference(self.running_nodes)
-        available_nodes = available_nodes.difference(self.down_nodes)
+        return self._get_available_node_subset(available_nodes)
 
-        return available_nodes
+    def _get_available_node_subset(self, node_set):
+        '''Given a set of nodes, return the subset of available nodes.
 
-    def _backfill_cmp(self, left, right):
-        return cmp(left[1], right[1])
+        '''
+        available_nodes = node_set.difference(self.running_nodes)
+        return available_nodes.difference(self.down_nodes)
 
     # the argument "required" is used to pass in the set of locations allowed by a reservation;
-    def find_job_location(self, arg_list, end_times):
-        '''Find the best location for a job and start the job allocation process (this is different from 
+    def find_job_location(self, job_list, end_times):
+        '''Find the best location for a job and start the job allocation process (this is different from
         what happens on BlueGenes!)
+
+        job_list = list of dictionaries of job data.  Each entry has the following fields:
+        user -- username of the job
+        pt_forbidden -- (ignored for cluster_systems)
+        geometry -- (ignored for cluster_systems)
+        forbidden -- locations that are forbidden for scheduling, usually due to reservations
+        jobid -- id of the Cobalt job
+        queue -- queue of the Cobalt job
+        walltime_p -- predicted wallclock time of the job (not used in cluster_systems currently)
+        walltime -- requested wall clock time for the job
+        utility_score -- score of the job
+        attrs -- a list of attributes on the job (currently used to constrain locations)
+        nodes -- number of requested nodes
+
+        end_times: This is a list of locations and when the job on them is expected to expire.
 
         '''
         best_location_dict = {}
-        winner = arg_list[0]
-
+        drain_locations = None
+        drain_time = 0
         jobid = None
         user = None
+        now = int(time.time())
+        self.init_drain_times(end_times)
 
         # first time through, try for starting jobs based on utility scores
-        for args in arg_list:
-            location_data = self._find_job_location(args)
-            if location_data:
+        for jobs in job_list:
+            jobid = int(jobs['jobid'])
+            user = jobs['user']
+            try:
+                location_data, drain_time, ready_to_run = self._find_job_location(jobs, now)
+            except RequiredLocationError:
+                continue #location_data, drain_time and ready_to_run not set.
+            if ready_to_run:
                 best_location_dict.update(location_data)
-                jobid = int(args['jobid'])
-                user = args['user']
+                break
+            elif drain_time != 0: #found a drain location
+                drain_locations = set(location_data[str(jobid)])
+                self.logger.info("%s/%s: Is draining nodes %s", user, jobid, ":".join(location_data[str(jobid)]))
                 break
 
-        # the next time through, try to backfill, but only if we couldn't find anything to start
-        if not best_location_dict:
-            job_end_times = {}
-            total = 0
-            for item in sorted(end_times, cmp=self._backfill_cmp):
-                total += len(item[0])
-                job_end_times[total] = item[1]
-
-            needed = winner['nodes'] - len(self._get_available_nodes(winner))
-            now = time.time()
-            backfill_cutoff = 0
-            for num in sorted(job_end_times):
-                if needed <= num:
-                    backfill_cutoff = job_end_times[num] - now
-
-            for args in arg_list:
-                if 60*float(args['walltime']) > backfill_cutoff:
-                    continue
-
-                location_data = self._find_job_location(args)
-                if location_data:
+        #make a second pass to pick a job for the draining nodes
+        self.draining_nodes = {}
+        backfill_drain_time = drain_time
+        if drain_locations is not None:
+            self.draining_nodes = {str(drain_time):list(drain_locations)}
+            for jobs in job_list:
+                jobid = int(jobs['jobid'])
+                user = jobs['user']
+                try:
+                    location_data, drain_time, ready_to_run = self._find_job_location(jobs, now, backfill_drain_time)
+                except RequiredLocationError:
+                    continue #location_data, drain_time and ready_to_run not set.
+                if ready_to_run:
                     best_location_dict.update(location_data)
-                    self.logger.info("backfilling job %s" % args['jobid'])
-                    jobid = int(args['jobid'])
-                    user = args['user']
+                    self.logger.info("%s/%s: job selected for backfill on locations %s", user, jobid,
+                            ':'.join(location_data[str(jobid)]))
                     break
+
 
         # reserve the stuff in the best_partition_dict, as those partitions are allegedly going to
         # be running jobs very soon
@@ -332,14 +423,56 @@ class ClusterBaseSystem (Component):
             #just in case we're not going to be running a job soon, and have to
             #return this to the pool:
             self.jobid_to_user[jobid] = user
-            alloc_time = time.time()
             for location in location_list:
-                self.alloc_only_nodes[location] = alloc_time
+                self.alloc_only_nodes[location] = now
             self.locations_by_jobid[jobid] = location_list
-
-
         return best_location_dict
     find_job_location = exposed(find_job_location)
+
+    def init_drain_times(self, end_times):
+        '''Update a list of the locations and times.  Return a list of nodes and their drain times.
+
+        end_times: a dict ([locations]:time) with the scheduled end times of locations that are running
+
+        side-effect: self.node_end_time_dict has every location initialized to 0 (immediately available)
+                     or to the time remaining on the jobs running
+
+        '''
+        #all nodes init to 0-time.  (ready immediately)
+        self.node_end_time_dict = {0:list(self.all_nodes)}
+        #All currently running nodes should have their times marked
+        for locations, float_end_time in end_times:
+            end_time = int(float_end_time)
+            for location in locations:
+                if end_time not in self.node_end_time_dict.keys():
+                    self.node_end_time_dict[end_time] = [location]
+                else:
+                    self.node_end_time_dict[end_time].append(location)
+                self.node_end_time_dict[0].remove(location)
+        # add in locations that are being cleaned, but are not coming from the scheduling component
+        for locations in self.locations_by_jobid.itervalues():
+            self._append_cleanup_drain_shadow(locations)
+        return
+
+    def _append_cleanup_drain_shadow(self, locations):
+        '''Append locations to our list of end times so that cleanup casts an appropriate backfill shadow.
+
+        '''
+        # add in locations that are being cleaned, but are not coming from the scheduling component
+        now = int(time.time())
+        #take the set of locations that we haven't assigned end-times to, and extend their times appropriately.
+        #these locations are in cleanup
+        cleaning_locations = list(set(locations) & set(self.node_end_time_dict[0]))
+        if not cleaning_locations == []:
+            #cast a shadow 5 minutes in the future until these locations are no longer tracked.
+            if self.node_end_time_dict.has_key(now + self.MINIMUM_BACKFILL_WINDOW):
+                # Don't stomp on times from a job that ends at the same time as cleanup would.
+                self.node_end_time_dict[now + self.MINIMUM_BACKFILL_WINDOW].extend(cleaning_locations)
+            else:
+                self.node_end_time_dict[now + self.MINIMUM_BACKFILL_WINDOW] = cleaning_locations
+            for location in cleaning_locations:
+                if location in self.node_end_time_dict[0]:
+                    self.node_end_time_dict[0].remove(location)
 
     def check_alloc_only_nodes(self):
         '''Check to see if nodes that we have allocated but not run yet should be freed.
@@ -375,8 +508,6 @@ class ClusterBaseSystem (Component):
                 break
         self.invoke_node_cleanup(jobids)
         return
-
-
     check_alloc_only_nodes = automatic(check_alloc_only_nodes, get_cluster_system_config("automatic_method_interval", 10.0))
 
     def invoke_node_cleanup(self, jobids):
@@ -401,10 +532,8 @@ class ClusterBaseSystem (Component):
 
             self.clean_nodes(list(locations_to_clean), user, jobid)
 
-
     def _walltimecmp(self, dict1, dict2):
         return -cmp(float(dict1['walltime']), float(dict2['walltime']))
-
 
     def find_queue_equivalence_classes(self, reservation_dict, active_queue_names, passthrough_partitions=[]):
         equiv = []
@@ -470,7 +599,6 @@ class ClusterBaseSystem (Component):
             return True #So we can progress.
     reserve_resources_until = exposed(reserve_resources_until)
 
-
     def nodes_up(self, node_list, user_name=None):
         changed = []
         for n in node_list:
@@ -485,7 +613,6 @@ class ClusterBaseSystem (Component):
         return changed
     nodes_up = exposed(nodes_up)
 
-
     def nodes_down(self, node_list, user_name=None):
         changed = []
         for n in node_list:
@@ -498,51 +625,60 @@ class ClusterBaseSystem (Component):
     nodes_down = exposed(nodes_down)
 
     def get_node_status(self):
+        '''Get current node status for clients.'''
         def my_cmp(left, right):
+            '''force an ordering on the nodes, needed for display'''
             return cmp(left[2], right[2])
 
         status_list = []
-        for n in self.all_nodes:
-            if n in self.running_nodes:
+        for node in self.all_nodes:
+            if node in self.running_nodes:
                 status = "allocated"
-            elif n in self.down_nodes:
+            elif node in self.down_nodes:
                 status = "down"
             else:
                 status = "idle"
 
-            status_list.append( (n, status, self.node_order[n]) )
+            status_list.append( (node, status, self.node_order[node]) )
         status_list.sort(my_cmp)
         return status_list
     get_node_status = exposed(get_node_status)
 
     def get_queue_assignments(self):
+        '''Fetch the node to queue mapping for display.'''
         ret = {}
-        for q in self.queue_assignments:
-            ret[q] = list(self.queue_assignments[q])
+        for queues in self.queue_assignments:
+            ret[queues] = list(self.queue_assignments[queues])
         return ret
     get_queue_assignments = exposed(get_queue_assignments)
 
     def set_queue_assignments(self, queue_names, node_list, user_name=None):
+        '''Associate queues with nodes from an external client.'''
         checked_nodes = set()
-        for n in node_list:
-            if n in self.all_nodes:
-                checked_nodes.add(n)
+        for node in node_list:
+            if node in self.all_nodes:
+                checked_nodes.add(node)
 
         queue_list = queue_names.split(":")
-        for q in queue_list:
-            if q not in self.queue_assignments:
-                self.queue_assignments[q] = set()
+        for queue in queue_list:
+            if queue not in self.queue_assignments:
+                self.queue_assignments[queue] = set()
 
-        for q in self.queue_assignments.keys():
-            if q not in queue_list:
-                self.queue_assignments[q].difference_update(checked_nodes)
-                if len(self.queue_assignments[q])==0:
-                    del self.queue_assignments[q]
+        for queue in self.queue_assignments.keys():
+            if queue not in queue_list:
+                self.queue_assignments[queue].difference_update(checked_nodes)
+                if len(self.queue_assignments[queue])==0:
+                    del self.queue_assignments[queue]
             else:
-                self.queue_assignments[q].update(checked_nodes)
+                self.queue_assignments[queue].update(checked_nodes)
         self.logger.info("%s assigning queues %s to nodes %s", user_name, queue_names, " ".join(checked_nodes))
         return list(checked_nodes)
     set_queue_assignments = exposed(set_queue_assignments)
+
+    def get_backfill_windows(self):
+        '''Get the current drain limits for display'''
+        return self.draining_nodes
+    get_backfill_windows = exposed(get_backfill_windows)
 
     def verify_locations(self, location_list):
         """Providing a system agnostic interface for making sure a 'location string' is valid"""
@@ -567,6 +703,9 @@ class ClusterBaseSystem (Component):
             counter += 1
 
         hostfile.close()
+
+        #On configuration call, set minimum backfill window.
+        self.MINIMUM_BACKFILL_WINDOW = int(get_cluster_system_config("minimum_backfill_window", 300))
 
     # this gets called by bgsched in order to figure out if there are partition overlaps;
     # it was written to provide the data that bgsched asks for and raises an exception
@@ -601,13 +740,14 @@ class ClusterBaseSystem (Component):
         return partitions
     get_partitions = exposed(get_partitions)
 
-
     def clean_nodes(self, locations, user, jobid):
         """Given a process group, start cleaning the nodes that were involved.
         The rest of the cleanup is done in check_done_cleaning.
 
         """
         self.logger.info("Job %s/%s: starting node cleanup." , user, jobid)
+        #Make sure we cast an appropriate backfill shadow.
+        self._append_cleanup_drain_shadow(locations)
         try:
             tmp_data = pwd.getpwnam(user)
             groupid = tmp_data.pw_gid
@@ -670,7 +810,6 @@ class ClusterBaseSystem (Component):
                 cmd.append(user)
                 cmd.append(group_name)
             return ComponentProxy("system_script_forker").fork(cmd, "system epilogue", "Job %s/%s" % (jobid, user))
-
 
     def retry_cleaning_scripts(self):
         '''Continue retrying scripts in the event that we have lost contact
@@ -813,10 +952,8 @@ class ClusterBaseSystem (Component):
 
         self.cleaning_processes = [cleaning_process for cleaning_process in self.cleaning_processes
                                     if not cleaning_process["completed"]]
-
     check_done_cleaning = automatic(check_done_cleaning,
             get_cluster_system_config("automatic_method_interval", 10.0))
-
 
     def __mark_failed_cleaning(self, cleaning_process, msg=None):
         '''Mark that a node has failed cleanup and take the node out of service.
