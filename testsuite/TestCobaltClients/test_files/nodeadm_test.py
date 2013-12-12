@@ -596,14 +596,14 @@ def test_nodeadm_list_1():
     args      = """-l"""
 
     cmdout    = \
-"""Host  Queue  State
-====================
-D1    QD1    good 
-D2    QD2    bad  
-D3    QD3    ugly 
-U1    QU1    one  
-U2    QU2    two  
-U3    QU3    three
+"""Host  Queue  State  Backfill
+==============================
+D1    QD1    good   -       
+D2    QD2    bad    -       
+D3    QD3    ugly   -       
+U1    QU1    one    -       
+U2    QU2    two    -       
+U3    QU3    three  -       
 """
 
     cmderr    = ''
@@ -617,6 +617,9 @@ GET_NODES_STATUS
 
 
 GET_QUEUE_ASSIGNMENTS
+
+
+GET_BACKFILL_WINDOWS
 
 """
 
@@ -650,14 +653,14 @@ def test_nodeadm_list_2():
     args      = """-l p1"""
 
     cmdout    = \
-"""Host  Queue  State
-====================
-D1    QD1    good 
-D2    QD2    bad  
-D3    QD3    ugly 
-U1    QU1    one  
-U2    QU2    two  
-U3    QU3    three
+"""Host  Queue  State  Backfill
+==============================
+D1    QD1    good   -       
+D2    QD2    bad    -       
+D3    QD3    ugly   -       
+U1    QU1    one    -       
+U2    QU2    two    -       
+U3    QU3    three  -       
 """
 
     cmderr    = ''
@@ -671,6 +674,9 @@ GET_NODES_STATUS
 
 
 GET_QUEUE_ASSIGNMENTS
+
+
+GET_BACKFILL_WINDOWS
 
 """
 
