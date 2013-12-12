@@ -75,6 +75,8 @@ for host in location:
         processes.append(p)
     except:
         logging.error("Job %s/%s failed to copy nodefile %s to host %s", jobid, user, nodefile, h)
+        #Make sure the script fails if can't copy the nodefile
+        raise
 
     try:
         p = subprocess.Popen(["/usr/bin/ssh", h, prologue, jobid, user, "no_group"],
@@ -84,6 +86,7 @@ for host in location:
         processes.append(p)
     except:
         logging.error("Job %s/%s failed to run prologue on host %s" , jobid, user, h, exc_info=True)
+        raise
 
 
 prologue_failure = []
