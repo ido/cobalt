@@ -59,10 +59,6 @@ class ClusterProcessGroup(ProcessGroup):
         ret = ProcessGroup.prefork(self)
 
         sim_mode  = get_cluster_system_config("simulation_mode", 'false').lower() in config_true_values
-        logger.debug("true values: %s", config_true_values)
-        logger.debug("CSConfig has: %s %s %s", type(get_cluster_system_config("simulation_mode", None).lower()),
-                get_cluster_system_config("simulation_mode", None).lower(),
-        get_cluster_system_config('simulation_mode', None).lower() in config_true_values)
         if not sim_mode:
             nodefile_dir = get_cluster_system_config("nodefile_dir", "/var/tmp")
             self.nodefile = os.path.join(nodefile_dir, "cobalt.%s" % self.jobid)
