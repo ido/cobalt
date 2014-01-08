@@ -1646,7 +1646,7 @@ def test_setres_setres_2():
     setres test run: setres_2
 
         Command Output:
-        [{'users': None, 'block_passthrough': False, 'project': None, 'start': 1656603000.0, 'cycle': None, 'duration': 18000, 'partitions': 'ANL-R00-R01-2048', 'res_id': 1, 'name': 'george'}]
+        [{'name': 'george', 'block_passthrough': False, 'project': None, 'start': 1656603000.0, 'cycle': None, 'duration': 18000, 'partitions': 'ANL-R00-R01-2048', 'res_id': 1, 'users': None}]
         
         
         Command Error/Debug:
@@ -1723,7 +1723,7 @@ def test_setres_setres_3():
     setres test run: setres_3
 
         Command Output:
-        Got starttime Thu Dec  1 16:30:00 2022 +0000 (UTC)
+        Got starttime Thu Dec 01 16:30:00 2022 +0000 (UTC)
         [{'project': None, 'users': None, 'block_passthrough': False, 'name': 'david', 'queue': 'q_1', 'start': 1669912200.0, 'duration': 3000, 'cycle': None, 'res_id': 2, 'partitions': 'ANL-R00-R01-2048'}]
         
         
@@ -1765,7 +1765,7 @@ def test_showres_showres_3():
         Reservation  Queue  User  Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions        Project  ResID  CycleID  Time Remaining  
         ====================================================================================================================================================================================================
         george       q_1    None  Thu Jun 30 15:30:00 2022 +0000 (UTC)  05:00     Thu Jun 30 20:30:00 2022 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  None     1      -        Not Started     
-        david        q_1    None  Thu Dec  1 16:30:00 2022 +0000 (UTC)  00:50     Thu Dec  1 17:20:00 2022 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  None     2      -        Not Started     
+        david        q_1    None  Thu Dec 01 16:30:00 2022 +0000 (UTC)  00:50     Thu Dec 01 17:20:00 2022 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  None     2      -        Not Started     
         
         Command Error/Debug:
         
@@ -1988,13 +1988,13 @@ def test_qstat_qstat_3():
     qstat test run: qstat_3
 
         Command Output:
-        JobID  User         WallTime  Nodes  State      Location  
-        ==========================================================
-        1      georgerojas  00:50:00  30     user_hold  None      
-        2      georgerojas  01:40:00  30     user_hold  None      
-        3      georgerojas  02:30:00  30     user_hold  None      
-        4      georgerojas  02:30:00  30     dep_hold   None      
-        5      georgerojas  02:30:00  30     dep_hold   None      
+        JobID  User   WallTime  Nodes  State      Location  
+        ====================================================
+        1      rojas  00:50:00  30     user_hold  None      
+        2      rojas  01:40:00  30     user_hold  None      
+        3      rojas  02:30:00  30     user_hold  None      
+        4      rojas  02:30:00  30     dep_hold   None      
+        5      rojas  02:30:00  30     dep_hold   None      
         
         Command Error/Debug:
         
@@ -2042,51 +2042,51 @@ def test_qalter_qalter_1():
         
         component: "queue-manager.get_jobs", defer: False
           get_jobs(
-             [{'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 1, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'georgerojas'}, {'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 2, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'georgerojas'}, {'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 3, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'georgerojas'}, {'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 4, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'georgerojas'}, {'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 5, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'georgerojas'}],
+             [{'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 1, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'rojas'}, {'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 2, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'rojas'}, {'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 3, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'rojas'}, {'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 4, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'rojas'}, {'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 5, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'rojas'}],
              )
         
         
         component: "queue-manager.set_jobs", defer: False
           set_jobs(
-             [{'project': None, 'user': 'georgerojas', 'jobid': 1, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 50, 'procs': 30, 'notify': None}],
-             {'queue': 'default', 'mode': 'smp', 'jobid': 1, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '60.0', 'procs': 30, 'user': 'georgerojas'},
-             georgerojas,
+             [{'project': None, 'user': 'rojas', 'jobid': 1, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 50, 'procs': 30, 'notify': None}],
+             {'queue': 'default', 'mode': 'smp', 'jobid': 1, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '60.0', 'procs': 30, 'user': 'rojas'},
+             rojas,
              )
         
         
         component: "queue-manager.set_jobs", defer: False
           set_jobs(
-             [{'project': None, 'user': 'georgerojas', 'jobid': 2, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 100, 'procs': 30, 'notify': None}],
-             {'queue': 'default', 'mode': 'smp', 'jobid': 2, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '110.0', 'procs': 30, 'user': 'georgerojas'},
-             georgerojas,
+             [{'project': None, 'user': 'rojas', 'jobid': 2, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 100, 'procs': 30, 'notify': None}],
+             {'queue': 'default', 'mode': 'smp', 'jobid': 2, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '110.0', 'procs': 30, 'user': 'rojas'},
+             rojas,
              )
         
         
         component: "queue-manager.set_jobs", defer: False
           set_jobs(
-             [{'project': None, 'user': 'georgerojas', 'jobid': 4, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 150, 'procs': 30, 'notify': None}],
-             {'queue': 'default', 'mode': 'smp', 'jobid': 4, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '160.0', 'procs': 30, 'user': 'georgerojas'},
-             georgerojas,
+             [{'project': None, 'user': 'rojas', 'jobid': 3, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 150, 'procs': 30, 'notify': None}],
+             {'queue': 'default', 'mode': 'smp', 'jobid': 3, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '160.0', 'procs': 30, 'user': 'rojas'},
+             rojas,
              )
         
         
         component: "queue-manager.set_jobs", defer: False
           set_jobs(
-             [{'project': None, 'user': 'georgerojas', 'jobid': 5, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 150, 'procs': 30, 'notify': None}],
-             {'queue': 'default', 'mode': 'smp', 'jobid': 5, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '160.0', 'procs': 30, 'user': 'georgerojas'},
-             georgerojas,
+             [{'project': None, 'user': 'rojas', 'jobid': 4, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 150, 'procs': 30, 'notify': None}],
+             {'queue': 'default', 'mode': 'smp', 'jobid': 4, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '160.0', 'procs': 30, 'user': 'rojas'},
+             rojas,
              )
         
         
         component: "queue-manager.set_jobs", defer: False
           set_jobs(
-             [{'project': None, 'user': 'georgerojas', 'jobid': 3, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 150, 'procs': 30, 'notify': None}],
-             {'queue': 'default', 'mode': 'smp', 'jobid': 3, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '160.0', 'procs': 30, 'user': 'georgerojas'},
-             georgerojas,
+             [{'project': None, 'user': 'rojas', 'jobid': 5, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 150, 'procs': 30, 'notify': None}],
+             {'queue': 'default', 'mode': 'smp', 'jobid': 5, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '160.0', 'procs': 30, 'user': 'rojas'},
+             rojas,
              )
         
         
-        [{'project': None, 'user': 'georgerojas', 'jobid': 3, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 160, 'procs': 30, 'notify': None}]
+        [{'project': None, 'user': 'rojas', 'jobid': 5, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 160, 'procs': 30, 'notify': None}]
         
         
     """
@@ -2122,13 +2122,13 @@ def test_qstat_qstat_4():
     qstat test run: qstat_4
 
         Command Output:
-        JobID  User         WallTime  Nodes  State      Location  
-        ==========================================================
-        1      georgerojas  01:00:00  30     user_hold  None      
-        2      georgerojas  01:50:00  30     user_hold  None      
-        3      georgerojas  02:40:00  30     user_hold  None      
-        4      georgerojas  02:40:00  30     dep_hold   None      
-        5      georgerojas  02:40:00  30     dep_fail   None      
+        JobID  User   WallTime  Nodes  State      Location  
+        ====================================================
+        1      rojas  01:00:00  30     user_hold  None      
+        2      rojas  01:50:00  30     user_hold  None      
+        3      rojas  02:40:00  30     user_hold  None      
+        4      rojas  02:40:00  30     dep_hold   None      
+        5      rojas  02:40:00  30     dep_fail   None      
         
         Command Error/Debug:
         
@@ -2176,51 +2176,51 @@ def test_qalter_qalter_2():
         
         component: "queue-manager.get_jobs", defer: False
           get_jobs(
-             [{'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 1, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'georgerojas'}, {'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 2, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'georgerojas'}, {'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 3, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'georgerojas'}, {'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 4, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'georgerojas'}, {'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 5, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'georgerojas'}],
+             [{'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 1, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'rojas'}, {'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 2, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'rojas'}, {'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 3, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'rojas'}, {'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 4, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'rojas'}, {'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 5, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'rojas'}],
              )
         
         
         component: "queue-manager.set_jobs", defer: False
           set_jobs(
-             [{'project': None, 'user': 'georgerojas', 'jobid': 1, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 60, 'procs': 30, 'notify': None}],
-             {'queue': 'default', 'mode': 'smp', 'jobid': 1, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '55.0', 'procs': 30, 'user': 'georgerojas'},
-             georgerojas,
+             [{'project': None, 'user': 'rojas', 'jobid': 1, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 60, 'procs': 30, 'notify': None}],
+             {'queue': 'default', 'mode': 'smp', 'jobid': 1, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '55.0', 'procs': 30, 'user': 'rojas'},
+             rojas,
              )
         
         
         component: "queue-manager.set_jobs", defer: False
           set_jobs(
-             [{'project': None, 'user': 'georgerojas', 'jobid': 2, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 110, 'procs': 30, 'notify': None}],
-             {'queue': 'default', 'mode': 'smp', 'jobid': 2, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '105.0', 'procs': 30, 'user': 'georgerojas'},
-             georgerojas,
+             [{'project': None, 'user': 'rojas', 'jobid': 2, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 110, 'procs': 30, 'notify': None}],
+             {'queue': 'default', 'mode': 'smp', 'jobid': 2, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '105.0', 'procs': 30, 'user': 'rojas'},
+             rojas,
              )
         
         
         component: "queue-manager.set_jobs", defer: False
           set_jobs(
-             [{'project': None, 'user': 'georgerojas', 'jobid': 4, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 160, 'procs': 30, 'notify': None}],
-             {'queue': 'default', 'mode': 'smp', 'jobid': 4, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '155.0', 'procs': 30, 'user': 'georgerojas'},
-             georgerojas,
+             [{'project': None, 'user': 'rojas', 'jobid': 3, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 160, 'procs': 30, 'notify': None}],
+             {'queue': 'default', 'mode': 'smp', 'jobid': 3, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '155.0', 'procs': 30, 'user': 'rojas'},
+             rojas,
              )
         
         
         component: "queue-manager.set_jobs", defer: False
           set_jobs(
-             [{'project': None, 'user': 'georgerojas', 'jobid': 5, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 160, 'procs': 30, 'notify': None}],
-             {'queue': 'default', 'mode': 'smp', 'jobid': 5, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '155.0', 'procs': 30, 'user': 'georgerojas'},
-             georgerojas,
+             [{'project': None, 'user': 'rojas', 'jobid': 4, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 160, 'procs': 30, 'notify': None}],
+             {'queue': 'default', 'mode': 'smp', 'jobid': 4, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '155.0', 'procs': 30, 'user': 'rojas'},
+             rojas,
              )
         
         
         component: "queue-manager.set_jobs", defer: False
           set_jobs(
-             [{'project': None, 'user': 'georgerojas', 'jobid': 3, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 160, 'procs': 30, 'notify': None}],
-             {'queue': 'default', 'mode': 'smp', 'jobid': 3, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '155.0', 'procs': 30, 'user': 'georgerojas'},
-             georgerojas,
+             [{'project': None, 'user': 'rojas', 'jobid': 5, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 160, 'procs': 30, 'notify': None}],
+             {'queue': 'default', 'mode': 'smp', 'jobid': 5, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '155.0', 'procs': 30, 'user': 'rojas'},
+             rojas,
              )
         
         
-        [{'project': None, 'user': 'georgerojas', 'jobid': 3, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 155, 'procs': 30, 'notify': None}]
+        [{'project': None, 'user': 'rojas', 'jobid': 5, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 155, 'procs': 30, 'notify': None}]
         
         
     """
@@ -2256,13 +2256,13 @@ def test_qstat_qstat_5():
     qstat test run: qstat_5
 
         Command Output:
-        JobID  User         WallTime  Nodes  State      Location  
-        ==========================================================
-        1      georgerojas  00:55:00  30     user_hold  None      
-        2      georgerojas  01:45:00  30     user_hold  None      
-        3      georgerojas  02:35:00  30     user_hold  None      
-        4      georgerojas  02:35:00  30     dep_hold   None      
-        5      georgerojas  02:35:00  30     dep_fail   None      
+        JobID  User   WallTime  Nodes  State      Location  
+        ====================================================
+        1      rojas  00:55:00  30     user_hold  None      
+        2      rojas  01:45:00  30     user_hold  None      
+        3      rojas  02:35:00  30     user_hold  None      
+        4      rojas  02:35:00  30     dep_hold   None      
+        5      rojas  02:35:00  30     dep_fail   None      
         
         Command Error/Debug:
         
@@ -2310,51 +2310,51 @@ def test_qalter_qalter_3():
         
         component: "queue-manager.get_jobs", defer: False
           get_jobs(
-             [{'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 1, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'georgerojas'}, {'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 2, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'georgerojas'}, {'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 3, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'georgerojas'}, {'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 4, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'georgerojas'}, {'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 5, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'georgerojas'}],
+             [{'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 1, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'rojas'}, {'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 2, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'rojas'}, {'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 3, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'rojas'}, {'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 4, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'rojas'}, {'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 5, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'rojas'}],
              )
         
         
         component: "queue-manager.set_jobs", defer: False
           set_jobs(
-             [{'project': None, 'user': 'georgerojas', 'jobid': 1, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 55, 'procs': 30, 'notify': None}],
-             {'queue': 'default', 'mode': 'smp', 'jobid': 1, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '65.0', 'procs': 30, 'user': 'georgerojas'},
-             georgerojas,
+             [{'project': None, 'user': 'rojas', 'jobid': 1, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 55, 'procs': 30, 'notify': None}],
+             {'queue': 'default', 'mode': 'smp', 'jobid': 1, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '65.0', 'procs': 30, 'user': 'rojas'},
+             rojas,
              )
         
         
         component: "queue-manager.set_jobs", defer: False
           set_jobs(
-             [{'project': None, 'user': 'georgerojas', 'jobid': 2, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 105, 'procs': 30, 'notify': None}],
-             {'queue': 'default', 'mode': 'smp', 'jobid': 2, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '115.0', 'procs': 30, 'user': 'georgerojas'},
-             georgerojas,
+             [{'project': None, 'user': 'rojas', 'jobid': 2, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 105, 'procs': 30, 'notify': None}],
+             {'queue': 'default', 'mode': 'smp', 'jobid': 2, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '115.0', 'procs': 30, 'user': 'rojas'},
+             rojas,
              )
         
         
         component: "queue-manager.set_jobs", defer: False
           set_jobs(
-             [{'project': None, 'user': 'georgerojas', 'jobid': 4, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 155, 'procs': 30, 'notify': None}],
-             {'queue': 'default', 'mode': 'smp', 'jobid': 4, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '165.0', 'procs': 30, 'user': 'georgerojas'},
-             georgerojas,
+             [{'project': None, 'user': 'rojas', 'jobid': 3, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 155, 'procs': 30, 'notify': None}],
+             {'queue': 'default', 'mode': 'smp', 'jobid': 3, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '165.0', 'procs': 30, 'user': 'rojas'},
+             rojas,
              )
         
         
         component: "queue-manager.set_jobs", defer: False
           set_jobs(
-             [{'project': None, 'user': 'georgerojas', 'jobid': 5, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 155, 'procs': 30, 'notify': None}],
-             {'queue': 'default', 'mode': 'smp', 'jobid': 5, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '165.0', 'procs': 30, 'user': 'georgerojas'},
-             georgerojas,
+             [{'project': None, 'user': 'rojas', 'jobid': 4, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 155, 'procs': 30, 'notify': None}],
+             {'queue': 'default', 'mode': 'smp', 'jobid': 4, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '165.0', 'procs': 30, 'user': 'rojas'},
+             rojas,
              )
         
         
         component: "queue-manager.set_jobs", defer: False
           set_jobs(
-             [{'project': None, 'user': 'georgerojas', 'jobid': 3, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 155, 'procs': 30, 'notify': None}],
-             {'queue': 'default', 'mode': 'smp', 'jobid': 3, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '165.0', 'procs': 30, 'user': 'georgerojas'},
-             georgerojas,
+             [{'project': None, 'user': 'rojas', 'jobid': 5, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 155, 'procs': 30, 'notify': None}],
+             {'queue': 'default', 'mode': 'smp', 'jobid': 5, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': '165.0', 'procs': 30, 'user': 'rojas'},
+             rojas,
              )
         
         
-        [{'project': None, 'user': 'georgerojas', 'jobid': 3, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 165, 'procs': 30, 'notify': None}]
+        [{'project': None, 'user': 'rojas', 'jobid': 5, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 165, 'procs': 30, 'notify': None}]
         
         
     """
@@ -2390,13 +2390,13 @@ def test_qstat_qstat_6():
     qstat test run: qstat_6
 
         Command Output:
-        JobID  User         WallTime  Nodes  State      Location  
-        ==========================================================
-        1      georgerojas  01:05:00  30     user_hold  None      
-        2      georgerojas  01:55:00  30     user_hold  None      
-        3      georgerojas  02:45:00  30     user_hold  None      
-        4      georgerojas  02:45:00  30     dep_hold   None      
-        5      georgerojas  02:45:00  30     dep_fail   None      
+        JobID  User   WallTime  Nodes  State      Location  
+        ====================================================
+        1      rojas  01:05:00  30     user_hold  None      
+        2      rojas  01:55:00  30     user_hold  None      
+        3      rojas  02:45:00  30     user_hold  None      
+        4      rojas  02:45:00  30     dep_hold   None      
+        5      rojas  02:45:00  30     dep_fail   None      
         
         Command Error/Debug:
         
@@ -2446,19 +2446,19 @@ def test_qrls_qrls_1():
         
         component: "queue-manager.get_jobs", defer: False
           get_jobs(
-             [{'user_hold': '*', 'tag': 'job', 'user': 'georgerojas', 'jobid': 1}, {'user_hold': '*', 'tag': 'job', 'user': 'georgerojas', 'jobid': 2}, {'user_hold': '*', 'tag': 'job', 'user': 'georgerojas', 'jobid': 3}, {'user_hold': '*', 'tag': 'job', 'user': 'georgerojas', 'jobid': 4}, {'user_hold': '*', 'tag': 'job', 'user': 'georgerojas', 'jobid': 5}],
+             [{'user_hold': '*', 'tag': 'job', 'user': 'rojas', 'jobid': 1}, {'user_hold': '*', 'tag': 'job', 'user': 'rojas', 'jobid': 2}, {'user_hold': '*', 'tag': 'job', 'user': 'rojas', 'jobid': 3}, {'user_hold': '*', 'tag': 'job', 'user': 'rojas', 'jobid': 4}, {'user_hold': '*', 'tag': 'job', 'user': 'rojas', 'jobid': 5}],
              )
         
         
         component: "queue-manager.set_jobs", defer: False
           set_jobs(
-             [{'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'georgerojas', 'jobid': 1}, {'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'georgerojas', 'jobid': 2}, {'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'georgerojas', 'jobid': 4}, {'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'georgerojas', 'jobid': 5}, {'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'georgerojas', 'jobid': 3}],
+             [{'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'rojas', 'jobid': 1}, {'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'rojas', 'jobid': 2}, {'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'rojas', 'jobid': 3}, {'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'rojas', 'jobid': 4}, {'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'rojas', 'jobid': 5}],
              {'user_hold': False},
-             georgerojas,
+             rojas,
              )
         
         
-        Response: [{'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'georgerojas', 'jobid': 1}, {'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'georgerojas', 'jobid': 2}, {'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'georgerojas', 'jobid': 4}, {'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'georgerojas', 'jobid': 5}, {'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'georgerojas', 'jobid': 3}]
+        Response: [{'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'rojas', 'jobid': 1}, {'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'rojas', 'jobid': 2}, {'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'rojas', 'jobid': 3}, {'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'rojas', 'jobid': 4}, {'user_hold': False, 'tag': 'job', 'is_active': False, 'user': 'rojas', 'jobid': 5}]
         
         
     """
@@ -2494,13 +2494,13 @@ def test_qstat_qstat_7():
     qstat test run: qstat_7
 
         Command Output:
-        JobID  User         WallTime  Nodes  State     Location  
-        =========================================================
-        1      georgerojas  01:05:00  30     queued    None      
-        2      georgerojas  01:55:00  30     queued    None      
-        3      georgerojas  02:45:00  30     queued    None      
-        4      georgerojas  02:45:00  30     dep_hold  None      
-        5      georgerojas  02:45:00  30     dep_fail  None      
+        JobID  User   WallTime  Nodes  State     Location  
+        ===================================================
+        1      rojas  01:05:00  30     queued    None      
+        2      rojas  01:55:00  30     queued    None      
+        3      rojas  02:45:00  30     queued    None      
+        4      rojas  02:45:00  30     dep_hold  None      
+        5      rojas  02:45:00  30     dep_fail  None      
         
         Command Error/Debug:
         
@@ -2546,15 +2546,15 @@ def test_qrls_qrls_2():
         
         component: "queue-manager.get_jobs", defer: False
           get_jobs(
-             [{'user_hold': '*', 'tag': 'job', 'user': 'georgerojas', 'jobid': 4}, {'user_hold': '*', 'tag': 'job', 'user': 'georgerojas', 'jobid': 5}],
+             [{'user_hold': '*', 'tag': 'job', 'user': 'rojas', 'jobid': 4}, {'user_hold': '*', 'tag': 'job', 'user': 'rojas', 'jobid': 5}],
              )
         
         
         component: "queue-manager.set_jobs", defer: False
           set_jobs(
-             [{'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'georgerojas', 'jobid': 4}, {'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'georgerojas', 'jobid': 5}],
+             [{'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'rojas', 'jobid': 4}, {'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'rojas', 'jobid': 5}],
              {'all_dependencies': []},
-             georgerojas,
+             rojas,
              )
         
         
@@ -2593,13 +2593,13 @@ def test_qstat_qstat_8():
     qstat test run: qstat_8
 
         Command Output:
-        JobID  User         WallTime  Nodes  State   Location  
-        =======================================================
-        1      georgerojas  01:05:00  30     queued  None      
-        2      georgerojas  01:55:00  30     queued  None      
-        3      georgerojas  02:45:00  30     queued  None      
-        4      georgerojas  02:45:00  30     queued  None      
-        5      georgerojas  02:45:00  30     queued  None      
+        JobID  User   WallTime  Nodes  State   Location  
+        =================================================
+        1      rojas  01:05:00  30     queued  None      
+        2      rojas  01:55:00  30     queued  None      
+        3      rojas  02:45:00  30     queued  None      
+        4      rojas  02:45:00  30     queued  None      
+        5      rojas  02:45:00  30     queued  None      
         
         Command Error/Debug:
         
@@ -2643,13 +2643,13 @@ def test_qsub_qsub_6():
         
         component: "system.validate_job", defer: False
           validate_job(
-             {'kernel': 'default', 'verbose': False, 'held': False, 'notify': False, 'ion_kerneloptions': False, 'project': False, 'preemptable': False, 'outputprefix': False, 'umask': False, 'version': False, 'env': False, 'cwd': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'run_project': False, 'forcenoval': False, 'kerneloptions': False, 'time': '150', 'jobname': False, 'debug': True, 'dependencies': False, 'debuglog': False, 'ion_kernel': 'default', 'proccount': False, 'disable_preboot': False, 'geometry': False, 'queue': 'default', 'mode': False, 'error': False, 'nodecount': '30', 'output': False, 'attrs': {}, 'user_list': False, 'inputfile': False},
+             {'kernel': 'default', 'verbose': False, 'held': False, 'notify': False, 'ion_kerneloptions': False, 'project': False, 'preemptable': False, 'outputprefix': False, 'umask': False, 'version': False, 'env': False, 'cwd': '/home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'run_project': False, 'forcenoval': False, 'kerneloptions': False, 'time': '150', 'jobname': False, 'debug': True, 'dependencies': False, 'debuglog': False, 'ion_kernel': 'default', 'proccount': False, 'disable_preboot': False, 'geometry': False, 'queue': 'default', 'mode': False, 'error': False, 'nodecount': '30', 'output': False, 'inputfile': False, 'attrs': {}, 'user_list': False, 'interactive': False},
              )
         
         
         component: "queue-manager.add_jobs", defer: False
           add_jobs(
-             [{'kernel': 'default', 'args': [], 'outputdir': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'user_list': ['georgerojas'], 'umask': 18, 'jobid': '*', 'queue': 'default', 'script_preboot': True, 'tag': 'job', 'command': '/bin/ls', 'mode': 'smp', 'run_project': False, 'path': '/Users/georgerojas/p/Cobalt/cobalt/src/clients:/Users/georgerojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin:/usr/local/git/bin:~/bin', 'nodes': 30, 'walltime': '150', 'ion_kernel': 'default', 'cwd': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'procs': 30, 'user': 'georgerojas'}],
+             [{'kernel': 'default', 'args': [], 'outputdir': '/home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'user_list': ['rojas'], 'umask': 18, 'jobid': '*', 'queue': 'default', 'script_preboot': True, 'tag': 'job', 'command': '/bin/ls', 'mode': 'smp', 'run_project': False, 'path': '/home/rojas/p/Cobalt/cobalt/src/clients:/home/rojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:~/bin', 'nodes': 30, 'walltime': '150', 'ion_kernel': 'default', 'cwd': '/home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'procs': 30, 'user': 'rojas'}],
              )
         
         
@@ -2695,13 +2695,13 @@ def test_qsub_qsub_7():
         
         component: "system.validate_job", defer: False
           validate_job(
-             {'kernel': 'default', 'verbose': False, 'held': False, 'notify': False, 'ion_kerneloptions': False, 'project': False, 'preemptable': False, 'outputprefix': False, 'umask': False, 'version': False, 'env': False, 'cwd': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'run_project': False, 'forcenoval': False, 'kerneloptions': False, 'time': '150', 'jobname': False, 'debug': True, 'dependencies': False, 'debuglog': False, 'ion_kernel': 'default', 'proccount': False, 'disable_preboot': False, 'geometry': False, 'queue': 'default', 'mode': False, 'error': False, 'nodecount': '30', 'output': False, 'attrs': {}, 'user_list': False, 'inputfile': False},
+             {'kernel': 'default', 'verbose': False, 'held': False, 'notify': False, 'ion_kerneloptions': False, 'project': False, 'preemptable': False, 'outputprefix': False, 'umask': False, 'version': False, 'env': False, 'cwd': '/home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'run_project': False, 'forcenoval': False, 'kerneloptions': False, 'time': '150', 'jobname': False, 'debug': True, 'dependencies': False, 'debuglog': False, 'ion_kernel': 'default', 'proccount': False, 'disable_preboot': False, 'geometry': False, 'queue': 'default', 'mode': False, 'error': False, 'nodecount': '30', 'output': False, 'inputfile': False, 'attrs': {}, 'user_list': False, 'interactive': False},
              )
         
         
         component: "queue-manager.add_jobs", defer: False
           add_jobs(
-             [{'kernel': 'default', 'args': [], 'outputdir': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'user_list': ['georgerojas'], 'umask': 18, 'jobid': '*', 'queue': 'default', 'script_preboot': True, 'tag': 'job', 'command': '/bin/ls', 'mode': 'smp', 'run_project': False, 'path': '/Users/georgerojas/p/Cobalt/cobalt/src/clients:/Users/georgerojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin:/usr/local/git/bin:~/bin', 'nodes': 30, 'walltime': '150', 'ion_kernel': 'default', 'cwd': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'procs': 30, 'user': 'georgerojas'}],
+             [{'kernel': 'default', 'args': [], 'outputdir': '/home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'user_list': ['rojas'], 'umask': 18, 'jobid': '*', 'queue': 'default', 'script_preboot': True, 'tag': 'job', 'command': '/bin/ls', 'mode': 'smp', 'run_project': False, 'path': '/home/rojas/p/Cobalt/cobalt/src/clients:/home/rojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:~/bin', 'nodes': 30, 'walltime': '150', 'ion_kernel': 'default', 'cwd': '/home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'procs': 30, 'user': 'rojas'}],
              )
         
         
@@ -2740,15 +2740,15 @@ def test_qstat_qstat_9():
     qstat test run: qstat_9
 
         Command Output:
-        JobID  User         WallTime  Nodes  State   Location  
-        =======================================================
-        1      georgerojas  01:05:00  30     queued  None      
-        2      georgerojas  01:55:00  30     queued  None      
-        3      georgerojas  02:45:00  30     queued  None      
-        4      georgerojas  02:45:00  30     queued  None      
-        5      georgerojas  02:45:00  30     queued  None      
-        6      georgerojas  02:30:00  30     queued  None      
-        7      georgerojas  02:30:00  30     queued  None      
+        JobID  User   WallTime  Nodes  State   Location  
+        =================================================
+        1      rojas  01:05:00  30     queued  None      
+        2      rojas  01:55:00  30     queued  None      
+        3      rojas  02:45:00  30     queued  None      
+        4      rojas  02:45:00  30     queued  None      
+        5      rojas  02:45:00  30     queued  None      
+        6      rojas  02:30:00  30     queued  None      
+        7      rojas  02:30:00  30     queued  None      
         
         Command Error/Debug:
         
@@ -2792,7 +2792,7 @@ def test_qalter_qalter_4():
         
         component: "queue-manager.get_jobs", defer: False
           get_jobs(
-             [{'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 6, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'georgerojas'}, {'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 7, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'georgerojas'}],
+             [{'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 6, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'rojas'}, {'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 7, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'rojas'}],
              )
         
         
@@ -2800,7 +2800,7 @@ def test_qalter_qalter_4():
           adjust_job_scores(
              [{'jobid': 6}, {'jobid': 7}],
              0,
-             georgerojas,
+             rojas,
              )
         
         
@@ -2839,15 +2839,15 @@ def test_qstat_qstat_10():
     qstat test run: qstat_10
 
         Command Output:
-        JobID  User         WallTime  Nodes  State   Location  
-        =======================================================
-        1      georgerojas  01:05:00  30     queued  None      
-        2      georgerojas  01:55:00  30     queued  None      
-        3      georgerojas  02:45:00  30     queued  None      
-        4      georgerojas  02:45:00  30     queued  None      
-        5      georgerojas  02:45:00  30     queued  None      
-        6      georgerojas  02:30:00  30     queued  None      
-        7      georgerojas  02:30:00  30     queued  None      
+        JobID  User   WallTime  Nodes  State   Location  
+        =================================================
+        1      rojas  01:05:00  30     queued  None      
+        2      rojas  01:55:00  30     queued  None      
+        3      rojas  02:45:00  30     queued  None      
+        4      rojas  02:45:00  30     queued  None      
+        5      rojas  02:45:00  30     queued  None      
+        6      rojas  02:30:00  30     queued  None      
+        7      rojas  02:30:00  30     queued  None      
         
         Command Error/Debug:
         
@@ -2884,7 +2884,7 @@ def test_setres_setres_4():
     setres test run: setres_4
 
         Command Output:
-        Got starttime Wed Dec  1 16:30:00 2032 +0000 (UTC)
+        Got starttime Wed Dec 01 16:30:00 2032 +0000 (UTC)
         [{'project': None, 'users': None, 'block_passthrough': False, 'name': 'res1', 'queue': 'q_1', 'start': 1985531400.0, 'duration': 3000, 'cycle': None, 'res_id': 3, 'partitions': 'ANL-R00-R01-2048:ANL-R00-1024'}]
         
         
@@ -2923,7 +2923,7 @@ def test_setres_setres_5():
     setres test run: setres_5
 
         Command Output:
-        Got starttime Thu Dec  1 16:30:00 2033 +0000 (UTC)
+        Got starttime Thu Dec 01 16:30:00 2033 +0000 (UTC)
         [{'project': None, 'users': None, 'block_passthrough': False, 'name': 'res2', 'queue': 'q_1', 'start': 2017067400.0, 'duration': 3000, 'cycle': None, 'res_id': 4, 'partitions': 'ANL-R01-1024:ANL-R00-M0-512'}]
         
         
@@ -2965,9 +2965,9 @@ def test_showres_showres_4():
         Reservation  Queue  User  Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions                     Project  ResID  CycleID  Time Remaining  
         =================================================================================================================================================================================================================
         george       q_1    None  Thu Jun 30 15:30:00 2022 +0000 (UTC)  05:00     Thu Jun 30 20:30:00 2022 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048               None     1      -        Not Started     
-        david        q_1    None  Thu Dec  1 16:30:00 2022 +0000 (UTC)  00:50     Thu Dec  1 17:20:00 2022 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048               None     2      -        Not Started     
-        res1         q_1    None  Wed Dec  1 16:30:00 2032 +0000 (UTC)  00:50     Wed Dec  1 17:20:00 2032 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048:ANL-R00-1024  None     3      -        Not Started     
-        res2         q_1    None  Thu Dec  1 16:30:00 2033 +0000 (UTC)  00:50     Thu Dec  1 17:20:00 2033 +0000 (UTC)  None        Allowed      ANL-R01-1024:ANL-R00-M0-512    None     4      -        Not Started     
+        david        q_1    None  Thu Dec 01 16:30:00 2022 +0000 (UTC)  00:50     Thu Dec 01 17:20:00 2022 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048               None     2      -        Not Started     
+        res1         q_1    None  Wed Dec 01 16:30:00 2032 +0000 (UTC)  00:50     Wed Dec 01 17:20:00 2032 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048:ANL-R00-1024  None     3      -        Not Started     
+        res2         q_1    None  Thu Dec 01 16:30:00 2033 +0000 (UTC)  00:50     Thu Dec 01 17:20:00 2033 +0000 (UTC)  None        Allowed      ANL-R01-1024:ANL-R00-M0-512    None     4      -        Not Started     
         
         Command Error/Debug:
         
@@ -3020,7 +3020,7 @@ def test_releaseres_releaseres_1():
         component: "scheduler.release_reservations", defer: False
           release_reservations(
              [{'name': 'res1', 'partitions': '*'}, {'name': 'res2', 'partitions': '*'}, {'name': 'george', 'partitions': '*'}],
-             georgerojas,
+             rojas,
              )
         
         
@@ -3059,8 +3059,8 @@ def test_setres_setres_6():
     setres test run: setres_6
 
         Command Output:
-        Got starttime Thu Dec  1 16:30:00 2033 +0000 (UTC)
-        [{'project': None, 'users': 'georgerojas', 'block_passthrough': False, 'name': 'r1', 'queue': 'q_1', 'start': 2017067400.0, 'duration': 3000, 'cycle': None, 'res_id': 5, 'partitions': 'ANL-R01-1024:ANL-R00-M0-512'}]
+        Got starttime Thu Dec 01 16:30:00 2033 +0000 (UTC)
+        [{'project': None, 'users': 'rojas', 'block_passthrough': False, 'name': 'r1', 'queue': 'q_1', 'start': 2017067400.0, 'duration': 3000, 'cycle': None, 'res_id': 5, 'partitions': 'ANL-R01-1024:ANL-R00-M0-512'}]
         
         
         Command Error/Debug:
@@ -3098,8 +3098,8 @@ def test_setres_setres_7():
     setres test run: setres_7
 
         Command Output:
-        Got starttime Fri Dec  2 16:30:00 2033 +0000 (UTC)
-        [{'project': None, 'users': 'georgerojas', 'block_passthrough': False, 'name': 'r2', 'queue': 'q_1', 'start': 2017153800.0, 'duration': 3000, 'cycle': None, 'res_id': 6, 'partitions': 'ANL-R01-1024:ANL-R00-M0-512'}]
+        Got starttime Fri Dec 02 16:30:00 2033 +0000 (UTC)
+        [{'project': None, 'users': 'rojas', 'block_passthrough': False, 'name': 'r2', 'queue': 'q_1', 'start': 2017153800.0, 'duration': 3000, 'cycle': None, 'res_id': 6, 'partitions': 'ANL-R01-1024:ANL-R00-M0-512'}]
         
         
         Command Error/Debug:
@@ -3137,8 +3137,8 @@ def test_setres_setres_8():
     setres test run: setres_8
 
         Command Output:
-        Got starttime Sat Dec  3 16:30:00 2033 +0000 (UTC)
-        [{'project': None, 'users': 'georgerojas', 'block_passthrough': False, 'partitions': 'ANL-R01-1024:ANL-R00-M0-512', 'queue': 'q_1', 'start': 2017240200.0, 'duration': 3000, 'cycle': 4320, 'res_id': 7, 'name': 'rc1'}]
+        Got starttime Sat Dec 03 16:30:00 2033 +0000 (UTC)
+        [{'project': None, 'users': 'rojas', 'block_passthrough': False, 'partitions': 'ANL-R01-1024:ANL-R00-M0-512', 'queue': 'q_1', 'start': 2017240200.0, 'duration': 3000, 'cycle': 4320, 'res_id': 7, 'name': 'rc1'}]
         
         
         Command Error/Debug:
@@ -3176,8 +3176,8 @@ def test_setres_setres_9():
     setres test run: setres_9
 
         Command Output:
-        Got starttime Sun Dec  4 16:30:00 2033 +0000 (UTC)
-        [{'project': None, 'users': 'georgerojas', 'block_passthrough': False, 'partitions': 'ANL-R01-1024:ANL-R00-M0-512', 'queue': 'q_1', 'start': 2017326600.0, 'duration': 3000, 'cycle': 4320, 'res_id': 8, 'name': 'rc2'}]
+        Got starttime Sun Dec 04 16:30:00 2033 +0000 (UTC)
+        [{'project': None, 'users': 'rojas', 'block_passthrough': False, 'partitions': 'ANL-R01-1024:ANL-R00-M0-512', 'queue': 'q_1', 'start': 2017326600.0, 'duration': 3000, 'cycle': 4320, 'res_id': 8, 'name': 'rc2'}]
         Warning: reservation 'rc1' overlaps reservation 'rc2'
         Warning: reservation 'rc1' overlaps reservation 'rc2'
         
@@ -3217,13 +3217,13 @@ def test_showres_showres_5():
     showres test run: showres_5
 
         Command Output:
-        Reservation  Queue  User         Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions                   Project  ResID  CycleID  Time Remaining  
-        ======================================================================================================================================================================================================================
-        david        q_1    None         Thu Dec  1 16:30:00 2022 +0000 (UTC)  00:50     Thu Dec  1 17:20:00 2022 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048             None     2      -        Not Started     
-        r1           q_1    georgerojas  Thu Dec  1 16:30:00 2033 +0000 (UTC)  00:50     Thu Dec  1 17:20:00 2033 +0000 (UTC)  None        Allowed      ANL-R01-1024:ANL-R00-M0-512  None     5      -        Not Started     
-        r2           q_1    georgerojas  Fri Dec  2 16:30:00 2033 +0000 (UTC)  00:50     Fri Dec  2 17:20:00 2033 +0000 (UTC)  None        Allowed      ANL-R01-1024:ANL-R00-M0-512  None     6      -        Not Started     
-        rc1          q_1    georgerojas  Sat Dec  3 16:30:00 2033 +0000 (UTC)  00:50     Sat Dec  3 17:20:00 2033 +0000 (UTC)  01:12       Allowed      ANL-R01-1024:ANL-R00-M0-512  None     7      1        Not Started     
-        rc2          q_1    georgerojas  Sun Dec  4 16:30:00 2033 +0000 (UTC)  00:50     Sun Dec  4 17:20:00 2033 +0000 (UTC)  01:12       Allowed      ANL-R01-1024:ANL-R00-M0-512  None     8      2        Not Started     
+        Reservation  Queue  User   Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions                   Project  ResID  CycleID  Time Remaining  
+        ================================================================================================================================================================================================================
+        david        q_1    None   Thu Dec 01 16:30:00 2022 +0000 (UTC)  00:50     Thu Dec 01 17:20:00 2022 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048             None     2      -        Not Started     
+        r1           q_1    rojas  Thu Dec 01 16:30:00 2033 +0000 (UTC)  00:50     Thu Dec 01 17:20:00 2033 +0000 (UTC)  None        Allowed      ANL-R01-1024:ANL-R00-M0-512  None     5      -        Not Started     
+        r2           q_1    rojas  Fri Dec 02 16:30:00 2033 +0000 (UTC)  00:50     Fri Dec 02 17:20:00 2033 +0000 (UTC)  None        Allowed      ANL-R01-1024:ANL-R00-M0-512  None     6      -        Not Started     
+        rc1          q_1    rojas  Sat Dec 03 16:30:00 2033 +0000 (UTC)  00:50     Sat Dec 03 17:20:00 2033 +0000 (UTC)  01:12       Allowed      ANL-R01-1024:ANL-R00-M0-512  None     7      1        Not Started     
+        rc2          q_1    rojas  Sun Dec 04 16:30:00 2033 +0000 (UTC)  00:50     Sun Dec 04 17:20:00 2033 +0000 (UTC)  01:12       Allowed      ANL-R01-1024:ANL-R00-M0-512  None     8      2        Not Started     
         
         Command Error/Debug:
         
@@ -3351,7 +3351,7 @@ def test_releaseres_releaseres_2():
         component: "scheduler.release_reservations", defer: False
           release_reservations(
              [{'name': 'rc1', 'partitions': '*'}, {'name': 'rc2', 'partitions': '*'}],
-             georgerojas,
+             rojas,
              )
         
         
@@ -3390,7 +3390,7 @@ def test_setres_setres_10():
     setres test run: setres_10
 
         Command Output:
-        Got starttime Thu Dec  1 16:30:00 2033 +0000 (UTC)
+        Got starttime Thu Dec 01 16:30:00 2033 +0000 (UTC)
         [{'project': None, 'users': None, 'block_passthrough': False, 'name': 'r1', 'queue': 'q_1', 'start': 2017067400.0, 'duration': 3000, 'cycle': None, 'res_id': 9, 'partitions': 'ANL-R01-1024:ANL-R00-M0-512'}]
         
         
@@ -3469,8 +3469,8 @@ def test_showres_showres_6():
         Command Output:
         Reservation  Queue  User  Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions                   Project  ResID  CycleID  Time Remaining  
         ===============================================================================================================================================================================================================
-        david        q_1    None  Thu Dec  1 16:30:00 2022 +0000 (UTC)  00:50     Thu Dec  1 17:20:00 2022 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048             None     2      -        Not Started     
-        r1           q_1    None  Thu Dec  1 16:30:00 2033 +0000 (UTC)  00:50     Thu Dec  1 17:20:00 2033 +0000 (UTC)  None        Allowed      ANL-R01-1024:ANL-R00-M0-512  None     9      -        Not Started     
+        david        q_1    None  Thu Dec 01 16:30:00 2022 +0000 (UTC)  00:50     Thu Dec 01 17:20:00 2022 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048             None     2      -        Not Started     
+        r1           q_1    None  Thu Dec 01 16:30:00 2033 +0000 (UTC)  00:50     Thu Dec 01 17:20:00 2033 +0000 (UTC)  None        Allowed      ANL-R01-1024:ANL-R00-M0-512  None     9      -        Not Started     
         
         Command Error/Debug:
         
@@ -3521,7 +3521,7 @@ def test_releaseres_releaseres_3():
         component: "scheduler.release_reservations", defer: False
           release_reservations(
              [{'name': 'r1', 'partitions': '*'}],
-             georgerojas,
+             rojas,
              )
         
         
@@ -3562,7 +3562,7 @@ def test_showres_showres_7():
         Command Output:
         Reservation  Queue  User  Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions        Project  ResID  CycleID  Time Remaining  
         ====================================================================================================================================================================================================
-        david        q_1    None  Thu Dec  1 16:30:00 2022 +0000 (UTC)  00:50     Thu Dec  1 17:20:00 2022 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  None     2      -        Not Started     
+        david        q_1    None  Thu Dec 01 16:30:00 2022 +0000 (UTC)  00:50     Thu Dec 01 17:20:00 2022 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  None     2      -        Not Started     
         
         Command Error/Debug:
         
@@ -3599,8 +3599,8 @@ def test_setres_setres_11():
     setres test run: setres_11
 
         Command Output:
-        Got starttime Thu Sep  5 23:06:00 2013 +0000 (UTC)
-        [{'project': None, 'users': None, 'block_passthrough': False, 'name': 'r1', 'queue': 'q_1', 'start': 1378422360.0, 'duration': 3000, 'cycle': None, 'res_id': 10, 'partitions': 'ANL-R01-1024:ANL-R00-M0-512'}]
+        Got starttime Wed Jan 08 22:58:00 2014 +0000 (UTC)
+        [{'project': None, 'users': None, 'block_passthrough': False, 'name': 'r1', 'queue': 'q_1', 'start': 1389221880.0, 'duration': 3000, 'cycle': None, 'res_id': 10, 'partitions': 'ANL-R01-1024:ANL-R00-M0-512'}]
         
         
         Command Error/Debug:
@@ -3652,7 +3652,7 @@ def test_releaseres_releaseres_4():
         component: "scheduler.release_reservations", defer: False
           release_reservations(
              [{'name': 'r1', 'partitions': '*'}],
-             georgerojas,
+             rojas,
              )
         
         
@@ -3698,13 +3698,13 @@ def test_qsub_qsub_8():
         
         component: "system.validate_job", defer: False
           validate_job(
-             {'kernel': 'default', 'verbose': False, 'held': False, 'notify': False, 'ion_kerneloptions': False, 'project': False, 'preemptable': False, 'outputprefix': False, 'umask': False, 'version': False, 'env': 'A=one:B=two:C=x\\=1\\:y\\=2\\:z\\=3:D=four', 'cwd': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'run_project': False, 'forcenoval': False, 'kerneloptions': False, 'time': '150', 'jobname': False, 'debug': True, 'dependencies': False, 'debuglog': False, 'ion_kernel': 'default', 'proccount': False, 'disable_preboot': False, 'geometry': False, 'queue': 'default', 'mode': False, 'error': False, 'nodecount': '30', 'output': False, 'attrs': {}, 'user_list': False, 'inputfile': False},
+             {'kernel': 'default', 'verbose': False, 'held': False, 'notify': False, 'ion_kerneloptions': False, 'project': False, 'preemptable': False, 'outputprefix': False, 'umask': False, 'version': False, 'env': 'A=one:B=two:C=x\\=1\\:y\\=2\\:z\\=3:D=four', 'cwd': '/home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'run_project': False, 'forcenoval': False, 'kerneloptions': False, 'time': '150', 'jobname': False, 'debug': True, 'dependencies': False, 'debuglog': False, 'ion_kernel': 'default', 'proccount': False, 'disable_preboot': False, 'geometry': False, 'queue': 'default', 'mode': False, 'error': False, 'nodecount': '30', 'output': False, 'inputfile': False, 'attrs': {}, 'user_list': False, 'interactive': False},
              )
         
         
         component: "queue-manager.add_jobs", defer: False
           add_jobs(
-             [{'kernel': 'default', 'args': [], 'outputdir': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'envs': {'A': 'one', 'C': 'x=1:y=2:z=3', 'B': 'two', 'D': 'four'}, 'user_list': ['georgerojas'], 'umask': 18, 'jobid': '*', 'queue': 'default', 'script_preboot': True, 'tag': 'job', 'command': '/bin/ls', 'mode': 'smp', 'run_project': False, 'path': '/Users/georgerojas/p/Cobalt/cobalt/src/clients:/Users/georgerojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin:/usr/local/git/bin:~/bin', 'nodes': 30, 'walltime': '150', 'ion_kernel': 'default', 'cwd': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'procs': 30, 'user': 'georgerojas'}],
+             [{'kernel': 'default', 'args': [], 'outputdir': '/home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'envs': {'A': 'one', 'C': 'x=1:y=2:z=3', 'B': 'two', 'D': 'four'}, 'user_list': ['rojas'], 'umask': 18, 'jobid': '*', 'queue': 'default', 'script_preboot': True, 'tag': 'job', 'command': '/bin/ls', 'mode': 'smp', 'run_project': False, 'path': '/home/rojas/p/Cobalt/cobalt/src/clients:/home/rojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:~/bin', 'nodes': 30, 'walltime': '150', 'ion_kernel': 'default', 'cwd': '/home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'procs': 30, 'user': 'rojas'}],
              )
         
         
@@ -3781,17 +3781,17 @@ def test_qstat_qstat_10():
     qstat test run: qstat_10
 
         Command Output:
-        JobID  JobName  User         Score    WallTime  QueuedTime  RunTime   Nodes  State      Location        Mode  Procs  Queue    StartTime                             
-        ====================================================================================================================================================================
-        8      N/A      georgerojas    0.1    02:30:00  00:00:00    N/A       30     queued     None            smp   30     default  N/A                                   
-        9      N/A      georgerojas    0.1    00:50:00  00:00:00    N/A       30     user_hold  None            smp   30     default  N/A                                   
-        2      N/A      georgerojas    0.1    01:55:00  00:00:11    00:00:02  30     starting   ANL-R01-M0-512  smp   30     default  Thu Sep  5 23:06:57 2013 +0000 (UTC)  
-        6      N/A      georgerojas    0.1    02:30:00  00:00:09    N/A       30     queued     None            smp   30     default  N/A                                   
-        5      N/A      georgerojas    0.1    02:45:00  00:00:13    N/A       30     queued     None            smp   30     default  N/A                                   
-        1      N/A      georgerojas    0.1    01:05:00  00:00:14    N/A       30     queued     None            smp   30     default  N/A                                   
-        7      N/A      georgerojas    0.1    02:30:00  00:00:09    N/A       30     queued     None            smp   30     default  N/A                                   
-        4      N/A      georgerojas    0.1    02:45:00  00:00:13    N/A       30     queued     None            smp   30     default  N/A                                   
-        3      N/A      georgerojas    0.1    02:45:00  00:00:14    N/A       30     queued     None            smp   30     default  N/A                                   
+        JobID  JobName  User   Score    WallTime  QueuedTime  RunTime   Nodes  State      Location        Mode  Procs  Queue    StartTime                             
+        ==============================================================================================================================================================
+        9      N/A      rojas    0.1    00:50:00  00:00:00    N/A       30     user_hold  None            smp   30     default  N/A                                   
+        8      N/A      rojas    0.1    02:30:00  00:00:00    N/A       30     queued     None            smp   30     default  N/A                                   
+        2      N/A      rojas    0.1    01:55:00  00:00:08    00:00:09  30     starting   ANL-R01-M0-512  smp   30     default  Wed Jan 08 22:58:38 2014 +0000 (UTC)  
+        5      N/A      rojas    0.1    02:45:00  00:00:17    N/A       30     queued     None            smp   30     default  N/A                                   
+        7      N/A      rojas    0.1    02:30:00  00:00:12    N/A       30     queued     None            smp   30     default  N/A                                   
+        1      N/A      rojas    0.1    01:05:00  00:00:18    N/A       30     queued     None            smp   30     default  N/A                                   
+        3      N/A      rojas    0.1    02:45:00  00:00:17    N/A       30     queued     None            smp   30     default  N/A                                   
+        6      N/A      rojas    0.1    02:30:00  00:00:12    N/A       30     queued     None            smp   30     default  N/A                                   
+        4      N/A      rojas    0.1    02:45:00  00:00:17    N/A       30     queued     None            smp   30     default  N/A                                   
         
         Command Error/Debug:
         
@@ -3864,17 +3864,17 @@ def test_qstat_qstat_11():
     qstat test run: qstat_11
 
         Command Output:
-        JobID  JobName  User         Score    WallTime  QueuedTime  RunTime   Nodes  State      Location        Mode  Procs  Queue    StartTime                             
-        ====================================================================================================================================================================
-        8      N/A      georgerojas    0.1    02:30:00  00:00:00    N/A       30     queued     None            smp   30     default  N/A                                   
-        9      N/A      georgerojas    0.1    00:50:00  00:00:00    N/A       30     user_hold  None            smp   30     default  N/A                                   
-        2      N/A      georgerojas    0.1    01:55:00  00:00:11    00:00:02  30     starting   ANL-R01-M0-512  smp   30     default  Thu Sep  5 23:06:57 2013 +0000 (UTC)  
-        6      N/A      georgerojas    0.1    02:30:00  00:00:10    N/A       30     queued     None            smp   30     default  N/A                                   
-        5      N/A      georgerojas    0.1    02:45:00  00:00:13    N/A       30     queued     None            smp   30     default  N/A                                   
-        1      N/A      georgerojas    0.1    01:05:00  00:00:15    N/A       30     queued     None            smp   30     default  N/A                                   
-        7      N/A      georgerojas    0.1    02:30:00  00:00:09    N/A       30     queued     None            smp   30     default  N/A                                   
-        4      N/A      georgerojas    0.1    02:45:00  00:00:14    N/A       30     queued     None            smp   30     default  N/A                                   
-        3      N/A      georgerojas    0.1    02:45:00  00:00:14    N/A       30     queued     None            smp   30     default  N/A                                   
+        JobID  JobName  User   Score    WallTime  QueuedTime  RunTime   Nodes  State      Location        Mode  Procs  Queue    StartTime                             
+        ==============================================================================================================================================================
+        9      N/A      rojas    0.1    00:50:00  00:00:00    N/A       30     user_hold  None            smp   30     default  N/A                                   
+        2      N/A      rojas    0.1    01:55:00  00:00:08    00:00:10  30     starting   ANL-R01-M0-512  smp   30     default  Wed Jan 08 22:58:38 2014 +0000 (UTC)  
+        8      N/A      rojas    0.1    02:30:00  00:00:01    N/A       30     queued     None            smp   30     default  N/A                                   
+        5      N/A      rojas    0.2    02:45:00  00:00:17    N/A       30     queued     None            smp   30     default  N/A                                   
+        7      N/A      rojas    0.2    02:30:00  00:00:12    N/A       30     queued     None            smp   30     default  N/A                                   
+        1      N/A      rojas    0.2    01:05:00  00:00:19    N/A       30     queued     None            smp   30     default  N/A                                   
+        3      N/A      rojas    0.2    02:45:00  00:00:18    N/A       30     queued     None            smp   30     default  N/A                                   
+        6      N/A      rojas    0.2    02:30:00  00:00:13    N/A       30     queued     None            smp   30     default  N/A                                   
+        4      N/A      rojas    0.2    02:45:00  00:00:18    N/A       30     queued     None            smp   30     default  N/A                                   
         
         Command Error/Debug:
         
@@ -3947,17 +3947,17 @@ def test_qstat_qstat_12():
     qstat test run: qstat_12
 
         Command Output:
-        JobID  JobName  User         Score    WallTime  QueuedTime  RunTime   Nodes  State       Location        Mode  Procs  Queue    StartTime                             
-        =====================================================================================================================================================================
-        8      N/A      georgerojas    0.1    02:30:00  00:00:01    N/A       30     queued      None            smp   30     default  N/A                                   
-        9      N/A      georgerojas    0.1    00:50:00  00:00:01    N/A       30     admin_hold  None            smp   30     default  N/A                                   
-        2      N/A      georgerojas    0.1    01:55:00  00:00:11    00:00:03  30     starting    ANL-R01-M0-512  smp   30     default  Thu Sep  5 23:06:57 2013 +0000 (UTC)  
-        6      N/A      georgerojas    0.1    02:30:00  00:00:10    N/A       30     queued      None            smp   30     default  N/A                                   
-        5      N/A      georgerojas    0.1    02:45:00  00:00:14    N/A       30     queued      None            smp   30     default  N/A                                   
-        1      N/A      georgerojas    0.1    01:05:00  00:00:15    N/A       30     queued      None            smp   30     default  N/A                                   
-        7      N/A      georgerojas    0.1    02:30:00  00:00:10    N/A       30     queued      None            smp   30     default  N/A                                   
-        4      N/A      georgerojas    0.1    02:45:00  00:00:14    N/A       30     queued      None            smp   30     default  N/A                                   
-        3      N/A      georgerojas    0.1    02:45:00  00:00:15    N/A       30     queued      None            smp   30     default  N/A                                   
+        JobID  JobName  User   Score    WallTime  QueuedTime  RunTime   Nodes  State       Location        Mode  Procs  Queue    StartTime                             
+        ===============================================================================================================================================================
+        9      N/A      rojas    0.1    00:50:00  00:00:01    N/A       30     admin_hold  None            smp   30     default  N/A                                   
+        2      N/A      rojas    0.1    01:55:00  00:00:08    00:00:11  30     starting    ANL-R01-M0-512  smp   30     default  Wed Jan 08 22:58:38 2014 +0000 (UTC)  
+        8      N/A      rojas    0.1    02:30:00  00:00:02    N/A       30     queued      None            smp   30     default  N/A                                   
+        5      N/A      rojas    0.2    02:45:00  00:00:18    N/A       30     queued      None            smp   30     default  N/A                                   
+        7      N/A      rojas    0.2    02:30:00  00:00:13    N/A       30     queued      None            smp   30     default  N/A                                   
+        1      N/A      rojas    0.2    01:05:00  00:00:20    N/A       30     queued      None            smp   30     default  N/A                                   
+        3      N/A      rojas    0.2    02:45:00  00:00:19    00:00:00  30     starting    ANL-R00-M0-512  smp   30     default  Wed Jan 08 22:58:49 2014 +0000 (UTC)  
+        6      N/A      rojas    0.2    02:30:00  00:00:13    N/A       30     queued      None            smp   30     default  N/A                                   
+        4      N/A      rojas    0.2    02:45:00  00:00:18    N/A       30     queued      None            smp   30     default  N/A                                   
         
         Command Error/Debug:
         
@@ -4030,17 +4030,17 @@ def test_qstat_qstat_13():
     qstat test run: qstat_13
 
         Command Output:
-        JobID  JobName  User         Score    WallTime  QueuedTime  RunTime   Nodes  State      Location        Mode  Procs  Queue    StartTime                             
-        ====================================================================================================================================================================
-        8      N/A      georgerojas    0.1    02:30:00  00:00:01    N/A       30     queued     None            smp   30     default  N/A                                   
-        9      N/A      georgerojas    0.1    00:50:00  00:00:01    N/A       30     user_hold  None            smp   30     default  N/A                                   
-        2      N/A      georgerojas    0.1    01:55:00  00:00:11    00:00:03  30     starting   ANL-R01-M0-512  smp   30     default  Thu Sep  5 23:06:57 2013 +0000 (UTC)  
-        6      N/A      georgerojas    0.1    02:30:00  00:00:11    N/A       30     queued     None            smp   30     default  N/A                                   
-        5      N/A      georgerojas    0.1    02:45:00  00:00:14    N/A       30     queued     None            smp   30     default  N/A                                   
-        1      N/A      georgerojas    0.1    01:05:00  00:00:16    N/A       30     queued     None            smp   30     default  N/A                                   
-        7      N/A      georgerojas    0.1    02:30:00  00:00:10    N/A       30     queued     None            smp   30     default  N/A                                   
-        4      N/A      georgerojas    0.1    02:45:00  00:00:15    N/A       30     queued     None            smp   30     default  N/A                                   
-        3      N/A      georgerojas    0.1    02:45:00  00:00:15    N/A       30     queued     None            smp   30     default  N/A                                   
+        JobID  JobName  User   Score    WallTime  QueuedTime  RunTime   Nodes  State      Location        Mode  Procs  Queue    StartTime                             
+        ==============================================================================================================================================================
+        9      N/A      rojas    0.1    00:50:00  00:00:02    N/A       30     user_hold  None            smp   30     default  N/A                                   
+        2      N/A      rojas    0.1    01:55:00  00:00:08    00:00:11  30     starting   ANL-R01-M0-512  smp   30     default  Wed Jan 08 22:58:38 2014 +0000 (UTC)  
+        8      N/A      rojas    0.1    02:30:00  00:00:02    N/A       30     queued     None            smp   30     default  N/A                                   
+        5      N/A      rojas    0.2    02:45:00  00:00:19    N/A       30     queued     None            smp   30     default  N/A                                   
+        7      N/A      rojas    0.2    02:30:00  00:00:14    N/A       30     queued     None            smp   30     default  N/A                                   
+        1      N/A      rojas    0.2    01:05:00  00:00:20    N/A       30     queued     None            smp   30     default  N/A                                   
+        3      N/A      rojas    0.2    02:45:00  00:00:19    00:00:00  30     starting   ANL-R00-M0-512  smp   30     default  Wed Jan 08 22:58:49 2014 +0000 (UTC)  
+        6      N/A      rojas    0.2    02:30:00  00:00:14    N/A       30     queued     None            smp   30     default  N/A                                   
+        4      N/A      rojas    0.2    02:45:00  00:00:19    N/A       30     queued     None            smp   30     default  N/A                                   
         
         Command Error/Debug:
         
@@ -4113,17 +4113,17 @@ def test_qstat_qstat_14():
     qstat test run: qstat_14
 
         Command Output:
-        JobID  JobName  User         Score    WallTime  QueuedTime  RunTime   Nodes  State      Location        Mode  Procs  Queue    StartTime                             
-        ====================================================================================================================================================================
-        8      N/A      georgerojas    0.1    02:30:00  00:00:02    N/A       30     queued     None            smp   30     default  N/A                                   
-        9      N/A      georgerojas    0.1    00:50:00  00:00:02    N/A       30     user_hold  None            smp   30     default  N/A                                   
-        2      N/A      georgerojas    0.1    01:55:00  00:00:11    00:00:04  30     starting   ANL-R01-M0-512  smp   30     default  Thu Sep  5 23:06:57 2013 +0000 (UTC)  
-        6      N/A      georgerojas    0.1    02:30:00  00:00:11    N/A       30     queued     None            smp   30     default  N/A                                   
-        5      N/A      georgerojas    0.1    02:45:00  00:00:15    N/A       30     queued     None            smp   30     default  N/A                                   
-        1      N/A      georgerojas    0.1    01:05:00  00:00:16    N/A       30     queued     None            smp   30     default  N/A                                   
-        7      N/A      georgerojas    0.1    02:30:00  00:00:11    N/A       30     queued     None            smp   30     default  N/A                                   
-        4      N/A      georgerojas    0.1    02:45:00  00:00:15    N/A       30     queued     None            smp   30     default  N/A                                   
-        3      N/A      georgerojas    0.1    02:45:00  00:00:15    N/A       30     queued     None            smp   30     default  N/A                                   
+        JobID  JobName  User   Score    WallTime  QueuedTime  RunTime   Nodes  State      Location        Mode  Procs  Queue    StartTime                             
+        ==============================================================================================================================================================
+        9      N/A      rojas    0.1    00:50:00  00:00:02    N/A       30     user_hold  None            smp   30     default  N/A                                   
+        2      N/A      rojas    0.1    01:55:00  00:00:08    00:00:12  30     starting   ANL-R01-M0-512  smp   30     default  Wed Jan 08 22:58:38 2014 +0000 (UTC)  
+        8      N/A      rojas    0.1    02:30:00  00:00:03    N/A       30     queued     None            smp   30     default  N/A                                   
+        5      N/A      rojas    0.2    02:45:00  00:00:19    N/A       30     queued     None            smp   30     default  N/A                                   
+        7      N/A      rojas    0.2    02:30:00  00:00:14    N/A       30     queued     None            smp   30     default  N/A                                   
+        1      N/A      rojas    0.2    01:05:00  00:00:21    N/A       30     queued     None            smp   30     default  N/A                                   
+        3      N/A      rojas    0.2    02:45:00  00:00:19    00:00:01  30     starting   ANL-R00-M0-512  smp   30     default  Wed Jan 08 22:58:49 2014 +0000 (UTC)  
+        6      N/A      rojas    0.2    02:30:00  00:00:15    N/A       30     queued     None            smp   30     default  N/A                                   
+        4      N/A      rojas    0.2    02:45:00  00:00:20    N/A       30     queued     None            smp   30     default  N/A                                   
         
         Command Error/Debug:
         
@@ -4196,17 +4196,17 @@ def test_qstat_qstat_15():
     qstat test run: qstat_15
 
         Command Output:
-        JobID  JobName  User         Score    WallTime  QueuedTime  RunTime   Nodes  State      Location        Mode  Procs  Queue    StartTime                             
-        ====================================================================================================================================================================
-        8      N/A      georgerojas    0.1    02:30:00  00:00:02    N/A       30     queued     None            smp   30     default  N/A                                   
-        9      N/A      georgerojas    0.1    00:50:00  00:00:02    N/A       30     user_hold  None            smp   30     default  N/A                                   
-        2      N/A      georgerojas    0.1    01:55:00  00:00:11    00:00:04  30     starting   ANL-R01-M0-512  smp   30     default  Thu Sep  5 23:06:57 2013 +0000 (UTC)  
-        6      N/A      georgerojas    0.1    02:30:00  00:00:11    N/A       30     queued     None            smp   30     default  N/A                                   
-        5      N/A      georgerojas    0.1    02:45:00  00:00:15    N/A       30     queued     None            smp   30     default  N/A                                   
-        1      N/A      georgerojas    0.1    01:05:00  00:00:16    N/A       30     queued     None            smp   30     default  N/A                                   
-        7      N/A      georgerojas    0.1    02:30:00  00:00:11    N/A       30     queued     None            smp   30     default  N/A                                   
-        4      N/A      georgerojas    0.1    02:45:00  00:00:16    N/A       30     queued     None            smp   30     default  N/A                                   
-        3      N/A      georgerojas    0.1    02:45:00  00:00:16    N/A       30     queued     None            smp   30     default  N/A                                   
+        JobID  JobName  User   Score    WallTime  QueuedTime  RunTime   Nodes  State      Location        Mode  Procs  Queue    StartTime                             
+        ==============================================================================================================================================================
+        9      N/A      rojas    0.1    00:50:00  00:00:03    N/A       30     user_hold  None            smp   30     default  N/A                                   
+        2      N/A      rojas    0.1    01:55:00  00:00:08    00:00:12  30     starting   ANL-R01-M0-512  smp   30     default  Wed Jan 08 22:58:38 2014 +0000 (UTC)  
+        8      N/A      rojas    0.1    02:30:00  00:00:03    N/A       30     queued     None            smp   30     default  N/A                                   
+        5      N/A      rojas    0.2    02:45:00  00:00:20    N/A       30     queued     None            smp   30     default  N/A                                   
+        7      N/A      rojas    0.2    02:30:00  00:00:15    N/A       30     queued     None            smp   30     default  N/A                                   
+        1      N/A      rojas    0.2    01:05:00  00:00:21    N/A       30     queued     None            smp   30     default  N/A                                   
+        3      N/A      rojas    0.2    02:45:00  00:00:19    00:00:01  30     starting   ANL-R00-M0-512  smp   30     default  Wed Jan 08 22:58:49 2014 +0000 (UTC)  
+        6      N/A      rojas    0.2    02:30:00  00:00:15    N/A       30     queued     None            smp   30     default  N/A                                   
+        4      N/A      rojas    0.2    02:45:00  00:00:20    N/A       30     queued     None            smp   30     default  N/A                                   
         
         Command Error/Debug:
         
@@ -4279,17 +4279,17 @@ def test_qstat_qstat_16():
     qstat test run: qstat_16
 
         Command Output:
-        JobID  JobName  User         Score    WallTime  QueuedTime  RunTime   Nodes  State       Location        Mode  Procs  Queue    StartTime                             
-        =====================================================================================================================================================================
-        8      N/A      georgerojas    0.1    02:30:00  00:00:03    N/A       30     queued      None            smp   30     default  N/A                                   
-        9      N/A      georgerojas    0.1    00:50:00  00:00:02    N/A       30     admin_hold  None            smp   30     default  N/A                                   
-        2      N/A      georgerojas    0.1    01:55:00  00:00:11    00:00:05  30     starting    ANL-R01-M0-512  smp   30     default  Thu Sep  5 23:06:57 2013 +0000 (UTC)  
-        6      N/A      georgerojas    0.1    02:30:00  00:00:12    N/A       30     queued      None            smp   30     default  N/A                                   
-        5      N/A      georgerojas    0.1    02:45:00  00:00:16    N/A       30     queued      None            smp   30     default  N/A                                   
-        1      N/A      georgerojas    0.1    01:05:00  00:00:17    N/A       30     queued      None            smp   30     default  N/A                                   
-        7      N/A      georgerojas    0.1    02:30:00  00:00:12    N/A       30     queued      None            smp   30     default  N/A                                   
-        4      N/A      georgerojas    0.1    02:45:00  00:00:16    N/A       30     queued      None            smp   30     default  N/A                                   
-        3      N/A      georgerojas    0.1    02:45:00  00:00:16    N/A       30     queued      None            smp   30     default  N/A                                   
+        JobID  JobName  User   Score    WallTime  QueuedTime  RunTime   Nodes  State       Location        Mode  Procs  Queue    StartTime                             
+        ===============================================================================================================================================================
+        9      N/A      rojas    0.1    00:50:00  00:00:04    N/A       30     admin_hold  None            smp   30     default  N/A                                   
+        2      N/A      rojas    0.1    01:55:00  00:00:08    00:00:13  30     starting    ANL-R01-M0-512  smp   30     default  Wed Jan 08 22:58:38 2014 +0000 (UTC)  
+        8      N/A      rojas    0.1    02:30:00  00:00:04    N/A       30     queued      None            smp   30     default  N/A                                   
+        5      N/A      rojas    0.2    02:45:00  00:00:20    N/A       30     queued      None            smp   30     default  N/A                                   
+        7      N/A      rojas    0.2    02:30:00  00:00:15    N/A       30     queued      None            smp   30     default  N/A                                   
+        1      N/A      rojas    0.2    01:05:00  00:00:22    N/A       30     queued      None            smp   30     default  N/A                                   
+        3      N/A      rojas    0.2    02:45:00  00:00:19    00:00:02  30     starting    ANL-R00-M0-512  smp   30     default  Wed Jan 08 22:58:49 2014 +0000 (UTC)  
+        6      N/A      rojas    0.2    02:30:00  00:00:16    N/A       30     queued      None            smp   30     default  N/A                                   
+        4      N/A      rojas    0.2    02:45:00  00:00:21    N/A       30     queued      None            smp   30     default  N/A                                   
         
         Command Error/Debug:
         
@@ -4362,17 +4362,17 @@ def test_qstat_qstat_17():
     qstat test run: qstat_17
 
         Command Output:
-        JobID  JobName  User         Score    WallTime  QueuedTime  RunTime   Nodes  State     Location        Mode  Procs  Queue    StartTime                             
-        ===================================================================================================================================================================
-        8      N/A      georgerojas    0.1    02:30:00  00:00:03    N/A       30     queued    None            smp   30     default  N/A                                   
-        9      N/A      georgerojas    0.1    00:50:00  00:00:03    N/A       30     queued    None            smp   30     default  N/A                                   
-        2      N/A      georgerojas    0.1    01:55:00  00:00:11    00:00:05  30     starting  ANL-R01-M0-512  smp   30     default  Thu Sep  5 23:06:57 2013 +0000 (UTC)  
-        6      N/A      georgerojas    0.1    02:30:00  00:00:12    N/A       30     queued    None            smp   30     default  N/A                                   
-        5      N/A      georgerojas    0.1    02:45:00  00:00:16    N/A       30     queued    None            smp   30     default  N/A                                   
-        1      N/A      georgerojas    0.1    01:05:00  00:00:17    N/A       30     queued    None            smp   30     default  N/A                                   
-        7      N/A      georgerojas    0.1    02:30:00  00:00:12    N/A       30     queued    None            smp   30     default  N/A                                   
-        4      N/A      georgerojas    0.1    02:45:00  00:00:16    N/A       30     queued    None            smp   30     default  N/A                                   
-        3      N/A      georgerojas    0.1    02:45:00  00:00:17    N/A       30     queued    None            smp   30     default  N/A                                   
+        JobID  JobName  User   Score    WallTime  QueuedTime  RunTime   Nodes  State     Location        Mode  Procs  Queue    StartTime                             
+        =============================================================================================================================================================
+        9      N/A      rojas    0.1    00:50:00  00:00:04    N/A       30     queued    None            smp   30     default  N/A                                   
+        2      N/A      rojas    0.1    01:55:00  00:00:08    00:00:14  30     starting  ANL-R01-M0-512  smp   30     default  Wed Jan 08 22:58:38 2014 +0000 (UTC)  
+        8      N/A      rojas    0.1    02:30:00  00:00:05    N/A       30     queued    None            smp   30     default  N/A                                   
+        5      N/A      rojas    0.2    02:45:00  00:00:21    N/A       30     queued    None            smp   30     default  N/A                                   
+        7      N/A      rojas    0.2    02:30:00  00:00:16    N/A       30     queued    None            smp   30     default  N/A                                   
+        1      N/A      rojas    0.2    01:05:00  00:00:23    N/A       30     queued    None            smp   30     default  N/A                                   
+        3      N/A      rojas    0.2    02:45:00  00:00:19    00:00:03  30     starting  ANL-R00-M0-512  smp   30     default  Wed Jan 08 22:58:49 2014 +0000 (UTC)  
+        6      N/A      rojas    0.2    02:30:00  00:00:16    N/A       30     queued    None            smp   30     default  N/A                                   
+        4      N/A      rojas    0.2    02:45:00  00:00:21    N/A       30     queued    None            smp   30     default  N/A                                   
         
         Command Error/Debug:
         
@@ -4409,15 +4409,15 @@ def test_setres_setres_12():
     setres test run: setres_12
 
         Command Output:
-        Got starttime Wed Jan  1 16:30:00 2014 +0000 (UTC)
-        [{'project': None, 'users': None, 'block_passthrough': False, 'name': 'r1', 'queue': 'q_1', 'start': 1388593800.0, 'duration': 3000, 'cycle': None, 'res_id': 11, 'partitions': 'ANL-R01-1024:ANL-R00-M0-512'}]
+        Got starttime Sun Jan 01 16:30:00 2034 +0000 (UTC)
+        [{'project': None, 'users': None, 'block_passthrough': False, 'name': 'r1', 'queue': 'q_1', 'start': 2019745800.0, 'duration': 3000, 'cycle': None, 'res_id': 11, 'partitions': 'ANL-R01-1024:ANL-R00-M0-512'}]
         
         
         Command Error/Debug:
         
     """
 
-    args      = """-n r1 -s 2014-01-01-10:30 -u '*' -d 50 -q q_1 ANL-R01-1024 ANL-R00-M0-512"""
+    args      = """-n r1 -s 2034-01-01-10:30 -u '*' -d 50 -q q_1 ANL-R01-1024 ANL-R00-M0-512"""
     exp_rs    = 0
 
     user    = pwd.getpwuid(os.getuid())[0] 
@@ -4450,8 +4450,8 @@ def test_showres_showres_8():
         Command Output:
         Reservation  Queue  User  Start                                 Duration  Passthrough  Partitions                   Time Remaining  
         ====================================================================================================================================
-        r1           q_1    None  Wed Jan  1 16:30:00 2014 +0000 (UTC)  00:50     Allowed      ANL-R01-1024:ANL-R00-M0-512  Not Started     
-        david        q_1    None  Thu Dec  1 16:30:00 2022 +0000 (UTC)  00:50     Allowed      ANL-R00-R01-2048             Not Started     
+        david        q_1    None  Thu Dec 01 16:30:00 2022 +0000 (UTC)  00:50     Allowed      ANL-R00-R01-2048             Not Started     
+        r1           q_1    None  Sun Jan 01 16:30:00 2034 +0000 (UTC)  00:50     Allowed      ANL-R01-1024:ANL-R00-M0-512  Not Started     
         
         Command Error/Debug:
         
@@ -4488,7 +4488,7 @@ def test_setres_setres_13():
     setres test run: setres_13
 
         Command Output:
-        [{'users': 'georgerojas', 'block_passthrough': False, 'project': None, 'start': 1388593800.0, 'cycle': None, 'duration': 3000, 'partitions': 'ANL-R01-1024:ANL-R00-M0-512', 'res_id': 11, 'name': 'r1'}]
+        [{'name': 'r1', 'block_passthrough': False, 'project': None, 'start': 2019745800.0, 'cycle': None, 'duration': 3000, 'partitions': 'ANL-R01-1024:ANL-R00-M0-512', 'res_id': 11, 'users': 'rojas'}]
         
         
         Command Error/Debug:
@@ -4526,10 +4526,10 @@ def test_showres_showres_9():
     showres test run: showres_9
 
         Command Output:
-        Reservation  Queue  User         Start                                 Duration  Passthrough  Partitions                   Time Remaining  
-        ===========================================================================================================================================
-        r1           q_1    georgerojas  Wed Jan  1 16:30:00 2014 +0000 (UTC)  00:50     Allowed      ANL-R01-1024:ANL-R00-M0-512  Not Started     
-        david        q_1    None         Thu Dec  1 16:30:00 2022 +0000 (UTC)  00:50     Allowed      ANL-R00-R01-2048             Not Started     
+        Reservation  Queue  User   Start                                 Duration  Passthrough  Partitions                   Time Remaining  
+        =====================================================================================================================================
+        david        q_1    None   Thu Dec 01 16:30:00 2022 +0000 (UTC)  00:50     Allowed      ANL-R00-R01-2048             Not Started     
+        r1           q_1    rojas  Sun Jan 01 16:30:00 2034 +0000 (UTC)  00:50     Allowed      ANL-R01-1024:ANL-R00-M0-512  Not Started     
         
         Command Error/Debug:
         
@@ -4566,7 +4566,7 @@ def test_setres_setres_14():
     setres test run: setres_14
 
         Command Output:
-        [{'users': None, 'block_passthrough': False, 'project': None, 'start': 1388593800.0, 'cycle': None, 'duration': 3000, 'partitions': 'ANL-R01-1024:ANL-R00-M0-512', 'res_id': 11, 'name': 'r1'}]
+        [{'name': 'r1', 'block_passthrough': False, 'project': None, 'start': 2019745800.0, 'cycle': None, 'duration': 3000, 'partitions': 'ANL-R01-1024:ANL-R00-M0-512', 'res_id': 11, 'users': None}]
         
         
         Command Error/Debug:
@@ -4606,8 +4606,8 @@ def test_showres_showres_10():
         Command Output:
         Reservation  Queue  User  Start                                 Duration  Passthrough  Partitions                   Time Remaining  
         ====================================================================================================================================
-        r1           q_1    None  Wed Jan  1 16:30:00 2014 +0000 (UTC)  00:50     Allowed      ANL-R01-1024:ANL-R00-M0-512  Not Started     
-        david        q_1    None  Thu Dec  1 16:30:00 2022 +0000 (UTC)  00:50     Allowed      ANL-R00-R01-2048             Not Started     
+        david        q_1    None  Thu Dec 01 16:30:00 2022 +0000 (UTC)  00:50     Allowed      ANL-R00-R01-2048             Not Started     
+        r1           q_1    None  Sun Jan 01 16:30:00 2034 +0000 (UTC)  00:50     Allowed      ANL-R01-1024:ANL-R00-M0-512  Not Started     
         
         Command Error/Debug:
         
@@ -4658,7 +4658,7 @@ def test_releaseres_releaseres_5():
         component: "scheduler.release_reservations", defer: False
           release_reservations(
              [{'name': 'r1', 'partitions': '*'}],
-             georgerojas,
+             rojas,
              )
         
         
@@ -4699,7 +4699,7 @@ def test_showres_showres_11():
         Command Output:
         Reservation  Queue  User  Start                                 Duration  Passthrough  Partitions        Time Remaining  
         =========================================================================================================================
-        david        q_1    None  Thu Dec  1 16:30:00 2022 +0000 (UTC)  00:50     Allowed      ANL-R00-R01-2048  Not Started     
+        david        q_1    None  Thu Dec 01 16:30:00 2022 +0000 (UTC)  00:50     Allowed      ANL-R00-R01-2048  Not Started     
         
         Command Error/Debug:
         
@@ -4736,15 +4736,15 @@ def test_setres_setres_15():
     setres test run: setres_15
 
         Command Output:
-        Got starttime Wed Jan  1 16:30:00 2014 +0000 (UTC)
-        [{'project': None, 'users': None, 'block_passthrough': False, 'queue': 'q_1', 'start': 1388593800.0, 'cycle': None, 'duration': 3000, 'partitions': 'ANL-R00-R01-2048:ANL-R01-1024:ANL-R00-M0-512', 'res_id': 12, 'name': 'r1'}]
+        Got starttime Sun Jan 01 16:30:00 2034 +0000 (UTC)
+        [{'project': None, 'users': None, 'block_passthrough': False, 'queue': 'q_1', 'start': 2019745800.0, 'cycle': None, 'duration': 3000, 'partitions': 'ANL-R00-R01-2048:ANL-R01-1024:ANL-R00-M0-512', 'res_id': 12, 'name': 'r1'}]
         
         
         Command Error/Debug:
         
     """
 
-    args      = """-n r1 -s 2014-01-01-10:30 -u '*' -d 50 -q q_1 -p ANL-R01-1024:ANL-R00-M0-512 ANL-R00-R01-2048"""
+    args      = """-n r1 -s 2034-01-01-10:30 -u '*' -d 50 -q q_1 -p ANL-R01-1024:ANL-R00-M0-512 ANL-R00-R01-2048"""
     exp_rs    = 0
 
     user    = pwd.getpwuid(os.getuid())[0] 
@@ -4777,8 +4777,8 @@ def test_showres_showres_12():
         Command Output:
         Reservation  Queue  User  Start                                 Duration  Passthrough  Partitions                                    Time Remaining  
         =====================================================================================================================================================
-        r1           q_1    None  Wed Jan  1 16:30:00 2014 +0000 (UTC)  00:50     Allowed      ANL-R00-R01-2048:ANL-R01-1024:ANL-R00-M0-512  Not Started     
-        david        q_1    None  Thu Dec  1 16:30:00 2022 +0000 (UTC)  00:50     Allowed      ANL-R00-R01-2048                              Not Started     
+        david        q_1    None  Thu Dec 01 16:30:00 2022 +0000 (UTC)  00:50     Allowed      ANL-R00-R01-2048                              Not Started     
+        r1           q_1    None  Sun Jan 01 16:30:00 2034 +0000 (UTC)  00:50     Allowed      ANL-R00-R01-2048:ANL-R01-1024:ANL-R00-M0-512  Not Started     
         
         Command Error/Debug:
         
@@ -4829,7 +4829,7 @@ def test_releaseres_releaseres_6():
         component: "scheduler.release_reservations", defer: False
           release_reservations(
              [{'name': 'r1', 'partitions': '*'}],
-             georgerojas,
+             rojas,
              )
         
         
@@ -4870,7 +4870,7 @@ def test_showres_showres_13():
         Command Output:
         Reservation  Queue  User  Start                                 Duration  Passthrough  Partitions        Time Remaining  
         =========================================================================================================================
-        david        q_1    None  Thu Dec  1 16:30:00 2022 +0000 (UTC)  00:50     Allowed      ANL-R00-R01-2048  Not Started     
+        david        q_1    None  Thu Dec 01 16:30:00 2022 +0000 (UTC)  00:50     Allowed      ANL-R00-R01-2048  Not Started     
         
         Command Error/Debug:
         
@@ -4945,43 +4945,45 @@ def test_qstat_qstat_11():
 
         Command Output:
         JobID: 10
-            JobName       : myjob_10
-            User          : georgerojas
-            WallTime      : 00:50:00
-            QueuedTime    : 00:00:00
-            RunTime       : N/A
-            TimeRemaining : N/A
-            Nodes         : 30
-            State         : queued
-            Location      : None
-            Mode          : smp
-            Procs         : 30
-            Preemptable   : False
-            User_Hold     : False
-            Admin_Hold    : False
-            Queue         : default
-            StartTime     : N/A
-            Index         : None
-            SubmitTime    : Thu Sep  5 23:07:07 2013 +0000 (UTC)
-            Path          : /Users/georgerojas/p/Cobalt/cobalt/src/clients:/Users/georgerojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin:/usr/local/git/bin:~/bin
-            OutputDir     : /Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients
-            ErrorPath     : None
-            OutputPath    : None
-            Envs          : myenv=myvar_10
-            Command       : /bin/ls
-            Args          : 
-            Kernel        : default
-            KernelOptions : None
-            Project       : None
-            Dependencies  : 
-            S             : Q
-            Notify        : None
-            Score         :   0.1  
-            Maxtasktime   : None
-            attrs         : {}
-            dep_frac      : None
-            user_list     : georgerojas
-            Geometry      : Any
+            JobName           : myjob_10
+            User              : rojas
+            WallTime          : 00:50:00
+            QueuedTime        : 00:00:00
+            RunTime           : N/A
+            TimeRemaining     : N/A
+            Nodes             : 30
+            State             : queued
+            Location          : None
+            Mode              : smp
+            Procs             : 30
+            Preemptable       : False
+            User_Hold         : False
+            Admin_Hold        : False
+            Queue             : default
+            StartTime         : N/A
+            Index             : None
+            SubmitTime        : Wed Jan 08 22:58:58 2014 +0000 (UTC)
+            Path              : /home/rojas/p/Cobalt/cobalt/src/clients:/home/rojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:~/bin
+            OutputDir         : /home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients
+            ErrorPath         : None
+            OutputPath        : None
+            Envs              : myenv=myvar_10
+            Command           : /bin/ls
+            Args              : 
+            Kernel            : default
+            KernelOptions     : None
+            ION_Kernel        : default
+            ION_KernelOptions : None
+            Project           : None
+            Dependencies      : 
+            S                 : Q
+            Notify            : None
+            Score             :   0.1  
+            Maxtasktime       : None
+            attrs             : {}
+            dep_frac          : None
+            user_list         : rojas
+            Geometry          : Any
         
         
         Command Error/Debug:
@@ -5057,43 +5059,45 @@ def test_qstat_qstat_12():
 
         Command Output:
         JobID: 11
-            JobName       : myjob_11
-            User          : georgerojas
-            WallTime      : 00:50:00
-            QueuedTime    : 00:00:00
-            RunTime       : N/A
-            TimeRemaining : N/A
-            Nodes         : 30
-            State         : queued
-            Location      : None
-            Mode          : smp
-            Procs         : 30
-            Preemptable   : False
-            User_Hold     : False
-            Admin_Hold    : False
-            Queue         : default
-            StartTime     : N/A
-            Index         : None
-            SubmitTime    : Thu Sep  5 23:07:08 2013 +0000 (UTC)
-            Path          : /Users/georgerojas/p/Cobalt/cobalt/src/clients:/Users/georgerojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin:/usr/local/git/bin:~/bin
-            OutputDir     : /Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients
-            ErrorPath     : None
-            OutputPath    : /Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/myout_11
-            Envs          : 
-            Command       : /bin/ls
-            Args          : 
-            Kernel        : default
-            KernelOptions : None
-            Project       : None
-            Dependencies  : 
-            S             : Q
-            Notify        : None
-            Score         :   0.1  
-            Maxtasktime   : None
-            attrs         : {}
-            dep_frac      : None
-            user_list     : georgerojas
-            Geometry      : Any
+            JobName           : myjob_11
+            User              : rojas
+            WallTime          : 00:50:00
+            QueuedTime        : 00:00:00
+            RunTime           : N/A
+            TimeRemaining     : N/A
+            Nodes             : 30
+            State             : queued
+            Location          : None
+            Mode              : smp
+            Procs             : 30
+            Preemptable       : False
+            User_Hold         : False
+            Admin_Hold        : False
+            Queue             : default
+            StartTime         : N/A
+            Index             : None
+            SubmitTime        : Wed Jan 08 22:58:59 2014 +0000 (UTC)
+            Path              : /home/rojas/p/Cobalt/cobalt/src/clients:/home/rojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:~/bin
+            OutputDir         : /home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients
+            ErrorPath         : None
+            OutputPath        : /home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/myout_11
+            Envs              : 
+            Command           : /bin/ls
+            Args              : 
+            Kernel            : default
+            KernelOptions     : None
+            ION_Kernel        : default
+            ION_KernelOptions : None
+            Project           : None
+            Dependencies      : 
+            S                 : Q
+            Notify            : None
+            Score             :   0.1  
+            Maxtasktime       : None
+            attrs             : {}
+            dep_frac          : None
+            user_list         : rojas
+            Geometry          : Any
         
         
         Command Error/Debug:
@@ -5169,43 +5173,45 @@ def test_qstat_qstat_13():
 
         Command Output:
         JobID: 12
-            JobName       : myout_12
-            User          : georgerojas
-            WallTime      : 00:50:00
-            QueuedTime    : 00:00:00
-            RunTime       : N/A
-            TimeRemaining : N/A
-            Nodes         : 30
-            State         : queued
-            Location      : None
-            Mode          : smp
-            Procs         : 30
-            Preemptable   : False
-            User_Hold     : False
-            Admin_Hold    : False
-            Queue         : default
-            StartTime     : N/A
-            Index         : None
-            SubmitTime    : Thu Sep  5 23:07:08 2013 +0000 (UTC)
-            Path          : /Users/georgerojas/p/Cobalt/cobalt/src/clients:/Users/georgerojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin:/usr/local/git/bin:~/bin
-            OutputDir     : /Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients
-            ErrorPath     : /Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/myerr_12
-            OutputPath    : /Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/myout_12
-            Envs          : 
-            Command       : /bin/ls
-            Args          : 
-            Kernel        : default
-            KernelOptions : None
-            Project       : None
-            Dependencies  : 
-            S             : Q
-            Notify        : None
-            Score         :   0.1  
-            Maxtasktime   : None
-            attrs         : {}
-            dep_frac      : None
-            user_list     : georgerojas
-            Geometry      : Any
+            JobName           : myout_12
+            User              : rojas
+            WallTime          : 00:50:00
+            QueuedTime        : 00:00:00
+            RunTime           : N/A
+            TimeRemaining     : N/A
+            Nodes             : 30
+            State             : queued
+            Location          : None
+            Mode              : smp
+            Procs             : 30
+            Preemptable       : False
+            User_Hold         : False
+            Admin_Hold        : False
+            Queue             : default
+            StartTime         : N/A
+            Index             : None
+            SubmitTime        : Wed Jan 08 22:59:00 2014 +0000 (UTC)
+            Path              : /home/rojas/p/Cobalt/cobalt/src/clients:/home/rojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:~/bin
+            OutputDir         : /home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients
+            ErrorPath         : /home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/myerr_12
+            OutputPath        : /home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/myout_12
+            Envs              : 
+            Command           : /bin/ls
+            Args              : 
+            Kernel            : default
+            KernelOptions     : None
+            ION_Kernel        : default
+            ION_KernelOptions : None
+            Project           : None
+            Dependencies      : 
+            S                 : Q
+            Notify            : None
+            Score             :   0.1  
+            Maxtasktime       : None
+            attrs             : {}
+            dep_frac          : None
+            user_list         : rojas
+            Geometry          : Any
         
         
         Command Error/Debug:
@@ -5281,43 +5287,45 @@ def test_qstat_qstat_14():
 
         Command Output:
         JobID: 13
-            JobName       : outpref_13
-            User          : georgerojas
-            WallTime      : 00:50:00
-            QueuedTime    : 00:00:00
-            RunTime       : N/A
-            TimeRemaining : N/A
-            Nodes         : 30
-            State         : queued
-            Location      : None
-            Mode          : smp
-            Procs         : 30
-            Preemptable   : False
-            User_Hold     : False
-            Admin_Hold    : False
-            Queue         : default
-            StartTime     : N/A
-            Index         : None
-            SubmitTime    : Thu Sep  5 23:07:09 2013 +0000 (UTC)
-            Path          : /Users/georgerojas/p/Cobalt/cobalt/src/clients:/Users/georgerojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin:/usr/local/git/bin:~/bin
-            OutputDir     : /Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients
-            ErrorPath     : /Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/outpref_13.error
-            OutputPath    : /Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/outpref_13.output
-            Envs          : 
-            Command       : /bin/ls
-            Args          : 
-            Kernel        : default
-            KernelOptions : None
-            Project       : None
-            Dependencies  : 
-            S             : Q
-            Notify        : None
-            Score         :   0.1  
-            Maxtasktime   : None
-            attrs         : {}
-            dep_frac      : None
-            user_list     : georgerojas
-            Geometry      : Any
+            JobName           : outpref_13
+            User              : rojas
+            WallTime          : 00:50:00
+            QueuedTime        : 00:00:00
+            RunTime           : N/A
+            TimeRemaining     : N/A
+            Nodes             : 30
+            State             : queued
+            Location          : None
+            Mode              : smp
+            Procs             : 30
+            Preemptable       : False
+            User_Hold         : False
+            Admin_Hold        : False
+            Queue             : default
+            StartTime         : N/A
+            Index             : None
+            SubmitTime        : Wed Jan 08 22:59:00 2014 +0000 (UTC)
+            Path              : /home/rojas/p/Cobalt/cobalt/src/clients:/home/rojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:~/bin
+            OutputDir         : /home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients
+            ErrorPath         : /home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/outpref_13.error
+            OutputPath        : /home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/outpref_13.output
+            Envs              : 
+            Command           : /bin/ls
+            Args              : 
+            Kernel            : default
+            KernelOptions     : None
+            ION_Kernel        : default
+            ION_KernelOptions : None
+            Project           : None
+            Dependencies      : 
+            S                 : Q
+            Notify            : None
+            Score             :   0.1  
+            Maxtasktime       : None
+            attrs             : {}
+            dep_frac          : None
+            user_list         : rojas
+            Geometry          : Any
         
         
         Command Error/Debug:
@@ -5393,43 +5401,45 @@ def test_qstat_qstat_15():
 
         Command Output:
         JobID: 14
-            JobName       : myjob_14
-            User          : georgerojas
-            WallTime      : 00:50:00
-            QueuedTime    : 00:00:00
-            RunTime       : N/A
-            TimeRemaining : N/A
-            Nodes         : 30
-            State         : queued
-            Location      : None
-            Mode          : smp
-            Procs         : 30
-            Preemptable   : False
-            User_Hold     : False
-            Admin_Hold    : False
-            Queue         : default
-            StartTime     : N/A
-            Index         : None
-            SubmitTime    : Thu Sep  5 23:07:09 2013 +0000 (UTC)
-            Path          : /Users/georgerojas/p/Cobalt/cobalt/src/clients:/Users/georgerojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin:/usr/local/git/bin:~/bin
-            OutputDir     : /Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients
-            ErrorPath     : /Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/outpref_14.error
-            OutputPath    : /Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/outpref_14.output
-            Envs          : 
-            Command       : /bin/ls
-            Args          : 
-            Kernel        : default
-            KernelOptions : None
-            Project       : None
-            Dependencies  : 
-            S             : Q
-            Notify        : None
-            Score         :   0.1  
-            Maxtasktime   : None
-            attrs         : {}
-            dep_frac      : None
-            user_list     : georgerojas
-            Geometry      : Any
+            JobName           : myjob_14
+            User              : rojas
+            WallTime          : 00:50:00
+            QueuedTime        : 00:00:00
+            RunTime           : N/A
+            TimeRemaining     : N/A
+            Nodes             : 30
+            State             : queued
+            Location          : None
+            Mode              : smp
+            Procs             : 30
+            Preemptable       : False
+            User_Hold         : False
+            Admin_Hold        : False
+            Queue             : default
+            StartTime         : N/A
+            Index             : None
+            SubmitTime        : Wed Jan 08 22:59:01 2014 +0000 (UTC)
+            Path              : /home/rojas/p/Cobalt/cobalt/src/clients:/home/rojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:~/bin
+            OutputDir         : /home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients
+            ErrorPath         : /home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/outpref_14.error
+            OutputPath        : /home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/outpref_14.output
+            Envs              : 
+            Command           : /bin/ls
+            Args              : 
+            Kernel            : default
+            KernelOptions     : None
+            ION_Kernel        : default
+            ION_KernelOptions : None
+            Project           : None
+            Dependencies      : 
+            S                 : Q
+            Notify            : None
+            Score             :   0.1  
+            Maxtasktime       : None
+            attrs             : {}
+            dep_frac          : None
+            user_list         : rojas
+            Geometry          : Any
         
         
         Command Error/Debug:
@@ -5474,13 +5484,13 @@ def test_qsub_qsub_15():
         
         component: "system.validate_job", defer: False
           validate_job(
-             {'kernel': 'default', 'verbose': False, 'held': False, 'notify': False, 'ion_kerneloptions': False, 'project': False, 'preemptable': False, 'outputprefix': False, 'umask': False, 'version': False, 'env': 'a=1:c=3:b=2', 'cwd': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'run_project': False, 'forcenoval': False, 'kerneloptions': False, 'time': '75', 'jobname': '$COBALT_JOBID-job', 'debug': True, 'dependencies': False, 'debuglog': False, 'ion_kernel': 'default', 'proccount': False, 'disable_preboot': False, 'geometry': False, 'queue': 'default', 'mode': 'script', 'error': False, 'nodecount': '100', 'output': False, 'attrs': {}, 'user_list': False, 'inputfile': False},
+             {'kernel': 'default', 'verbose': False, 'held': False, 'notify': False, 'ion_kerneloptions': False, 'project': False, 'preemptable': False, 'outputprefix': False, 'umask': False, 'version': False, 'env': 'a=1:c=3:b=2', 'cwd': '/home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'run_project': False, 'forcenoval': False, 'kerneloptions': False, 'time': '75', 'jobname': '$COBALT_JOBID-job', 'debug': True, 'dependencies': False, 'debuglog': False, 'ion_kernel': 'default', 'proccount': False, 'disable_preboot': False, 'geometry': False, 'queue': 'default', 'mode': 'script', 'error': False, 'nodecount': '100', 'output': False, 'inputfile': False, 'attrs': {}, 'user_list': False, 'interactive': False},
              )
         
         
         component: "queue-manager.add_jobs", defer: False
           add_jobs(
-             [{'kernel': 'default', 'args': [], 'outputdir': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'envs': {'a': '1', 'c': '3', 'b': '2'}, 'jobname': '$COBALT_JOBID-job', 'user_list': ['georgerojas'], 'umask': 18, 'jobid': '*', 'queue': 'default', 'script_preboot': True, 'tag': 'job', 'command': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/cobalt_script3.sh', 'mode': 'script', 'run_project': False, 'path': '/Users/georgerojas/p/Cobalt/cobalt/src/clients:/Users/georgerojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin:/usr/local/git/bin:~/bin', 'nodes': 100, 'walltime': '75', 'ion_kernel': 'default', 'cwd': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'procs': 100, 'user': 'georgerojas'}],
+             [{'kernel': 'default', 'args': [], 'outputdir': '/home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'envs': {'a': '1', 'c': '3', 'b': '2'}, 'jobname': '$COBALT_JOBID-job', 'user_list': ['rojas'], 'umask': 18, 'jobid': '*', 'queue': 'default', 'script_preboot': True, 'tag': 'job', 'command': '/home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/cobalt_script3.sh', 'mode': 'script', 'run_project': False, 'path': '/home/rojas/p/Cobalt/cobalt/src/clients:/home/rojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:~/bin', 'nodes': 100, 'walltime': '75', 'ion_kernel': 'default', 'cwd': '/home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'procs': 100, 'user': 'rojas'}],
              )
         
         
@@ -5521,43 +5531,45 @@ def test_qstat_qstat_16():
 
         Command Output:
         JobID: 15
-            JobName       : 15-job
-            User          : georgerojas
-            WallTime      : 01:15:00
-            QueuedTime    : 00:00:00
-            RunTime       : N/A
-            TimeRemaining : N/A
-            Nodes         : 100
-            State         : queued
-            Location      : None
-            Mode          : script
-            Procs         : 100
-            Preemptable   : False
-            User_Hold     : False
-            Admin_Hold    : False
-            Queue         : default
-            StartTime     : N/A
-            Index         : None
-            SubmitTime    : Thu Sep  5 23:07:10 2013 +0000 (UTC)
-            Path          : /Users/georgerojas/p/Cobalt/cobalt/src/clients:/Users/georgerojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin:/usr/local/git/bin:~/bin
-            OutputDir     : /Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients
-            ErrorPath     : None
-            OutputPath    : None
-            Envs          : a=1 c=3 b=2
-            Command       : /Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/cobalt_script3.sh
-            Args          : 
-            Kernel        : default
-            KernelOptions : None
-            Project       : None
-            Dependencies  : 
-            S             : Q
-            Notify        : None
-            Score         :   0.1  
-            Maxtasktime   : None
-            attrs         : {}
-            dep_frac      : None
-            user_list     : georgerojas
-            Geometry      : Any
+            JobName           : 15-job
+            User              : rojas
+            WallTime          : 01:15:00
+            QueuedTime        : 00:00:00
+            RunTime           : N/A
+            TimeRemaining     : N/A
+            Nodes             : 100
+            State             : queued
+            Location          : None
+            Mode              : script
+            Procs             : 100
+            Preemptable       : False
+            User_Hold         : False
+            Admin_Hold        : False
+            Queue             : default
+            StartTime         : N/A
+            Index             : None
+            SubmitTime        : Wed Jan 08 22:59:02 2014 +0000 (UTC)
+            Path              : /home/rojas/p/Cobalt/cobalt/src/clients:/home/rojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:~/bin
+            OutputDir         : /home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients
+            ErrorPath         : None
+            OutputPath        : None
+            Envs              : a=1 c=3 b=2
+            Command           : /home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/cobalt_script3.sh
+            Args              : 
+            Kernel            : default
+            KernelOptions     : None
+            ION_Kernel        : default
+            ION_KernelOptions : None
+            Project           : None
+            Dependencies      : 
+            S                 : Q
+            Notify            : None
+            Score             :   0.1  
+            Maxtasktime       : None
+            attrs             : {}
+            dep_frac          : None
+            user_list         : rojas
+            Geometry          : Any
         
         
         Command Error/Debug:
@@ -5602,13 +5614,13 @@ def test_qsub_qsub_16():
         
         component: "system.validate_job", defer: False
           validate_job(
-             {'kernel': 'default', 'verbose': False, 'held': False, 'notify': False, 'ion_kerneloptions': False, 'project': False, 'preemptable': False, 'outputprefix': False, 'umask': False, 'version': False, 'env': 'a=1:c=3:b=2', 'cwd': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'run_project': False, 'forcenoval': False, 'kerneloptions': False, 'time': '50', 'jobname': '$COBALT_JOBID-job', 'debug': True, 'dependencies': False, 'debuglog': False, 'ion_kernel': 'default', 'proccount': False, 'disable_preboot': False, 'geometry': False, 'queue': 'default', 'mode': 'script', 'error': False, 'nodecount': '30', 'output': False, 'attrs': {}, 'user_list': False, 'inputfile': False},
+             {'kernel': 'default', 'verbose': False, 'held': False, 'notify': False, 'ion_kerneloptions': False, 'project': False, 'preemptable': False, 'outputprefix': False, 'umask': False, 'version': False, 'env': 'a=1:c=3:b=2', 'cwd': '/home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'run_project': False, 'forcenoval': False, 'kerneloptions': False, 'time': '50', 'jobname': '$COBALT_JOBID-job', 'debug': True, 'dependencies': False, 'debuglog': False, 'ion_kernel': 'default', 'proccount': False, 'disable_preboot': False, 'geometry': False, 'queue': 'default', 'mode': 'script', 'error': False, 'nodecount': '30', 'output': False, 'inputfile': False, 'attrs': {}, 'user_list': False, 'interactive': False},
              )
         
         
         component: "queue-manager.add_jobs", defer: False
           add_jobs(
-             [{'kernel': 'default', 'args': [], 'outputdir': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'envs': {'a': '1', 'c': '3', 'b': '2'}, 'jobname': '$COBALT_JOBID-job', 'user_list': ['georgerojas'], 'umask': 18, 'jobid': '*', 'queue': 'default', 'script_preboot': True, 'tag': 'job', 'command': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/cobalt_script3.sh', 'mode': 'script', 'run_project': False, 'path': '/Users/georgerojas/p/Cobalt/cobalt/src/clients:/Users/georgerojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin:/usr/local/git/bin:~/bin', 'nodes': 30, 'walltime': '50', 'ion_kernel': 'default', 'cwd': '/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'procs': 30, 'user': 'georgerojas'}],
+             [{'kernel': 'default', 'args': [], 'outputdir': '/home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'envs': {'a': '1', 'c': '3', 'b': '2'}, 'jobname': '$COBALT_JOBID-job', 'user_list': ['rojas'], 'umask': 18, 'jobid': '*', 'queue': 'default', 'script_preboot': True, 'tag': 'job', 'command': '/home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/cobalt_script3.sh', 'mode': 'script', 'run_project': False, 'path': '/home/rojas/p/Cobalt/cobalt/src/clients:/home/rojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:~/bin', 'nodes': 30, 'walltime': '50', 'ion_kernel': 'default', 'cwd': '/home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients', 'procs': 30, 'user': 'rojas'}],
              )
         
         
@@ -5649,43 +5661,45 @@ def test_qstat_qstat_17():
 
         Command Output:
         JobID: 16
-            JobName       : 16-job
-            User          : georgerojas
-            WallTime      : 00:50:00
-            QueuedTime    : 00:00:00
-            RunTime       : N/A
-            TimeRemaining : N/A
-            Nodes         : 30
-            State         : queued
-            Location      : None
-            Mode          : script
-            Procs         : 30
-            Preemptable   : False
-            User_Hold     : False
-            Admin_Hold    : False
-            Queue         : default
-            StartTime     : N/A
-            Index         : None
-            SubmitTime    : Thu Sep  5 23:07:10 2013 +0000 (UTC)
-            Path          : /Users/georgerojas/p/Cobalt/cobalt/src/clients:/Users/georgerojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin:/usr/local/git/bin:~/bin
-            OutputDir     : /Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients
-            ErrorPath     : None
-            OutputPath    : None
-            Envs          : a=1 c=3 b=2
-            Command       : /Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/cobalt_script3.sh
-            Args          : 
-            Kernel        : default
-            KernelOptions : None
-            Project       : None
-            Dependencies  : 
-            S             : Q
-            Notify        : None
-            Score         :   0.1  
-            Maxtasktime   : None
-            attrs         : {}
-            dep_frac      : None
-            user_list     : georgerojas
-            Geometry      : Any
+            JobName           : 16-job
+            User              : rojas
+            WallTime          : 00:50:00
+            QueuedTime        : 00:00:00
+            RunTime           : N/A
+            TimeRemaining     : N/A
+            Nodes             : 30
+            State             : queued
+            Location          : None
+            Mode              : script
+            Procs             : 30
+            Preemptable       : False
+            User_Hold         : False
+            Admin_Hold        : False
+            Queue             : default
+            StartTime         : N/A
+            Index             : None
+            SubmitTime        : Wed Jan 08 22:59:02 2014 +0000 (UTC)
+            Path              : /home/rojas/p/Cobalt/cobalt/src/clients:/home/rojas/p/Cobalt/cobalt/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:~/bin
+            OutputDir         : /home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients
+            ErrorPath         : None
+            OutputPath        : None
+            Envs              : a=1 c=3 b=2
+            Command           : /home/rojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/cobalt_script3.sh
+            Args              : 
+            Kernel            : default
+            KernelOptions     : None
+            ION_Kernel        : default
+            ION_KernelOptions : None
+            Project           : None
+            Dependencies      : 
+            S                 : Q
+            Notify            : None
+            Score             :   0.1  
+            Maxtasktime       : None
+            attrs             : {}
+            dep_frac          : None
+            user_list         : rojas
+            Geometry          : Any
         
         
         Command Error/Debug:
@@ -5724,24 +5738,24 @@ def test_qdel_qdel_1():
 
         Command Output:
               Deleted Jobs
-        JobID  User         
-        ====================
-        1      georgerojas  
-        2      georgerojas  
-        3      georgerojas  
-        4      georgerojas  
-        5      georgerojas  
-        6      georgerojas  
-        7      georgerojas  
-        8      georgerojas  
-        9      georgerojas  
-        10     georgerojas  
-        11     georgerojas  
-        12     georgerojas  
-        13     georgerojas  
-        14     georgerojas  
-        15     georgerojas  
-        16     georgerojas  
+        JobID  User   
+        ==============
+        1      rojas  
+        2      rojas  
+        3      rojas  
+        4      rojas  
+        5      rojas  
+        6      rojas  
+        7      rojas  
+        8      rojas  
+        9      rojas  
+        10     rojas  
+        11     rojas  
+        12     rojas  
+        13     rojas  
+        14     rojas  
+        15     rojas  
+        16     rojas  
         
         Command Error/Debug:
         
@@ -5792,7 +5806,7 @@ def test_releaseres_releaseres_7():
         component: "scheduler.release_reservations", defer: False
           release_reservations(
              [{'name': 'david', 'partitions': '*'}],
-             georgerojas,
+             rojas,
              )
         
         
@@ -6536,8 +6550,8 @@ def test_setres_setres_16():
     setres test run: setres_16
 
         Command Output:
-        Got starttime Thu Sep  5 23:07:00 2013 +0000 (UTC)
-        [{'project': None, 'users': None, 'block_passthrough': False, 'queue': 'q2', 'start': 1378422420.0, 'cycle': None, 'duration': 3000, 'partitions': 'ANL-R32-M1-512', 'res_id': 13, 'name': 'res1'}]
+        Got starttime Wed Jan 08 22:59:00 2014 +0000 (UTC)
+        [{'project': None, 'users': None, 'block_passthrough': False, 'queue': 'q2', 'start': 1389221940.0, 'cycle': None, 'duration': 3000, 'partitions': 'ANL-R32-M1-512', 'res_id': 13, 'name': 'res1'}]
         
         
         Command Error/Debug:
@@ -6575,8 +6589,8 @@ def test_setres_setres_17():
     setres test run: setres_17
 
         Command Output:
-        Got starttime Thu Sep  5 23:07:00 2013 +0000 (UTC)
-        [{'users': None, 'block_passthrough': False, 'name': 'res2', 'project': None, 'start': 1378422420.0, 'duration': 3000, 'partitions': 'ANL-R41-1024', 'res_id': 14, 'cycle': None}]
+        Got starttime Wed Jan 08 22:59:00 2014 +0000 (UTC)
+        [{'users': None, 'block_passthrough': False, 'name': 'res2', 'project': None, 'start': 1389221940.0, 'duration': 3000, 'partitions': 'ANL-R41-1024', 'res_id': 14, 'cycle': None}]
         
         
         Command Error/Debug:
@@ -6725,13 +6739,13 @@ def test_qstat_qstat_18():
     qstat test run: qstat_18
 
         Command Output:
-        JobID  User         WallTime  Nodes  State    Location        
-        ==============================================================
-         2     georgerojas  01:55:00  30     exiting  ANL-R01-M0-512  
-         3     georgerojas  02:45:00  30     exiting  ANL-R00-M0-512  
-        17     georgerojas  00:00:00  256    queued   None            
-        18     georgerojas  00:00:00  256    queued   None            
-        19     georgerojas  00:00:00  1024   queued   None            
+        JobID  User   WallTime  Nodes  State    Location        
+        ========================================================
+         2     rojas  01:55:00  30     exiting  ANL-R01-M0-512  
+         3     rojas  02:45:00  30     exiting  ANL-R00-M0-512  
+        17     rojas  00:00:00  256    queued   None            
+        18     rojas  00:00:00  256    queued   None            
+        19     rojas  00:00:00  1024   queued   None            
         
         Command Error/Debug:
         
