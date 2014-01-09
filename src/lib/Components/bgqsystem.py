@@ -2423,7 +2423,7 @@ class BGSystem (BGBaseSystem):
         # might have happpened if a previous cleanup attempt failed and the process group has already been waited upon
         for forker, child_id in children.keys():
             if children[(forker, child_id)]['pg'] is None:
-                cleanup[forker].append(child['id'])
+                cleanup[forker].append(child_id)
 
         # cleanup any children that have completed and been processed
         for forker in cleanup.keys():
