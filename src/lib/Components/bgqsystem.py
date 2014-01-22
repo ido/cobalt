@@ -2694,7 +2694,7 @@ class BGSystem (BGBaseSystem):
 
         '''
         if not set(io_locations).issubset(set(self._io_blocks.keys())):
-            raise ValueError, "Invalid IO Block name in specified locaitons"
+            raise ValueError, "Invalid IO Block name in specified locations"
         for io_location in io_locations:
             self._blocks_lock.acquire()
             try:
@@ -2721,7 +2721,7 @@ class BGSystem (BGBaseSystem):
                 self.free_io_block(io_location, force, user)
                 self.logger.info("IO Block free initiated on %s by user %s", io_location ,user)
             except ValueError:
-                self.logger.warning("unable to free IO Block for locaiton %s", io_location)
+                self.logger.warning("unable to free IO Block for location %s", io_location)
                 return False
             finally:
                 self._blocks_lock.release()
