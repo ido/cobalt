@@ -761,9 +761,9 @@ def boot_block(block, user, jobid):
                 break
         sleep(1)
     if failed:
-        logger.error("Boot for locaiton %s failed."% (block,))
+        logger.error("Boot for location %s failed."% (block,))
     else:
-        logger.info("Boot for locaiton %s complete."% (block,))
+        logger.info("Boot for location %s complete."% (block,))
     return failed
 
 #  
