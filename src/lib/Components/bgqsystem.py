@@ -1630,22 +1630,30 @@ class BGSystem (BGBaseSystem):
             failed_mp = pybgsched.StringVector()
             unconnected_io = pybgsched.StringVector()
 
-            for block_name in self._managed_blocks:
-                if self._blocks[block_name].block_type == 'pseudoblock':
-                    continue
-                failed_mp.clear()
-                unconnected_io.clear()
-                try:
-                    pybgsched.Block.checkIO(block_name, unconnected_io, failed_mp)
-                except:
-                    self.logger.critical("Error communicating with the bridge to update block IO information.")
-                    self.logger.critical("%s", traceback.format_exc())
-                    self.bridge_in_error = True
-                    Cobalt.Util.sleep(5) # wait a little bit...
-                    break
+            try:
+                self._blocks_lock.acquire()
+                for block_name in self._managed_blocks:
+                    if self._blocks[block_name].block_type == 'pseudoblock':
+                        continue
+                    failed_mp.clear()
+                    unconnected_io.clear()
+                    try:
+                        pybgsched.Block.checkIO(block_name, unconnected_io, failed_mp)
+                    except:
+                        self.logger.critical("Error communicating with the bridge to update block IO information.")
+                        self.logger.critical("%s", traceback.format_exc())
+                        self.bridge_in_error = True
+                        Cobalt.Util.sleep(5) # wait a little bit...
+                        break
 
-                if failed_mp.size() > 0:
-                    new_failed_io_block_names.add(block_name)
+                    if failed_mp.size() > 0:
+                        new_failed_io_block_names.add(block_name)
+            except RuntimeError:
+                self.logger.warning("Blocks added during update, skipping update iteration.")
+                Cobalt.Util.sleep(10) #sleep a little so we don't hammer the system component with failures
+                continue #iterate top-level while
+            finally:
+                self._blocks_lock.release()
 
             if self.bridge_in_error == True:
                 continue
