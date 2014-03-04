@@ -98,7 +98,6 @@ def main():
         now       = time.time()
 
         deltatime = now - start
-        print deltatime
         remaining = "inactive" if deltatime < 0.0 else client_utils.get_elapsed_time(deltatime, duration, True)
         remaining = "00:00:00" if '-' in remaining else remaining
         tminus    = "inactive" if deltatime >= 0.0 else client_utils.get_elapsed_time(deltatime, duration, True)
