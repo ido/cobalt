@@ -75,6 +75,7 @@ def options_disallowed(parser):
     """
     This function will check the options against running jobs
     """
+    _quit = False
     if parser.options.nodes != None:
         client_utils.logger.error( "cannot change node count of a running job")
         _quit = True
@@ -108,8 +109,13 @@ def options_disallowed(parser):
     if parser.options.defer != None:
         client_utils.logger.error( "cannot change the score of a running job")
         _quit = True
-    return _quit
 
+    # Currently we do not support modifying a job while running
+    if not _quit:
+        client_utils.logger.error( "Modifying a job while running is currently not supported")
+        _quit = True
+
+    return _quit
 
 def get_jobdata(jobids, parser, user):
     """
@@ -127,9 +133,7 @@ def get_jobdata(jobids, parser, user):
         if job['is_active']:
             job_running = True
 
-    _quit = False
     if job_running:
-
         if options_disallowed(parser):
             sys.exit(1)
 

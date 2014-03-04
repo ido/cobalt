@@ -567,7 +567,7 @@ class CqmStub(object):
             _job['walltime']      = str(wtime)
             _job['procs']         = str(nodes)
             _job['nodes']         = str(nodes)
-            _job['is_active']     = False
+            _job['is_active']     = True if job_running else False
             _job['queue']         = QUEUES[ndx]
             _job['mode']          = 'smp'
             _job['errorpath']     = '/tmp'
