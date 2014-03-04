@@ -340,14 +340,27 @@ def sec_to_str(t):
     """
     return Cobalt.Util.sec_to_str(t)
 
-def get_elapsed_time(starttime, endtime):
+def get_timeformat(runtime, dayf = False):
+    """
+    Return the seconds into time format
+    """
+    days = 0
+    minutes, seconds = divmod(runtime, 60)
+    hours, minutes   = divmod(minutes, 60)
+    if dayf:
+        days, hours      = divmod(hours,24)
+    if days < 1:
+        ret = ( "%02d:%02d:%02d" % (hours, minutes, seconds) )
+    else:
+        ret = ( "%dd %02d:%02d:%02d" % (days, hours, minutes, seconds))
+    return ret
+
+def get_elapsed_time(starttime, endtime, dayf = False):
     """
     returns hh:mm:ss elapsed time string from start and end timestamps
     """
     runtime = endtime - starttime
-    minutes, seconds = divmod(runtime, 60)
-    hours, minutes = divmod(minutes, 60)
-    return ( "%02d:%02d:%02d" % (hours, minutes, seconds) )
+    return get_timeformat(runtime, dayf)
 
 def print_tabular(rows):
     """
