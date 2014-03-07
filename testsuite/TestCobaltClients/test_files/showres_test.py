@@ -10,9 +10,9 @@ def test_showres_arg_1():
     args      = ''
 
     cmdout    = \
-"""Reservation  Queue  User      Start                                 Duration  Passthrough  Partitions  Time Remaining  
-=======================================================================================================================
-*            kebra  gooduser  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Blocked      [P1-10]     00:00:00        
+"""Reservation  Queue  User      Start                                 Duration  Passthrough  Partitions  Remaining  T-Minus   
+============================================================================================================================
+*            kebra  gooduser  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Blocked      [P1-10]     15:56:40   inactive  
 """
 
     cmderr    = ''
@@ -78,9 +78,9 @@ def test_showres_arg_2():
     args      = """--oldts"""
 
     cmdout    = \
-"""Reservation  Queue  User      Start                     Duration  Passthrough  Partitions  Time Remaining  
-===========================================================================================================
-*            kebra  gooduser  Tue Mar 26 16:56:40 2013  00:08     Blocked      [P1-10]     00:00:00        
+"""Reservation  Queue  User      Start                     Duration  Passthrough  Partitions  Remaining  T-Minus   
+================================================================================================================
+*            kebra  gooduser  Tue Mar 26 16:56:40 2013  00:08     Blocked      [P1-10]     15:56:40   inactive  
 """
 
     cmderr    = ''
@@ -146,9 +146,9 @@ def test_showres_arg_3():
     args      = """arg1"""
 
     cmdout    = \
-"""Reservation  Queue  User      Start                                 Duration  Passthrough  Partitions  Time Remaining  
-=======================================================================================================================
-*            kebra  gooduser  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Blocked      [P1-10]     00:00:00        
+"""Reservation  Queue  User      Start                                 Duration  Passthrough  Partitions  Remaining  T-Minus   
+============================================================================================================================
+*            kebra  gooduser  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Blocked      [P1-10]     15:56:40   inactive  
 """
 
     cmderr    = \
@@ -216,9 +216,9 @@ def test_showres_l_option_1():
     args      = """-l"""
 
     cmdout    = \
-"""Reservation  Queue  User      Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions  Time Remaining  
-=========================================================================================================================================================================
-*            kebra  gooduser  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Tue Mar 26 22:05:00 2013 +0000 (UTC)  00:05       Blocked      [P1-10]     00:00:00        
+"""Reservation  Queue  User      Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions  Remaining  T-Minus   
+==============================================================================================================================================================================
+*            kebra  gooduser  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Tue Mar 26 22:05:00 2013 +0000 (UTC)  00:05       Blocked      [P1-10]     15:56:40   inactive  
 """
 
     cmderr    = ''
@@ -284,9 +284,9 @@ def test_showres_l_option_2():
     args      = """-l --oldts"""
 
     cmdout    = \
-"""Reservation  Queue  User      Start                     Duration  End Time                  Cycle Time  Passthrough  Partitions  Time Remaining  
-=================================================================================================================================================
-*            kebra  gooduser  Tue Mar 26 16:56:40 2013  00:08     Tue Mar 26 17:05:00 2013  00:05       Blocked      [P1-10]     00:00:00        
+"""Reservation  Queue  User      Start                     Duration  End Time                  Cycle Time  Passthrough  Partitions  Remaining  T-Minus   
+======================================================================================================================================================
+*            kebra  gooduser  Tue Mar 26 16:56:40 2013  00:08     Tue Mar 26 17:05:00 2013  00:05       Blocked      [P1-10]     15:56:40   inactive  
 """
 
     cmderr    = ''
@@ -352,9 +352,9 @@ def test_showres_x_option_1():
     args      = """-x"""
 
     cmdout    = \
-"""Reservation  Queue  User      Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions  Project  ResID  CycleID  Time Remaining  
-==================================================================================================================================================================================================
-*            kebra  gooduser  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Tue Mar 26 22:05:00 2013 +0000 (UTC)  00:05       Blocked      [P1-10]     proj     id     10       00:00:00        
+"""Reservation  Queue  User      Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions  Project  ResID  CycleID  Remaining  T-Minus   
+=======================================================================================================================================================================================================
+*            kebra  gooduser  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Tue Mar 26 22:05:00 2013 +0000 (UTC)  00:05       Blocked      [P1-10]     proj     id     10       15:56:40   inactive  
 """
 
     cmderr    = ''
@@ -420,9 +420,9 @@ def test_showres_x_option_2():
     args      = """-x --oldts"""
 
     cmdout    = \
-"""Reservation  Queue  User      Start                     Duration  End Time                  Cycle Time  Passthrough  Partitions  Project  ResID  CycleID  Time Remaining  
-==========================================================================================================================================================================
-*            kebra  gooduser  Tue Mar 26 16:56:40 2013  00:08     Tue Mar 26 17:05:00 2013  00:05       Blocked      [P1-10]     proj     id     10       00:00:00        
+"""Reservation  Queue  User      Start                     Duration  End Time                  Cycle Time  Passthrough  Partitions  Project  ResID  CycleID  Remaining  T-Minus   
+===============================================================================================================================================================================
+*            kebra  gooduser  Tue Mar 26 16:56:40 2013  00:08     Tue Mar 26 17:05:00 2013  00:05       Blocked      [P1-10]     proj     id     10       15:56:40   inactive  
 """
 
     cmderr    = ''
@@ -652,9 +652,9 @@ def test_showres_debug():
     args      = """--debug"""
 
     cmdout    = \
-"""Reservation  Queue  User      Start                                 Duration  Passthrough  Partitions  Time Remaining  
-=======================================================================================================================
-*            kebra  gooduser  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Blocked      [P1-10]     00:00:00        
+"""Reservation  Queue  User      Start                                 Duration  Passthrough  Partitions  Remaining  T-Minus   
+============================================================================================================================
+*            kebra  gooduser  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Blocked      [P1-10]     15:56:40   inactive  
 """
 
     cmderr    = \

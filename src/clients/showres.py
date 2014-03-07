@@ -76,16 +76,16 @@ def main():
 
     verbose        = False
     really_verbose = False
-    header = [('Reservation', 'Queue', 'User', 'Start', 'Duration','Passthrough', 'Partitions', 'Time Remaining')]
+    header = [('Reservation', 'Queue', 'User', 'Start', 'Duration','Passthrough', 'Partitions', 'Remaining','T-Minus')]
 
     if parser.options.verbose:
         verbose = True
         header = [('Reservation', 'Queue', 'User', 'Start', 'Duration',
-                   'End Time', 'Cycle Time', 'Passthrough', 'Partitions', 'Time Remaining')]
+                   'End Time', 'Cycle Time', 'Passthrough', 'Partitions', 'Remaining', 'T-Minus')]
     elif parser.options.really_verbose:
         really_verbose = True
         header = [('Reservation', 'Queue', 'User', 'Start', 'Duration','End Time', 'Cycle Time','Passthrough','Partitions', 
-                   'Project', 'ResID', 'CycleID', 'Time Remaining' )]
+                   'Project', 'ResID', 'CycleID', 'Remaining', 'T-Minus' )]
 
     for res in reservations:
 
@@ -98,8 +98,9 @@ def main():
         now       = time.time()
 
         deltatime = now - start
-        timeleft = "Not Started" if deltatime < 0.0 else client_utils.get_elapsed_time(deltatime, duration)
-        timeleft = "00:00:00" if '-' in timeleft else timeleft
+        remaining = "inactive" if deltatime < 0.0 else client_utils.get_elapsed_time(deltatime, duration, True)
+        remaining = "00:00:00" if '-' in remaining else remaining
+        tminus    = "inactive" if deltatime >= 0.0 else client_utils.get_elapsed_time(deltatime, duration, True)
 
         # do some crazy stuff to make reservations which cycle display the 
         # "next" start time
@@ -145,18 +146,18 @@ def main():
                            starttime,"%02d:%02d" % (dhour, dmin),
                            endtime, cycle, passthrough,
                            mergelist(res['partitions'], cluster), 
-                           res['project'], res['res_id'], res['cycle_id'], timeleft))
+                           res['project'], res['res_id'], res['cycle_id'], remaining, tminus))
         elif verbose:
             output.append((res['name'], res['queue'], res['users'], 
                            starttime,"%02d:%02d" % (dhour, dmin),
                            endtime, cycle, passthrough,
                            mergelist(res['partitions'], cluster), 
-                           timeleft))
+                           remaining, tminus))
         else:
             output.append((res['name'], res['queue'], res['users'], 
                            starttime,"%02d:%02d" % (dhour, dmin), passthrough,
                            mergelist(res['partitions'], cluster), 
-                           timeleft))
+                           remaining, tminus))
 
     output.sort( (lambda x,y: cmp( time.mktime(time.strptime(x[3].split('+')[0].split('-')[0].strip(), time_fmt)), 
                                    time.mktime(time.strptime(y[3].split('+')[0].split('-')[0].strip(), time_fmt))) ) )

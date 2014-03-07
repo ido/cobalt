@@ -4860,6 +4860,7 @@ def test_qalter_mode_1():
 co
 vn
 script
+interactive
 """
 
     stubout   = ''
@@ -4900,6 +4901,7 @@ def test_qalter_mode_2():
 co
 vn
 script
+interactive
 """
 
     stubout   = ''
@@ -4940,6 +4942,7 @@ def test_qalter_proccount_1():
 co
 vn
 script
+interactive
 """
 
     stubout   = ''
@@ -4980,6 +4983,7 @@ def test_qalter_proccount_2():
 co
 vn
 script
+interactive
 """
 
     stubout   = ''
@@ -5020,6 +5024,7 @@ def test_qalter_invalid_nodecount():
 co
 vn
 script
+interactive
 """
 
     stubout   = ''
@@ -5727,6 +5732,157 @@ def test_qalter_user_2():
 
 
 # ---------------------------------------------------------------------------------
+def test_qalter_user_3():
+    """
+    qalter test run: user_3
+
+    """
+
+    args      = """-v --run_users user1:root 1 2 3 4 5"""
+
+    cmdout    = ''
+
+    cmderr    = \
+"""Modifying a job while running is currently not supported
+"""
+
+    stubout   = \
+"""
+GET_JOBS
+
+is_active:*
+is_active type: <type 'str'>
+jobid:1
+jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
+nodes:*
+nodes type: <type 'str'>
+notify:*
+notify type: <type 'str'>
+procs:*
+procs type: <type 'str'>
+project:*
+project type: <type 'str'>
+queue:*
+queue type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+user:gooduser
+user type: <type 'str'>
+walltime:*
+walltime type: <type 'str'>
+is_active:*
+is_active type: <type 'str'>
+jobid:2
+jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
+nodes:*
+nodes type: <type 'str'>
+notify:*
+notify type: <type 'str'>
+procs:*
+procs type: <type 'str'>
+project:*
+project type: <type 'str'>
+queue:*
+queue type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+user:gooduser
+user type: <type 'str'>
+walltime:*
+walltime type: <type 'str'>
+is_active:*
+is_active type: <type 'str'>
+jobid:3
+jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
+nodes:*
+nodes type: <type 'str'>
+notify:*
+notify type: <type 'str'>
+procs:*
+procs type: <type 'str'>
+project:*
+project type: <type 'str'>
+queue:*
+queue type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+user:gooduser
+user type: <type 'str'>
+walltime:*
+walltime type: <type 'str'>
+is_active:*
+is_active type: <type 'str'>
+jobid:4
+jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
+nodes:*
+nodes type: <type 'str'>
+notify:*
+notify type: <type 'str'>
+procs:*
+procs type: <type 'str'>
+project:*
+project type: <type 'str'>
+queue:*
+queue type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+user:gooduser
+user type: <type 'str'>
+walltime:*
+walltime type: <type 'str'>
+is_active:*
+is_active type: <type 'str'>
+jobid:5
+jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
+nodes:*
+nodes type: <type 'str'>
+notify:*
+notify type: <type 'str'>
+procs:*
+procs type: <type 'str'>
+project:*
+project type: <type 'str'>
+queue:*
+queue type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+user:gooduser
+user type: <type 'str'>
+walltime:*
+walltime type: <type 'str'>
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("JOB_RUNNING")
+
+    results = testutils.run_cmd('qalter.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
 def test_qalter_project():
     """
     qalter test run: project
@@ -6224,7 +6380,8 @@ def test_qalter_geometry_3():
     cmdout    = ''
 
     cmderr    = \
-"""Invalid Geometry
+"""get_config_option: Option type not found in section [system]
+Invalid Geometry
 """
 
     stubout   = \
@@ -6353,7 +6510,8 @@ def test_qalter_geometry_4():
     cmdout    = ''
 
     cmderr    = \
-"""Invalid Geometry
+"""get_config_option: Option type not found in section [system]
+Invalid Geometry
 """
 
     stubout   = \
@@ -6504,7 +6662,8 @@ def test_qalter_geometry_5():
     cmdout    = ''
 
     cmderr    = \
-"""Invalid Geometry
+"""get_config_option: Option type not found in section [system]
+Invalid Geometry
 """
 
     stubout   = \
