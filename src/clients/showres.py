@@ -100,7 +100,7 @@ def main():
         deltatime = now - start
         remaining = "inactive" if deltatime < 0.0 else client_utils.get_elapsed_time(deltatime, duration, True)
         remaining = "00:00:00" if '-' in remaining else remaining
-        tminus    = "inactive" if deltatime >= 0.0 else client_utils.get_elapsed_time(deltatime, duration, True)
+        tminus    = "active" if deltatime >= 0.0 else client_utils.get_elapsed_time(deltatime, duration, True)
 
         # do some crazy stuff to make reservations which cycle display the 
         # "next" start time
