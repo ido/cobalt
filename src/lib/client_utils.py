@@ -707,7 +707,7 @@ def get_filters():
         filters = []
     return filters
 
-def process_filters(filters,spec):
+def process_filters(filters, spec):
     """
     Process the specified filters to spec
     """
@@ -746,11 +746,15 @@ def cobalt_date(date):
     """
     return time.strftime('%Y_%m_%d-%H:%M', date)
 
-def boot_block(block, user, jobid):
+def boot_block(block, user, jobid, resid=None):
     """
-    utility to boot specified block
+    utility to boot specified block.  This is always doing this on behalf of a process outside of Cobalt's server components.
     """
-    success = component_call(SYSMGR, False, 'initiate_proxy_boot', (block, user, jobid), False)
+    #set a timeout pull from config file.  Default will be 5 mintues after termination.
+    Cobalt.Util.init_cobalt_config()
+    timeout = int(Cobalt.Util.get_config_option('bgsystem', 'terminal_boot_timeout' , 300))
+
+    success = component_call(SYSMGR, False, 'initiate_proxy_boot', (block, user, jobid, resid, timeout), False)
     if not success:
         logger.error("Boot request for block %s failed authorization." % (block, ))
         return AUTH_FAIL
@@ -779,11 +783,11 @@ def boot_block(block, user, jobid):
         logger.info("Boot for location %s complete."% (block,))
     return failed
 
-#  
+#
 # Callback fucntions for argument parsing defined below
 #
 
-def cb_debug(option,opt_str,value,parser,*args):
+def cb_debug(option, opt_str, value, parser, *args):
     """
     Set debug mode for logging
     """
@@ -794,9 +798,9 @@ def cb_debug(option,opt_str,value,parser,*args):
     args    = '\n'+cmdinfo[1] + ' ' + ' '.join(sys.argv[1:])+'\n'
     logger.debug(args)
 
-    setattr(parser.values,option.dest,True) # set the option
+    setattr(parser.values, option.dest, True) # set the option
 
-def cb_nodes(option,opt_str,value,parser,*args):
+def cb_nodes(option, opt_str, value, parser, *args):
     """
     This callback will validate value is greater than zero and store it.
     """
