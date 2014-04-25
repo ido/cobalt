@@ -126,6 +126,8 @@ class ClusterBaseSystem (Component):
         self.queue_assignments = {}
         self.node_order = {}
         self.MINIMUM_BACKFILL_WINDOW = 300
+        self.drain_mode = 'backfill'
+        self.set_drain_mode(get_cluster_system_config("drain_mode", 'backfill'))
 
         try:
             self.configure(cluster_hostfile)
@@ -143,6 +145,7 @@ class ClusterBaseSystem (Component):
         self.alloc_timeout = int(get_cluster_system_config("allocation_timeout", 300))
         self.node_end_time_dict = {}
         self.draining_nodes = {}
+        self.draining_queues = {} #{queue_name:time}
         self.logger.info("allocation timeout set to %d seconds." % self.alloc_timeout)
         self.logger.info("Minimum Backfill Window set to %d seconds." % self.MINIMUM_BACKFILL_WINDOW)
 
@@ -191,8 +194,12 @@ class ClusterBaseSystem (Component):
         self.alloc_timeout = int(get_cluster_system_config("allocation_timeout", 300))
         self.logger.info("allocation timeout set to %d seconds." % self.alloc_timeout)
         self.node_end_time_dict = {}
-        self.draining_nodes = {}
+        self.draining_nodes = {} #{int(time):list(locations)}
+        self.draining_queues = {} #{queue_name:time}
         self.logger.info("Minimum Backfill Window set to %d seconds." % self.MINIMUM_BACKFILL_WINDOW)
+        self.drain_mode = 'backfill'
+        self.set_drain_mode(get_cluster_system_config("drain_mode", 'backfill'))
+
 
     def save_me(self):
         '''Automatically write statefiles.'''
@@ -247,13 +254,15 @@ class ClusterBaseSystem (Component):
         return ""
     unfail_partitions = exposed(unfail_partitions)
 
-    def _find_job_location(self, job, now, drain_time=0):
+    def _find_job_location(self, job, now, drain_time=0, already_draining=set([])):
         '''Get a list of nodes capable of running a job.
 
         job - data about the job under consideration
         drain_location_times - the set of locations that are being drained this pass
         drain_time - the time remaining on the drain locaitons.  If 0 do not consider
                      drain locations
+        already_draining - set of locations that have been set for draining by a higher
+                           scored job.  Don't consider these locations for running.
 
         return:
         jobid: locations - map of jobid to locations for this job
@@ -273,13 +282,14 @@ class ClusterBaseSystem (Component):
         new_drain_time = 0
         ready_to_run = False
         nodes = int(job['nodes'])
+        available_nodes = set()
         try:
-            available_nodes = self.queue_assignments[job['queue']].difference(forbidden)
+            available_nodes = self.queue_assignments[job['queue']].difference(forbidden).difference(already_draining)
         except KeyError:
             #The key error is due to the queue being a reservation queue.  Those have no resources assigned in the system
             #component.  This should be changed in a later version, but for now, we can run straight off the "required"
             #nodes list
-            available_nodes = set([])
+            pass
         finally:
             available_nodes.update(set(required))
 
@@ -289,7 +299,7 @@ class ClusterBaseSystem (Component):
 
         #check to make sure all required nodes are currently in the queue that this job belongs to
         if not required.issubset(available_nodes):
-            err_str = '%s/%s has locations %s that are not in the queue for this job.  Job will never run.' % \
+            err_str = '%s/%s has required locations %s that are not in the queue for this job.  Job will never run.' % \
                     (job['user'], job['jobid'], ", ".join([str(s) for s in required.difference(available_nodes)]))
             self.logger.warning(err_str)
             raise RequiredLocationError(err_str)
@@ -317,10 +327,11 @@ class ClusterBaseSystem (Component):
                 new_drain_time = ready_time
                 locations = self.node_end_time_dict[ready_time]
                 for location in locations:
-                    selected_locations.add(location)
-                    remaining_node_count -= 1
-                    if remaining_node_count == 0:
-                        break
+                    if location in available_nodes:
+                        selected_locations.add(location)
+                        remaining_node_count -= 1
+                        if remaining_node_count == 0:
+                            break
                 if remaining_node_count == 0:
                     break
 
@@ -370,51 +381,103 @@ class ClusterBaseSystem (Component):
         nodes -- number of requested nodes
 
         end_times: This is a list of locations and when the job on them is expected to expire.
+        This may be run with:
+        first_fit - run immediately in a location
+        backfill - drain for jobs and allow for backfilling
+        drain-only - drain for the highest scored job, do not run jobs from the backfill pass.
 
         '''
         best_location_dict = {}
-        drain_locations = None
-        drain_time = 0
         jobid = None
         user = None
         now = int(time.time())
+        drain_locs_by_queue = {}
         self.init_drain_times(end_times)
+        #self.draining_nodes cannot be reset here, due to the fact that this may be called on a second pass if you have multiple
+        #queue equivalence classes.
 
         # first time through, try for starting jobs based on utility scores
         for jobs in job_list:
             jobid = int(jobs['jobid'])
+            queue = jobs['queue']
             user = jobs['user']
+            drain_time = 0
+            self.logger.debug('Queue considered: %s', queue)
+            if queue in drain_locs_by_queue.keys():
+                self.logger.debug('queue seen')
+                continue
+            else: #first time we're seeing this queue this pass
+                if queue in self.draining_queues.keys():
+                    del self.draining_queues[queue]
+            self.logger.debug("current draining nodes: %s", self.draining_nodes)
+            already_draining = set([loc for drain_locs in self.draining_nodes.values() for loc in drain_locs])
+            self.logger.debug("Already draining: %s" % already_draining)
+            #short circut, we won't be able to schedule anything if our entire queue is being drained.
+            if self.queue_assignments[queue].issubset(already_draining):
+                self.logger.debug("queue %s has no nodes that aren't already drained.", queue)
+                drain_locs_by_queue[queue] = set(self.queue_assignments[queue])
+                #use shortest drain time of all resources for this queue:
+                shortest_time = None
+                for drain_time, drain_nodes in self.draining_nodes.iteritems():
+                    if self.queue_assignments[queue].intersection(drain_nodes):
+                        self.logger.debug("Finding new shortest time")
+                        if shortest_time is None or shortest_time > int(drain_time):
+                            shortest_time = int(drain_time)
+                self.draining_queues[queue] = shortest_time
+                continue
             try:
-                location_data, drain_time, ready_to_run = self._find_job_location(jobs, now)
+                location_data, drain_time, ready_to_run = self._find_job_location(jobs, now, already_draining=already_draining)
             except RequiredLocationError:
+                self.logger.debug("Required location error PRIMARY LOOP!")
                 continue #location_data, drain_time and ready_to_run not set.
-            if ready_to_run:
+            if ready_to_run or self.drain_mode == 'first_fit':
+                if self.drain_mode == 'first_fit':
+                    self.logger.info("locations %s selected to run immediately by first fit", location_data)
+                else:
+                    self.logger.info("locations %s selected to run immediately", location_data)
                 best_location_dict.update(location_data)
                 break
             elif drain_time != 0: #found a drain location
-                drain_locations = set(location_data[str(jobid)])
-                self.logger.info("%s/%s: Is draining nodes %s", user, jobid, ":".join(location_data[str(jobid)]))
-                break
+                drain_locs_by_queue[queue] = set(location_data[str(jobid)])
+                self.draining_queues[queue] = drain_time
+                self.draining_nodes[str(self.draining_queues[queue])] = list(location_data[str(jobid)])
+                self.logger.info("%s/%s: Is draining nodes %s in queue %s", user, jobid, ":".join(location_data[str(jobid)]), queue)
+                #do not break out here, we need to cover other queues!
+
+        self.logger.debug('primary pass complete')
 
         #make a second pass to pick a job for the draining nodes
-        self.draining_nodes = {}
-        backfill_drain_time = drain_time
-        if drain_locations is not None:
-            self.draining_nodes = {str(drain_time):list(drain_locations)}
+        #self.draining_nodes = {}
+
+        #for queue in drain_locs_by_queue.keys():
+        #    self.draining_nodes[str(self.draining_queues[queue])] = list(drain_locs_by_queue[queue])
+        if drain_locs_by_queue != {} and self.drain_mode == 'backfill':
+            #only make this pass if we are allowing backfilling.
+            self.logger.debug("locs_by_queue: %s", drain_locs_by_queue)
+            self.logger.debug("locs_by_time: %s", self.draining_queues)
             for jobs in job_list:
                 jobid = int(jobs['jobid'])
                 user = jobs['user']
+                queue = jobs['queue']
+                drain_time = 0
                 try:
-                    location_data, drain_time, ready_to_run = self._find_job_location(jobs, now, backfill_drain_time)
+                    location_data, drain_time, ready_to_run = self._find_job_location(jobs, now,
+                            drain_time=int(self.draining_queues[queue]))
                 except RequiredLocationError:
                     continue #location_data, drain_time and ready_to_run not set.
-                if ready_to_run:
-                    best_location_dict.update(location_data)
-                    self.logger.info("%s/%s: job selected for backfill on locations %s", user, jobid,
-                            ':'.join(location_data[str(jobid)]))
-                    break
+                except KeyError:
+                    pass
+                    #self.logger.warning("Queue %s not found in draining queue times.", queue)
+                    #raise
+                else:
+                    if ready_to_run:
+                        #first backfill we find is the winner, and we start it.
+                        best_location_dict.update(location_data)
+                        self.logger.info("%s/%s: job selected for backfill on locations %s from queue %s", user, jobid,
+                                ':'.join(location_data[str(jobid)]), jobs['queue'])
+                        break
 
-
+        self.logger.debug('secondary_pass_complete')
         # reserve the stuff in the best_partition_dict, as those partitions are allegedly going to
         # be running jobs very soon
         for jobid_str, location_list in best_location_dict.iteritems():
@@ -432,7 +495,7 @@ class ClusterBaseSystem (Component):
     def init_drain_times(self, end_times):
         '''Update a list of the locations and times.  Return a list of nodes and their drain times.
 
-        end_times: a dict ([locations]:time) with the scheduled end times of locations that are running
+        end_times: a list of dicts [[locations]:time] with the scheduled end times of locations that are running
 
         side-effect: self.node_end_time_dict has every location initialized to 0 (immediately available)
                      or to the time remaining on the jobs running
@@ -448,10 +511,34 @@ class ClusterBaseSystem (Component):
                     self.node_end_time_dict[end_time] = [location]
                 else:
                     self.node_end_time_dict[end_time].append(location)
-                self.node_end_time_dict[0].remove(location)
+                try:
+                    self.node_end_time_dict[0].remove(location)
+                except ValueError:
         # add in locations that are being cleaned, but are not coming from the scheduling component
+                    self.logger.warning("WARNING: Location %s not found in node end times.", location)
         for locations in self.locations_by_jobid.itervalues():
             self._append_cleanup_drain_shadow(locations)
+
+        #This is needed for the multiple passes that can happen in find_job_location due to multiple calls in a single scheduling
+        #pass by bgsched if we end up with multiple queue equivalence classes (i.e., we have queues defined such that at least two
+        #sets of queues contain a disjoint set of resources.  We can only have a drain time set if there is a job that we are
+        #actively draining for, so at the end of drain time initialization, clear any drain times that don't correspond to a job end
+        #time.
+        times_to_remove = []
+        for draining_time_str in self.draining_nodes.keys():
+            draining_time = int(draining_time_str)
+            found = False
+            for end_time in self.node_end_time_dict.keys():
+                if end_time == draining_time:
+                    found = True
+                    break
+            if not found:
+                times_to_remove.append(draining_time_str)
+        for time_to_remove in times_to_remove:
+            try:
+                del self.draining_nodes[time_to_remove] #has to be string to play nice with XMLRPC
+            except KeyError:
+                self.logger.warning("Drain time of %s not found when cleaning up drain times.", time_to_remove)
         return
 
     def _append_cleanup_drain_shadow(self, locations):
@@ -536,12 +623,37 @@ class ClusterBaseSystem (Component):
         return -cmp(float(dict1['walltime']), float(dict2['walltime']))
 
     def find_queue_equivalence_classes(self, reservation_dict, active_queue_names, passthrough_partitions=[]):
+        '''Aggregate queues together that can impact eachother in the same general pass (both drain and backfill pass) in
+        find_job_location.  Equivalence classes will then be used in FJL to consider placement of jobs and resources, in separate
+        passes.  If multiple equivalence classes are returned, then they must contain orthogonal sets of resources.
+
+        Inputs:
+        reservation_dict -- a mapping of active reservations to resrouces.  These will block any job in a normal queue.
+        active_queue_names -- A list of queues that are currently enabled.  Queues that are not in the 'running' state
+                              are ignored.
+        passthrough_partitions -- Not used in the general cluster_system version.  Nominally this would be a list of location
+                                  identifiers that would be impacted by runs on a queue, but would not be directly scheduled.
+                                  The implication is that these locations may be made unavailable by having resources in this
+                                  equivalence class scheduled, or vice-versa.
+
+        Output:
+        A list of dictionaries of queues that may impact eachother while scheduling resources.
+
+        Side effects: None
+
+        Internal Data:
+        queue_assignments: a mapping of queues to schedulable locations.
+
+        '''
+        #Bring together sets of queues that need to be considered together in a scheduling pass.
+        #if two queues have overlapping sets of resources we need to consider them toegether in the same scheduler
+        #pass.  By the same token, we can treat each orthogonal set of resources in their own pass.  Which is exactly
+        #what find_job_location will do with this data.
         equiv = []
         for q in self.queue_assignments:
             # skip queues that aren't "running"
             if not q in active_queue_names:
                 continue
-
             found_a_match = False
             for e in equiv:
                 if e['data'].intersection(self.queue_assignments[q]):
@@ -552,12 +664,12 @@ class ClusterBaseSystem (Component):
             if not found_a_match:
                 equiv.append( { 'queues': set([q]), 'data': set(self.queue_assignments[q]), 'reservations': set() } )
 
-
+        #merge together queue/resource groupings that you missed on the first pass
         real_equiv = []
         for eq_class in equiv:
             found_a_match = False
             for e in real_equiv:
-                if e['queues'].intersection(eq_class['queues']):
+                if e['data'].intersection(eq_class['data']):
                     e['queues'].update(eq_class['queues'])
                     e['data'].update(eq_class['data'])
                     found_a_match = True
@@ -567,6 +679,7 @@ class ClusterBaseSystem (Component):
 
         equiv = real_equiv
 
+        #add in locations for active reservations that may impact scheduling decisions in these queues.
         for eq_class in equiv:
             for res_name in reservation_dict:
                 skip = True
@@ -579,6 +692,7 @@ class ClusterBaseSystem (Component):
             del eq_class['data']
 
         return equiv
+
     find_queue_equivalence_classes = exposed(find_queue_equivalence_classes)
 
     def reserve_resources_until(self, location, time, jobid):
@@ -984,3 +1098,8 @@ class ClusterBaseSystem (Component):
         '''
         raise NotImplementedError("Must be overridden in child class")
 
+    def set_drain_mode(self, mode):
+        valid_modes = ['backfill', 'drain_only', 'first_fit']
+        if mode not in valid_modes:
+            raise ValueError("Mode %s is not a valid drain mode" % mode)
+        self.drain_mode = mode

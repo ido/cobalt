@@ -1225,6 +1225,7 @@ def cluster_display_node_info():
     queue_data = component_call(SYSMGR, False, 'get_queue_assignments', ())
     end_times_to_nodes = component_call(SYSMGR, False, 'get_backfill_windows', ())
 
+    print end_times_to_nodes
     header = [['Host', 'Queue', 'State', 'Backfill']]
     #build output list
     output = []

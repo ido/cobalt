@@ -66,7 +66,7 @@ def get_basic_job_dict():
             'queue': 'default',
             'walltime': 10,
             'user': 'testuser'
-            }
+            } 
 
 class TestClusterSystem(object):
     '''Test core cluster system functionality'''
@@ -76,11 +76,11 @@ class TestClusterSystem(object):
         self.full_node_set = set(['vs1.test', 'vs2.test', 'vs3.test', 'vs4.test'])
 
     def setup(self):
-        '''Ensure cluster system exists for all tests.  Refresh the setup between tests'''
+        '''Ensure cluster s ystem exists for all tests.  Refresh the setup between tests'''
         self.cluster_system = Cobalt.Components.cluster_system.ClusterSystem()
 
     def teardown(self):
-        '''Free cluster system base class between tests.  Forces reinitialization.'''
+        '''Free cluster syst em base class between tests.  Forces reinitialization.'''
         del self.cluster_system
 
     def test_init_drain_time_no_jobs(self):
@@ -314,6 +314,35 @@ class TestClusterSystem(object):
         assert best_location == {'2':['vs4.test']}, "ERROR: Unexpected best_location.\nExpected %s\nGot %s" % \
                 ({'2':['vs4.test']}, best_location)
 
+    def test_find_job_location_drain_right_queue(self):
+        #make sure that if we can draini resources from different queues, that we only drain from one.
+        jobs = [get_basic_job_dict() for _ in range(4)]
+        jobs[0]['walltime'] = 720
+        jobs[0]['score'] = 5000
+        jobs[0]['nodes'] = 4
+        jobs[0]['queue'] = 'backfill'
+        jobs[1]['jobid'] = 2
+        jobs[1]['walltime'] = 5
+        jobs[1]['score'] = 101
+        jobs[1]['queue'] = 'q2'
+        jobs[1]['nodes'] = 2
+        jobs[2]['jobid'] = 3
+        jobs[2]['walltime'] = 5
+        jobs[2]['score'] = 100
+        jobs[2]['queue'] = 'q1'
+        jobs[2]['nodes'] = 2
+        jobs[3]['jobid'] = 4
+        jobs[3]['queue'] = 'q1'
+        jobs[3]['nodes'] = 1
+        jobs[3]['walltime'] = 5
+        self.cluster_system.queue_assignments = {'q1':set(['vs1.test', 'vs2.test']), 'q2':set(['vs3.test', 'vs4.test']),
+                'backfill':set(['vs1.test', 'vs2.test', 'vs3.test', 'vs4.test'])}
+        self.cluster_system.running_nodes = set(['vs2.test', 'vs3.test'])
+        end_times = [[['vs2.test', 'vs3.test'], int(time.time()) + 400]]
+        best_location = self.cluster_system.find_job_location(jobs, end_times)
+        assert best_location == {'4':['vs1.test']}, "ERROR: Unexpected best_location.\nExpected %s\nGot %s" % \
+                ({'4':['vs1.test']}, best_location)
+
     def test_find_job_location_hold_for_cleanup(self):
         #ensure that a job that is in a "cleanup" state doesn't get ignored for backfill scheduling
         jobs = [get_basic_job_dict(), get_basic_job_dict()]
@@ -344,3 +373,102 @@ class TestClusterSystem(object):
         assert self.cluster_system.node_end_time_dict == expected_dict, \
             "ERROR: locations was %s\n Expected: %s\n %s" % (self.cluster_system.node_end_time_dict, expected_dict,
                     self.cluster_system.node_end_time_dict == expected_dict)
+
+    def test_find_queue_equivalence_classes_no_overlap(self):
+        expected_return = [{'reservations': [], 'queues': ['q1']}, {'reservations': [], 'queues': ['q2']}]
+        self.cluster_system.queue_assignments = {'q1':['vs1.test', 'vs2.test'], 'q2':['vs3.test', 'vs4.test']}
+        reservation_dict = {}
+        active_queue_names = ['q1', 'q2']
+        passthrough_partitions = []
+        actual_return = self.cluster_system.find_queue_equivalence_classes(reservation_dict, active_queue_names,
+                passthrough_partitions)
+        assert expected_return == actual_return, "ERROR: equivalence classes: expected: %s\ngot: %s" % (expected_return,
+                actual_return)
+
+    def test_find_queue_equivalence_classes_overlap(self):
+        expected_return = [{'reservations': [], 'queues': ['q1', 'q2']}]
+        self.cluster_system.queue_assignments = {'q1':['vs1.test', 'vs2.test', 'vs3.test'], 'q2':['vs3.test', 'vs4.test']}
+        reservation_dict = {}
+        active_queue_names = ['q1', 'q2']
+        passthrough_partitions = []
+        actual_return = self.cluster_system.find_queue_equivalence_classes(reservation_dict, active_queue_names,
+                passthrough_partitions)
+        assert expected_return == actual_return, "ERROR: equivalence classes: expected: %s\ngot: %s" % (expected_return,
+                actual_return)
+
+    def test__find_queue_equivalence_classes_split_with_bridge(self):
+        #Ran into this while implementing backfill: take two queues with orthogonal resources, with a third that overlaps both.
+        #This has to put all three into the same equivalence class regardless of order.
+        #Originally this would get the first overlap, but miss q2.
+        expected_return = [{'reservations': [], 'queues': ['q1', 'q2', 'backfill']}]
+        self.cluster_system.queue_assignments = {'q1':['vs1.test', 'vs2.test', 'vs3.test'], 'backfill':['vs1.test', 'vs2.test'
+            'vs3.test', 'vs4.test'], 'q2':['vs3.test', 'vs4.test']}
+        reservation_dict = {}
+        active_queue_names = ['q1', 'backfill', 'q2']
+        passthrough_partitions = []
+        actual_return = self.cluster_system.find_queue_equivalence_classes(reservation_dict, active_queue_names,
+                passthrough_partitions)
+        assert expected_return == actual_return, "ERROR: equivalence classes: expected: %s\ngot: %s" % (expected_return,
+                actual_return)
+
+    def test_find_queue_equivalence_classes_2_overlap_1_separate(self):
+        #as it says on the tin, have two overlaping queues and one non-overlaping queue.  Make sure the orthogonal set really is
+        #separate
+        expected_return = [{'reservations': [], 'queues': ['q1', 'backfill',]}, {'reservations':[], 'queues':['q2']}]
+        self.cluster_system.queue_assignments = {'q1':['vs2.test', 'vs3.test'], 'backfill':['vs1.test', 'vs3.test'],
+                'q2':['vs4.test']}
+        reservation_dict = {}
+        active_queue_names = ['q1', 'backfill', 'q2']
+        passthrough_partitions = []
+        actual_return = self.cluster_system.find_queue_equivalence_classes(reservation_dict, active_queue_names,
+                passthrough_partitions)
+        assert expected_return == actual_return, "ERROR: equivalence classes: expected: %s\ngot: %s" % (expected_return,
+                actual_return)
+
+    def test_find_queue_equivalence_classes_inactive_queue(self):
+        #don't consider queues that are turned off.
+        expected_return = [{'reservations': [], 'queues': ['q1']}]
+        self.cluster_system.queue_assignments = {'q1':['vs1.test', 'vs2.test', 'vs3.test'], 'q2':['vs3.test', 'vs4.test']}
+        reservation_dict = {}
+        active_queue_names = ['q1']
+        passthrough_partitions = []
+        actual_return = self.cluster_system.find_queue_equivalence_classes(reservation_dict, active_queue_names,
+                passthrough_partitions)
+        assert expected_return == actual_return, "ERROR: equivalence classes: expected: %s\ngot: %s" % (expected_return,
+                actual_return)
+
+    def test_find_queue_equivalence_classes_no_active_queue(self):
+        #don't blow up if no queues are active.
+        expected_return = []
+        self.cluster_system.queue_assignments = {'q1':['vs1.test', 'vs2.test', 'vs3.test'], 'q2':['vs3.test', 'vs4.test']}
+        reservation_dict = {}
+        active_queue_names = []
+        passthrough_partitions = []
+        actual_return = self.cluster_system.find_queue_equivalence_classes(reservation_dict, active_queue_names,
+                passthrough_partitions)
+        assert expected_return == actual_return, "ERROR: equivalence classes: expected: %s\ngot: %s" % (expected_return,
+                actual_return)
+
+    def test_find_queue_equivalence_classes_consider_reservation(self):
+        #attach a reservation to an appropriate class
+        expected_return = [{'reservations': ['test.res'], 'queues': ['q1']}, {'reservations': [], 'queues': ['q2']}]
+        self.cluster_system.queue_assignments = {'q1':['vs1.test', 'vs2.test'], 'q2':['vs3.test', 'vs4.test']}
+        reservation_dict = {'test.res':'vs1.test'}
+        active_queue_names = ['q1', 'q2']
+        passthrough_partitions = []
+        actual_return = self.cluster_system.find_queue_equivalence_classes(reservation_dict, active_queue_names,
+                passthrough_partitions)
+        assert expected_return == actual_return, "ERROR: equivalence classes: expected: %s\ngot: %s" % (expected_return,
+                actual_return)
+
+    def test_find_queue_equivalence_classes_reserve_all_classes(self):
+        #For a reservation that attaches to multiple equivalence classes, make sure it attaches to both.
+        expected_return = [{'reservations': ['test.res'], 'queues': ['q1']}, {'reservations': ['test.res'], 'queues': ['q2']}]
+        self.cluster_system.queue_assignments = {'q1':['vs1.test', 'vs2.test'], 'q2':['vs3.test', 'vs4.test']}
+        reservation_dict = {'test.res':'vs1.test:vs3.test'}
+        active_queue_names = ['q1', 'q2']
+        passthrough_partitions = []
+        actual_return = self.cluster_system.find_queue_equivalence_classes(reservation_dict, active_queue_names,
+                passthrough_partitions)
+        assert expected_return == actual_return, "ERROR: equivalence classes: expected: %s\ngot: %s" % (expected_return,
+                actual_return)
