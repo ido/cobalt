@@ -50,7 +50,7 @@ class ClusterNode(object):
         self.name = name
         self.running = False
         self.down = False
-        self.queues = None
+        self.queues = []
         self.allocated = False
         self.cleaning = False
         self.cleaning_process = None
@@ -58,6 +58,8 @@ class ClusterNode(object):
         self.alloc_timeout = None
         self.alloc_start = None
         self.assigned_user = None
+        self.draining_jobid = None
+        self.drain_time = None
 
     def allocate(self, jobid, user, time=None):
 
@@ -72,15 +74,14 @@ class ClusterNode(object):
 
     def start_running(self):
         self.running = True
+        #invoke prescripts
 
     def stop_running(self):
-
         self.running = False
         self.cleaning = True
         #invoke cleanup
 
     def deallocate(self):
-
         self.assigned_user = None
         self.assigned_jobid = None
         self.alloc_timeout = None
@@ -93,7 +94,28 @@ class ClusterNode(object):
     def mark_down (self):
         self.down = True
 
+    def mark_draining(self, jobid, drain_time):
+        '''mark that a node is being drained for a job, and how long it is to be drained for.'''
+        self.draining_jobid = int(jobid)
+        self.drain_time = int(drain_time) #integer seconds from epoch
 
+    def clear_draining(self):
+        '''Clear the drain state from the node being drained.'''
+        self.draining_jobid = None
+        self.drain_time = None
+
+    def add_queues(self, queue_list):
+        self.queues.extend(queue_list)
+        #logger.info('node %s queues are now %s', self.name, " ".join(q for q in self.queues))
+
+    def del_queues(self, queue_list):
+        for queue in queue_list:
+            del self.queues[queue]
+        #logger.info('node %s queues are now %s', self.name, " ".join(q for q in self.queues))
+
+    def set_queues(self, queue_list):
+        self.queues = queue_list
+        #logger.info('node %s queues are now %s', self.name, " ".join(q for q in self.queues))
 
 class ClusterNodeDict(DataDict):
     '''default container for ClusterNode information
@@ -120,6 +142,7 @@ class ClusterBaseSystem (Component):
     def __init__ (self, *args, **kwargs):
         Component.__init__(self, *args, **kwargs)
         self.process_groups = ProcessGroupDict()
+        self.active_queues = []
         self.all_nodes = set()
         self.running_nodes = set()
         self.down_nodes = set()
@@ -159,8 +182,9 @@ class ClusterBaseSystem (Component):
         return state
 
     def __setstate__(self, state):
-        Component.__setstate__(self, state)
+        Component.__setstate__( self, state)
         self.all_nodes = set()
+        self.active_queues = []
         self.node_order = {}
         self.MINIMUM_BACKFILL_WINDOW = 300
         try:
@@ -395,8 +419,38 @@ class ClusterBaseSystem (Component):
         self.init_drain_times(end_times)
         #self.draining_nodes cannot be reset here, due to the fact that this may be called on a second pass if you have multiple
         #queue equivalence classes.
-
+        self.logger.debug('job_list: %s', job_list)
         # first time through, try for starting jobs based on utility scores
+
+        #remove queues from draining if they are not in the active queue list, from the scheduler via find_queue_equivalence_classes
+        inactive_queues = []
+        for queue in self.draining_queues.keys():
+            if queue not in self.active_queues:
+                inactive_queues.append(queue)
+        for queue in inactive_queues:
+            del self.draining_queues[queue]
+
+        #first identify the list of queues in our jobs:
+        considered_queues = []
+        for job in job_list:
+            if job['queue'] not in considered_queues:
+                considered_queues.append(job['queue'])
+        #to make sure that we properly reevalueate the drains on this pass, we need to clear out old times, make sure not to clear
+        #out times that are in use by other equivalence classes.
+        for queue in considered_queues:
+            if queue in self.draining_queues.keys():
+                del self.draining_queues[queue]
+        still_draining_times = [str(t) for t in self.draining_queues.values()]
+        not_found_times = [t for t in self.draining_nodes.keys() if t not in still_draining_times]
+        for drain_time in not_found_times:
+            del self.draining_nodes[drain_time]
+
+        self.logger.debug('*' * 80)
+        self.logger.debug('initial draining_queues:\n%s', self.draining_queues)
+        self.logger.debug('stilldraining times:\n%s', still_draining_times)
+        self.logger.debug('initial draining_nodes:\n%s', self.draining_nodes)
+        self.logger.debug('*' * 80)
+
         for jobs in job_list:
             jobid = int(jobs['jobid'])
             queue = jobs['queue']
@@ -404,7 +458,7 @@ class ClusterBaseSystem (Component):
             drain_time = 0
             self.logger.debug('Queue considered: %s', queue)
             if queue in drain_locs_by_queue.keys():
-                self.logger.debug('queue seen')
+                #self.logger.debug('queue seen')
                 continue
             else: #first time we're seeing this queue this pass
                 if queue in self.draining_queues.keys():
@@ -420,7 +474,7 @@ class ClusterBaseSystem (Component):
                 shortest_time = None
                 for drain_time, drain_nodes in self.draining_nodes.iteritems():
                     if self.queue_assignments[queue].intersection(drain_nodes):
-                        self.logger.debug("Finding new shortest time")
+                        #self.logger.debug("Finding new shortest time")
                         if shortest_time is None or shortest_time > int(drain_time):
                             shortest_time = int(drain_time)
                 self.draining_queues[queue] = shortest_time
@@ -519,26 +573,6 @@ class ClusterBaseSystem (Component):
         for locations in self.locations_by_jobid.itervalues():
             self._append_cleanup_drain_shadow(locations)
 
-        #This is needed for the multiple passes that can happen in find_job_location due to multiple calls in a single scheduling
-        #pass by bgsched if we end up with multiple queue equivalence classes (i.e., we have queues defined such that at least two
-        #sets of queues contain a disjoint set of resources.  We can only have a drain time set if there is a job that we are
-        #actively draining for, so at the end of drain time initialization, clear any drain times that don't correspond to a job end
-        #time.
-        times_to_remove = []
-        for draining_time_str in self.draining_nodes.keys():
-            draining_time = int(draining_time_str)
-            found = False
-            for end_time in self.node_end_time_dict.keys():
-                if end_time == draining_time:
-                    found = True
-                    break
-            if not found:
-                times_to_remove.append(draining_time_str)
-        for time_to_remove in times_to_remove:
-            try:
-                del self.draining_nodes[time_to_remove] #has to be string to play nice with XMLRPC
-            except KeyError:
-                self.logger.warning("Drain time of %s not found when cleaning up drain times.", time_to_remove)
         return
 
     def _append_cleanup_drain_shadow(self, locations):
@@ -639,7 +673,7 @@ class ClusterBaseSystem (Component):
         Output:
         A list of dictionaries of queues that may impact eachother while scheduling resources.
 
-        Side effects: None
+        Side effects: updates a list of currently active queues used for find_job_location
 
         Internal Data:
         queue_assignments: a mapping of queues to schedulable locations.
@@ -650,6 +684,8 @@ class ClusterBaseSystem (Component):
         #pass.  By the same token, we can treat each orthogonal set of resources in their own pass.  Which is exactly
         #what find_job_location will do with this data.
         equiv = []
+        self.active_queues = active_queue_names
+
         for q in self.queue_assignments:
             # skip queues that aren't "running"
             if not q in active_queue_names:
