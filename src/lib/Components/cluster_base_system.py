@@ -484,14 +484,14 @@ class ClusterBaseSystem (Component):
             except RequiredLocationError:
                 self.logger.debug("Required location error PRIMARY LOOP!")
                 continue #location_data, drain_time and ready_to_run not set.
-            if ready_to_run or self.drain_mode == 'first_fit':
+            if ready_to_run:
                 if self.drain_mode == 'first_fit':
                     self.logger.info("locations %s selected to run immediately by first fit", location_data)
                 else:
                     self.logger.info("locations %s selected to run immediately", location_data)
                 best_location_dict.update(location_data)
                 break
-            elif drain_time != 0: #found a drain location
+            elif drain_time != 0 and self.drain_mode != 'first_fit': #found a drain location
                 drain_locs_by_queue[queue] = set(location_data[str(jobid)])
                 self.draining_queues[queue] = drain_time
                 self.draining_nodes[str(self.draining_queues[queue])] = list(location_data[str(jobid)])
