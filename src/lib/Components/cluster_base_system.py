@@ -408,7 +408,15 @@ class ClusterBaseSystem (Component):
         This may be run with:
         first_fit - run immediately in a location
         backfill - drain for jobs and allow for backfilling
-        drain-only - drain for the highest scored job, do not run jobs from the backfill pass.
+
+        Reservation handling:
+        Reservations are a special case, as they don't (necessarially) have queues bound tightly to resources in the system
+        component.  Under the current behavior, they should first-fit their jobs.  A reservation pass on this function can will
+        have 'requires' set in the passed in jobs, allowing us to react accordingly.
+
+        Reservation passes do not respect drain decisions otherwise.  The behavior of two overlaping reservations is undefined,
+        since a reservation is effectively max-priority on the affected resources.  All reservations are equal and will race as
+        such.
 
         '''
         best_location_dict = {}
@@ -455,6 +463,13 @@ class ClusterBaseSystem (Component):
             jobid = int(jobs['jobid'])
             queue = jobs['queue']
             user = jobs['user']
+            has_required = False
+            try:
+                if jobs['required']:
+                    #if this exists we're scheduling on the reservation pass, treat accordingly.
+                    has_required = True
+            except KeyError: #requried locations is totally optional and may not be in the dict.
+                pass
             drain_time = 0
             self.logger.debug('Queue considered: %s', queue)
             if queue in drain_locs_by_queue.keys():
@@ -467,18 +482,23 @@ class ClusterBaseSystem (Component):
             already_draining = set([loc for drain_locs in self.draining_nodes.values() for loc in drain_locs])
             self.logger.debug("Already draining: %s" % already_draining)
             #short circut, we won't be able to schedule anything if our entire queue is being drained.
-            if self.queue_assignments[queue].issubset(already_draining):
-                self.logger.debug("queue %s has no nodes that aren't already drained.", queue)
-                drain_locs_by_queue[queue] = set(self.queue_assignments[queue])
-                #use shortest drain time of all resources for this queue:
-                shortest_time = None
-                for drain_time, drain_nodes in self.draining_nodes.iteritems():
-                    if self.queue_assignments[queue].intersection(drain_nodes):
-                        #self.logger.debug("Finding new shortest time")
-                        if shortest_time is None or shortest_time > int(drain_time):
-                            shortest_time = int(drain_time)
-                self.draining_queues[queue] = shortest_time
-                continue
+            try:
+                if self.queue_assignments[queue].issubset(already_draining):
+                    self.logger.debug("queue %s has no nodes that aren't already drained.", queue)
+                    drain_locs_by_queue[queue] = set(self.queue_assignments[queue])
+                    #use shortest drain time of all resources for this queue:
+                    shortest_time = None
+                    for drain_time, drain_nodes in self.draining_nodes.iteritems():
+                        if self.queue_assignments[queue].intersection(drain_nodes):
+                            #self.logger.debug("Finding new shortest time")
+                            if shortest_time is None or shortest_time > int(drain_time):
+                                shortest_time = int(drain_time)
+                    self.draining_queues[queue] = shortest_time
+                    continue
+            except KeyError:
+                #Reservation queues will cause a key error on this test, the queue is not actually assigned to resources
+                #in the component.  Treat as though this check passed, reservations don't drain. --PMR
+                pass
             try:
                 location_data, drain_time, ready_to_run = self._find_job_location(jobs, now, already_draining=already_draining)
             except RequiredLocationError:
@@ -491,7 +511,8 @@ class ClusterBaseSystem (Component):
                     self.logger.info("locations %s selected to run immediately", location_data)
                 best_location_dict.update(location_data)
                 break
-            elif drain_time != 0 and self.drain_mode != 'first_fit': #found a drain location
+            elif drain_time != 0 and (self.drain_mode != 'first_fit' or has_required): #found a drain location
+                #In the event reservation scheduling, use first fit.
                 drain_locs_by_queue[queue] = set(location_data[str(jobid)])
                 self.draining_queues[queue] = drain_time
                 self.draining_nodes[str(self.draining_queues[queue])] = list(location_data[str(jobid)])
