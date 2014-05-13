@@ -315,7 +315,7 @@ class TestClusterSystem(object):
                 ({'2':['vs4.test']}, best_location)
 
     def test_find_job_location_drain_right_queue(self):
-        #make sure that if we can draini resources from different queues, that we only drain from one.
+        #make sure that if we can drain resources from different queues, that we only drain from one.
         jobs = [get_basic_job_dict() for _ in range(4)]
         jobs[0]['walltime'] = 720
         jobs[0]['score'] = 5000
@@ -526,3 +526,79 @@ class TestClusterSystem(object):
             "Draining nodes:\nExpected: %s\nGot: %s" % (expected_draining_nodes, self.cluster_system.draining_nodes)
         assert str(self.cluster_system.draining_queues) == str(expected_draining_queues), \
             "Draining nodes:\nExpected: %s\nGot: %s" % (expected_draining_queues, self.cluster_system.draining_queues)
+
+    def test_first_fit(self):
+        #make sure if first fit is set that we don't try to drain, and just run the first fit.
+        self.cluster_system.drain_mode = 'first_fit'
+        jobs = [get_basic_job_dict() for _ in range(3)]
+        jobs[0]['walltime'] = 720
+        jobs[0]['score'] = 50000
+        jobs[0]['nodes'] = 2
+        jobs[1]['jobid'] = 2
+        jobs[1]['walltime'] = 10
+        jobs[1]['score'] = 100
+        jobs[2]['jobid'] = 3
+        jobs[2]['walltime'] = 5
+        jobs[2]['score'] = 10
+        self.cluster_system.running_nodes = set(['vs1.test', 'vs2.test', 'vs3.test'])
+        end_times = [[['vs1.test', 'vs2.test', 'vs3.test'], int(time.time()) + 400]]
+        best_location = self.cluster_system.find_job_location(jobs, end_times)
+        assert best_location == {'2':['vs4.test']}, "ERROR: Unexpected best_location.\nExpected %s\nGot %s" % \
+                ({'2':['vs4.test']}, best_location)
+
+class TestReservationHandling(object):
+    '''Test core cluster system functionality'''
+
+    def __init__(self):
+        self.cluster_system = None
+        self.full_node_set = set(['vs1.test', 'vs2.test', 'vs3.test', 'vs4.test'])
+
+    def setup(self):
+        '''Ensure cluster s ystem exists for all tests.  Refresh the setup between tests'''
+        self.cluster_system = Cobalt.Components.cluster_system.ClusterSystem()
+
+    def teardown(self):
+        '''Free cluster syst em base class between tests.  Forces reinitialization.'''
+        del self.cluster_system
+
+    def test_reservation_drain_shadow(self):
+        #this comes in as forbidden locations.  Make sure that a job isn't scheduled if it has too many forbidden locations
+        jobs = [get_basic_job_dict() for _ in range(3)]
+        jobs[0]['walltime'] = 720
+        jobs[0]['score'] = 50000
+        jobs[0]['nodes'] = 2
+        jobs[0]['forbidden'] = ['vs4.test']
+        jobs[1]['jobid'] = 2
+        jobs[1]['walltime'] = 10
+        jobs[1]['score'] = 100
+        jobs[1]['forbidden'] = ['vs4.test']
+        jobs[2]['jobid'] = 3
+        jobs[2]['walltime'] = 5
+        jobs[2]['score'] = 10
+        jobs[2]['forbidden'] = ['vs4.test']
+        self.cluster_system.running_nodes = set(['vs1.test', 'vs2.test', 'vs3.test'])
+        end_times = [[['vs1.test', 'vs2.test', 'vs3.test'], int(time.time()) + 400]]
+        best_location = self.cluster_system.find_job_location(jobs, end_times)
+        assert best_location == {}, "ERROR: Unexpected best_location.\nExpected %s\nGot %s" % ({}, best_location)
+
+    def test_reservations_run_first_fit(self):
+        #make sure first-fit rules are used for reservation jobs
+        #self.cluster_system.drain_mode = 'backfill'
+        jobs = [get_basic_job_dict() for _ in range(3)]
+        jobs[0]['walltime'] = 720
+        jobs[0]['score'] = 50000
+        jobs[0]['nodes'] = 2
+        jobs[0]['required'] = ['vs2.test', 'vs3.test', 'vs4.test']
+        jobs[1]['jobid'] = 2
+        jobs[1]['walltime'] = 10
+        jobs[1]['score'] = 100
+        jobs[1]['required'] = ['vs2.test', 'vs3.test', 'vs4.test']
+        jobs[2]['jobid'] = 3
+        jobs[2]['walltime'] = 5
+        jobs[2]['score'] = 10
+        jobs[2]['required'] = ['vs2.test', 'vs3.test', 'vs4.test']
+        self.cluster_system.running_nodes = set(['vs1.test', 'vs2.test', 'vs3.test'])
+        end_times = []
+        best_location = self.cluster_system.find_job_location(jobs, end_times)
+        assert best_location == {'2':['vs4.test']}, "ERROR: Unexpected best_location.\nExpected %s\nGot %s" % \
+                ({'2':['vs4.test']}, best_location)
