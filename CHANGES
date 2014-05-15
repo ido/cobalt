@@ -1,5 +1,11 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 0.99.32 ==
+ * Cluster systems now drain for larger jobs, and will backfill into the
+   draining hardware. (Cobalt Ticket #663)
+ * Fixed a bug in the prologue_helper where a silent failure on sending the
+   hostfile to nodes could occur silently (Cobalt Ticket #686)
+
 == Changes to 0.99.31 == 
  * Interactive mode jobs (qsub -I) are now supported on the BlueGene/Q.
    (Cobalt Ticket #107)

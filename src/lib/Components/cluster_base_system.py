@@ -848,9 +848,6 @@ class ClusterBaseSystem (Component):
 
     def get_backfill_windows(self):
         '''Get the current drain limits for display'''
-        #ret_dict = {}
-        #for key, val in self.node_end_time_dict.iteritems():
-            #ret_dict[str(key)] = val
         return self.draining_nodes
     get_backfill_windows = exposed(get_backfill_windows)
 
