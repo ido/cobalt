@@ -14,7 +14,6 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 config = ConfigParser.ConfigParser()
 config.read(Cobalt.CONFIG_FILES)
-
 if not config.has_section('cluster_system'):
     print '''"ERROR: cluster_system" section missing from cobalt config file'''
     sys.exit(1)

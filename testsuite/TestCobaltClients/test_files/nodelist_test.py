@@ -35,6 +35,15 @@ GET_QUEUE_ASSIGNMENTS
 
 GET_BACKFILL_WINDOWS
 
+
+GET_RESERVATIONS
+
+active:True
+active type: <type 'bool'>
+partitions:*
+partitions type: <type 'str'>
+queue:*
+queue type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -94,6 +103,15 @@ GET_QUEUE_ASSIGNMENTS
 
 GET_BACKFILL_WINDOWS
 
+
+GET_RESERVATIONS
+
+active:True
+active type: <type 'bool'>
+partitions:*
+partitions type: <type 'str'>
+queue:*
+queue type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -160,6 +178,12 @@ component: "system.get_backfill_windows", defer: False
      )
 
 
+component: "scheduler.get_reservations", defer: False
+  get_reservations(
+     [{'queue': '*', 'active': True, 'partitions': '*'}],
+     )
+
+
 """
 
     stubout   = \
@@ -175,6 +199,15 @@ GET_QUEUE_ASSIGNMENTS
 
 GET_BACKFILL_WINDOWS
 
+
+GET_RESERVATIONS
+
+active:True
+active type: <type 'bool'>
+partitions:*
+partitions type: <type 'str'>
+queue:*
+queue type: <type 'str'>
 """
 
     stubout_file = "stub.out"

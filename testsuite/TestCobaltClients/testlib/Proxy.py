@@ -697,6 +697,10 @@ class SchedStub(object):
     def enable(self,whoami):
         logmsg("\nENABLE\n")
         logmsg('whoami: %s' % str(whoami))
+    
+    def get_backfill_list(self,whoami):
+        logmsg("\nGET_BACKFILL_LIST\n")
+        logmsg('whoami: %s' % str(whoami))
 
 class SlpStub(object):
 

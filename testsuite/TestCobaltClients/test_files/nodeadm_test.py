@@ -621,6 +621,15 @@ GET_QUEUE_ASSIGNMENTS
 
 GET_BACKFILL_WINDOWS
 
+
+GET_RESERVATIONS
+
+active:True
+active type: <type 'bool'>
+partitions:*
+partitions type: <type 'str'>
+queue:*
+queue type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -678,6 +687,15 @@ GET_QUEUE_ASSIGNMENTS
 
 GET_BACKFILL_WINDOWS
 
+
+GET_RESERVATIONS
+
+active:True
+active type: <type 'bool'>
+partitions:*
+partitions type: <type 'str'>
+queue:*
+queue type: <type 'str'>
 """
 
     stubout_file = "stub.out"

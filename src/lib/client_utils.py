@@ -1241,6 +1241,7 @@ def cluster_display_node_info():
     statuses = component_call(SYSMGR, False, 'get_node_status', ())
     queue_data = component_call(SYSMGR, False, 'get_queue_assignments', ())
     end_times_to_nodes = component_call(SYSMGR, False, 'get_backfill_windows', ())
+    reservations = component_call(SCHMGR, False, 'get_reservations', ([{'queue':'*', 'partitions':'*', 'active':True}],))
 
     header = [['Host', 'Queue', 'State', 'Backfill']]
     #build output list
@@ -1253,6 +1254,11 @@ def cluster_display_node_info():
         for queue in queue_data:
             if host_name in queue_data[queue]:
                 queues.append(queue)
+        queues.sort()
+        for res in reservations:
+            if host_name in res['partitions'].split(':'):
+                if res['queue'] not in queues:
+                    queues.append(res['queue'])
         now = int(time.time()) #This comes back as a float in python
         for end_time in end_times_to_nodes:
             if int(end_time) == 0 or status != 'idle':
