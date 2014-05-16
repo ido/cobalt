@@ -28,8 +28,7 @@ class BootContext(object):
     A pointer to one of these objects is passed to the boot state for processing.
 
     '''
-    def __init__(self, block, job_id, user, block_lock, subblock_parent=None):
-
+    def __init__(self, block, job_id, user, block_lock, subblock_parent=None, timeout=None):
         self.block = block
         self.block_id = self.block.name
         self.job_id = job_id
@@ -48,6 +47,9 @@ class BootContext(object):
             self.max_reboot_attempts = int(self.max_reboot_attempts)
         self.reboot_attempts = 0
         self.status_string = []
+        self.reap_timeout = None
+        if timeout is not None:
+            self.reap_timeout = timeout
 
     def under_resource_reservation(self):
         '''Return whether or not the block is under a resource reservation.  Handle locking as well for this check.
@@ -79,8 +81,8 @@ class BGQBoot(Cobalt.ContextStateMachine.ContextStateMachine):
     _state_list = [BootPending, BootInitiating, BootComplete, BootFailed, BootRebooting,]
     _state_instances = []
 
-    def __init__(self, block, job_id, user, block_lock, subblock_parent=None, boot_id=None, tag=None):
-        super(BGQBoot, self).__init__(context=BootContext(block, job_id, user, block_lock, subblock_parent),
+    def __init__(self, block, job_id, user, block_lock, subblock_parent=None, boot_id=None, tag=None, timeout=None):
+        super(BGQBoot, self).__init__(context=BootContext(block, job_id, user, block_lock, subblock_parent, timeout=timeout),
                 initialstate='pending', exceptionstate='failed')
         if boot_id != None:
             self.boot_id = boot_id
@@ -89,8 +91,8 @@ class BGQBoot(Cobalt.ContextStateMachine.ContextStateMachine):
         self.tag = tag
         _logger.info("Boot %s initialized.", self.boot_id)
 
-    def __del__(self):
-        _logger.debug("Boot %s destroyed.", self.boot_id)
+    #def __del__(self):
+    #    _logger.debug("Boot %s destroyed.", self.boot_id)
 
     #get/setstate not allowed.  Should not be used with this class due to the lock and block data reacquistion.  Must be
     #reconstructed at restart --PMR
@@ -302,11 +304,11 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
             self.boot_data_lock.release()
         return retval
 
-    def initiate_boot(self, block_id, job_id, user, subblock_parent=None, tag=None):
+    def initiate_boot(self, block_id, job_id, user, subblock_parent=None, tag=None, timeout=None):
         '''Asynchrynously initiate a boot.  This will return immediately, the boot should be in the pending state.
 
         '''
-        self.send(InitiateBootMsg(block_id, job_id, user, subblock_parent, tag))
+        self.send(InitiateBootMsg(block_id, job_id, user, subblock_parent, tag, timeout))
         _logger.debug("Sent message to initiate boot: %s %s %s %s", block_id, job_id, user, subblock_parent)
         return
 
@@ -344,13 +346,14 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
         try:
             self.boot_data_lock.acquire()
             if msg.msg_type == 'initiate_boot':
-                new_boot = BGQBoot(self.all_blocks[msg.block_id], msg.job_id, msg.user, self.block_lock, tag=msg.tag)
+                new_boot = BGQBoot(self.all_blocks[msg.block_id], msg.job_id, msg.user, self.block_lock, tag=msg.tag,
+                        timeout=msg.timeout)
                 self.pending_boots.add(new_boot)
                 retval = True
         except AttributeError:
             #We apparently cannot handle this message as it lacks a message type
             #take no action and let another handler try the message
-            pass
+            pass 
         finally:
             self.boot_data_lock.release()
         return retval
@@ -390,17 +393,18 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
 #Boot messages, possibly break out into separate file
 class InitiateBootMsg(object):
 
-    def __init__(self, block_id, job_id, user, subblock_parent=None, tag=None):
+    def __init__(self, block_id, job_id, user, subblock_parent=None, tag=None, timeout=None):
         self.msg_type = 'initiate_boot'
         self.block_id = block_id
         self.job_id = job_id
         self.user = user
         self.subblock_parent = subblock_parent
         self.tag = tag
+        self.timeout = timeout
 
     def __str__(self):
-        return "<InitiateBootMsg: msg_type=%s, block_id=%s, job_id=%s, user=%s, subblock_parent=%s, tag=%s>" % \
-                (self.msg_type, self.block_id, self.job_id, self.user, self.subblock_parent, self.tag)
+        return "<InitiateBootMsg: msg_type=%s, block_id=%s, job_id=%s, user=%s, subblock_parent=%s, tag=%s, timeout=%s>" % \
+                (self.msg_type, self.block_id, self.job_id, self.user, self.subblock_parent, self.tag, self.timeout)
 
 
 class ReapBootMsg(object):

@@ -1571,7 +1571,7 @@ class BGBaseSystem (Component):
 
     @query
     @exposed
-    def initiate_proxy_boot(self, location, user=None, jobid=None, resid=None):
+    def initiate_proxy_boot(self, location, user=None, jobid=None, resid=None, timeout=None):
         raise NotImplementedError, "Proxy booting is not supported for this configuration."
 
     @query

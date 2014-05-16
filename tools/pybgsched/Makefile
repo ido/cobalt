@@ -2,11 +2,11 @@
 
 
 CC = /usr/bin/g++
-SWIG = /usr/bin/swig 
+SWIG = /usr/bin/swig
 
 MODULE = pybgsched
 
-SWIGFLAGS = -python -c++
+SWIGFLAGS = -python -threads -c++
 INTERFACE_FILE = $(MODULE).i
 
 PYTHON_INCLUDE = /usr/include/python2.6

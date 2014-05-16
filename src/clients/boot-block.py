@@ -22,8 +22,10 @@ from Cobalt.client_utils import cb_debug, cb_gtzero
 
 from Cobalt.arg_parser import ArgParse
 
-__revision__= 'TBD'
-__version__ = '$Version$'
+from Cobalt.Util import init_cobalt_config
+
+__revision__ = 'TBD'
+__version__  = '$Version$'
 
 AUTH_FAIL       = 2
 BAD_OPTION_FAIL = 3

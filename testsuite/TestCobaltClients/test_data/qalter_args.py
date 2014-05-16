@@ -29,6 +29,7 @@ test_argslist = [
     { "tc_name" : "invalid_nodecount", "args" : """-v --mode dual -nfiver --proccount 1023 -t50 -e /tmp/p -o /tmp/o 1 2 3 4 5 6 7 8 9 10""", },
     { "tc_name" : "user_1", "args" : """-v --run_users user1:user2:user3 1 2 3 4 5""", 'skip_list' : ['not_bsim'], "new_only" : True, },
     { "tc_name" : "user_2", "args" : """-v --run_users user1:naughtyuser 1 2 3 4 5""", },
+    { "tc_name" : "user_3", "args" : """-v --run_users user1:root 1 2 3 4 5""", 'skip_list' : ['not_bsim'], "new_only" : True, "testhook" : "JOB_RUNNING", },
     { "tc_name" : "project", "args" : """-v --run_project 10 20 30""", "new_only" : True, },
     { "tc_name" : "geometry_1", "args" : """-v --geometry 10 1 2 3 4 5""", 'new_only': True, },
     { "tc_name" : "geometry_2", "args" : """-v --geometry 10x10x10x10x10 1 2 3 4 5""", 'new_only' : True, },

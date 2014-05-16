@@ -143,7 +143,7 @@ class SystemStub(object):
         logmsg("jobid: %s, type = %s" % (str(jobid), str(type(jobid))))
         return True
 
-    def initiate_proxy_boot(self,block, user, jobid):
+    def initiate_proxy_boot(self,block, user, jobid, resid=None, timeout=None):
         logmsg("\nINITIATE_PROXY_BOOT\n")
         logmsg("block: %s, type = %s" % (block, str(type(block))))
         logmsg("user: %s" % user)
@@ -567,7 +567,7 @@ class CqmStub(object):
             _job['walltime']      = str(wtime)
             _job['procs']         = str(nodes)
             _job['nodes']         = str(nodes)
-            _job['is_active']     = False
+            _job['is_active']     = True if job_running else False
             _job['queue']         = QUEUES[ndx]
             _job['mode']          = 'smp'
             _job['errorpath']     = '/tmp'

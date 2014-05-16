@@ -15,82 +15,63 @@ the variable in the libary, this is a known deviation.*/
 
 %exception bgsched::Block{
 
-    PyThreadState *_save;
-    _save = PyEval_SaveThread();
     try{
         $action;
     }
     catch(bgsched::InputException &e){
-        PyEval_RestoreThread(_save);
         PyErr_SetString(PyExc_IOError, const_cast<char *>(e.what()));
         return NULL;
     }
     catch(std::exception &e){
-        PyEval_RestoreThread(_save);
         SWIG_exception(SWIG_RuntimeError, e.what());
         return NULL;
     }
-    PyEval_RestoreThread(_save);
 }
 
 
 %exception bgsched::Block::update{
-    PyThreadState *_save;
-    _save = PyEval_SaveThread();
     try{
         $action;
     }
     catch(bgsched::InputException &e){
-        PyEval_RestoreThread(_save);
         PyErr_SetString(PyExc_IOError, const_cast<char *>(e.what()));
         return NULL;
     }
     catch(bgsched::DatabaseException &e){
-        PyEval_RestoreThread(_save);
         PyErr_SetString(PyExc_IOError, const_cast<char *>(e.what()));
         return NULL;
     }
     catch(bgsched::InternalException &e){
-        PyEval_RestoreThread(_save);
         PyErr_SetString(PyExc_RuntimeError, const_cast<char *>(e.what()));
         return NULL;
     }
     catch(std::exception &e){
-        PyEval_RestoreThread(_save);
         SWIG_exception(SWIG_RuntimeError, e.what());
         return NULL;
     }
-    PyEval_RestoreThread(_save);
 }
 
 
 %exception bgsched::Block::add{
-    PyThreadState *_save;
-    _save = PyEval_SaveThread();
     try{
         $action;
     }
     catch(bgsched::InputException &e){
-        PyEval_RestoreThread(_save);
         PyErr_SetString(PyExc_IOError, const_cast<char *>(e.what()));
         return NULL;
     }
     catch(bgsched::DatabaseException &e){
-        PyEval_RestoreThread(_save);
         PyErr_SetString(PyExc_IOError, const_cast<char *>(e.what()));
         return NULL;
     }
     catch(bgsched::RuntimeException &e){
-        PyEval_RestoreThread(_save);
         PyErr_SetString(PyExc_RuntimeError, const_cast<char *>(e.what()));
         return NULL;
     }
     catch(std::exception &e){
-        PyEval_RestoreThread(_save);
         SWIG_exception(SWIG_RuntimeError, e.what());
         return NULL;
     }
-    PyEval_RestoreThread(_save);
 }
 
 /*Do this for SWIG's benefit.  This doesn't really exist in the C++ code */

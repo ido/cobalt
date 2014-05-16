@@ -22,14 +22,10 @@ typedef unsigned long uint64_t;
 
 /*generic exception handling.  Keep exceptions from killing cobalt*/
 %exception  {
-    PyThreadState *_save;
-    _save = PyEval_SaveThread();
     try{
         $action
-        PyEval_RestoreThread(_save);
     }
     catch(std::exception &e){
-        PyEval_RestoreThread(_save);
         SWIG_exception(SWIG_RuntimeError, e.what());
     }
 }

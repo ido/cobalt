@@ -249,7 +249,7 @@ Block b successfully freed.
 status 1
 status 2
 status 3
-Boot for locaiton b complete.
+Boot for location b complete.
 """
 
     cmderr    = ''
@@ -392,7 +392,7 @@ def test_boot_block_nofree_noreboot_3():
 """status 1
 status 2
 status 3
-Boot for locaiton b complete.
+Boot for location b complete.
 """
 
     cmderr    = ''

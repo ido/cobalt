@@ -283,7 +283,7 @@ class ClusterBaseSystem (Component):
 
         job - data about the job under consideration
         drain_location_times - the set of locations that are being drained this pass
-        drain_time - the time remaining on the drain locaitons.  If 0 do not consider
+        drain_time - the time remaining on the drain locations.  If 0 do not consider
                      drain locations
         already_draining - set of locations that have been set for draining by a higher
                            scored job.  Don't consider these locations for running.

@@ -340,14 +340,27 @@ def sec_to_str(t):
     """
     return Cobalt.Util.sec_to_str(t)
 
-def get_elapsed_time(starttime, endtime):
+def get_timeformat(runtime, dayf = False):
+    """
+    Return the seconds into time format
+    """
+    days = 0
+    minutes, seconds = divmod(runtime, 60)
+    hours, minutes   = divmod(minutes, 60)
+    if dayf:
+        days, hours      = divmod(hours,24)
+    if days < 1:
+        ret = ( "%02d:%02d:%02d" % (hours, minutes, seconds) )
+    else:
+        ret = ( "%dd %02d:%02d:%02d" % (days, hours, minutes, seconds))
+    return ret
+
+def get_elapsed_time(starttime, endtime, dayf = False):
     """
     returns hh:mm:ss elapsed time string from start and end timestamps
     """
     runtime = endtime - starttime
-    minutes, seconds = divmod(runtime, 60)
-    hours, minutes = divmod(minutes, 60)
-    return ( "%02d:%02d:%02d" % (hours, minutes, seconds) )
+    return get_timeformat(runtime, dayf)
 
 def print_tabular(rows):
     """
@@ -694,7 +707,7 @@ def get_filters():
         filters = []
     return filters
 
-def process_filters(filters,spec):
+def process_filters(filters, spec):
     """
     Process the specified filters to spec
     """
@@ -733,11 +746,15 @@ def cobalt_date(date):
     """
     return time.strftime('%Y_%m_%d-%H:%M', date)
 
-def boot_block(block, user, jobid):
+def boot_block(block, user, jobid, resid=None):
     """
-    utility to boot specified block
+    utility to boot specified block.  This is always doing this on behalf of a process outside of Cobalt's server components.
     """
-    success = component_call(SYSMGR, False, 'initiate_proxy_boot', (block, user, jobid), False)
+    #set a timeout pull from config file.  Default will be 5 mintues after termination.
+    Cobalt.Util.init_cobalt_config()
+    timeout = int(Cobalt.Util.get_config_option('bgsystem', 'terminal_boot_timeout' , 300))
+
+    success = component_call(SYSMGR, False, 'initiate_proxy_boot', (block, user, jobid, resid, timeout), False)
     if not success:
         logger.error("Boot request for block %s failed authorization." % (block, ))
         return AUTH_FAIL
@@ -761,16 +778,16 @@ def boot_block(block, user, jobid):
                 break
         sleep(1)
     if failed:
-        logger.error("Boot for locaiton %s failed."% (block,))
+        logger.error("Boot for location %s failed."% (block,))
     else:
-        logger.info("Boot for locaiton %s complete."% (block,))
+        logger.info("Boot for location %s complete."% (block,))
     return failed
 
-#  
+#
 # Callback fucntions for argument parsing defined below
 #
 
-def cb_debug(option,opt_str,value,parser,*args):
+def cb_debug(option, opt_str, value, parser, *args):
     """
     Set debug mode for logging
     """
@@ -781,9 +798,9 @@ def cb_debug(option,opt_str,value,parser,*args):
     args    = '\n'+cmdinfo[1] + ' ' + ' '.join(sys.argv[1:])+'\n'
     logger.debug(args)
 
-    setattr(parser.values,option.dest,True) # set the option
+    setattr(parser.values, option.dest, True) # set the option
 
-def cb_nodes(option,opt_str,value,parser,*args):
+def cb_nodes(option, opt_str, value, parser, *args):
     """
     This callback will validate value is greater than zero and store it.
     """

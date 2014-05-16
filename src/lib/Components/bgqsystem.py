@@ -113,7 +113,7 @@ class BGProcessGroup(ProcessGroup):
         return self.__repr__()
 
     def __setstate__(self, data):
-        ProcessGroup.__setstate(self, data)
+        ProcessGroup.__setstate__(self, data)
         if not hasattr(self, 'interactive_complete'):
             self.interactive_complete = False
         
@@ -1630,22 +1630,30 @@ class BGSystem (BGBaseSystem):
             failed_mp = pybgsched.StringVector()
             unconnected_io = pybgsched.StringVector()
 
-            for block_name in self._managed_blocks:
-                if self._blocks[block_name].block_type == 'pseudoblock':
-                    continue
-                failed_mp.clear()
-                unconnected_io.clear()
-                try:
-                    pybgsched.Block.checkIO(block_name, unconnected_io, failed_mp)
-                except:
-                    self.logger.critical("Error communicating with the bridge to update block IO information.")
-                    self.logger.critical("%s", traceback.format_exc())
-                    self.bridge_in_error = True
-                    Cobalt.Util.sleep(5) # wait a little bit...
-                    break
+            try:
+                self._blocks_lock.acquire()
+                for block_name in self._managed_blocks:
+                    if self._blocks[block_name].block_type == 'pseudoblock':
+                        continue
+                    failed_mp.clear()
+                    unconnected_io.clear()
+                    try:
+                        pybgsched.Block.checkIO(block_name, unconnected_io, failed_mp)
+                    except:
+                        self.logger.critical("Error communicating with the bridge to update block IO information.")
+                        self.logger.critical("%s", traceback.format_exc())
+                        self.bridge_in_error = True
+                        Cobalt.Util.sleep(5) # wait a little bit...
+                        break
 
-                if failed_mp.size() > 0:
-                    new_failed_io_block_names.add(block_name)
+                    if failed_mp.size() > 0:
+                        new_failed_io_block_names.add(block_name)
+            except RuntimeError:
+                self.logger.warning("Blocks added during update, skipping update iteration.")
+                Cobalt.Util.sleep(10) #sleep a little so we don't hammer the system component with failures
+                continue #iterate top-level while
+            finally:
+                self._blocks_lock.release()
 
             if self.bridge_in_error == True:
                 continue
@@ -2235,7 +2243,11 @@ class BGSystem (BGBaseSystem):
         #if failed then reap (if boot not found for query assume boot failed and reaped)
         boots = self.booter.stat()
         for boot in boots:
-            self.logger.debug("boot %s, tag %s, blockid: %s", boot.boot_id, boot.tag, boot.block_id)
+            self.logger.debug("boot %s, tag %s, blockid: %s, state: %s", boot.boot_id, boot.tag, boot.block_id, boot.state)
+            #first clear the timeouts:
+            if boot.state in ['complete', 'failed']:
+                if boot.context.force_clean == True:
+                    self.booter.reap(boot.block_id)
             if boot.tag == 'io_boot':
                 #Gives us a chance to clear IO Boots
                 if boot.state in ['complete', 'failed']:
@@ -2423,7 +2435,7 @@ class BGSystem (BGBaseSystem):
         # might have happpened if a previous cleanup attempt failed and the process group has already been waited upon
         for forker, child_id in children.keys():
             if children[(forker, child_id)]['pg'] is None:
-                cleanup[forker].append(child['id'])
+                cleanup[forker].append(child_id)
 
         # cleanup any children that have completed and been processed
         for forker in cleanup.keys():
@@ -2525,6 +2537,12 @@ class BGSystem (BGBaseSystem):
         return self.booter.booting_suspended
 
     @exposed
+    def get_boot_info(self):
+        '''Fetch information on ongoing boots for display by cobalt clients'''
+        raise NotImplementedError
+        return None
+
+    @exposed
     def set_cleaning(self, block, jobid, whoami):
         self.logger.warning("User %s force-cleaning block %s.", whoami, block)
         self._mark_block_for_cleaning(block, jobid)
@@ -2532,7 +2550,7 @@ class BGSystem (BGBaseSystem):
         return
 
     @exposed
-    def initiate_proxy_boot(self, location, user=None, jobid=None, resid=None):
+    def initiate_proxy_boot(self, location, user=None, jobid=None, resid=None, timeout=None):
         '''Start a boot at a location on the user's behalf.  Require a valid cobalt jobid or resid for a location
         along with the proper user.
 
@@ -2541,10 +2559,12 @@ class BGSystem (BGBaseSystem):
         '''
         retval = False
         is_authorized = self._auth_user_for_block(location, user, jobid, resid)
+        if timeout is None:
+            self.logger.warning("external not setting a timeout.  This may cause a memory leak if this boot is not properly reaped.")
         if is_authorized:
             #mark the block as 'busy' so that we don't collide when rapidly booting blocks.
             self._blocks[location].state = 'busy'
-            self.booter.initiate_boot(location, jobid, user, location, tag='external')
+            self.booter.initiate_boot(location, jobid, user, location, tag='external', timeout=timeout)
             retval = True
         return retval
 
@@ -2694,7 +2714,7 @@ class BGSystem (BGBaseSystem):
 
         '''
         if not set(io_locations).issubset(set(self._io_blocks.keys())):
-            raise ValueError, "Invalid IO Block name in specified locaitons"
+            raise ValueError, "Invalid IO Block name in specified locations"
         for io_location in io_locations:
             self._blocks_lock.acquire()
             try:
@@ -2721,7 +2741,7 @@ class BGSystem (BGBaseSystem):
                 self.free_io_block(io_location, force, user)
                 self.logger.info("IO Block free initiated on %s by user %s", io_location ,user)
             except ValueError:
-                self.logger.warning("unable to free IO Block for locaiton %s", io_location)
+                self.logger.warning("unable to free IO Block for location %s", io_location)
                 return False
             finally:
                 self._blocks_lock.release()
