@@ -204,24 +204,27 @@ Run the job with the specified IO Node kernel options.  (BlueGene/Q only)
 .TP
 .B \-\-mode [mode]
 This is a platform-dependent setting that controls the execution mode of the 
-submitted job and the division of cores and memory on the compute nodes.  
+submitted job and the division of cores and memory on the compute nodes.
 Valid values are dependent on the specific BlueGene platform:
+
 .TP
-BG/L: Valid values are "co" (coprocessor),"vn" (virtual node) and "script".  
-      The default is co.
+BG/L:  Valid values are "co" (coprocessor),"vn" (virtual node) and "script".
+The default is "co".
+
 .TP
-BG/P: Valid values are "smp", "dual", "vn" and "script".   "smp", "dual" and 
-      "vn" correspond to the modes within mpirun. The default is "smp" 
+BG/P:  Valid values are "smp", "dual", "vn" and "script".   "smp", "dual" and
+"vn" correspond to the modes within mpirun. The default is "smp".
+
 .TP
-BG/Q: Valid values are "c1","c2","c4","c8","c16","c32","c64","script" and "interactive".  
-      The c(n) modes correspond to the "ranks-per-node" flag of runjob and 
-      governs the MPI ranks started per node on the compute nodes.  Node memory
-      is divided evenly between all processes.  n/64 threads will be available 
-      to each MPI process as well. If this option is not set the default is "c1"
-.TP
-On all platforms, the "script" mode causes the job to be routed through the 
-script-forker, and will allow the execution of script jobs
-allows the user to  
+BG/Q:  Valid values are "c1","c2","c4","c8","c16","c32","c64","script" and
+"interactive".  The c(n) modes correspond to the "ranks-per-node" flag of
+runjob and governs the MPI ranks started per node on the compute nodes.  Node
+memory is divided evenly between all processes.  64/n threads will be available
+to each MPI process as well. If this option is not set the default is "c1".
+
+On all platforms, the "script" mode causes the job to be routed through the
+script-forker, and will allow the execution of script jobs.  On linux cluster
+platforms, all jobs are run as script jobs.
 
 .SH "NOTE"
 The only thing printed to STDOUT is the jobid, any other error or informational messages are printed to STDERR.
