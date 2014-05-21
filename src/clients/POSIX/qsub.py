@@ -361,13 +361,15 @@ def run_interactive_job(jobid, user, disable_preboot):
 
     deljob = True if impl == "cluster_system" else False
 
-    def start_session(loc):
+    def start_session(loc, resid):
         """
         start ssh or shell session
         """
         # Create necesary env vars
         os.putenv("COBALT_NODEFILE", "/var/tmp/cobalt.%s" % (jobid))
         os.putenv("COBALT_JOBID", "%s" % (jobid))
+        if resid:
+            os.putenv("COBALT_RESID", "%s" % (resid))
         os.putenv("COBALT_PARTNAME", loc)
         os.putenv("COBALT_BLOCKNAME", loc)
         client_utils.logger.info("Opening interactive session to %s", loc)
@@ -377,7 +379,7 @@ def run_interactive_job(jobid, user, disable_preboot):
             os.system(os.environ['SHELL'])
 
     # Wait for job to start
-    query = [{'tag':'job', 'jobid':jobid, 'location':'*', 'state':"*"}]
+    query = [{'tag':'job', 'jobid':jobid, 'location':'*', 'state':"*", 'resid':"*"}]
     client_utils.logger.info("Wait for job %s to start...", str(jobid))
 
     while True:
@@ -396,8 +398,9 @@ def run_interactive_job(jobid, user, disable_preboot):
             sleep(2)
         state    = response[0]['state']
         location = response[0]['location']
+        resid    = response[0]['resid']
         if state == 'running' and location:
-            start_session(location[0])
+            start_session(location[0], resid)
             break
         client_utils.logger.debug('Current State "%s" for job %s', str(state), str(jobid))
         sleep(2)
@@ -425,6 +428,8 @@ def run_job(parser, user, spec, opts):
             deljob = run_interactive_job(jobid, user,  opts['disable_preboot'])
         else:
             logjob(jobid, spec, True)
+    except Exception, e:
+        client_utils.logger.error(e)
     finally:
         if parser.options.mode == 'interactive':
             exit_interactive_job(deljob, jobid, user)
