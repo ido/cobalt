@@ -141,6 +141,8 @@ project:my_project
 project type: <type 'str'>
 queue:jello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:50
 score type: <type 'int'>
 state:user_hold
@@ -188,6 +190,8 @@ project:my_project
 project type: <type 'str'>
 queue:jello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:50
 score type: <type 'int'>
 state:user_hold
@@ -303,6 +307,8 @@ project:my_project
 project type: <type 'str'>
 queue:jello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:50
 score type: <type 'int'>
 state:user_hold
@@ -350,6 +356,8 @@ project:my_project
 project type: <type 'str'>
 queue:jello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:50
 score type: <type 'int'>
 state:user_hold
@@ -558,6 +566,8 @@ project:my_project
 project type: <type 'str'>
 queue:jello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:50
 score type: <type 'int'>
 state:user_hold
@@ -605,6 +615,8 @@ project:my_project
 project type: <type 'str'>
 queue:jello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:50
 score type: <type 'int'>
 state:user_hold
@@ -656,6 +668,8 @@ project:my_project
 project type: <type 'str'>
 queue:bello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:55
 score type: <type 'int'>
 state:user_hold
@@ -703,6 +717,8 @@ project:my_project
 project type: <type 'str'>
 queue:bello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:55
 score type: <type 'int'>
 state:user_hold
@@ -754,6 +770,8 @@ project:my_project
 project type: <type 'str'>
 queue:aaa
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:40
 score type: <type 'int'>
 state:user_hold
@@ -801,6 +819,8 @@ project:my_project
 project type: <type 'str'>
 queue:aaa
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:40
 score type: <type 'int'>
 state:user_hold
@@ -1067,6 +1087,8 @@ project:my_project
 project type: <type 'str'>
 queue:jello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:50
 score type: <type 'int'>
 state:user_hold
@@ -1114,6 +1136,8 @@ project:my_project
 project type: <type 'str'>
 queue:jello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:50
 score type: <type 'int'>
 state:user_hold
@@ -1165,6 +1189,8 @@ project:my_project
 project type: <type 'str'>
 queue:bello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:55
 score type: <type 'int'>
 state:user_hold
@@ -1212,6 +1238,8 @@ project:my_project
 project type: <type 'str'>
 queue:bello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:55
 score type: <type 'int'>
 state:user_hold
@@ -1263,6 +1291,8 @@ project:my_project
 project type: <type 'str'>
 queue:aaa
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:40
 score type: <type 'int'>
 state:user_hold
@@ -1310,6 +1340,8 @@ project:my_project
 project type: <type 'str'>
 queue:aaa
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:40
 score type: <type 'int'>
 state:user_hold
@@ -1361,6 +1393,8 @@ project:my_project
 project type: <type 'str'>
 queue:bbb
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:60
 score type: <type 'int'>
 state:user_hold
@@ -1408,6 +1442,8 @@ project:my_project
 project type: <type 'str'>
 queue:bbb
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:60
 score type: <type 'int'>
 state:user_hold
@@ -1459,6 +1495,8 @@ project:my_project
 project type: <type 'str'>
 queue:hhh
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:30
 score type: <type 'int'>
 state:user_hold
@@ -1506,6 +1544,8 @@ project:my_project
 project type: <type 'str'>
 queue:hhh
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:30
 score type: <type 'int'>
 state:user_hold
@@ -1557,6 +1597,8 @@ project:my_project
 project type: <type 'str'>
 queue:dito
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:20
 score type: <type 'int'>
 state:user_hold
@@ -1604,6 +1646,8 @@ project:my_project
 project type: <type 'str'>
 queue:dito
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:20
 score type: <type 'int'>
 state:user_hold
@@ -1655,6 +1699,8 @@ project:my_project
 project type: <type 'str'>
 queue:myq
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:25
 score type: <type 'int'>
 state:user_hold
@@ -1702,6 +1748,8 @@ project:my_project
 project type: <type 'str'>
 queue:myq
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:25
 score type: <type 'int'>
 state:user_hold
@@ -2017,6 +2065,8 @@ project:my_project
 project type: <type 'str'>
 queue:jello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:50
 score type: <type 'int'>
 state:user_hold
@@ -2064,6 +2114,8 @@ project:my_project
 project type: <type 'str'>
 queue:jello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:50
 score type: <type 'int'>
 state:user_hold
@@ -2115,6 +2167,8 @@ project:my_project
 project type: <type 'str'>
 queue:bello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:55
 score type: <type 'int'>
 state:user_hold
@@ -2162,6 +2216,8 @@ project:my_project
 project type: <type 'str'>
 queue:bello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:55
 score type: <type 'int'>
 state:user_hold
@@ -2213,6 +2269,8 @@ project:my_project
 project type: <type 'str'>
 queue:aaa
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:40
 score type: <type 'int'>
 state:user_hold
@@ -2260,6 +2318,8 @@ project:my_project
 project type: <type 'str'>
 queue:aaa
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:40
 score type: <type 'int'>
 state:user_hold
@@ -2311,6 +2371,8 @@ project:my_project
 project type: <type 'str'>
 queue:bbb
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:60
 score type: <type 'int'>
 state:user_hold
@@ -2358,6 +2420,8 @@ project:my_project
 project type: <type 'str'>
 queue:bbb
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:60
 score type: <type 'int'>
 state:user_hold
@@ -2409,6 +2473,8 @@ project:my_project
 project type: <type 'str'>
 queue:hhh
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:30
 score type: <type 'int'>
 state:user_hold
@@ -2456,6 +2522,8 @@ project:my_project
 project type: <type 'str'>
 queue:hhh
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:30
 score type: <type 'int'>
 state:user_hold
@@ -2507,6 +2575,8 @@ project:my_project
 project type: <type 'str'>
 queue:dito
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:20
 score type: <type 'int'>
 state:user_hold
@@ -2554,6 +2624,8 @@ project:my_project
 project type: <type 'str'>
 queue:dito
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:20
 score type: <type 'int'>
 state:user_hold
@@ -2605,6 +2677,8 @@ project:my_project
 project type: <type 'str'>
 queue:myq
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:25
 score type: <type 'int'>
 state:user_hold
@@ -2652,6 +2726,8 @@ project:my_project
 project type: <type 'str'>
 queue:myq
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:25
 score type: <type 'int'>
 state:user_hold
@@ -2703,6 +2779,8 @@ project:my_project
 project type: <type 'str'>
 queue:yours
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:35
 score type: <type 'int'>
 state:user_hold
@@ -2750,6 +2828,8 @@ project:my_project
 project type: <type 'str'>
 queue:yours
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:35
 score type: <type 'int'>
 state:user_hold
@@ -2801,6 +2881,8 @@ project:my_project
 project type: <type 'str'>
 queue:zq
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:2
 score type: <type 'int'>
 state:user_hold
@@ -2848,6 +2930,8 @@ project:my_project
 project type: <type 'str'>
 queue:zq
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:2
 score type: <type 'int'>
 state:user_hold
@@ -3014,6 +3098,8 @@ project:my_project
 project type: <type 'str'>
 queue:jello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:50
 score type: <type 'int'>
 state:user_hold
@@ -3061,6 +3147,8 @@ project:my_project
 project type: <type 'str'>
 queue:jello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:50
 score type: <type 'int'>
 state:user_hold
@@ -3112,6 +3200,8 @@ project:my_project
 project type: <type 'str'>
 queue:bello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:55
 score type: <type 'int'>
 state:user_hold
@@ -3159,6 +3249,8 @@ project:my_project
 project type: <type 'str'>
 queue:bello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:55
 score type: <type 'int'>
 state:user_hold
@@ -3210,6 +3302,8 @@ project:my_project
 project type: <type 'str'>
 queue:aaa
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:40
 score type: <type 'int'>
 state:user_hold
@@ -3257,6 +3351,8 @@ project:my_project
 project type: <type 'str'>
 queue:aaa
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:40
 score type: <type 'int'>
 state:user_hold
@@ -3423,6 +3519,8 @@ project:my_project
 project type: <type 'str'>
 queue:jello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:50
 score type: <type 'int'>
 state:user_hold
@@ -3470,6 +3568,8 @@ project:my_project
 project type: <type 'str'>
 queue:jello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:50
 score type: <type 'int'>
 state:user_hold
@@ -3521,6 +3621,8 @@ project:my_project
 project type: <type 'str'>
 queue:bello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:55
 score type: <type 'int'>
 state:user_hold
@@ -3568,6 +3670,8 @@ project:my_project
 project type: <type 'str'>
 queue:bello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:55
 score type: <type 'int'>
 state:user_hold
@@ -3619,6 +3723,8 @@ project:my_project
 project type: <type 'str'>
 queue:aaa
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:40
 score type: <type 'int'>
 state:user_hold
@@ -3666,6 +3772,8 @@ project:my_project
 project type: <type 'str'>
 queue:aaa
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:40
 score type: <type 'int'>
 state:user_hold
@@ -3832,6 +3940,8 @@ project:my_project
 project type: <type 'str'>
 queue:jello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:50
 score type: <type 'int'>
 state:user_hold
@@ -3879,6 +3989,8 @@ project:my_project
 project type: <type 'str'>
 queue:jello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:50
 score type: <type 'int'>
 state:user_hold
@@ -3930,6 +4042,8 @@ project:my_project
 project type: <type 'str'>
 queue:bello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:55
 score type: <type 'int'>
 state:user_hold
@@ -3977,6 +4091,8 @@ project:my_project
 project type: <type 'str'>
 queue:bello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:55
 score type: <type 'int'>
 state:user_hold
@@ -4028,6 +4144,8 @@ project:my_project
 project type: <type 'str'>
 queue:aaa
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:40
 score type: <type 'int'>
 state:user_hold
@@ -4075,6 +4193,8 @@ project:my_project
 project type: <type 'str'>
 queue:aaa
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:40
 score type: <type 'int'>
 state:user_hold
@@ -4241,6 +4361,8 @@ project:my_project
 project type: <type 'str'>
 queue:jello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:50
 score type: <type 'int'>
 state:user_hold
@@ -4288,6 +4410,8 @@ project:my_project
 project type: <type 'str'>
 queue:jello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:50
 score type: <type 'int'>
 state:user_hold
@@ -4339,6 +4463,8 @@ project:my_project
 project type: <type 'str'>
 queue:bello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:55
 score type: <type 'int'>
 state:user_hold
@@ -4386,6 +4512,8 @@ project:my_project
 project type: <type 'str'>
 queue:bello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:55
 score type: <type 'int'>
 state:user_hold
@@ -4437,6 +4565,8 @@ project:my_project
 project type: <type 'str'>
 queue:aaa
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:40
 score type: <type 'int'>
 state:user_hold
@@ -4484,6 +4614,8 @@ project:my_project
 project type: <type 'str'>
 queue:aaa
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:40
 score type: <type 'int'>
 state:user_hold
@@ -4661,6 +4793,8 @@ project:my_project
 project type: <type 'str'>
 queue:jello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:50
 score type: <type 'int'>
 state:user_hold
@@ -4708,6 +4842,8 @@ project:my_project
 project type: <type 'str'>
 queue:jello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:50
 score type: <type 'int'>
 state:user_hold
@@ -4759,6 +4895,8 @@ project:my_project
 project type: <type 'str'>
 queue:bello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:55
 score type: <type 'int'>
 state:user_hold
@@ -4806,6 +4944,8 @@ project:my_project
 project type: <type 'str'>
 queue:bello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:55
 score type: <type 'int'>
 state:user_hold
@@ -5217,6 +5357,8 @@ project:my_project
 project type: <type 'str'>
 queue:jello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:50
 score type: <type 'int'>
 state:user_hold
@@ -5264,6 +5406,8 @@ project:my_project
 project type: <type 'str'>
 queue:jello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:50
 score type: <type 'int'>
 state:user_hold
@@ -5315,6 +5459,8 @@ project:my_project
 project type: <type 'str'>
 queue:bello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:55
 score type: <type 'int'>
 state:user_hold
@@ -5362,6 +5508,8 @@ project:my_project
 project type: <type 'str'>
 queue:bello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:55
 score type: <type 'int'>
 state:user_hold
@@ -5413,6 +5561,8 @@ project:my_project
 project type: <type 'str'>
 queue:aaa
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:40
 score type: <type 'int'>
 state:user_hold
@@ -5460,6 +5610,8 @@ project:my_project
 project type: <type 'str'>
 queue:aaa
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:40
 score type: <type 'int'>
 state:user_hold
@@ -5511,6 +5663,8 @@ project:my_project
 project type: <type 'str'>
 queue:bbb
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:60
 score type: <type 'int'>
 state:user_hold
@@ -5558,6 +5712,8 @@ project:my_project
 project type: <type 'str'>
 queue:bbb
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:60
 score type: <type 'int'>
 state:user_hold
@@ -5609,6 +5765,8 @@ project:my_project
 project type: <type 'str'>
 queue:hhh
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:30
 score type: <type 'int'>
 state:user_hold
@@ -5656,6 +5814,8 @@ project:my_project
 project type: <type 'str'>
 queue:hhh
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:30
 score type: <type 'int'>
 state:user_hold
@@ -6007,6 +6167,8 @@ project:my_project
 project type: <type 'str'>
 queue:jello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:50
 score type: <type 'int'>
 state:user_hold
@@ -6054,6 +6216,8 @@ project:my_project
 project type: <type 'str'>
 queue:jello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 run_project:True
 run_project type: <type 'bool'>
 score:50
@@ -6107,6 +6271,8 @@ project:my_project
 project type: <type 'str'>
 queue:bello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:55
 score type: <type 'int'>
 state:user_hold
@@ -6154,6 +6320,8 @@ project:my_project
 project type: <type 'str'>
 queue:bello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 run_project:True
 run_project type: <type 'bool'>
 score:55
@@ -6207,6 +6375,8 @@ project:my_project
 project type: <type 'str'>
 queue:aaa
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:40
 score type: <type 'int'>
 state:user_hold
@@ -6254,6 +6424,8 @@ project:my_project
 project type: <type 'str'>
 queue:aaa
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 run_project:True
 run_project type: <type 'bool'>
 score:40
@@ -6908,6 +7080,8 @@ project:my_project
 project type: <type 'str'>
 queue:jello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:50
 score type: <type 'int'>
 state:user_hold
@@ -6955,6 +7129,8 @@ project:my_project
 project type: <type 'str'>
 queue:jello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 run_project:True
 run_project type: <type 'bool'>
 score:50
@@ -7010,6 +7186,8 @@ project:my_project
 project type: <type 'str'>
 queue:bello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:55
 score type: <type 'int'>
 state:user_hold
@@ -7057,6 +7235,8 @@ project:my_project
 project type: <type 'str'>
 queue:bello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 run_project:True
 run_project type: <type 'bool'>
 score:55
@@ -7112,6 +7292,8 @@ project:my_project
 project type: <type 'str'>
 queue:aaa
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:40
 score type: <type 'int'>
 state:user_hold
@@ -7159,6 +7341,8 @@ project:my_project
 project type: <type 'str'>
 queue:aaa
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 run_project:True
 run_project type: <type 'bool'>
 score:40
@@ -7329,6 +7513,8 @@ project:my_project
 project type: <type 'str'>
 queue:jello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:50
 score type: <type 'int'>
 state:user_hold
@@ -7376,6 +7562,8 @@ project:my_project
 project type: <type 'str'>
 queue:jello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 run_project:True
 run_project type: <type 'bool'>
 score:50
@@ -7431,6 +7619,8 @@ project:my_project
 project type: <type 'str'>
 queue:bello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:55
 score type: <type 'int'>
 state:user_hold
@@ -7478,6 +7668,8 @@ project:my_project
 project type: <type 'str'>
 queue:bello
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 run_project:True
 run_project type: <type 'bool'>
 score:55
@@ -7533,6 +7725,8 @@ project:my_project
 project type: <type 'str'>
 queue:aaa
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 score:40
 score type: <type 'int'>
 state:user_hold
@@ -7580,6 +7774,8 @@ project:my_project
 project type: <type 'str'>
 queue:aaa
 queue type: <type 'str'>
+resid:None
+resid type: <type 'NoneType'>
 run_project:True
 run_project type: <type 'bool'>
 score:40
