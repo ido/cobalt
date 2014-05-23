@@ -411,8 +411,9 @@ def run_job(parser, user, spec, opts):
     """
     run the job
     """
-    jobid = None
-    deljob = True
+    jobid        = None
+    deljob       = True
+    exc_occurred = False
     try:
         not_exit_on_interrupt()
         jobs  =  client_utils.component_call(QUEMGR, False, 'add_jobs',([spec],), False)
@@ -430,10 +431,12 @@ def run_job(parser, user, spec, opts):
             logjob(jobid, spec, True)
     except Exception, e:
         client_utils.logger.error(e)
-        sys.exit(1)
+        exc_occurred = True
     finally:
         if parser.options.mode == 'interactive':
             exit_interactive_job(deljob, jobid, user)
+        if exc_occurred: 
+            sys.exit(1)
 
 def main():
     """
