@@ -581,6 +581,7 @@ class CqmStub(object):
             _job['args']          = ''
             _job['user_list']     = [u for u in USERS]
             _job['geometry']      = None
+            _job['resid']         = None
             _job['score']         = SCORES[ndx]
             ndx += 1
             _job_specs.append(_job)
