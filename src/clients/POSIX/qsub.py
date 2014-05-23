@@ -430,6 +430,7 @@ def run_job(parser, user, spec, opts):
             logjob(jobid, spec, True)
     except Exception, e:
         client_utils.logger.error(e)
+        sys.exit(1)
     finally:
         if parser.options.mode == 'interactive':
             exit_interactive_job(deljob, jobid, user)
