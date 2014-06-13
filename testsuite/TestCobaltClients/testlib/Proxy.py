@@ -143,7 +143,7 @@ class SystemStub(object):
         logmsg("jobid: %s, type = %s" % (str(jobid), str(type(jobid))))
         return True
 
-    def initiate_proxy_boot(self,block, user, jobid):
+    def initiate_proxy_boot(self,block, user, jobid, resid=None, timeout=None):
         logmsg("\nINITIATE_PROXY_BOOT\n")
         logmsg("block: %s, type = %s" % (block, str(type(block))))
         logmsg("user: %s" % user)
@@ -581,6 +581,7 @@ class CqmStub(object):
             _job['args']          = ''
             _job['user_list']     = [u for u in USERS]
             _job['geometry']      = None
+            _job['resid']         = None
             _job['score']         = SCORES[ndx]
             ndx += 1
             _job_specs.append(_job)
@@ -696,6 +697,10 @@ class SchedStub(object):
 
     def enable(self,whoami):
         logmsg("\nENABLE\n")
+        logmsg('whoami: %s' % str(whoami))
+    
+    def get_backfill_list(self,whoami):
+        logmsg("\nGET_BACKFILL_LIST\n")
         logmsg('whoami: %s' % str(whoami))
 
 class SlpStub(object):

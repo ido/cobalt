@@ -4,6 +4,7 @@
 
 import pybgsched
 import logging
+import time
 from Cobalt.BaseTriremeState import BaseTriremeState
 
 _logger = logging.getLogger()
@@ -17,7 +18,7 @@ def _initiate_boot(context):
         pybgsched.Block.initiateBoot(context.subblock_parent)
     except RuntimeError:
         #fail the boot
-        _logger.warning("%s/%s: Unable to boot block %s due to RuntimeError. Aborting job startup.",context.user, context.job_id,
+        _logger.warning("%s/%s: Unable to boot block %s due to RuntimeError. Aborting job startup.", context.user, context.job_id,
                 context.subblock_parent)
         context.status_string.append("%s/%s: Unable to boot block %s due to RuntimeError. Aborting job startup." % (context.user,
             context.job_id, context.subblock_parent))
@@ -160,11 +161,17 @@ class BootComplete(BaseTriremeState):
     def __init__(self, context):
         super(BootComplete, self).__init__(context)
         self._destination_states = frozenset([BootComplete])
+        self.context.reap_timeout_end = None
+        if self.context.reap_timeout is not None:
+            self.context.reap_timeout_end = int(self.context.reap_timeout) + int(time.time())
+        self.context.force_clean = False
 
     def progress(self):
         '''Boot has completed, wait until the boot is acknowledged and reaped.
 
         '''
+        if self.context.reap_timeout is not None and int(time.time()) > self.context.reap_timeout_end:
+            self.context.force_clean = True
         return self
 
 class BootFailed(BaseTriremeState):
@@ -173,11 +180,17 @@ class BootFailed(BaseTriremeState):
     def __init__(self, context):
         super(BootFailed, self).__init__(context)
         self._destination_states = frozenset([BootFailed])
+        self.context.reap_timeout_end = None
+        if self.context.reap_timeout is not None:
+            self.context.reap_timeout_end = int(self.context.reap_timeout) + int(time.time())
+        self.context.force_clean = False
 
     def progress(self):
         '''Boot has failed.  Messages have been logged.  Wait for reaping.
 
         '''
+        if self.context.reap_timeout is not None and int(time.time()) > self.context.reap_timeout_end:
+            self.context.force_clean = True
         return self
 
 class BootRebooting(BaseTriremeState):

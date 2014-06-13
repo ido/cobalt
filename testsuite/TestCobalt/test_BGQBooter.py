@@ -210,7 +210,7 @@ class test_BGQBooter(object):
         boot = BGQBoot(pybgsched.block_dict['TB-1'], 2, 'testuser', self.block_lock)
         self.booter.send(ReapBootMsg(2))
         pending_messages = ",".join([str(msg) for msg in self.booter.fetch_queued_messages()])
-        correct_messages = "<InitiateBootMsg: msg_type=initiate_boot, block_id=TB-1, job_id=1, user=testuser, subblock_parent=None, tag=None>,<ReapBootMsg: boot_id=2>"
+        correct_messages = "<InitiateBootMsg: msg_type=initiate_boot, block_id=TB-1, job_id=1, user=testuser, subblock_parent=None, tag=None, timeout=None>,<ReapBootMsg: boot_id=2>"
         assert pending_messages == correct_messages, "Pending messages failed: expected %s, got %s" % (correct_messages, pending_messages)
 
     @timeout(10)
@@ -306,6 +306,72 @@ class test_BGQBooter(object):
         time.sleep(3)
         boot_state = str(self.booter.stat('IO-1')[0].state)
         assert boot_state == 'failed', 'Boot state not complete, is %s instead' % boot_state
+
+    @timeout(25)
+    def test_boot_timeout_completed(self):
+        #walk the boot through its transitions, make sure the boot object goes away without external reaping.
+        pybgsched.block_dict['TB-1'].set_status(pybgsched.Block.Initialized)
+        pybgsched.block_dict['TB-1'].add_status(pybgsched.Block.Booting)
+        pybgsched.block_dict['TB-1'].add_status(pybgsched.Block.Booting)
+        pybgsched.block_dict['TB-1'].add_status(pybgsched.Block.Allocated)
+        pybgsched.block_dict['TB-1'].add_status(pybgsched.Block.Free)
+        self.booter.start()
+        self.booter.initiate_boot('TB-1', 1, 'testuser', timeout=10)
+        while True:
+            if self.booter.pending_boots != set():
+                break
+        pybgsched.block_dict['TB-1'].set_action(pybgsched.Action._None)
+        while (True):
+            time.sleep(1)
+            if pybgsched.block_dict['TB-1'].statuses == [pybgsched.Block.Initialized]:
+                time.sleep(3)
+                break
+        boot_state = str(self.booter.stat('TB-1')[0].state)
+        assert boot_state == 'complete', 'Boot state not complete, is %s instead' % boot_state
+        while(True):
+            time.sleep(1)
+            boot = self.booter.stat('TB-1')[0]
+            if boot.context.force_clean == True:
+                self.booter.reap(boot.context.block_id)
+                break
+        while(True): #Make sure the boot really died
+            msg_count = len(self.booter.fetch_queued_messages())
+            if msg_count == 0:
+                break
+        assert len(self.booter.stat('TB-1')) == 0, "Boot should be deleted, but reference still in boot list."
+
+    @timeout(18)
+    def test_boot_timeout_failed(self):
+        #take a boot into a failed state and make sure that the object is cleaned up within the expected timeout
+        pybgsched.block_dict['TB-1'].set_status(pybgsched.Block.Terminating)
+        pybgsched.block_dict['TB-1'].add_status(pybgsched.Block.Allocated)
+        self.booter.start()
+        self.booter.initiate_boot('TB-1', 1, 'testuser', timeout=10)
+        while True:
+            if self.booter.pending_boots != set():
+                break
+        for boot in self.booter.pending_boots:
+            boot.context.max_reboot_attempts = 0
+        pybgsched.block_dict['TB-1'].set_action(pybgsched.Action._None)
+        while (True):
+            time.sleep(1)
+            current_status = pybgsched.block_dict['TB-1'].statuses
+            if current_status == [pybgsched.Block.Terminating]:
+                time.sleep(3)
+                break
+        boot_state = str(self.booter.stat('TB-1')[0].state)
+        assert boot_state == 'failed', 'Boot state not failed, is %s instead' % boot_state
+        while(True):
+            time.sleep(1)
+            boot = self.booter.stat('TB-1')[0]
+            if boot.context.force_clean == True:
+                self.booter.reap(boot.context.block_id)
+                break
+        while(True): #Make sure the boot really died
+            msg_count = len(self.booter.fetch_queued_messages())
+            if msg_count == 0:
+                break
+        assert len(self.booter.stat('TB-1')) == 0, "Boot should be deleted, but reference still in boot list."
 
 class test_BootPending(object):
 

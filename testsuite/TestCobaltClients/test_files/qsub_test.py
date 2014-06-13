@@ -5500,6 +5500,8 @@ jobid:1
 jobid type: <type 'int'>
 location:*
 location type: <type 'str'>
+resid:*
+resid type: <type 'str'>
 state:*
 state type: <type 'str'>
 tag:job
@@ -5672,6 +5674,8 @@ jobid:1
 jobid type: <type 'int'>
 location:*
 location type: <type 'str'>
+resid:*
+resid type: <type 'str'>
 state:*
 state type: <type 'str'>
 tag:job
@@ -5844,6 +5848,8 @@ jobid:1
 jobid type: <type 'int'>
 location:*
 location type: <type 'str'>
+resid:*
+resid type: <type 'str'>
 state:*
 state type: <type 'str'>
 tag:job
