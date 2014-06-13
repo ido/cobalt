@@ -1,6 +1,6 @@
 Summary: Python bindings to IBM's BlueGene/Q control system scheduler interface 
 Name: pybgsched
-Version: 0.1.3
+Version: 0.1.4
 
 Release: 1
 License: None
@@ -40,6 +40,8 @@ rm -rf $RPM_BUILD_ROOT
 /usr/lib64/python2.6/site-packages/pybgsched.pyo
 
 %changelog
+* Fri Mar 07 2014 Paul Rich <richp@alcf.al.gov> -
+- Changed threading to avoid situations where exception processing can cause python runtime crashes.
 * Fri Feb 15 2013 Paul Rich <richp@alcf.anl.gov> -
 - adding support for Action field in Blocks
 - V1R2M0 additions for compilation and linking of library
