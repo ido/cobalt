@@ -1696,7 +1696,7 @@ class BGSystem (BGBaseSystem):
             self.offline_blocks = []
             missing_blocks = set(self._blocks.keys())
             new_blocks = []
-
+            
             block_modification_time.start()
             try:
 
@@ -1753,7 +1753,10 @@ class BGSystem (BGBaseSystem):
                     detailed_io_block_filter.setName(io_block.getName())
                     detailed_io_block_filter.setExtendedInfo(True)
                     new_io_block_info = pybgsched.getIOBlocks(detailed_io_block_filter)
-                    self._io_blocks.q_add([self._new_io_block_dict(new_io_block_info[0])])
+                    if len(new_io_block_info) == 1:
+                        self._io_blocks.q_add([self._new_io_block_dict(new_io_block_info[0])])
+                    else:
+                        self.logger.info("IO Block %s no longer in control system.  IO Block not added.", io_block.getName())
 
                 for io_block_name in missing_io_blocks:
                     self.logger.info("missing block removed: %s", io_block_name)
@@ -1771,9 +1774,12 @@ class BGSystem (BGBaseSystem):
                     detailed_block_filter.setName(block.getName())
                     detailed_block_filter.setExtendedInfo(True)
                     new_block_info = pybgsched.getBlocks(detailed_block_filter)
-                    self._blocks.q_add([self._new_block_dict(new_block_info[0])])
-                    b = self._blocks[block.getName()]
-                    self._detect_wiring_deps(b)
+                    if len(new_block_info) == 1:
+                        self._blocks.q_add([self._new_block_dict(new_block_info[0])])
+                        b = self._blocks[block.getName()]
+                        self._detect_wiring_deps(b)
+                    else:
+                        self.logger.info("Block %s no longer in control system.  Block not added.", block.getName())
 
                 # if partitions were added or removed, then update the relationships between partitions
                 if len(missing_blocks) > 0 or len(new_blocks) > 0:
@@ -1782,7 +1788,7 @@ class BGSystem (BGBaseSystem):
                 block_modification_time.stop()
                 self.logger.log(1, "block_modification time: %f", block_modification_time.elapsed_time)
                 bf_end = time.time()
-                self.logger.log(1,'update loop init: %f sec',bf_end - bf_start)
+                self.logger.log(1, 'update loop init: %f sec',bf_end - bf_start)
 
                 for b in self._blocks.values():
                     #start off all pseudoblocks as idle, we can make them not idle soon.
@@ -1843,13 +1849,21 @@ class BGSystem (BGBaseSystem):
                 recompute_block_state_time.start()
                 self._recompute_block_state(bg_cached_io_blocks)
                 recompute_block_state_time.stop()
-                self.logger.log(1,'recompute_block_state: %f', recompute_block_state_time.elapsed_time)
+                self.logger.log(1, 'recompute_block_state: %f', recompute_block_state_time.elapsed_time)
 
                 block_update_end = time.time()
-                self.logger.log(1,'block_update overall: %f', block_update_end - block_update_start)
+                self.logger.log(1, 'block_update overall: %f', block_update_end - block_update_start)
             except:
                 self.logger.error("error in update_block_state", exc_info=True)
-            self._blocks_lock.release()
+                self.logger.error("setting all blocks to bridge-out state")
+                #set all blocks to an error state as a last-ditch effort to prevent job collisions in the event of control system
+                #runtime errors.
+                for block in self._blocks.values():
+                    block.state = "bridge-out"
+                for block in self._io_blocks.values():
+                    block.state = "bridge-out"
+            finally:
+                self._blocks_lock.release()
 
             # cleanup partitions and set their kernels back to the default (while _not_ holding the lock)
             if block_reset_kernel:
