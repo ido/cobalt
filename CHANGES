@@ -1,5 +1,10 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 0.99.35 ==
+ * Fixed an issue where a block being removed in the BGQ control system between block
+   detection and the block being added for tracking could result in blocks being
+   erroniously marked as idle. (Cobalt Ticket #4268)
+
 == Changes to 0.99.34 ==
  * Fixed an issue where Cobalt could have a memory leak if boot-block.py was
    terminated early the boot tracking object may never be cleaned up.
