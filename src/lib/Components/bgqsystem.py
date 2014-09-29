@@ -2697,7 +2697,7 @@ class BGSystem (BGBaseSystem):
                 retval =  -1
             elif blk1.name > blk2.name:
                 retval = 1
-            elif blk2.name < blk2.name:
+            elif blk1.name < blk2.name:
                 retval = -1
             return retval
 
