@@ -774,7 +774,7 @@ def boot_block(block, user, jobid, resid=None):
             if status in ['complete', 'failed']:
                 component_call(SYSMGR, False, 'reap_boot', (block,))
                 if status == 'failed':
-                    failed = True
+                    failed = GENERAL_FAIL
                 break
         sleep(1)
     if failed:

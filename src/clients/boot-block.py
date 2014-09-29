@@ -103,13 +103,15 @@ def main():
                 break
 
     if not opts.free:
-        client_utils.boot_block(block, user, jobid)
+        #This returns important error codes. Pass this back up through main.
+        return client_utils.boot_block(block, user, jobid)
 
 if __name__ == '__main__':
     try:
-        main()
+        retval = main()
     except SystemExit:
         raise
     except Exception, e:
         client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", e)
         sys.exit(1)
+    sys.exit(retval)
