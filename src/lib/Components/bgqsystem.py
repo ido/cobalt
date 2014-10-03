@@ -1170,6 +1170,17 @@ class BGSystem (BGBaseSystem):
         for io_block_name, new_state in io_block_updates:
             self._io_blocks[io_block_name].state = new_state
 
+        #mark blocks that have pending boots for ensemble jobs.  If the booter isn't checked
+        #we can get blocks marked available that shouldn't be. Do this in a pre-pass
+        #anything with a pending boot should be considered busy.
+        pending_boots = self.booter.pending_boots
+        pending_messages = self.booter.fetch_queued_messages()
+        for boot in pending_boots:
+            self._blocks[boot.block_id].state = 'busy'
+        for boot in pending_messages:
+            if boot.msg_type == 'initiate_boot':
+                self._blocks[boot.block_id].state = 'busy'
+
         #Compute Block state update
         for b in self._blocks.values():
 
@@ -1201,6 +1212,7 @@ class BGSystem (BGBaseSystem):
                 b.state = "allocated"
                 if b.block_type != "pseudoblock":
                     continue
+
 
             #pseudoblock handling, busy isn't handled by the control system.
             if b.block_type == "pseudoblock":
@@ -1240,6 +1252,7 @@ class BGSystem (BGBaseSystem):
                 if subblock_parent_block.state != 'idle':
                     b.state = subblock_parent_block.state
                     continue
+
 
             #mark blocked in parent/child partition is allocated/cleaning
             allocated = None
@@ -2576,8 +2589,12 @@ class BGSystem (BGBaseSystem):
         if timeout is None:
             self.logger.warning("external not setting a timeout.  This may cause a memory leak if this boot is not properly reaped.")
         if is_authorized:
-            #mark the block as 'busy' so that we don't collide when rapidly booting blocks.
-            self._blocks[location].state = 'busy'
+            self._blocks_lock.acquire()
+            try:
+                #mark the block as 'busy' so that we don't collide when rapidly booting blocks.
+                self._blocks[location].state = 'busy'
+            finally:
+                self._blocks_lock.release()
             self.booter.initiate_boot(location, jobid, user, location, tag='external', timeout=timeout)
             retval = True
         return retval
@@ -2680,7 +2697,7 @@ class BGSystem (BGBaseSystem):
                 retval =  -1
             elif blk1.name > blk2.name:
                 retval = 1
-            elif blk2.name < blk2.name:
+            elif blk1.name < blk2.name:
                 retval = -1
             return retval
 
