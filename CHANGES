@@ -1,5 +1,11 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 0.99.36 ==
+ * Fix for issues in get-bootable-blocks and with block booting.  Block names are now
+   properly sorted.  A race condition between boot-block and update_block_state has
+   been fixed.  The return statuses for boot-block have also been corrected for failed
+   boots.  (Cobalt Ticket #4282 and #4280)
+
 == Changes to 0.99.35 ==
  * Fixed an issue where a block being removed in the BGQ control system between block
    detection and the block being added for tracking could result in blocks being
