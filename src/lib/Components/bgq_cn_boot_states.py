@@ -142,7 +142,8 @@ class BootInitiating(BaseTriremeState):
 
         boot_block = get_compute_block(self.context.subblock_parent)
         if boot_block is None:
-
+            _logger.error('Unable to find block.  Failing boot!.')
+            return BootFailed(self.context)
         block_status = boot_block.getStatus()
         if block_status == pybgsched.Block.Initialized:
             if boot_block.getAction() == pybgsched.Action.Free:

@@ -126,7 +126,6 @@ class QueueThread(threading.Thread):
         retitems = []
         try:
             queued_items = list(self.msg_queue.queue)
-            _logger.debug("queued items: %s", queued_items)
             retitems = copy.deepcopy(queued_items)
         except Exception:
             #we must preserve the thread.  Report the traceback, but try to continue on.

@@ -1188,6 +1188,7 @@ class BGSystem (BGBaseSystem):
                 continue
 
             if b.state == 'busy':
+                #TODO: is this valid for pseudoblocks?
                 if not b.reserved_by:
                     b.reserved_until = False
 
@@ -1199,7 +1200,7 @@ class BGSystem (BGBaseSystem):
                 continue
             #failed diags/marked failed not in here
 
-            self.check_block_hardware(b)
+            self.check_block_hardware(b, subblock_parent=b.has_subblocks)
             if b.state != 'idle':
                 continue
 
@@ -1212,7 +1213,6 @@ class BGSystem (BGBaseSystem):
                 b.state = "allocated"
                 if b.block_type != "pseudoblock":
                     continue
-
 
             #pseudoblock handling, busy isn't handled by the control system.
             if b.block_type == "pseudoblock":
@@ -1241,17 +1241,16 @@ class BGSystem (BGBaseSystem):
                 subblock_parent_block = self._blocks[b.subblock_parent]
                 for nc in subblock_parent_block.node_cards:
                     if nc.used_by:
-                        if (b.subblock_parent != nc.used_by or
-                                b.subblock_parent == b.name):
+                        if (b.subblock_parent != nc.used_by or b.subblock_parent == b.name):
                             b.state = "blocked (%s)" % nc.used_by
                             break
                 if b.state != 'idle':
                     continue
 
                 self.check_block_hardware(subblock_parent_block, subblock_parent=True)
-                if subblock_parent_block.state != 'idle':
-                    b.state = subblock_parent_block.state
-                    continue
+                #if subblock_parent_block.state != 'idle':
+                #    b.state = subblock_parent_block.state
+                continue #do not process blocking.  Pseudoblock should be set by now.
 
 
             #mark blocked in parent/child partition is allocated/cleaning
@@ -1264,7 +1263,7 @@ class BGSystem (BGBaseSystem):
                         break
                     else:
                         # if it is the subblock parent we're not really busy
-                        if rel_block.name != b.subblock_parent:
+                        if b.name != rel_block.subblock_parent:
                             allocated = rel_block
                             break
                 if rel_block.cleanup_pending:
@@ -1311,7 +1310,7 @@ class BGSystem (BGBaseSystem):
         #Nodeboards in error
         freeing_error_blocks = []
         for nc in block.node_cards:
-            if subblock_parent and nc.used_by:
+            if not subblock_parent and nc.used_by and not block.block_type == 'pseudoblock':
                 #block if other stuff is running on our node cards.
                 #remember subblock jobs can violate this
                 block.state = "blocked (%s)" % nc.used_by
@@ -1915,7 +1914,7 @@ class BGSystem (BGBaseSystem):
 
         retval = False
         for rel in block._relatives:
-            if rel.state in ['busy', 'allocated', 'cleanup', 'cleanup-initiate', 'foo']:
+            if rel.state in ['busy', 'allocated', 'cleanup', 'cleanup-initiate']:
                 if rel.name != block.subblock_parent:
                     retval = True
                     block.state = 'blocked (%s)' % rel.name
