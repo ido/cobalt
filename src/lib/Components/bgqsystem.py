@@ -1188,7 +1188,6 @@ class BGSystem (BGBaseSystem):
                 continue
 
             if b.state == 'busy':
-                #TODO: is this valid for pseudoblocks?
                 if not b.reserved_by:
                     b.reserved_until = False
 
@@ -2349,8 +2348,13 @@ class BGSystem (BGBaseSystem):
 
         cobalt_block = self._blocks[pgroup.location[0]]
         cobalt_block.current_reboots = 0
+        if cobalt_block.block_type == 'pseudoblock':
+            pgroup.subblock = True
+            pgroup.subblock_parent = cobalt_block.subblock_parent
+            pgroup.corner = cobalt_block.corner_node
+            pgroup.extents = cobalt_block.extents
         try:
-            self.logger.info("%s: Forking task on %s.",pgroup.label, pgroup.location[0])
+            self.logger.info("%s: Forking task on %s.", pgroup.label, pgroup.location[0])
             pgroup.start()
             if pgroup.head_pid == None:
                 self.logger.error("%s: process group failed to start using the %s component; releasing resources",
