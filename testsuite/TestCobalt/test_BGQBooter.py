@@ -55,15 +55,18 @@ class test_BGQBooter(object):
 
     class TestBlock(object):
 
-        def __init__(self, name, reserved=True, block_type='normal'):
+        def __init__(self, name, reserved=True, block_type='normal', subblock_parent=None):
             self.name = name
             self.reserved = reserved
-            self.block_type = 'normal'
-            self.current_kernel_options=" "
+            self.block_type = block_type
+            self.current_kernel_options = " "
             self.current_kernel = "default"
+            self.subblock_parent = self.name
+            if block_type == 'pseudoblock':
+                self.subblock_parent = subblock_parent
 
         def under_resource_reservation(self, job_id):
-            return self.reserved
+             return self.reserved
 
     class TestIOBlock(object):
         def __init__(self, name):
@@ -372,6 +375,30 @@ class test_BGQBooter(object):
             if msg_count == 0:
                 break
         assert len(self.booter.stat('TB-1')) == 0, "Boot should be deleted, but reference still in boot list."
+
+    @timeout(10)
+    def test_subblock_boot(self):
+        #Test to make sure that the right block gets booted if we pass in a block with a different subblock parent.
+        self.test_blocks['TB-P'] = test_BGQBooter.TestBlock('TB-P', block_type='pseudoblock', subblock_parent='TB-1')
+        pybgsched.block_dict['TB-1'].set_status(pybgsched.Block.Initialized)
+        pybgsched.block_dict['TB-1'].add_status(pybgsched.Block.Booting)
+        pybgsched.block_dict['TB-1'].add_status(pybgsched.Block.Booting)
+        pybgsched.block_dict['TB-1'].add_status(pybgsched.Block.Allocated)
+        pybgsched.block_dict['TB-1'].add_status(pybgsched.Block.Free)
+        self.booter.start()
+        self.booter.initiate_boot('TB-P', 1, 'testuser')
+        while True:
+            if self.booter.pending_boots != set():
+                break
+        pybgsched.block_dict['TB-1'].set_action(pybgsched.Action._None)
+        while (True):
+            time.sleep(1)
+            if pybgsched.block_dict['TB-1'].statuses == [pybgsched.Block.Initialized]:
+                time.sleep(3)
+                break
+            #assert str(self.booter.stat('TB-1')[0].state) != 'failed'
+        boot_state = str(self.booter.stat('TB-P')[0].state)
+        assert boot_state == 'complete', 'Boot state not complete, is %s instead' % boot_state
 
 class test_BootPending(object):
 
