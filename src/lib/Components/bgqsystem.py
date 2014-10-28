@@ -833,11 +833,21 @@ class BGSystem (BGBaseSystem):
 
                         corner_node = self._get_compute_node_from_global_coords([a_corner, b_corner, c_corner, d_corner, e_corner])
                         self.logger.debug("Creating subblock name: %s, corner: %s, extents %s, nodecards: %s", curr_name, corner_node, extents, nodecard_list)
-
+                        #get all nodes within block, we can't just add a nodecard's worth of nodes:
+                        nodes = []
+                        for A in range(a_corner, a_corner + extents[A_DIM]):
+                            for B in range(b_corner, b_corner + extents[B_DIM]):
+                                for C in range(c_corner, c_corner + extents[C_DIM]):
+                                    for D in range(d_corner, d_corner + extents[D_DIM]):
+                                        for E in range(e_corner, e_corner + extents[E_DIM]):
+                                            for node in nodecard_list[0].nodes:
+                                                    if node.name == self._get_compute_node_from_global_coords([A, B, C, D, E]):
+                                                        nodes.append(node)
                         ret_blocks.append((dict(
                             name = curr_name, 
                             queue = "default",
                             size = curr_size,
+                            nodes = nodes,
                             node_cards = nodecard_list,
                             subblock_parent = parent_name,
                             corner_node = corner_node,

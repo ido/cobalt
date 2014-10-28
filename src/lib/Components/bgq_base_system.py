@@ -484,6 +484,7 @@ class Block (Data):
                     raise RuntimeError("Invalid corner node for chosen block size.")
                 #pull in all nodenames by coords from nodecard.
                 nc = list(self.node_cards)[0] #only one node_card is in use in this case.
+
         self.current_kernel = get_config_option('bgsystem', 'cn_default_kernel', 'default')
         self.current_kernel_options = get_config_option('bgqsystem', 'cn_default_kernel_options', '')
         self.reboot_ions_for_kernel = False
@@ -633,13 +634,14 @@ class Block (Data):
         b2_nc = set(block.node_cards)
         if (b1_nc.isdisjoint(b2_nc)):
             return False
-
         if (b1_nc & b2_nc == b2_nc):
-            return True
+            if len(b1_nc) > 2:
+                return True
+            #have to handle single-nodecards differently
         if len(b1_nc ^ b2_nc) == 0:
             b1_nodes = set(self.nodes)
             b2_nodes = set(block.nodes)
-            if (b1_nodes & b2_nodes == b2_nodes):
+            if b2_nodes.issubset(b1_nodes):
                 return True
         return False
 

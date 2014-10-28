@@ -1,17 +1,18 @@
-import logging
-import sys
+"""Tests for the bgqsystem component of Cobalt.  Right now these focus on subblock handling.
+
+Mock is required for this set of tests to work
+
+"""
 
 from mock import MagicMock, Mock, patch
 
 import Cobalt.Components.bgqsystem
 from Cobalt.Components.bgqsystem import BGSystem
-from Cobalt.Proxy import ComponentProxy
-#from test_base import TestComponent
 
 patch.object('BGSystem.configure', MagicMock(name='configure'))
 
 class TestBGQSystem(object):
-
+    '''General BGQSystem component tests.'''
     def setup (self):
         #bypass configuration and do not start up UBS thread!
         BGSystem.configure = MagicMock(name='configure')
