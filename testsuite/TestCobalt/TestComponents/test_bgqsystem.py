@@ -167,7 +167,7 @@ class TestBGQSystem(object):
         pg = Cobalt.Components.bgqsystem.BGProcessGroup(pgspec)
         pg.label = 'foo'
         pg.start = MagicMock(name='start')
-        pg.head_pid = 1
+        pg.head_pid = 1 #since we're not actually executing anything, avoid the start-failure path.
         self.bgqsystem.reserve_resources_until = Mock(name='reserve_resources_until')
         self.bgqsystem._start_process_group(pg, self.bgqsystem._blocks['TEST-00000-00000-1'])
         assert pg.subblock_parent == 'TEST-00000-11331-128', 'bad subblock_parent %s' % pg.subblock_parent
@@ -175,3 +175,54 @@ class TestBGQSystem(object):
         assert pg.extents == '1x1x1x1x1', 'bad extents'
         assert pg.subblock == True, 'not marked subblock'
 
+    def test_normal_block_pgroup_forker_call(self):
+        #make sure that the forker gets proper details for normal block startup.
+        #put in enough fake block data to test:
+        class FakeBlock(object):
+            def __init__(self, spec):
+                for arg, val in spec.items():
+                    self.__setattr__(arg, val)
+
+        self.bgqsystem._blocks['TEST-00000-00000-1'] = FakeBlock({'name': 'TEST-00000-00000-1',
+                                                       'subblock_parent': 'TEST-00000-11331-128',
+                                                       'corner_node': 'R00-M0-N00-J00',
+                                                       'extents': '1x1x1x1x1',
+                                                       'block_type': 'pseudoblock',
+                                                       'current_reboots': 0,
+                                                       })
+        self.bgqsystem._blocks['TEST-00000-11331-128'] = FakeBlock({'name': 'TEST-00000-11331-128',
+                                                       'subblock_parent': 'TEST-00000-11331-128',
+                                                       'block_type': 'normal',
+                                                       'current_reboots': 0,
+                                                       })
+
+        pgspec = {'cobalt_log_file': '',
+                  'cwd': '', 
+                  'executable': '', 
+                  'id': 1,
+                  'jobid': 1,
+                  'kernel': 'default',
+                  'kerneloptions': None,
+                  'location': ['TEST-00000-11331-128'],
+                  'mode': 'c1',
+                  'size': 1,
+                  'stderr': '', 
+                  'stdin': '', 
+                  'stdout': '', 
+                  'umask': '0022',
+                  'starttime': 0.0,
+                  'walltime': 600,
+                  'killtime': 600.0,
+                  'args': [],
+                  'user': 'crusher',
+                 }
+        pg = Cobalt.Components.bgqsystem.BGProcessGroup(pgspec)
+        pg.label = 'foo'
+        pg.start = MagicMock(name='start')
+        pg.head_pid = 1 #since we're not actually executing anything, avoid the start-failure path.
+        self.bgqsystem.reserve_resources_until = Mock(name='reserve_resources_until')
+        self.bgqsystem._start_process_group(pg, self.bgqsystem._blocks['TEST-00000-11331-128'])
+        assert not pg.subblock, 'not a subblock'
+        assert pg.corner is None, 'corner should not be set %s' % pg.corner
+        assert pg.subblock_parent is None, 'subblock_parent should not be set %s' % pg.subblock_parent
+        assert pg.extents is None, 'extents should not be set %s' % pg.extents
