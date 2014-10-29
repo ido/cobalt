@@ -346,7 +346,8 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
         try:
             self.boot_data_lock.acquire()
             if msg.msg_type == 'initiate_boot':
-                new_boot = BGQBoot(self.all_blocks[msg.block_id], msg.job_id, msg.user, self.block_lock, tag=msg.tag,
+                new_boot = BGQBoot(self.all_blocks[msg.block_id], msg.job_id, msg.user, self.block_lock,
+                        self.all_blocks[msg.block_id].subblock_parent, tag=msg.tag,
                         timeout=msg.timeout)
                 self.pending_boots.add(new_boot)
                 retval = True

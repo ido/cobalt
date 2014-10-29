@@ -45,9 +45,14 @@ def get_compute_block(block, extended_info=False):
     '''
     block_location_filter = pybgsched.BlockFilter()
     block_location_filter.setName(block)
+    retloc = None
     if extended_info:
         block_location_filter.setExtendedInfo(True)
-    return pybgsched.getBlocks(block_location_filter)[0]
+    try:
+        retloc = pybgsched.getBlocks(block_location_filter)[0]
+    except IndexError:
+        _logger.critical("Booting Block %s not found in the control system!", block)
+    return retloc
 
 class BootPending(BaseTriremeState):
     '''A boot has been requested.  This state handles boot initiation.
@@ -136,6 +141,9 @@ class BootInitiating(BaseTriremeState):
             return BootFailed(self.context)
 
         boot_block = get_compute_block(self.context.subblock_parent)
+        if boot_block is None:
+            _logger.error('Unable to find block.  Failing boot!.')
+            return BootFailed(self.context)
         block_status = boot_block.getStatus()
         if block_status == pybgsched.Block.Initialized:
             if boot_block.getAction() == pybgsched.Action.Free:
