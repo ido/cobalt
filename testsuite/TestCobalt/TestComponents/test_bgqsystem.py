@@ -6,10 +6,10 @@ Mock is required for this set of tests to work
 
 from mock import MagicMock, Mock, patch
 
-import Cobalt.Components.bgqsystem
-from Cobalt.Components.bgqsystem import BGSystem
-
-patch.object('BGSystem.configure', MagicMock(name='configure'))
+pybgsched_mock = Mock()
+with patch.dict('sys.modules', {'pybgsched':pybgsched_mock}):
+    import Cobalt.Components.bgqsystem
+    from Cobalt.Components.bgqsystem import BGSystem
 
 class TestBGQSystem(object):
     '''General BGQSystem component tests.'''
