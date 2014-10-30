@@ -1237,6 +1237,10 @@ class BGSystem (BGBaseSystem):
                             break
 
                 if b.state != 'idle':
+                    #we are allocated/cleaning/otherwise occupied, do not let relatives run anything.
+                    for rel in b._relatives:
+                        if rel.state == 'idle':
+                            rel.state = "blocked (%s)" % b.name
                     continue
 
                 is_blocked = self.check_subblock_blocked(b)
