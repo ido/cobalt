@@ -104,6 +104,7 @@ class Reservation (Data):
         self.running = False
         self.project = spec.get("project", None)
         self.block_passthrough = spec.get("block_passthrough", False)
+        self.deleting = False
 
     def _get_active(self):
         return self.is_active()
@@ -255,7 +256,7 @@ class Reservation (Data):
         else:
             now = stime - self.start
 
-        if now <= self.duration:
+        if now <= self.duration and not self.deleting:
             if not self.running:
                 self.running = True
                 logger.info("Res %s/%s: Activating reservation: %s",
@@ -400,6 +401,7 @@ class ReservationDict (DataDict):
                       Logs that the reservation has terminated.
                       Emits a terminated database record
                       Attempts to mark the queue dead in the queue-manager.
+                      Marks the reservation as dying
 
         '''
         reservations = Cobalt.Data.DataDict.q_del(self, *args, **kwargs)
@@ -414,7 +416,8 @@ class ReservationDict (DataDict):
             logger.error("problem disabling reservation queue (%s)" % err)
 
         for reservation in reservations:
-            #This should be the last place we have handles to reservations, 
+            reservation .deleting = True #Do not let the is_active check succeed.
+            #This should be the last place we have handles to reservations,
             #after this they're heading to GC.
             if reservation.is_active():
                 #if we are active, then drop a deactivating message.
