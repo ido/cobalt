@@ -1321,6 +1321,7 @@ class Job (StateMachine):
             self._sm_log_info("no holds remain; releasing job", cobalt_log = True)
             self.__timers['hold'].stop()
             self.etime = time.time()
+            self.total_etime = 0.0
             self._sm_state = queued_state
 
     def _sm_ready__run(self, args):
