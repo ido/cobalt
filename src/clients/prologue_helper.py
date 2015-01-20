@@ -41,8 +41,13 @@ except:
 
 args = {}
 for s in sys.argv[1:]:
-    key, value = s.split("=")
-    args[key] = value
+    try:
+        key = s.split("=")[0]
+        value = '='.join(s.split('=')[1:])
+    except IndexError:
+        print >> sys.stderr, "Malformed argument %s.  Ignoring." % s
+    else:
+        args[key] = value
 
 if not sim_mode:
     nodefile_dir = get_cluster_system_config("nodefile_dir", "/var/tmp")
