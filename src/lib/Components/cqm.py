@@ -3633,7 +3633,11 @@ class QueueManager(Component):
                                     "job_prog", JobProgDepFracMsg(job))
                         else:
                             new_score = job.dep_frac * job.score
-                        waiting_job.score = max(waiting_job.score, new_score)
+                        # update with new_score iff waiting_job.project == job.project
+                        if waiting_job.project == job.project:
+                            waiting_job.score = max(waiting_job.score, new_score)
+                        else:
+                            waiting_job.score = max(waiting_job.score, 0.0)
 
         # remove the job from the queue
         #
