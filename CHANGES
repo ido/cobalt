@@ -1,5 +1,15 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 0.99.37 ==
+ * Fixed issue where a reservation could hit it's activation check while it is being
+   deactivated, causing those events should be reversed.  Released reservations can't
+   activate. (Cobalt Ticket #4289)
+ * COBALT_JOBSIZE and COBALT_PARTSIZE have been added to interactive jobs.
+   (Cobalt Ticket #4294)
+ * Job dependencies require the same project to gain score from eachother.
+   (Cobalt Ticket #4293)
+ * prologue_helper.py now handles "=" in arguments correctly. (Cobalt Ticket #4292)
+
 == Changes to 0.99.36 ==
  * Fix for issues in get-bootable-blocks and with block booting.  Block names are now
    properly sorted.  A race condition between boot-block and update_block_state has
