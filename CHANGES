@@ -1,5 +1,43 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 0.99.37 ==
+ * Fixed issue where a reservation could hit it's activation check while it is being
+   deactivated, causing those events should be reversed.  Released reservations can't
+   activate. (Cobalt Ticket #4289)
+ * COBALT_JOBSIZE and COBALT_PARTSIZE have been added to interactive jobs.
+   (Cobalt Ticket #4294)
+ * Job dependencies require the same project to gain score from eachother.
+   (Cobalt Ticket #4293)
+ * prologue_helper.py now handles "=" in arguments correctly. (Cobalt Ticket #4292)
+
+== Changes to 0.99.36 ==
+ * Fix for issues in get-bootable-blocks and with block booting.  Block names are now
+   properly sorted.  A race condition between boot-block and update_block_state has
+   been fixed.  The return statuses for boot-block have also been corrected for failed
+   boots.  (Cobalt Ticket #4282 and #4280)
+
+== Changes to 0.99.35 ==
+ * Fixed an issue where a block being removed in the BGQ control system between block
+   detection and the block being added for tracking could result in blocks being
+   erroniously marked as idle. (Cobalt Ticket #4268)
+
+== Changes to 0.99.34 ==
+ * Fixed an issue where Cobalt could have a memory leak if boot-block.py was
+   terminated early the boot tracking object may never be cleaned up.
+ * Numerous enhancements and fixes to handle multiple overlaping queues in the
+   system with respect to draining and backfilling. (Cobalt Ticket #663)
+ * Fixed some typos in the documentation for qsub.
+ * COBALT_RESID is now appropriately set in interactive mode jobs (Cobalt Ticket #703)
+
+== Changes to 0.99.33 ==
+ * Fixed issue where adding blocks while the system component is running can
+   cause the system component's block update loop to fail. (Cobalt Ticket #695)
+ * Preliminary fix for a racecondition that can cause subblock jobs to terminate
+   early (Cobalt Ticket #690)
+ * Added T-Minus to showres (Cobalt Ticket #692)
+ * Fixed an error in qalter where attemtpts to change the users on a running job
+   caused qalter to fail. (Cobalt Ticket #694)
+
 == Changes to 0.99.32 ==
  * Cluster systems now drain for larger jobs, and will backfill into the
    draining hardware. (Cobalt Ticket #663)
