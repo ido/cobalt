@@ -350,7 +350,7 @@ def parse_options(parser, spec, opts, opt2spec, def_spec):
     opts['disable_preboot'] = not spec['script_preboot']
     return opt_count
 
-def run_interactive_job(jobid, user, disable_preboot):
+def run_interactive_job(jobid, user, disable_preboot, nodes, procs):
     """
     This will create the shell or ssh session for user
     """
@@ -361,7 +361,7 @@ def run_interactive_job(jobid, user, disable_preboot):
 
     deljob = True if impl == "cluster_system" else False
 
-    def start_session(loc, resid):
+    def start_session(loc, resid, nodes, procs):
         """
         start ssh or shell session
         """
@@ -372,6 +372,9 @@ def run_interactive_job(jobid, user, disable_preboot):
             os.putenv("COBALT_RESID", "%s" % (resid))
         os.putenv("COBALT_PARTNAME", loc)
         os.putenv("COBALT_BLOCKNAME", loc)
+        os.putenv("COBALT_JOBSIZE", str(procs))
+        os.putenv("COBALT_BLOCKSIZE",str(nodes))
+        os.putenv("COBALT_PARTSIZE", str(nodes))
         client_utils.logger.info("Opening interactive session to %s", loc)
         if deljob:
             os.system("/usr/bin/ssh -o \"SendEnv COBALT_NODEFILE COBALT_JOBID\" %s" % (loc))
@@ -400,7 +403,7 @@ def run_interactive_job(jobid, user, disable_preboot):
         location = response[0]['location']
         resid    = response[0]['resid']
         if state == 'running' and location:
-            start_session(location[0], resid)
+            start_session(location[0], resid, nodes, procs)
             break
         client_utils.logger.debug('Current State "%s" for job %s', str(state), str(jobid))
         sleep(2)
@@ -426,7 +429,7 @@ def run_job(parser, user, spec, opts):
         # If this is an interactive job, wait for it to start, then start user shell
         if parser.options.mode == 'interactive':
             logjob(jobid, spec, False)
-            deljob = run_interactive_job(jobid, user,  opts['disable_preboot'])
+            deljob = run_interactive_job(jobid, user,  opts['disable_preboot'], opts['nodecount'], opts['proccount'])
         else:
             logjob(jobid, spec, True)
     except Exception, e:
