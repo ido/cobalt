@@ -104,7 +104,7 @@ class Reservation (Data):
         self.running = False
         self.project = spec.get("project", None)
         self.block_passthrough = spec.get("block_passthrough", False)
-        self.deleting = False
+        #self.deleting = False
 
     def _get_active(self):
         return self.is_active()
@@ -256,7 +256,7 @@ class Reservation (Data):
         else:
             now = stime - self.start
 
-        if now <= self.duration and not self.deleting:
+        if now <= self.duration:
             if not self.running:
                 self.running = True
                 logger.info("Res %s/%s: Activating reservation: %s",
@@ -416,7 +416,7 @@ class ReservationDict (DataDict):
             logger.error("problem disabling reservation queue (%s)" % err)
 
         for reservation in reservations:
-            reservation.deleting = True #Do not let the is_active check succeed.
+            #reservation.deleting = True #Do not let the is_active check succeed.
             #This should be the last place we have handles to reservations,
             #after this they're heading to GC.
             if reservation.is_active():
