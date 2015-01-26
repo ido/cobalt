@@ -416,7 +416,7 @@ class ReservationDict (DataDict):
             logger.error("problem disabling reservation queue (%s)" % err)
 
         for reservation in reservations:
-            reservation .deleting = True #Do not let the is_active check succeed.
+            reservation.deleting = True #Do not let the is_active check succeed.
             #This should be the last place we have handles to reservations,
             #after this they're heading to GC.
             if reservation.is_active():
