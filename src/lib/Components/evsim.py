@@ -50,32 +50,32 @@ CP = ConfigParser.ConfigParser()
 CP.read(Cobalt.CONFIG_FILES)
 if CP.has_section('evsim') and CP.get("evsim", "no_of_machines"):
     no_of_machine = CP.get("evsim", "no_of_machines")
-    
+
 def sec_to_date(sec, dateformat="%m/%d/%Y %H:%M:%S"):
     tmp = datetime.fromtimestamp(sec)
     fmtdate = tmp.strftime(dateformat)
-    return fmtdate    
-                      
+    return fmtdate
+
 def date_to_sec(fmtdate, dateformat="%m/%d/%Y %H:%M:%S"):
     t_tuple = time.strptime(fmtdate, dateformat)
     sec = time.mktime(t_tuple)
     return sec
 
 class Sim_bg_Sched (BGSched):
-    
+
     def __init__(self, *args, **kwargs):
         BGSched.__init__(self, *args, **kwargs)
-        
+
         self.get_current_time = ComponentProxy("event-manager").get_current_time
-        
+
         predict_scheme = kwargs.get("predict", False)
         if predict_scheme:
             self.running_job_walltime_prediction = bool(int(predict_scheme[2]))
         else:
-            self.running_job_walltime_prediction = False             
-                
+            self.running_job_walltime_prediction = False
+
 class Sim_Cluster_Sched (BGSched):
-    
+
     def __init__(self, *args, **kwargs):
         BGSched.__init__(self, *args, **kwargs)
         self.get_current_time = ComponentProxy("event-manager").get_current_time
@@ -84,25 +84,25 @@ class Sim_Cluster_Sched (BGSched):
         self.queues = Cobalt.Components.bgsched.QueueDict(self.COMP_QUEUE_MANAGER)
         self.jobs = Cobalt.Components.bgsched.JobDict(self.COMP_QUEUE_MANAGER)
         self.running_job_walltime_prediction = False
-    
+
 class SimEvent (Data):
-    
+
     """A simulated event
-    
+
     Attributes:
     machine -- 0, 1, 2 ... represent the system (e.g. Intrepid or Eureka) where the event occurs
     type -- I (init), Q (submit job), S (start job), E (end job),
     datetime -- the date time at which the event occurs
     unixtime -- the unix time form for datetime
     jobid -- the job id associated with the event
-    location -- the location where the event occurs, represented by node list or partition list 
+    location -- the location where the event occurs, represented by node list or partition list
     """
-    
+
     fields = Data.fields + [
         "machine", "type", "datetime", "unixtime",
-        "jobid", "location", 
+        "jobid", "location",
     ]
-    
+
     def __init__ (self, spec):
         """Initialize a new partition."""
         Data.__init__(self, spec)
@@ -113,115 +113,115 @@ class SimEvent (Data):
         self.unixtime = spec.get("unixtime", None)
         self.jobid = spec.get("jobid", 0)
         self.location = spec.get("location", {})
-    
+
 class EventSimulator(Component):
     """Event Simulator. Manages time stamps, events, and the advancing of the clock
-        
+
     Definition of an event, which is a dictionary of following keys:
         machine -- 0, 1, 2 ... represent the system (e.g. Intrepid or Eureka) where the event occurs
         type -- I (init), Q (submit job), S (start job), E (end job),
         datetime -- the date time at which the event occurs
         unixtime -- the unix time form for datetime
         jobid -- the job id associated with the event
-        location -- the location where the event occurs, represented by node list or partition list 
+        location -- the location where the event occurs, represented by node list or partition list
     """
-    
+
     implementation = "evsim"
     name = "event-manager"
-    
+
     def __init__(self, *args, **kwargs):
-        
+
         Component.__init__(self, *args, **kwargs)
         self.event_list = [{'unixtime':0}]
         self.time_stamp = 0
-        
+
         self.finished = False
-                
+
         self.bgsched = Sim_bg_Sched(**kwargs)
         #self.csched = Sim_Cluster_Sched()
-        
+
         self.mmon = metricmon()
-        
+
         self.go_next = True
-        
+
     def set_go_next(self, bool_value):
         self.go_next = bool_value
     set_go_next = exposed(set_go_next)
-    
+
     def get_go_next(self,):
         return self.go_next
     get_go_next = exposed(get_go_next)
-    
+
     def events_length(self):
         return len(self.event_list)
-    
+
     def add_event(self, ev_spec):
         '''insert time stamps in the same order'''
-        
+
         time_sec = ev_spec.get('unixtime')
         if time_sec == None:
             print "insert time stamp error: no unix time provided"
             return -1
-        
+
         if not ev_spec.has_key('jobid'):
             ev_spec['jobid'] = 0
         if not ev_spec.has_key('location'):
-            ev_spec['location'] = [] 
-        
+            ev_spec['location'] = []
+
         pos  = self.events_length()
-        
+
         while time_sec < self.event_list[pos-1].get('unixtime'):
             pos = pos - 1
-            
+
         self.event_list.insert(pos, ev_spec)
         #print "insert time stamp ", ev_spec, " at pos ", pos
         return pos
     add_event = exposed(add_event)
-    
+
     def get_time_span(self):
         '''return the whole time span'''
         starttime = self.event_list[1].get('unixtime')
         endtime = self.event_list[-1].get('unixtime')
         timespan = endtime - starttime
         return timespan
-    get_time_span = exposed(get_time_span)       
-    
+    get_time_span = exposed(get_time_span)
+
     def get_current_time_stamp(self):
         '''return current time stamp'''
         return self.time_stamp
-    
+
     def get_current_time(self):
         '''return current unix time'''
         return self.event_list[self.time_stamp].get('unixtime')
     get_current_time = exposed(get_current_time)
-        
+
     def get_current_date_time(self):
         '''return current date time'''
         return self.event_list[self.time_stamp].get('datetime')
     get_current_date_time = exposed(get_current_date_time)
-    
+
     def get_current_event_type(self):
         '''return current event type'''
         return self.event_list[self.time_stamp].get('type')
     get_current_event_type = exposed(get_current_event_type)
-    
+
     def get_current_event_job(self):
         '''return current event job'''
         return self.event_list[self.time_stamp].get('jobid')
     get_current_event_job = exposed(get_current_event_job)
-    
+
     def get_current_event_location(self):
         return self.event_list[self.time_stamp].get('location')
     get_current_event_location = exposed(get_current_event_location)
-    
+
     def get_current_event_machine(self):
         '''return machine which the current event belongs to'''
         return self.event_list[self.time_stamp].get('machine')
-        
+
     def get_current_event_all(self):
         '''return current event'''
         return self.event_list[self.time_stamp]
-    
+
     def get_next_event_time_sec(self):
         '''return the next event time'''
         if self.time_stamp < len(self.event_list) - 1:
@@ -229,12 +229,12 @@ class EventSimulator(Component):
         else:
             return -1
     get_next_event_time_sec = exposed(get_next_event_time_sec)
-    
-        
+
+
     def is_finished(self):
         return self.finished
     is_finished = exposed(is_finished)
-    
+
     def clock_increment(self):
         '''the current time stamp increments by 1'''
         if self.time_stamp < len(self.event_list) - 1:
@@ -244,11 +244,11 @@ class EventSimulator(Component):
                 "[%s]: Time stamp is incremented by 1, current time stamp: %s " % (self.implementation, self.time_stamp)
         else:
             self.finished = True
-            
+
         return self.time_stamp
     clock_intrement = exposed(clock_increment)
-   
-    def add_init_events(self, jobspecs, machine_id):   ###EVSIM change here        
+
+    def add_init_events(self, jobspecs, machine_id):   ###EVSIM change here
         """add initial submission events based on input jobs and machine id"""
 
         for jobspec in jobspecs:
@@ -262,15 +262,15 @@ class EventSimulator(Component):
             self.add_event(evspec)
 
     add_init_events = exposed(add_init_events)
-    
+
     def init_unhold_events(self, machine_id):
         """add unholding event"""
         if not self.event_list:
             return
-            
+
         first_time_sec = self.event_list[1]['unixtime']
         last_time_sec = self.event_list[-1]['unixtime']
-        
+
         unhold_point = first_time_sec + UNHOLD_INTERVAL + machine_id
         while unhold_point < last_time_sec:
             evspec = {}
@@ -279,19 +279,19 @@ class EventSimulator(Component):
             evspec['unixtime'] = unhold_point
             evspec['datetime'] = sec_to_date(unhold_point)
             self.add_event(evspec)
-            
+
             unhold_point += UNHOLD_INTERVAL + machine_id
     init_unhold_events = exposed(init_unhold_events)
-    
+
     def init_mmon_events(self):
         """add metrics monitor points into time stamps"""
         if not self.event_list:
             return
-                 
+
         first_time_sec = self.get_first_mmon_point(self.event_list[1]['datetime'])
         last_time_sec = self.event_list[-1]['unixtime']
         machine_id = MMON
-        
+
         mmon_point = first_time_sec + MMON_INTERVAL
         while mmon_point < last_time_sec:
             evspec = {}
@@ -299,38 +299,38 @@ class EventSimulator(Component):
             evspec['unixtime'] = mmon_point
             evspec['datetime'] = sec_to_date(mmon_point)
             self.add_event(evspec)
-            mmon_point += MMON_INTERVAL        
-    init_mmon_events = exposed(init_mmon_events) 
-    
+            mmon_point += MMON_INTERVAL
+    init_mmon_events = exposed(init_mmon_events)
+
     def get_first_mmon_point(self, date_time):
         "based on the input date time (%m/%d/%Y %H:%M:%S), get the next epoch time that is at the beginning of an hour"
         segs = date_time.split()
         hours = segs[1].split(":")
         new_datetime = "%s %s:%s:%s" %  (segs[0], hours[0], '00', '00')
         new_epoch = date_to_sec(new_datetime) + 3600
-        return new_epoch    
-    
+        return new_epoch
+
     def print_events(self):
-        print "total events:", len(self.event_list) 
+        print "total events:", len(self.event_list)
         i = 0
         for event in self.event_list:
             print event
             i += 1
             if i == 25:
                 break
-    
+
     def event_driver(self):
         """core part that drives the clock"""
-        
+
         if self.go_next:
             #only if the go_next tag is true will the clock be incremented. enable scheduler schedule multiple job at the same time stamp
             self.clock_increment()
-             
+
         machine = self.get_current_event_machine()
 #        print "[%s]: %s, machine=%s, event=%s, job=%s" % (
 #                                            self.implementation,
-#                                            self.get_current_date_time(), 
-#                                            self.get_current_event_machine(), 
+#                                            self.get_current_date_time(),
+#                                            self.get_current_event_machine(),
 #                                            self.get_current_event_type(),
 #                                            self.get_current_event_job(),
 #                                            )
@@ -341,7 +341,7 @@ class EventSimulator(Component):
             self.csched.schedule_jobs()
         if machine == MMON:
             self.mmon.metric_monitor()
-        
+
         if self.go_next:
             ComponentProxy("queue-manager").calc_loss_of_capacity()
 
