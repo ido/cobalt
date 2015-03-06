@@ -39,16 +39,18 @@ DEFAULT_MAX_HOLDING_SYS_UTIL = 0.6
 SELF_UNHOLD_INTERVAL = 0
 AT_LEAST_HOLD = 600
 MIDPLANE_SIZE = 512
-TOTAL_NODES = 40960
-TOTAL_MIDPLANE = 80
+#TOTAL_NODES = 40960 #INTREPID
+TOTAL_NODES = 49152 #MIRA
+#TOTAL_MIDPLANE = 80 #INTREPID
+TOTAL_MIDPLANE = 96 #MIRA
 YIELD_THRESHOLD = 0
 
 BESTFIT_BACKFILL = False
 SJF_BACKFILL = True
 
 MIN_WALLTIME = 60
-MAX_WALLTIME = 43200
-
+#MAX_WALLTIME = 43200 #INTREPID -- 12 hours
+MAX_WALLTIME = 259200 #MIRA -- 72 Hours (reservations can do this, 24 for normal operation)
 BALANCE_FACTOR = 1
 
 class BGQsim(Simulator):
@@ -2098,6 +2100,7 @@ class BGQsim(Simulator):
         idle_midplanes = self.get_midplanes_by_state('idle')
         self.reset_rack_matrix()
         for name in idle_midplanes:  #sample name for a midplane:  ANL-R15-M0-512
+            print name
             row = int(name[5])
             col = int(name[6])
             M = int(name[9])
