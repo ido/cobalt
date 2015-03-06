@@ -138,7 +138,7 @@ class EventSimulator(Component):
         self.finished = False
                 
         self.bgsched = Sim_bg_Sched(**kwargs)
-        self.csched = Sim_Cluster_Sched()
+        #self.csched = Sim_Cluster_Sched()
         
         self.mmon = metricmon()
         
@@ -344,4 +344,4 @@ class EventSimulator(Component):
         
         if self.go_next:
             ComponentProxy("queue-manager").calc_loss_of_capacity()
-            
+
