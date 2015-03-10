@@ -2465,7 +2465,8 @@ class Job (StateMachine):
 
         # start resource prologue scripts #Script forking ***
         resource_scripts = get_cqm_config('resource_prescripts', "").split(':')
-        self._sm_scripts_thread = RunScriptsThread(resource_scripts, self, self.fields)
+        #FIXME: when fixing preemption deal with this --PMR
+        #self._sm_scripts_thread = RunScriptsThread(resource_scripts, self, self.fields)
 
         self._sm_state = 'Prologue'
 
@@ -4042,7 +4043,7 @@ class QueueManager(Component):
         # I think this duplicates cobalt's old scheduling policy
         # higher queue priorities win, with jobid being the tie breaker
         def default():
-            #this is a vairable that is always being passed in by us.
+            #this is a variable that is always being passed in by us.
             val = queue_priority + 0.1
             return val
 
@@ -4055,16 +4056,22 @@ class QueueManager(Component):
 
 
     def compute_utility_scores (self):
-        utility_scores = []
+        '''Evaluate score functions for a job based on the job's queue.
+
+        This will increment the job's score based on the score function
+        of each job's queue.
+
+        '''
         current_time = time.time()
 
-        queued_jobs = self.Queues.get_jobs([{'is_runnable':True}]) 
+        queued_jobs = self.Queues.get_jobs([{'is_runnable':True}])
         for job in queued_jobs:
             utility_name = self.Queues[job.queue].policy
-            args = {'queued_time':current_time - float(job.submittime), 
+            args = {'queued_time':current_time - float(job.submittime),
                     'wall_time': 60*float(job.walltime),
-                    'wall_time_p': 60*float(job.walltime_p), 
+                    'wall_time_p': 60*float(job.walltime_p),
                     'hold_time' : job.hold_time,
+                    'total_etime' : job.total_etime,
                     'size': float(job.nodes),
                     'user_name': job.user,
                     'project': job.project,
@@ -4086,28 +4093,28 @@ class QueueManager(Component):
                 # probably go back to the "default" one
 
                 # and if we get here, try to fix it and throw away this scheduling iteration
-                self.logger.error("cannot find utility function '%s' named by queue '%s'" % (utility_name, job.queue))
+                self.logger.error("cannot find utility function '%s' named by queue '%s'", utility_name, job.queue)
                 self.user_utility_functions[utility_name] = self.builtin_utility_functions["default"]
-                self.logger.error("falling back to 'default' policy to replace '%s'" % utility_name)
+                self.logger.error("falling back to 'default' policy to replace '%s'", utility_name)
                 return
-            except:
+            except Exception:
                 # do something sensible when the requested utility function explodes
                 # probably go back to the "default" one
 
                 # and if we get here, try to fix it and throw away this scheduling iteration
-                self.logger.error("error while executing utility function '%s' named by queue '%s'" % (utility_name, job.queue), \
+                self.logger.error("error while executing utility function '%s' named by queue '%s'", utility_name, job.queue,
                     exc_info=True)
                 self.user_utility_functions[utility_name] = self.builtin_utility_functions["default"]
-                self.logger.error("falling back to 'default' policy to replace '%s'" % utility_name)
+                self.logger.error("falling back to 'default' policy to replace '%s'", utility_name)
                 return
 
             try:
                 job.score += score
-            except:
-                self.logger.error("utility function '%s' named by queue '%s' returned a non-number" % (utility_name, job.queue), \
+            except Exception:
+                self.logger.error("utility function '%s' named by queue '%s' returned a non-number", utility_name, job.queue,
                     exc_info=True)
                 self.user_utility_functions[utility_name] = self.builtin_utility_functions["default"]
-                self.logger.error("falling back to 'default' policy to replace '%s'" % utility_name)
+                self.logger.error("falling back to 'default' policy to replace '%s'", utility_name)
                 return
 
         if self.score_timestamp:
