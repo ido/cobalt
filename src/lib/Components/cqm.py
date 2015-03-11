@@ -145,6 +145,7 @@ def get_histm_config(option, default):
         value = default
     return value
 
+CQM_SCALE_DEP_FRAC = str(get_cqm_config('scale_dep_frac', 'false')).lower() in Cobalt.Util.config_true_values
 
 walltime_prediction = get_histm_config("walltime_prediction", "False").lower()   # *AdjEst*
 walltime_prediction_configured = False
@@ -3647,13 +3648,15 @@ class QueueManager(Component):
                             dbwriter.log_to_db(None, "all_holds_clear", 
                                     "job_prog", JobProgMsg(waiting_job))
                         if job.dep_frac is None:
-                            job.dep_frac = float(get_cqm_config('dep_frac',
-                                0.5))
-                            new_score = (float(get_cqm_config('dep_frac', 0.5)) 
-                                    * job.score)
+                            job.dep_frac = float(get_cqm_config('dep_frac', 0.5))
+                            if CQM_SCALE_DEP_FRAC:
+                                new_score = min(float(waiting_job.nodes) / job.nodes, 1.) * job.dep_frac * job.score
+                            else:
+                                new_score = (float(get_cqm_config('dep_frac', 0.5)) * job.score)
                             dbwriter.log_to_db(None, "dep_frac_update", 
                                     "job_prog", JobProgDepFracMsg(job))
                         else:
+                            #hard override for schecdtl --inherit
                             new_score = job.dep_frac * job.score
                         # update with new_score iff waiting_job.project == job.project
                         if waiting_job.project == job.project:
