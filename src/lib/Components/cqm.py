@@ -74,6 +74,7 @@ import errno
 import logging
 import os
 import pwd
+import grp
 import sys
 import time
 import math
@@ -3156,7 +3157,7 @@ class Restriction (Data):
 
     fields = Data.fields + ["name", "type", "value"]
 
-    __checks__ = {'maxtime':'maxwalltime', 'users':'usercheck',
+    __checks__ = {'maxtime':'maxwalltime', 'users':'usercheck', 'groups':'groupcheck',
                   'maxrunning':'maxuserjobs', 'mintime':'minwalltime',
                   'maxqueued':'maxqueuedjobs', 'maxusernodes':'maxusernodes',
                   'totalnodes':'maxtotalnodes', 'maxnodehours':'maxnodehours' }
@@ -3202,6 +3203,18 @@ class Restriction (Data):
         if '*' in qusers or job['user'] in qusers:
             return (True, "")
         else:
+            return (False, "You are not allowed to submit to the '%s' queue" % self.queue.name)
+
+    def groupcheck(self, job, _=None):
+        '''checks if job owner is a member of an approved group'''
+        queue_groups = self.value.split(':')
+        if '*' in queue_groups:
+            return (True, "")
+        else:
+            all_groups = grp.getgrall()
+            for group in all_groups:
+                if group.gr_name in queue_groups and job['user'] in group.gr_mem:
+                    return (True, "")
             return (False, "You are not allowed to submit to the '%s' queue" % self.queue.name)
 
     def maxuserjobs(self, job, queuestate=None):
@@ -3337,9 +3350,16 @@ class Queue (Data):
 
         # test job against queue restrictions
         probs = ''
+        user_grp_results = []
         for restriction in [r for r in self.restrictions.itervalues() if r.type == 'queue']:
             result = restriction.CanAccept(spec)
-            if not result[0]:
+            if restriction.name in ('users', 'groups'):
+                user_grp_results.append(result)
+                if len(user_grp_results) == 2 and not reduce(lambda x, y: x[0] | y[0], user_grp_results):
+                    for res in user_grp_results:
+                        if not res[0]:
+                            probs = probs + res[1] + '\n'
+            elif not result[0]:
                 probs = probs + result[1] + '\n'
         if probs:
             raise QueueError, probs
