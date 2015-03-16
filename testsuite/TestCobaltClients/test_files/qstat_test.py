@@ -9090,6 +9090,8 @@ state type: <type 'str'>
 
 GET_QUEUES
 
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -9110,6 +9112,8 @@ totalnodes:*
 totalnodes type: <type 'str'>
 users:*
 users type: <type 'str'>
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -9130,6 +9134,8 @@ totalnodes:*
 totalnodes type: <type 'str'>
 users:*
 users type: <type 'str'>
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -9317,6 +9323,8 @@ state type: <type 'str'>
 
 GET_QUEUES
 
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -9337,6 +9345,8 @@ totalnodes:*
 totalnodes type: <type 'str'>
 users:*
 users type: <type 'str'>
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -9357,6 +9367,8 @@ totalnodes:*
 totalnodes type: <type 'str'>
 users:*
 users type: <type 'str'>
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -9436,6 +9448,8 @@ state type: <type 'str'>
 
 GET_QUEUES
 
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -9515,6 +9529,8 @@ state type: <type 'str'>
 
 GET_QUEUES
 
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -9594,6 +9610,8 @@ state type: <type 'str'>
 
 GET_QUEUES
 
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -9673,6 +9691,8 @@ state type: <type 'str'>
 
 GET_QUEUES
 
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -9752,6 +9772,8 @@ state type: <type 'str'>
 
 GET_QUEUES
 
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -9939,6 +9961,8 @@ state type: <type 'str'>
 
 GET_QUEUES
 
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -10126,6 +10150,8 @@ state type: <type 'str'>
 
 GET_QUEUES
 
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -10313,6 +10339,8 @@ state type: <type 'str'>
 
 GET_QUEUES
 
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -10500,6 +10528,8 @@ state type: <type 'str'>
 
 GET_QUEUES
 
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -10579,6 +10609,8 @@ state type: <type 'str'>
 
 GET_QUEUES
 
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
