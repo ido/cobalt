@@ -32,6 +32,7 @@ from nose.tools import timed, TimeExpired
 import os
 import os.path
 import pwd
+import grp
 import tempfile
 from threading import Lock, Condition
 import traceback
@@ -323,6 +324,27 @@ class TestCQMJobManagement (TestCQMComponent):
         else:
             assert not "a job failing can_queue should prevent the set_jobs from succeeding"
 
+    def test_queue_job_group_restriction(self):
+        #Note: apparently CentOS likes to not add your user to your user's default group.  Make sure that
+        #grp will actually return you as a member of the gid you're running under. --PMR
+        group_name = grp.getgrgid(os.getegid()).gr_name #group we're running under for verification check.
+        self.cqm.add_queues([{'name':"default"}])
+        self.cqm.add_queues([{'name':"restricted-group"}])
+        self.cqm.set_queues([{'name':"restricted-group"}], {'groups':'bar'})
+
+        self.cqm.add_jobs([{'queue':"default", 'jobname':"hello", 'user':pwd.getpwuid(os.getuid()).pw_name}])
+        try:
+            self.cqm.set_jobs([{'jobname':"hello"}], {'queue': "restricted-group"})
+        except QueueError:
+            pass
+        else:
+            assert False, "A job not in a specified group must fail to queue."
+
+        self.cqm.set_queues([{'name':"restricted-group"}], {'groups':'cobalt'})
+        self.cqm.set_jobs([{'jobname':"hello"}], {'queue': "restricted-group"})
+        r = self.cqm.get_jobs([{'jobname':"hello", 'queue':"*"}])
+        assert len(r) == 1
+        assert r[0].queue == "restricted-group"
 
 class Task (Data):
     required_fields = ['jobid', 'location', 'user', 'cwd', 'executable', 'args', ]
