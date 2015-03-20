@@ -3242,15 +3242,25 @@ class Restriction (Data):
 
     def groupcheck(self, job, _=None):
         '''checks if job owner is a member of an approved group'''
+        retval = False
+        retstr = "You are not allowed to submit to the '%s' queue (group restriction)" % self.queue.name
         queue_groups = self.value.split(':')
-        if '*' in queue_groups:
-            return (True, "")
-        else:
-            all_groups = grp.getgrall()
-            for group in all_groups:
-                if group.gr_name in queue_groups and job['user'] in group.gr_mem:
-                    return (True, "")
-            return (False, "You are not allowed to submit to the '%s' queue" % self.queue.name)
+        try:
+            if '*' in queue_groups:
+                retval = True
+                retstr = ""
+            elif grp.getgrgid(pwd.getpwnam(job['user']).pw_gid).gr_name in queue_groups:
+                retval = True
+                retstr = ""
+            else:
+                all_groups = grp.getgrall()
+                for group in all_groups:
+                    if group.gr_name in queue_groups and job['user'] in group.gr_mem:
+                        retval = True
+                        retstr = ""
+        except KeyError:
+            retstr = "Group could not be verified for queue restriction."
+        return retval, retstr
 
     def maxuserjobs(self, job, queuestate=None):
         '''limits how many jobs each user can run by checking queue state
