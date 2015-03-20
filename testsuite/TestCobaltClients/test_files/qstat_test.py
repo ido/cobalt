@@ -8957,6 +8957,7 @@ def test_qstat_queue_option_1():
     cmdout    = \
 """Name: aaa
     Users        : dog
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -8968,6 +8969,7 @@ def test_qstat_queue_option_1():
 
 Name: bbb
     Users        : cat
+    Groups       : foo
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -8979,6 +8981,7 @@ Name: bbb
 
 Name: bello
     Users        : house
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -8990,6 +8993,7 @@ Name: bello
 
 Name: dito
     Users        : king
+    Groups       : wheel
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9001,6 +9005,7 @@ Name: dito
 
 Name: hhh
     Users        : henry
+    Groups       : bar
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9012,6 +9017,7 @@ Name: hhh
 
 Name: jello
     Users        : land
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9023,6 +9029,7 @@ Name: jello
 
 Name: kebra
     Users        : james
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9034,6 +9041,7 @@ Name: kebra
 
 Name: myq
     Users        : queen
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9045,6 +9053,7 @@ Name: myq
 
 Name: yours
     Users        : girl
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9056,6 +9065,7 @@ Name: yours
 
 Name: zq
     Users        : boy
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9080,6 +9090,8 @@ state type: <type 'str'>
 
 GET_QUEUES
 
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -9100,6 +9112,8 @@ totalnodes:*
 totalnodes type: <type 'str'>
 users:*
 users type: <type 'str'>
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -9120,6 +9134,8 @@ totalnodes:*
 totalnodes type: <type 'str'>
 users:*
 users type: <type 'str'>
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -9174,6 +9190,7 @@ def test_qstat_queue_option_2():
     cmdout    = \
 """Name: zq
     Users        : boy
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9185,6 +9202,7 @@ def test_qstat_queue_option_2():
 
 Name: yours
     Users        : girl
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9196,6 +9214,7 @@ Name: yours
 
 Name: myq
     Users        : queen
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9207,6 +9226,7 @@ Name: myq
 
 Name: kebra
     Users        : james
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9218,6 +9238,7 @@ Name: kebra
 
 Name: jello
     Users        : land
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9229,6 +9250,7 @@ Name: jello
 
 Name: hhh
     Users        : henry
+    Groups       : bar
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9240,6 +9262,7 @@ Name: hhh
 
 Name: dito
     Users        : king
+    Groups       : wheel
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9251,6 +9274,7 @@ Name: dito
 
 Name: bello
     Users        : house
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9262,6 +9286,7 @@ Name: bello
 
 Name: bbb
     Users        : cat
+    Groups       : foo
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9273,6 +9298,7 @@ Name: bbb
 
 Name: aaa
     Users        : dog
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9297,6 +9323,8 @@ state type: <type 'str'>
 
 GET_QUEUES
 
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -9317,6 +9345,8 @@ totalnodes:*
 totalnodes type: <type 'str'>
 users:*
 users type: <type 'str'>
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -9337,6 +9367,8 @@ totalnodes:*
 totalnodes type: <type 'str'>
 users:*
 users type: <type 'str'>
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -9389,18 +9421,18 @@ def test_qstat_queue_option_3():
     args      = """-f --sort users -Q"""
 
     cmdout    = \
-"""Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
-========================================================================================================
-zq     boy    None     None     20          20         20            20            100         running  
-bbb    cat    None     None     20          20         20            20            100         running  
-aaa    dog    None     None     20          20         20            20            100         running  
-yours  girl   None     None     20          20         20            20            100         running  
-hhh    henry  None     None     20          20         20            20            100         running  
-bello  house  None     None     20          20         20            20            100         running  
-kebra  james  None     None     20          20         20            20            100         running  
-dito   king   None     None     20          20         20            20            100         running  
-jello  land   None     None     20          20         20            20            100         running  
-myq    queen  None     None     20          20         20            20            100         running  
+"""Name   Users  Groups  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
+================================================================================================================
+zq     boy    None    None     None     20          20         20            20            100         running  
+bbb    cat    foo     None     None     20          20         20            20            100         running  
+aaa    dog    None    None     None     20          20         20            20            100         running  
+yours  girl   None    None     None     20          20         20            20            100         running  
+hhh    henry  bar     None     None     20          20         20            20            100         running  
+bello  house  None    None     None     20          20         20            20            100         running  
+kebra  james  None    None     None     20          20         20            20            100         running  
+dito   king   wheel   None     None     20          20         20            20            100         running  
+jello  land   None    None     None     20          20         20            20            100         running  
+myq    queen  None    None     None     20          20         20            20            100         running  
 """
 
     cmderr    = ''
@@ -9416,6 +9448,8 @@ state type: <type 'str'>
 
 GET_QUEUES
 
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -9468,18 +9502,18 @@ def test_qstat_queue_option_4():
     args      = """-Q"""
 
     cmdout    = \
-"""Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
-========================================================================================================
-aaa    dog    None     None     20          20         20            20            100         running  
-bbb    cat    None     None     20          20         20            20            100         running  
-bello  house  None     None     20          20         20            20            100         running  
-dito   king   None     None     20          20         20            20            100         running  
-hhh    henry  None     None     20          20         20            20            100         running  
-jello  land   None     None     20          20         20            20            100         running  
-kebra  james  None     None     20          20         20            20            100         running  
-myq    queen  None     None     20          20         20            20            100         running  
-yours  girl   None     None     20          20         20            20            100         running  
-zq     boy    None     None     20          20         20            20            100         running  
+"""Name   Users  Groups  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
+================================================================================================================
+aaa    dog    None    None     None     20          20         20            20            100         running  
+bbb    cat    foo     None     None     20          20         20            20            100         running  
+bello  house  None    None     None     20          20         20            20            100         running  
+dito   king   wheel   None     None     20          20         20            20            100         running  
+hhh    henry  bar     None     None     20          20         20            20            100         running  
+jello  land   None    None     None     20          20         20            20            100         running  
+kebra  james  None    None     None     20          20         20            20            100         running  
+myq    queen  None    None     None     20          20         20            20            100         running  
+yours  girl   None    None     None     20          20         20            20            100         running  
+zq     boy    None    None     None     20          20         20            20            100         running  
 """
 
     cmderr    = ''
@@ -9495,6 +9529,8 @@ state type: <type 'str'>
 
 GET_QUEUES
 
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -9547,18 +9583,18 @@ def test_qstat_queue_option_5():
     args      = """-Q --reverse"""
 
     cmdout    = \
-"""Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
-========================================================================================================
-zq     boy    None     None     20          20         20            20            100         running  
-yours  girl   None     None     20          20         20            20            100         running  
-myq    queen  None     None     20          20         20            20            100         running  
-kebra  james  None     None     20          20         20            20            100         running  
-jello  land   None     None     20          20         20            20            100         running  
-hhh    henry  None     None     20          20         20            20            100         running  
-dito   king   None     None     20          20         20            20            100         running  
-bello  house  None     None     20          20         20            20            100         running  
-bbb    cat    None     None     20          20         20            20            100         running  
-aaa    dog    None     None     20          20         20            20            100         running  
+"""Name   Users  Groups  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
+================================================================================================================
+zq     boy    None    None     None     20          20         20            20            100         running  
+yours  girl   None    None     None     20          20         20            20            100         running  
+myq    queen  None    None     None     20          20         20            20            100         running  
+kebra  james  None    None     None     20          20         20            20            100         running  
+jello  land   None    None     None     20          20         20            20            100         running  
+hhh    henry  bar     None     None     20          20         20            20            100         running  
+dito   king   wheel   None     None     20          20         20            20            100         running  
+bello  house  None    None     None     20          20         20            20            100         running  
+bbb    cat    foo     None     None     20          20         20            20            100         running  
+aaa    dog    None    None     None     20          20         20            20            100         running  
 """
 
     cmderr    = ''
@@ -9574,6 +9610,8 @@ state type: <type 'str'>
 
 GET_QUEUES
 
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -9626,18 +9664,18 @@ def test_qstat_queue_option_6():
     args      = """-Q --sort users"""
 
     cmdout    = \
-"""Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
-========================================================================================================
-zq     boy    None     None     20          20         20            20            100         running  
-bbb    cat    None     None     20          20         20            20            100         running  
-aaa    dog    None     None     20          20         20            20            100         running  
-yours  girl   None     None     20          20         20            20            100         running  
-hhh    henry  None     None     20          20         20            20            100         running  
-bello  house  None     None     20          20         20            20            100         running  
-kebra  james  None     None     20          20         20            20            100         running  
-dito   king   None     None     20          20         20            20            100         running  
-jello  land   None     None     20          20         20            20            100         running  
-myq    queen  None     None     20          20         20            20            100         running  
+"""Name   Users  Groups  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
+================================================================================================================
+zq     boy    None    None     None     20          20         20            20            100         running  
+bbb    cat    foo     None     None     20          20         20            20            100         running  
+aaa    dog    None    None     None     20          20         20            20            100         running  
+yours  girl   None    None     None     20          20         20            20            100         running  
+hhh    henry  bar     None     None     20          20         20            20            100         running  
+bello  house  None    None     None     20          20         20            20            100         running  
+kebra  james  None    None     None     20          20         20            20            100         running  
+dito   king   wheel   None     None     20          20         20            20            100         running  
+jello  land   None    None     None     20          20         20            20            100         running  
+myq    queen  None    None     None     20          20         20            20            100         running  
 """
 
     cmderr    = ''
@@ -9653,6 +9691,8 @@ state type: <type 'str'>
 
 GET_QUEUES
 
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -9705,18 +9745,18 @@ def test_qstat_queue_option_7():
     args      = """-Q --sort users --reverse"""
 
     cmdout    = \
-"""Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
-========================================================================================================
-myq    queen  None     None     20          20         20            20            100         running  
-jello  land   None     None     20          20         20            20            100         running  
-dito   king   None     None     20          20         20            20            100         running  
-kebra  james  None     None     20          20         20            20            100         running  
-bello  house  None     None     20          20         20            20            100         running  
-hhh    henry  None     None     20          20         20            20            100         running  
-yours  girl   None     None     20          20         20            20            100         running  
-aaa    dog    None     None     20          20         20            20            100         running  
-bbb    cat    None     None     20          20         20            20            100         running  
-zq     boy    None     None     20          20         20            20            100         running  
+"""Name   Users  Groups  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
+================================================================================================================
+myq    queen  None    None     None     20          20         20            20            100         running  
+jello  land   None    None     None     20          20         20            20            100         running  
+dito   king   wheel   None     None     20          20         20            20            100         running  
+kebra  james  None    None     None     20          20         20            20            100         running  
+bello  house  None    None     None     20          20         20            20            100         running  
+hhh    henry  bar     None     None     20          20         20            20            100         running  
+yours  girl   None    None     None     20          20         20            20            100         running  
+aaa    dog    None    None     None     20          20         20            20            100         running  
+bbb    cat    foo     None     None     20          20         20            20            100         running  
+zq     boy    None    None     None     20          20         20            20            100         running  
 """
 
     cmderr    = ''
@@ -9732,6 +9772,8 @@ state type: <type 'str'>
 
 GET_QUEUES
 
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -9786,6 +9828,7 @@ def test_qstat_queue_option_8():
     cmdout    = \
 """Name: aaa
     Users        : dog
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9797,6 +9840,7 @@ def test_qstat_queue_option_8():
 
 Name: bbb
     Users        : cat
+    Groups       : foo
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9808,6 +9852,7 @@ Name: bbb
 
 Name: bello
     Users        : house
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9819,6 +9864,7 @@ Name: bello
 
 Name: dito
     Users        : king
+    Groups       : wheel
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9830,6 +9876,7 @@ Name: dito
 
 Name: hhh
     Users        : henry
+    Groups       : bar
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9841,6 +9888,7 @@ Name: hhh
 
 Name: jello
     Users        : land
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9852,6 +9900,7 @@ Name: jello
 
 Name: kebra
     Users        : james
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9863,6 +9912,7 @@ Name: kebra
 
 Name: myq
     Users        : queen
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9874,6 +9924,7 @@ Name: myq
 
 Name: yours
     Users        : girl
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9885,6 +9936,7 @@ Name: yours
 
 Name: zq
     Users        : boy
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9909,6 +9961,8 @@ state type: <type 'str'>
 
 GET_QUEUES
 
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -9963,6 +10017,7 @@ def test_qstat_queue_option_9():
     cmdout    = \
 """Name: zq
     Users        : boy
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9974,6 +10029,7 @@ def test_qstat_queue_option_9():
 
 Name: yours
     Users        : girl
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9985,6 +10041,7 @@ Name: yours
 
 Name: myq
     Users        : queen
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -9996,6 +10053,7 @@ Name: myq
 
 Name: kebra
     Users        : james
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -10007,6 +10065,7 @@ Name: kebra
 
 Name: jello
     Users        : land
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -10018,6 +10077,7 @@ Name: jello
 
 Name: hhh
     Users        : henry
+    Groups       : bar
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -10029,6 +10089,7 @@ Name: hhh
 
 Name: dito
     Users        : king
+    Groups       : wheel
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -10040,6 +10101,7 @@ Name: dito
 
 Name: bello
     Users        : house
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -10051,6 +10113,7 @@ Name: bello
 
 Name: bbb
     Users        : cat
+    Groups       : foo
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -10062,6 +10125,7 @@ Name: bbb
 
 Name: aaa
     Users        : dog
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -10086,6 +10150,8 @@ state type: <type 'str'>
 
 GET_QUEUES
 
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -10140,6 +10206,7 @@ def test_qstat_queue_option_10():
     cmdout    = \
 """Name: zq
     Users        : boy
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -10151,6 +10218,7 @@ def test_qstat_queue_option_10():
 
 Name: bbb
     Users        : cat
+    Groups       : foo
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -10162,6 +10230,7 @@ Name: bbb
 
 Name: aaa
     Users        : dog
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -10173,6 +10242,7 @@ Name: aaa
 
 Name: yours
     Users        : girl
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -10184,6 +10254,7 @@ Name: yours
 
 Name: hhh
     Users        : henry
+    Groups       : bar
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -10195,6 +10266,7 @@ Name: hhh
 
 Name: bello
     Users        : house
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -10206,6 +10278,7 @@ Name: bello
 
 Name: kebra
     Users        : james
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -10217,6 +10290,7 @@ Name: kebra
 
 Name: dito
     Users        : king
+    Groups       : wheel
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -10228,6 +10302,7 @@ Name: dito
 
 Name: jello
     Users        : land
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -10239,6 +10314,7 @@ Name: jello
 
 Name: myq
     Users        : queen
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -10263,6 +10339,8 @@ state type: <type 'str'>
 
 GET_QUEUES
 
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -10317,6 +10395,7 @@ def test_qstat_queue_option_11():
     cmdout    = \
 """Name: myq
     Users        : queen
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -10328,6 +10407,7 @@ def test_qstat_queue_option_11():
 
 Name: jello
     Users        : land
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -10339,6 +10419,7 @@ Name: jello
 
 Name: dito
     Users        : king
+    Groups       : wheel
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -10350,6 +10431,7 @@ Name: dito
 
 Name: kebra
     Users        : james
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -10361,6 +10443,7 @@ Name: kebra
 
 Name: bello
     Users        : house
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -10372,6 +10455,7 @@ Name: bello
 
 Name: hhh
     Users        : henry
+    Groups       : bar
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -10383,6 +10467,7 @@ Name: hhh
 
 Name: yours
     Users        : girl
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -10394,6 +10479,7 @@ Name: yours
 
 Name: aaa
     Users        : dog
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -10405,6 +10491,7 @@ Name: aaa
 
 Name: bbb
     Users        : cat
+    Groups       : foo
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -10416,6 +10503,7 @@ Name: bbb
 
 Name: zq
     Users        : boy
+    Groups       : None
     MinTime      : None
     MaxTime      : None
     MaxRunning   : 20
@@ -10440,6 +10528,8 @@ state type: <type 'str'>
 
 GET_QUEUES
 
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*
@@ -10492,18 +10582,18 @@ def test_qstat_queue_option_12():
     args      = """-Q --header Jobid:State:RunTime"""
 
     cmdout    = \
-"""Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
-========================================================================================================
-aaa    dog    None     None     20          20         20            20            100         running  
-bbb    cat    None     None     20          20         20            20            100         running  
-bello  house  None     None     20          20         20            20            100         running  
-dito   king   None     None     20          20         20            20            100         running  
-hhh    henry  None     None     20          20         20            20            100         running  
-jello  land   None     None     20          20         20            20            100         running  
-kebra  james  None     None     20          20         20            20            100         running  
-myq    queen  None     None     20          20         20            20            100         running  
-yours  girl   None     None     20          20         20            20            100         running  
-zq     boy    None     None     20          20         20            20            100         running  
+"""Name   Users  Groups  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
+================================================================================================================
+aaa    dog    None    None     None     20          20         20            20            100         running  
+bbb    cat    foo     None     None     20          20         20            20            100         running  
+bello  house  None    None     None     20          20         20            20            100         running  
+dito   king   wheel   None     None     20          20         20            20            100         running  
+hhh    henry  bar     None     None     20          20         20            20            100         running  
+jello  land   None    None     None     20          20         20            20            100         running  
+kebra  james  None    None     None     20          20         20            20            100         running  
+myq    queen  None    None     None     20          20         20            20            100         running  
+yours  girl   None    None     None     20          20         20            20            100         running  
+zq     boy    None    None     None     20          20         20            20            100         running  
 """
 
     cmderr    = ''
@@ -10519,6 +10609,8 @@ state type: <type 'str'>
 
 GET_QUEUES
 
+groups:*
+groups type: <type 'str'>
 maxnodehours:*
 maxnodehours type: <type 'str'>
 maxqueued:*

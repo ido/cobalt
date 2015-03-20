@@ -55,6 +55,7 @@ vbuf         = ''
 logwrite     = True
 
 USERS    = ['james', 'land' , 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl'  , 'boy']
+GROUPS   = [None, None, None, None, 'foo', 'bar', 'wheel', None, None, None,]
 QUEUES   = ['kebra', 'jello', 'bello', 'aaa', 'bbb', 'hhh'  , 'dito', 'myq'  , 'yours' , 'zq' ]
 SCORES   = [ 45    ,  50    ,  55    ,  40  ,  60  ,  30    ,  20   ,  25    ,  35     ,  2   ]
 PARTS    = ['P1','P2','P3','P4','P5','P6','P7','P8','P9','P10']
@@ -169,12 +170,12 @@ class SystemStub(object):
         logmsg("\nREAP_BOOT\n")
         logmsg("block: %s, type = %s" % (block, str(type(block))))
         return True
-        
+
     def get_block_bgsched_status(self,block):
         logmsg("\nGET_BLOCK_BGSCHED_STATUS\n")
         logmsg("block: %s, type = %s" % (block, str(type(block))))
         return 'Free'
-        
+
     def validate_job(self,opts):
         disable_logwrite()
         logmsg("\nVALIDATE_JOB\n")
@@ -475,6 +476,7 @@ class CqmStub(object):
                      'mintime'      : None,
                      'name'         : QUEUES[i],
                      'users'        : USERS[i],
+                     'groups'       : GROUPS[i],
                      'maxrunning'   : 20,
                      'maxqueued'    : 20,
                      'maxusernodes' : 20,

@@ -3214,7 +3214,6 @@ class Restriction (Data):
             self.type = spec.get("type", "queue")
         self.value = spec.get("value")
         self.queue = queue
-        logger.debug('created restriction %s with type %s' % (self.name, self.type))
 
     def maxwalltime(self, job, _=None):
         '''checks walltime of job against maxtime of queue'''
@@ -3312,7 +3311,6 @@ class Restriction (Data):
 
     def CanAccept(self, job, queuestate=None):
         '''Checks if this object will allow the job'''
-        logger.debug('checking restriction %s' % self.name)
         func = getattr(self, self.__checks__[self.name])
         return func(job, queuestate)
 
@@ -3389,13 +3387,7 @@ class Queue (Data):
         user_grp_results = []
         for restriction in [r for r in self.restrictions.itervalues() if r.type == 'queue']:
             result = restriction.CanAccept(spec)
-            if restriction.name in ('users', 'groups'):
-                user_grp_results.append(result)
-                if len(user_grp_results) == 2 and not reduce(lambda x, y: x[0] | y[0], user_grp_results):
-                    for res in user_grp_results:
-                        if not res[0]:
-                            probs = probs + res[1] + '\n'
-            elif not result[0]:
+            if not result[0]:
                 probs = probs + result[1] + '\n'
         if probs:
             raise QueueError, probs
@@ -3457,7 +3449,6 @@ class QueueDict(DataDict):
             raise QueueError, "Queue '%s' does not exist" % spec['queue']
 
         [testqueue] = [q for q in self.itervalues() if q.name == spec['queue']]
-
         return testqueue.can_queue(spec)
 
     def del_queues(self, specs, callback=None, cargs={}):

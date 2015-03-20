@@ -62,7 +62,7 @@ def get_output_for_queues(parser,hinfo):
 
     names = parser.args if not parser.no_args() else ['*']
 
-    query = [{'name':qname,'users':'*','mintime':'*','maxtime':'*','maxrunning':'*','maxqueued':'*','maxusernodes':'*',
+    query = [{'name':qname,'users':'*','groups':'*','mintime':'*','maxtime':'*','maxrunning':'*','maxqueued':'*','maxusernodes':'*',
               'maxnodehours':'*','totalnodes':'*','state':'*'} for qname in names]
     response = client_utils.component_call(QUEMGR, True, 'get_queues', (query,))
 
