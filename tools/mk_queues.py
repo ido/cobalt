@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+#THIS COMMAND IS EXTREMELY DANGEROUS AND SHOULD NOT BE USED.
+#THIS IS PRESENT FOR HISTORICAL PURPOSES ONLY.
 
 '''Cobalt state upgrade helper'''
 __revision__ = '$Revision: 619 $'
