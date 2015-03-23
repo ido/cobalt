@@ -1,17 +1,205 @@
 .TH "cobalt.conf" 5
 .SH "NAME"
 cobalt.conf - configuration parameters for cobalt components
+.SH "SYNOPSIS"
+.I /etc/cobalt.conf
 .SH "DESCRIPTION"
-Cobalt.conf includes a section for each component that has
-configuration parameters. Each section has a header, [component] where
-component is the individual component name. Each setting is a
-key/value pair. You can comment out lines by starting them with '#'.
+The Cobalt configuration file is an "ini-style" configuration file. This
+configuration file has sections for all Cobalt components and clients
+in a given instance.  The general format of a section is:
+.PP
+[section]
+. key1=val1
+. key2=val2
+.PP
+Values that are lists are ":"-delimited.  In the event that a key is defined
+multiple times in a section, the value of the last key in the section will be
+the value used.  Comments may be made in a file by beginning a like with a '#'.
+Comments must not be inline with key-value pairs.  The sections that follow
+describe the various sections and their options.
+
+If a configuration value definition is mandatory, that will be noted.
+.PP
+.SS General Sections
+.SS "[components]"
+.PP
+.TP
+.B service-location
+The url:port of the service-locator component (slp).  The default port is 8256.
+This must be specified for a given Cobalt instance
+.TP
+.B python
+The path to the python interpreter to use.  If omitted, the default is
+.I/usr/bin/python
+.PP
+.SS "[communication]"
+SSL configuration for Cobalt. These must be specified per-install
+.TP
+.B key
+Key to use for SSL communication. May be generated via
+.BRopenssl (1)
+.TP
+.B cert
+This is a locally stored certification for authenticating the key.
+.TP
+.B ca
+Certification authority for the
+.SB cert
+entry.  This is typically the same as
+.SB cert.
+.TP
+.B password
+Required to be set in configuration file.  This is a shared secret for all
+Cobalt daemons and clients to use, and is the password required for Cobalt's
+internal
+.SM XMLRPC
+communication.
+.PP
+.SS "[statefiles]"
+Options for Cobalt's statefile persistence.
+.TP
+.B location
+Path to where the statefiles are stored.
+.PP
+.SS "[system]"
+Common system configuration settings.  These apply to all types of systems.
+.TP
+.B size
+Maximum size of a given system in nodes.
+.PP
+.SS "[forker]"
+Common option for Cobalt forker components.
+.TP
+.B ignore_setgroup_errors
+Default false.  If set to true, then setuid/setgid failures will not kill jobs.
+Necessary for running local or subinstances of Cobalt, as well as running
+any non-root simulation mode.  If this is set and the forker components are not
+running as root, this will cause any job ran to be run as the user to run as the
+user that the forker component is running as.
+.TP
+.B save_me_interval
+The minimum interval that Cobalt will wait between saving statefiles for this
+component, in seconds. By default the interval is 10.0 seconds.  Under periods
+of high load on the component, the interval between statefiles may be longer.
+.SS "[logger]"
+This section handles cobalt component logging and default levels.
+Valid logging levels in this section are
+.SM DEBUG,
+.SM INFO,
+.SM NOTICE,
+.SM WARNING,
+.SM ERROR
+and
+.SM CRITICAL
+.TP
+.B to_syslog
+If true, send logging data to the syslog daemon.
+.TP
+.B syslog_level
+Only send messages to syslog at this level or higher.  The default level is INFO
+.TP
+.B syslog_location
+Location of logfile
+.TP
+.B syslog_facility
+Logger facility to send logs to.  The default is local0
+.TP
+.B to_console
+Send logging data to console or stdout/stderr as appropriate.
+This defaults to true.
+.TP
+.B console_level
+Only send messages to the console at this level or higher.
+The default level is INFO
+.SS "[bgsched]"
+.TP
+.B default_reservation_policy
+If set, this is the score accrual policy that will be used on reservation
+queues.  The default policy is "default" (fifo).
+.TP
+.B db_flush_interval
+The minimum frequency with which messages are sent to the database component.
+.B use_db_logging
+must be set to true, and the default interval is 10 seconds.
+.B log_dir
+The directory to place reservation accounting logs.
+.TP
+.B overflow_file
+This is a file location to use for holding database messages should
+.B use_db_logging
+be set to true, but the CobaltDB writer component is unavailable for an
+extended period of time.  If this file is present, then on cdbwriter startup,
+messages from this file will be pushed to the component and added to the
+database, followed by in-memory pending messages.
+.TP
+.B max_queued_messages
+This is the number of messages to keep in memory before flushing to the
+.SB overflow_file.
+If set to -1, the component will never flush to the overflow file.  If this
+is not set, then the overflow file will not be used.
+.TP
+.B save_me_interval
+The minimum interval that Cobalt will wait between saving statefiles for this
+component, in seconds. By default the interval is 10.0 seconds.  Under periods
+of high load on the component, the interval between statefiles may be longer.
+.TP
+.B schedule_jobs_interval
+This is the minimum interval between iterations of the scheduling loop. The
+default time is 10 seconds.
+.TP
+.B utility_file
+Location of file for site-defined utility functions.
+.TP
+.B use_db_logging
+If true, send messages to CobaltDB, or cache the messages that would be sent
+if the CobaltDB writer is currently unavailable for later writing.  The default
+is false
+
+.SS "[cqm]"
+These are options for the queue-manager component, cqm.
+
+
+
+
+
+.SS Cluster System Sections
+
+.SS BlueGene/P Sections
+
+.SS BlueGene/Q Sections
+
+
+
+.SH "ENVIRONMENT"
+.B COBALT_CONFIG_FILES
+If set, Cobalt will use the configuration pointed to by this path.
+
+.SH "FILES"
+
+.TP
+.I /etc/cobalt.conf
+This is the default location for the configuration file used by all Cobalt
+daemons and clients.  Due to the potential for abuse of the
+.SM XMLRPC
+interfaces, access to this file should be carefully controlled.  This file
+does not to be writable under normal conditions, and only must be readable
+by the user used by Cobalt's setgid wrappers.  By default, this is the
+.SM cobalt
+user.
+
+
+
+
 .PP
 See individual component man pages for component specific parameters.
 .SH "EXAMPLES"
 The following is an example of a single component clause, setting
 the bgkernel parameter to false.
-.RS
+
+
+
+
+.RS:
 .sp
 .nf
 .ne 0
