@@ -626,33 +626,6 @@ class Job (StateMachine):
                 get_cqm_config('force_kill_delay', DEFAULT_FORCE_KILL_DELAY))
         self.attrs = spec.get("attrs", {})
 
-        self.all_dependencies = spec.get("all_dependencies")
-        if self.all_dependencies:
-            self.all_dependencies = str(self.all_dependencies).split(":")
-            logger.info("Job %s/%s: dependencies set to %s", self.jobid, self.user, ":".join(self.all_dependencies))
-        else:
-            self.all_dependencies = []
-        self.satisfied_dependencies = []
-
-
-        self.preemptable = spec.get("preemptable", False)
-        self.__preempts = 0
-        if self.preemptable:
-            self.mintasktime = int(float(spec.get("mintasktime", 0)))
-            self.maxtasktime = int(float(spec.get("maxtasktime", 0)))
-            self.maxcptime = int(float(spec.get("maxcptime", 0)))
-
-        self.geometry = spec.get("geometry", None)
-
-        self.taskid = None
-        self.task_running = False
-        self.exit_status = None
-        self.max_running = False
-
-        self.__admin_hold = False
-        self.__user_hold = False
-        self.__dep_hold = False
-
         self.score = float(spec.get("score", 0.0))
 
         self.__resource_nodects = []
@@ -670,6 +643,10 @@ class Job (StateMachine):
         self.__timers['queue'].start()
         self.etime = time.time()
 
+        self.__admin_hold = False
+        self.__user_hold = False
+        self.__dep_hold = False
+
         # setting the hold flags will automatically cause the appropriate hold
         #events to be triggered, so this needs to be done
         # only after the object has been completely initialized
@@ -678,10 +655,36 @@ class Job (StateMachine):
         if spec.get("user_hold", False):
             self.user_hold = True
 
-        self.total_etime = 0.0
-        self.priority_core_hours = None
         self.dep_fail = False
         self.dep_frac = None #float(get_cqm_config('dep_frac', 0.5))
+        self.all_dependencies = spec.get("all_dependencies")
+        self.satisfied_dependencies = []
+        if self.all_dependencies:
+            self.all_dependencies = str(self.all_dependencies).split(":")
+            logger.info("Job %s/%s: dependencies set to %s", self.jobid, self.user, ":".join(self.all_dependencies))
+            # read passed dependencies and set dep_hold if necessary
+            # set dep_hold as needed:
+            self.update_dep_state()
+        else:
+            self.all_dependencies = []
+
+
+        self.preemptable = spec.get("preemptable", False)
+        self.__preempts = 0
+        if self.preemptable:
+            self.mintasktime = int(float(spec.get("mintasktime", 0)))
+            self.maxtasktime = int(float(spec.get("maxtasktime", 0)))
+            self.maxcptime = int(float(spec.get("maxcptime", 0)))
+
+        self.geometry = spec.get("geometry", None)
+
+        self.taskid = None
+        self.task_running = False
+        self.exit_status = None
+        self.max_running = False
+
+        self.total_etime = 0.0
+        self.priority_core_hours = None
         self.user_list = spec.get('user_list', [self.user])
 
         #for imporved script handling:
@@ -702,18 +705,10 @@ class Job (StateMachine):
         if self.user_hold:
             dbwriter.log_to_db(self.user, "user_hold", "job_prog", JobProgMsg(self))
 
-        # read passed dependencies and set dep_hold if necessary
-        # set dep_hold as needed:
-        self.update_dep_state()
 
         self.initializing = False
 
     # end def __init__()
-
-    #def __setattr__(self, name, value):
-        #super(Job, self).__setattr__(name, value)
-        #if name in ('all_dependencies', 'satisfied_dependencies'):
-            #self.update_dep_state()
 
     def no_holds_left(self):
         '''Check for whether any holds are set on a job'''
