@@ -1323,14 +1323,14 @@ class BGBaseSystem (Component):
         self._blocks_lock.acquire()
         try:
             self.cached_blocks = copy.deepcopy(self.blocks)
+            # build the cached_blocks structure first
+            # Must be rebuilt while lock is held due to possible update race.
+            self._build_locations_cache()
         except:
             self.logger.error("error in copy.deepcopy", exc_info=True)
             return {}
         finally:
             self._blocks_lock.release()
-
-        # build the cached_blocks structure first
-        self._build_locations_cache()
 
         # first, figure out backfilling cutoffs per block (which we'll also use for picking which block to drain)
         job_end_times = {}
