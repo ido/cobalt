@@ -1697,7 +1697,7 @@ class BGSystem (BGBaseSystem):
                                     #if we have no links, then this midplane is definitely dead:
                                     self.logger.warning("No IO links found for midplane: %s", mp)
                                 else:
-                                    self.logger.warning("Unknown RunntimeError encountered!")
+                                    self.logger.warning("Unknown RuntimeError encountered!")
                                 self.failed_io_midplane_cache.add(mp)
                                 new_io_link_to_mp_dict[mp] = []
                                 continue
@@ -1718,10 +1718,9 @@ class BGSystem (BGBaseSystem):
             now = time.time()
             block_reset_kernel = []
             self.bridge_partition_cache = {}
-            self.offline_blocks = []
             missing_blocks = set(self._blocks.keys())
             new_blocks = []
-            
+
             block_modification_time.start()
             try:
 
