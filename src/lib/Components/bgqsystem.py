@@ -1183,11 +1183,9 @@ class BGSystem (BGBaseSystem):
         #mark blocks that have pending boots for ensemble jobs.  If the booter isn't checked
         #we can get blocks marked available that shouldn't be. Do this in a pre-pass
         #anything with a pending boot should be considered busy.
-        pending_boots = self.booter.pending_boots
-        pending_messages = self.booter.fetch_queued_messages()
-        for boot in pending_boots:
+        for boot in self.booter.pending_boots:
             self._blocks[boot.block_id].state = 'busy'
-        for boot in pending_messages:
+        for boot in self.booter.fetch_queued_messages():
             if boot.msg_type == 'initiate_boot':
                 self._blocks[boot.block_id].state = 'busy'
 
@@ -1315,8 +1313,10 @@ class BGSystem (BGBaseSystem):
                     error_node_name, state_str = self.get_node_in_error(nc.name)
                     if error_node_name:
                         block.state = "hardware offline (%s): node %s" % (state_str, error_node_name)
+                        self.offline_blocks.append(block.name)
                     else:
                         block.state = "hardware offline (%s): nodeboard %s" % ("SoftwareFailure", nc.name)
+                        self.offline_blocks.append(block.name)
                 return True
             return False
 
@@ -1344,10 +1344,12 @@ class BGSystem (BGBaseSystem):
 
         if block.name in self.failed_io_block_names:
             block.state = "Insufficient IO Links"
+            self.offline_blocks.append(block.name)
             return
 
         if block.midplanes.intersection(self.failed_io_midplane_cache):
             block.state = "Insufficient IO Links"
+            self.offline_blocks.append(block.name)
             return
 
         link_offline = False
@@ -1356,12 +1358,14 @@ class BGSystem (BGBaseSystem):
             for link in self.io_link_to_mp_dict[mp]:
                 if link.getState() != pybgsched.IOLink.Available:
                     block.state = "hardware offline (%s) IOLink %s" %(link.getStateString(), link.getDestinationLocation())
+                    self.offline_blocks.append(block.name)
                     link_offline = True
                     return
                 if link.getIONodeState() != pybgsched.Hardware.Available:
                     dead_ion_links += 1
                     if dead_ion_links > 4: #FIXME: make this configurable
                         block.state = "hardware offline (%s) IO Node %s" % (link.getIONodeStateString(),link.getDestinationLocation())
+                        self.offline_blocks.append(block.name)
                         link_offline = True
                         return
 
@@ -1697,7 +1701,7 @@ class BGSystem (BGBaseSystem):
                                     #if we have no links, then this midplane is definitely dead:
                                     self.logger.warning("No IO links found for midplane: %s", mp)
                                 else:
-                                    self.logger.warning("Unknown RunntimeError encountered!")
+                                    self.logger.warning("Unknown RuntimeError encountered!")
                                 self.failed_io_midplane_cache.add(mp)
                                 new_io_link_to_mp_dict[mp] = []
                                 continue
@@ -1718,10 +1722,9 @@ class BGSystem (BGBaseSystem):
             now = time.time()
             block_reset_kernel = []
             self.bridge_partition_cache = {}
-            self.offline_blocks = []
             missing_blocks = set(self._blocks.keys())
             new_blocks = []
-            
+
             block_modification_time.start()
             try:
 
