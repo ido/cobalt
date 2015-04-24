@@ -123,6 +123,8 @@ nodecard_exp = re.compile(r'-N(?P<pos>[0-9][0-9])')
 midplane_exp = re.compile(r'-M(?P<pos>[0-9])')
 rack_exp = re.compile(r'R(?P<pos>[0-9]([0-9]|[A-F]))')
 wire_exp = re.compile(r'(?P<dim>[A-D])_R(?P<rack>[0-9]([0-9]|[A-F]))-M(?P<midplane>0|1)')
+NOT_OFFLINE_RE = re.compile(r'^(blocked|busy|idle|allocated|cleanup|cleanup-pending)')
+
 
 def get_transformed_loc(nodeboard_pos, coords):
     ''' Return an node postion based on coordiantes and nodecard position
@@ -1210,23 +1212,28 @@ class BGBaseSystem (Component):
         else:
             return []
 
-    # this function builds three things, namely a pair of dictionaries keyed by queue names, and a set of 
-    # block names which are not functional
-    #
-    # self._defined_sizes maps queue names to an ordered list of block sizes available in that queue
-    #     for all schedulable blocks (even if currently offline and not functional)
-    # self._locations_cache maps queue names to dictionaries which map block sizes to block objects;
-    #     this structure will only contain blocks which are fully online, so we don't try to drain a
-    #     broken block
-    # self._not_functional_set contains names of blocks which are not functional (either themselves, or
-    #     a parent or child) 
     def _build_locations_cache(self):
+        '''Build three things: a pair of dictionaries keyed by queue names,
+        and a set of block names which are not functional.
+
+        Side Effects:
+
+        self._defined_sizes: maps queue names to an ordered list of block sizes available in that queue
+            for all schedulable blocks (even if currently offline and not functional)
+        self._locations_cache: maps queue names to dictionaries which map block sizes to block objects;
+            this structure will only contain blocks which are fully online, so we don't try to drain a
+            broken block
+        self._not_functional_set: contains names of blocks which are not functional (either themselves, or
+            a parent or child)
+
+        '''
         per_queue = {}
         defined_sizes = {}
         not_functional_set = set()
         for target_block in self.cached_blocks.itervalues():
             usable = True
-            if target_block.name in self.offline_blocks:
+            if (target_block.name in self.offline_blocks or
+                    NOT_OFFLINE_RE.search(target_block.state) is None):
                 usable = False
             else:
                 for part in self.cached_blocks.itervalues():
@@ -1379,7 +1386,8 @@ class BGBaseSystem (Component):
                         drain_blocks.add(self.cached_blocks[p_name])
                         self.cached_blocks[p_name].draining = True
                     drain_blocks.add(location)
-                    self.logger.debug("job %s is draining %s backfill ends at %s" % (job['jobid'], location.name, \
+                    self.logger.debug("job %s is draining %s state %s backfill ends at %s" % (job['jobid'], location.name,
+                        location.state, \
                         time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(location.backfill_time))))
                     location.draining = True
 
@@ -1513,44 +1521,55 @@ class BGBaseSystem (Component):
         rc = False
         block_name = location[0]
         pg = self.process_groups.find_by_jobid(jobid)
-        try:
-            self._blocks_lock.acquire()
-            block = self.blocks[block_name]
-            used_by = self.blocks[block_name].used_by
-            if new_time:
-                if used_by == None:
-                    block.used_by = jobid
-                    used_by = jobid
-                if used_by == jobid:
-                    block.reserved_until = new_time
-                    block.reserved_by = jobid
-                    if block.state == 'idle':
-                        block.state = 'allocated'
-                    self.logger.info("job %s: block '%s' now reserved until %s", jobid, block_name,
-                        time.asctime(time.gmtime(new_time)))
-                    self._recompute_block_state()
-                    rc = True
+        with self._blocks_lock:
+            try:
+                block = self.blocks[block_name]
+                used_by = self.blocks[block_name].used_by
+                if new_time:
+                    if used_by == None:
+                        block.used_by = jobid
+                        used_by = jobid
+                    if used_by == jobid:
+                        block.reserved_until = new_time
+                        block.reserved_by = jobid
+                        if block.state == 'idle':
+                            block.state = 'allocated'
+                        self.logger.info("job %s: block '%s' now reserved until %s", jobid, block_name,
+                            time.asctime(time.gmtime(new_time)))
+                        self._recompute_block_state()
+                        rc = True
+                    else:
+                        self.logger.error("job %s wasn't allowed to update the reservation on block %s (owner=%s)",
+                            jobid, block_name, used_by)
                 else:
-                    self.logger.error("job %s wasn't allowed to update the reservation on block %s (owner=%s)",
-                        jobid, block_name, used_by)
-            else:
-                #new_time must be none, we're unsetting this
-                if used_by == jobid or jobid == None:
-                    #yes, jobid == None is a hard override
-                    self.blocks[block_name].reserved_until = False
-                    self.blocks[block_name].reserved_by = None
-                    self.logger.info("reservation on block '%s' has been removed", block_name)
-                    self._mark_block_for_cleaning(block_name, jobid, locking=False)
-                    rc = True
-                else:
-                    self.logger.error("job %s wasn't allowed to clear the reservation on block %s (owner=%s)",
-                        jobid, block_name, used_by)
-        except:
-            self.logger.exception("an unexpected error occurred will adjusting the block reservation time")
-        finally:
-            self._blocks_lock.release()
+                    #new_time must be none, we're unsetting this
+                    if used_by == jobid or jobid == None:
+                        #yes, jobid == None is a hard override
+                        self.blocks[block_name].reserved_until = False
+                        self.blocks[block_name].reserved_by = None
+                        self.logger.info("reservation on block '%s' has been removed", block_name)
+                        self._mark_block_for_cleaning(block_name, jobid, locking=False)
+                        rc = True
+                    else:
+                        self.logger.error("job %s wasn't allowed to clear the reservation on block %s (owner=%s)",
+                            jobid, block_name, used_by)
+            except Exception:
+                self.logger.exception("an unexpected error occurred in adjusting the block reservation time")
         return rc
     reserve_resources_until = exposed(reserve_resources_until)
+
+    def _recompute_block_state(self):
+        '''stub.  Must be implemented by actual system implementation.'''
+        raise NotImplementedError("_recompute_block_state not implemented in "
+            "the base system component")
+
+    def _mark_block_for_cleaning(self, block_name, jobid, locking=True):
+        '''stub. Must be implemented by actual system component for
+        reserve_resources_until.
+
+        '''
+        raise NotImplementedError("_mark_block_for_cleaning not implemented in "
+            "the base system component")
 
     def _auth_user_for_block(self, location, user, jobid, resid):
         '''Given a location, user, jobid, and/or resid, make sure the user is allowed to boot/free blocks associated with that location.
@@ -1576,6 +1595,7 @@ class BGBaseSystem (Component):
                 self.logger.warning("%s is not authorized to execute operations on block %s.", user, location)
                 retval = False
         return retval
+
 
     @query
     @exposed
