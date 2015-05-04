@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+#THIS COMMAND IS EXTREMELY DANGEROUS AND SHOULD NOT BE USED.
+#THIS SCRIPT IS HERE FOR HISTORICAL PURPOSES ONLY.
 
 '''Cobalt Queue Status'''
 __revision__ = '$Revision: 406 $'
