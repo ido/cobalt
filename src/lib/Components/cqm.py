@@ -786,6 +786,9 @@ class Job (StateMachine):
             if self.ion_kerneloptions == False:
                 self.ion_kerneloptions = None
         self.runid = state.get("runid", None)
+        #for old statefiles, make sure to update the dependency state on restart:
+        self.__dep_hold = False
+        self.update_dep_state()
         self.initializing = False
 
     def __task_signal(self, retry = True):
