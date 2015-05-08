@@ -272,37 +272,40 @@ def dgetopt(arglist, opt, vopt, msg):
 def merge_nodelist(locations):
     '''create a set of dashed-ranges from a node list'''
     reg = re.compile('(\D+)(\d+)')
-    prefix = reg.match(locations[0]).group(1)
 
-    # create a sorted list of the node numbers
-    uniq = []
+    # create a dictionary with a key for each node prefix,
+    # with sorted lists of node numbers as the values
+    noderanges = {}
     for name in locations:
+        prefix = reg.match(name).group(1)
         newnum = int(reg.match(name).group(2))
-        if not newnum in uniq:
-            uniq.append(newnum)
-    uniq.sort()
+        if not prefix in noderanges:
+            noderanges[prefix] = [newnum]
+        elif not newnum in noderanges[prefix]:
+            noderanges[prefix].append(newnum)
 
-    # iterate through the sorted list, identifying gaps in the sequential numbers
-    breaks = []
-    start = 0
-    idx = 0
-    for idx in range(1,len(uniq)):
-        if uniq[idx] != uniq[idx-1] + 1:
-            breaks.append((start,idx-1))
-            start = idx
-            
-    breaks.append((start, idx))
-
-    # produce pretty output for contiguous ranges
+    # iterate through the sorted lists, identifying gaps in the sequential numbers
     ret = []
-    for t in breaks:
-        if uniq[t[1]] - uniq[t[0]] > 0:
-            ret.append("[%s%s-%s]" % (prefix, uniq[t[0]], uniq[t[1]]))
-        else:
-            ret.append("%s%s" % (prefix, uniq[t[0]]))
+    for prefix in sorted(noderanges.keys()):
+        noderanges[prefix].sort()
+        breaks = []
+        start = 0
+        idx = 0
+        for idx in range(1,len(noderanges[prefix])):
+            if noderanges[prefix][idx] != noderanges[prefix][idx-1] + 1:
+                breaks.append((start,idx-1))
+                start = idx
+
+        breaks.append((start, idx))
+
+        # produce pretty output for contiguous ranges
+        for t in breaks:
+            if noderanges[prefix][t[1]] - noderanges[prefix][t[0]] > 0:
+                ret.append("[%s%s-%s]" % (prefix, noderanges[prefix][t[0]], noderanges[prefix][t[1]]))
+            else:
+                ret.append("%s%s" % (prefix, noderanges[prefix][t[0]]))
 
     return ','.join(ret)
-
 
 def dgetopt_long(arglist, opt, vopt, msg):
     '''parse options into a dictionary, long and short options supported'''
