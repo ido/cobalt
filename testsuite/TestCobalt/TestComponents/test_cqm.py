@@ -1035,6 +1035,36 @@ class CQMIntegrationTestBase (TestCQMComponent):
         self.assert_jobid()
         assert self.job['admin_hold'] == new_hold
 
+    #dep_hold tests.
+
+    def job_add_dep_hold(self):
+        #set dep hold if appropriate on job addition
+        self.cqm.add_jobs([{'nodes':512, 'walltime':10,
+            'queue':'default'}])
+        self.cqm.add_jobs([{'nodes':512, 'walltime':10, 'queue':'default',
+            'all_dependencies':'1'}])
+        job1 = self.cqm.get_jobs([{'queue':'default', 'jobid':1,
+            'all_dependencies':'*', 'dep_hold':'*'}])[0]
+        job2 = self.cqm.get_jobs([{'queue':'default', 'jobid':2,
+            'all_dependencies':'*', 'dep_hold':'*'}])[0]
+        assert job1['dep_hold'] == False, "dep_hold incorrectly set."
+        assert job2['dep_hold'] == True, "dep_hold not set."
+
+    def job_dep_hold_and_release(self):
+        #add two jobs, set dependencies, if deps set, make sure that we are now
+        #in dep_hold
+        self.cqm.add_jobs([{'nodes':512, 'walltime':10, 'queue':'default'}])
+        self.cqm.add_jobs([{'nodes':512, 'walltime':10, 'queue':'default'}])
+        job1 = self.cqm.set_jobs([{'queue':'default', 'jobid':2,
+            'all_dependencies':'*', 'dep_hold':'*'}],
+            {'all_dependencies':'1'})[0]
+        assert job1['dep_hold'] is True, "Dep hold not set on adding dependency."
+        #remove deps, update holds, make sure job no longer in dep_hold
+        job1 = self.cqm.set_jobs([{'queue':'default', 'jobid':2,
+            'all_dependencies':'*', 'dep_hold':'*'}],
+            {'all_dependencies':''})[0]
+        assert job1['dep_hold'] is False, "Job failed to release dep_hold"
+
     def job_run(self, location):
         debug_print("Initiating job run at %s" % location)
         jobs = self.cqm.run_jobs([self.get_job_query_spec()], location)
