@@ -271,18 +271,43 @@ def dgetopt(arglist, opt, vopt, msg):
 
 def merge_nodelist(locations):
     '''create a set of dashed-ranges from a node list'''
-    reg = re.compile('(\D+)(\d+)')
+    reg = re.compile(r'(\D+)(\d+)')
 
     # create a dictionary with a key for each node prefix,
     # with sorted lists of node numbers as the values
     noderanges = {}
+    prefix_min_digits = {}
+    prefix_max_digits = {}
+    prefix_format_str = {}
+
     for name in locations:
         prefix = reg.match(name).group(1)
-        newnum = int(reg.match(name).group(2))
+        nodenum = reg.match(name).group(2)
+        num_digits = len(nodenum)
+        newnum = int(nodenum)
         if not prefix in noderanges:
             noderanges[prefix] = [newnum]
+            prefix_min_digits[prefix] = num_digits
+            prefix_max_digits[prefix] = num_digits
         elif not newnum in noderanges[prefix]:
             noderanges[prefix].append(newnum)
+            prefix_min_digits[prefix] = min(prefix_min_digits[prefix], num_digits)
+            prefix_max_digits[prefix] = max(prefix_max_digits[prefix], num_digits)
+
+    #set format string.  Compensate for constant-length naming conventions.
+    #Thanks Andrew!
+    for prefix in prefix_min_digits.keys():
+        if prefix_min_digits[prefix] == prefix_max_digits[prefix]:
+            prefix_format_str[prefix] = {
+                    'compact': ("[%%s%%%d.%dd-%%%d.%dd]" %
+                        (prefix_min_digits[prefix], prefix_min_digits[prefix],
+                        prefix_min_digits[prefix], prefix_min_digits[prefix])),
+                    'single': ("%%s%%%d.%dd" % (prefix_min_digits[prefix],
+                               prefix_min_digits[prefix]))
+                    }
+        else:
+            prefix_format_str[prefix] = {'compact': "[%s%s-%s]",
+                                         'single': "%s%s"}
 
     # iterate through the sorted lists, identifying gaps in the sequential numbers
     ret = []
@@ -291,19 +316,22 @@ def merge_nodelist(locations):
         breaks = []
         start = 0
         idx = 0
-        for idx in range(1,len(noderanges[prefix])):
+        for idx in range(1, len(noderanges[prefix])):
             if noderanges[prefix][idx] != noderanges[prefix][idx-1] + 1:
-                breaks.append((start,idx-1))
+                breaks.append((start, idx-1))
                 start = idx
 
         breaks.append((start, idx))
 
         # produce pretty output for contiguous ranges
-        for t in breaks:
-            if noderanges[prefix][t[1]] - noderanges[prefix][t[0]] > 0:
-                ret.append("[%s%s-%s]" % (prefix, noderanges[prefix][t[0]], noderanges[prefix][t[1]]))
+        for brk in breaks:
+            if noderanges[prefix][brk[1]] - noderanges[prefix][brk[0]] > 0:
+                ret.append(prefix_format_str[prefix]['compact'] %
+                        (prefix, noderanges[prefix][brk[0]],
+                            noderanges[prefix][brk[1]]))
             else:
-                ret.append("%s%s" % (prefix, noderanges[prefix][t[0]]))
+                ret.append(prefix_format_str[prefix]['single'] %
+                        (prefix, noderanges[prefix][brk[0]]))
 
     return ','.join(ret)
 
