@@ -9,9 +9,9 @@ test_argslist - is a list of dictionaries, each dictionary has all the necessary
 """
 
 test_argslist = [
-    { "tc_name" : "getq_option_1", "args" : """--getq""", },
-    { "tc_name" : "getq_option_2", "args" : """-d --getq""", },
-    { "tc_name" : "getq_option_3", "args" : """-f --getq""", },
+    { "tc_name" : "getq_option_1", "args" : """--getq""", "new_only": True},
+    { "tc_name" : "getq_option_2", "args" : """-d --getq""", "new_only": True},
+    { "tc_name" : "getq_option_3", "args" : """-f --getq""", "new_only": True},
     { "tc_name" : "preempt_job_1", "args" : """-d --preempt 1 2 3""", 'skip_list' : ['not_bsim'], },
     { "tc_name" : "preempt_job_2", "args" : """-f --preempt 1 2 3""", 'skip_list' : ['not_bsim'], },
     { "tc_name" : "kill_job_1", "args" : """-d -f --kill 1 2 3""", "old_args" : """--delete 1 2 3""", },
@@ -19,7 +19,7 @@ test_argslist = [
     { "tc_name" : "kill_job_3", "args" : """-f --kill 1 2 3""", "old_args" : """-d --delete 1 2 3""", },
     { "tc_name" : "kill_job_4", "args" : """-d --kill 1 2 3""", },
     { "tc_name" : "addq_option_1", "args" : """--addq""", "new_only" : True, },
-    { "tc_name" : "addq_option_2", "args" : """--addq myq1 myq2 myq3""", },
+    { "tc_name" : "addq_option_2", "args" : """--addq myq1 myq2 myq3""", "new_only": True},
     { "tc_name" : "delq_option_1", "args" : """--delq""", "new_only" : True, },
     { "tc_name" : "delq_option_2", "args" : """--delq myq1 myq2 myq3""", },
     { "tc_name" : "stopq_option_1", "args" : """--stopq""", "new_only" : True, },

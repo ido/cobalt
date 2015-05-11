@@ -1,25 +1,531 @@
 .TH "cobalt.conf" 5
 .SH "NAME"
 cobalt.conf - configuration parameters for cobalt components
+.SH "SYNOPSIS"
+.I /etc/cobalt.conf
 .SH "DESCRIPTION"
-Cobalt.conf includes a section for each component that has
-configuration parameters. Each section has a header, [component] where
-component is the individual component name. Each setting is a
-key/value pair. You can comment out lines by starting them with '#'.
+The Cobalt configuration file is an "ini-style" configuration file. This
+configuration file has sections for all Cobalt components and clients
+in a given instance.  The general format of a section is:
 .PP
-See individual component man pages for component specific parameters.
-.SH "EXAMPLES"
-The following is an example of a single component clause, setting
-the bgkernel parameter to false.
+[section]
+. key1=val1
+. key2=val2
+.PP
+Values that are lists are ":"-delimited.  In the event that a key is defined
+multiple times in a section, the value of the last key in the section will be
+the value used.  Comments may be made in a file by beginning a like with a '#'.
+Comments must not be inline with key-value pairs.  The sections that follow
+describe the various sections and their options.
+
+If a configuration value definition is mandatory, that will be noted.
+.PP
+.SS General Sections
+.SS "[components]"
+.TP
+.B service-location
+The url:port of the service-locator component (slp).  The default port is 8256.
+This must be specified for a given Cobalt instance
+.TP
+.B python
+The path to the python interpreter to use.  If omitted, the default is
+.I /usr/bin/python
+
+.SS "[communication]"
+SSL configuration for Cobalt. These must be specified per-install
+.TP
+.B key
+Key to use for SSL communication. May be generated via
+.BR openssl (1)
+.TP
+.B cert
+This is a locally stored certification for authenticating the key.
+.TP
+.B ca
+Certification authority for the
+.SB cert
+entry.  This is typically the same as
+.SB cert.
+.TP
+.B password
+Required to be set in configuration file.  This is a shared secret for all
+Cobalt daemons and clients to use, and is the password required for Cobalt's
+internal
+.SM XMLRPC
+communication.
+.PP
+.SS "[statefiles]"
+Options for Cobalt's statefile persistence.
+.TP
+.B location
+Path to where the statefiles are stored.
+.PP
+.SS "[system]"
+Common system configuration settings.  These apply to all types of systems.
+.TP
+.B size
+Maximum size of a given system in nodes.
+.PP
+.SS "[forker]"
+Common option for Cobalt forker components.
+.TP
+.B ignore_setgroup_errors
+Default false.  If set to true, then setuid/setgid failures will not kill jobs.
+Necessary for running local or subinstances of Cobalt, as well as running
+any non-root simulation mode.  If this is set and the forker components are not
+running as root, this will cause any job ran to be run as the user to run as the
+user that the forker component is running as.
+.TP
+.B save_me_interval
+The minimum interval that Cobalt will wait between saving statefiles for this
+component, in seconds. By default the interval is 10.0 seconds.  Under periods
+of high load on the component, the interval between statefiles may be longer.
+.SS "[logger]"
+This section handles cobalt component logging and default levels.
+Valid logging levels in this section are
+.SM DEBUG,
+.SM INFO,
+.SM NOTICE,
+.SM WARNING,
+.SM ERROR
+and
+.SM CRITICAL
+.TP
+.B to_syslog
+If true, send logging data to the syslog daemon.
+.TP
+.B syslog_level
+Only send messages to syslog at this level or higher.  The default level is INFO
+.TP
+.B syslog_location
+Location of logfile
+.TP
+.B syslog_facility
+Logger facility to send logs to.  The default is local0
+.TP
+.B to_console
+Send logging data to console or stdout/stderr as appropriate.
+This defaults to true.
+.TP
+.B console_level
+Only send messages to the console at this level or higher.
+The default level is INFO
+.SS "[bgsched]"
+.TP
+.B default_reservation_policy
+If set, this is the score accrual policy that will be used on reservation
+queues.  The default policy is "default" (fifo).
+.TP
+.B db_flush_interval
+The minimum frequency with which messages are sent to the database component.
+.B use_db_logging
+must be set to true, and the default interval is 10 seconds.
+.B log_dir
+The directory to place reservation accounting logs.
+.TP
+.B overflow_file
+This is a file location to use for holding database messages should
+.B use_db_logging
+be set to true, but the CobaltDB writer component is unavailable for an
+extended period of time.  If this file is present, then on cdbwriter startup,
+messages from this file will be pushed to the component and added to the
+database, followed by in-memory pending messages.
+.TP
+.B max_queued_messages
+This is the number of messages to keep in memory before flushing to the
+.SB overflow_file.
+If set to -1, the component will never flush to the overflow file.  If this
+is not set, then the overflow file will not be used.
+.TP
+.B save_me_interval
+The minimum interval that Cobalt will wait between saving statefiles for this
+component, in seconds. By default the interval is 10.0 seconds.  Under periods
+of high load on the component, the interval between statefiles may be longer.
+.TP
+.B schedule_jobs_interval
+This is the minimum interval between iterations of the scheduling loop. The
+default time is 10 seconds.
+.TP
+.B utility_file
+Location of file for site-defined utility functions.
+.TP
+.B use_db_logging
+If true, send messages to CobaltDB, or cache the messages that would be sent
+if the CobaltDB writer is currently unavailable for later writing.  The default
+is false
+
+.SS "[cqm]"
+These are options for the queue-manager component, cqm. Cqm handles queueing
+and overall job tracking operations.
+.TP
+.B filters
+A colon-delimited list of paths to scripts to run.  These are run by the
+clients that work with
+.BR cqm(8),
+specifically,
+.BR qsub(1),
+.BR qalter(1),
+and
+.BR qmove(1).
+These are invoked from the clients and these scripts must run return an exit
+status of 0 prior to the job, or job modification being passed into cqm.
+These are intended as site-specific validation scripts.  Scripts recieve
+job parameters as key=value pairs as arguments, and any key=value pairs written
+to stdout will modify job parameters accordingly, for instance a non-default
+initial score of 500 may be written to stdout as score=500.  If a job would
+fail to pass the filter entirely, then it should return a nonzero exit status.
+A note as to which filter failed should be presented to the user.  It should be
+noted that
+.BR cqadm(1)
+as an admin-level command does not run these filters.  Since the filters are
+invoked as a part of client invocation, any change to this parameter to a
+running Cobalt instance will have an immediate effect without signaling
+or restart.
+.TP
+.B job_prescripts
+A colon-delimited list of scripts to run when the job is scheduled, but prior
+to job invocation.  These are run once per job, whether or not it is preempted.
+Nonzero exit statuses in these scripts are fatal to a job starting up.
+.TP
+.B job_postscripts
+A colon-delimited list of scripts to run after the job has ended. These are
+run once per job, whether or not it is preempted. Nonzero exit statuses in
+these scripts have no effect on a job.
+.TP
+.B resource_prescripts
+A colon-delimited list of scripts to run when the job is scheduled, but prior
+to job invocation.  These are run once per task, prior to resuming from
+preemption. Nonzero exit statuses in these scripts are fatal to a job
+starting up.
+.TP
+.B resource_postscripts
+A colon-delimited list of scripts to run after the job has ended. These are
+run after each preemption step. Nonzero exit statuses at the end of a job in
+these scripts have no effect on a job.
+.TP
+.B dep_frac
+The floating-point fraction of a job's score that a dependent job inherits.
+This sets a default value and may be overridden on a per-job basis by the
+.BR schedctl(1)
+command.  The default is 0.5.
+.TP
+.B scale_dep_frac
+If set to true, the dependency fraction inherited by jobs will be modified by
+the ratio of the size of the resources the dependent job to the job it is
+inheriting score from.  This only applies to dependent jobs that are smaller
+than the job they are inheriting from.  For instance, a 4 node job depending
+on an 8 node job would inherit half the score fraction than an 8 node job
+that depended on an 8-node job.
+.TP
+.B mailserver
+The address of the mailserver to use for sending admin emails and requested
+user emails for startup and termination notification.
+.TP
+.B force_kill_delay
+The length of time, in seconds, to wait between sending a SIGTERM and a SIGKILL
+to a job.  The default is 300 seconds.
+.TP
+.B log_dir
+The directory to place job accounting logs.
+.TP
+.B overflow_file
+This is a file location to use for holding database messages should
+.B use_db_logging
+be set to true, but the CobaltDB writer component is unavailable for an
+extended period of time.  If this file is present, then on cdbwriter startup,
+messages from this file will be pushed to the component and added to the
+database, followed by in-memory pending messages.
+.TP
+.B max_queued_messages
+This is the number of messages to keep in memory before flushing to the
+.SB overflow_file.
+If set to -1, the component will never flush to the overflow file.  If this
+is not set, then the overflow file will not be used.
+.TP
+.B save_me_interval
+The minimum interval that Cobalt will wait between saving statefiles for this
+component, in seconds. By default the interval is 10.0 seconds.  Under periods
+of high load on the component, the interval between statefiles may be longer.
+.TP
+.B utility_file
+Location of file for site-defined utility functions.
+.TP
+.B use_db_logging
+If true, send messages to CobaltDB, or cache the messages that would be sent
+if the CobaltDB writer is currently unavailable for later writing.  The default
+is false
+.TP
+.B poll_process_groups_interval
+The interval in seconds between queries to the system component for process
+group status.
+.TP
+.B use_db_jobid_generator
+If true, use CobaltDB to generate a unique jobid.  This may be used to ensure
+unique jobids across multiple Cobalt instances on related resources.
+Default false.
+.TP
+.B progress_interval
+The minimum time in seconds between job statemachine steps.  Default 10 seconds.
+.TP
+.B max_walltime
+If set, defines a general maximum requested walltime for all queues.  May be
+overriden by setting the MaxWalltime property on a given queue.  If this is not
+set, then there is no default limit on the length of time a user job
+may request, unless explicitly set as a part of a given queue.
+.TP
+.B compute_utility_interval
+The minimum time in seconds to wait between score calculation iterations.
+The default is 10 seconds.
+.TP
+.B cqstat_header
+A colon-delimited list of display headers to use in
+.BR qstat (1)'s
+default display.
+A default set of headers will be used if this is not set.
+.TP
+.B cqstat_header_full
+A colon-delimited list of display headers to use with
+.BR qstat (1)'s
+-f flag.  If not set, a default set of display headers are used.  This does
+not change the -f -l combination for display.
+
+.SS "[cdbwriter]"
+.TP
+.B log_dir
+The directory to place cdbwriter message overflow files.
+.TP
+.B user
+The user to connect to DB2.  It is recommended to use a user identity that
+only has access to the Cobalt database.  This user requires read, write,
+and update permissions on the Cobalt database.
+.TP
+.B pwd
+This is the password that the user will use to connect to the Cobalt database.
+.TP
+.B database
+The name of the database in DB2 to connect to that contains the Cobalt database.
+.TP
+.B schema
+The name of the DB2 schema where the Cobalt database resides.  Multiple schemas
+may exist in the same database, which is useful for handling multiple, related,
+Cobalt instances.
+.TP
+.B save_me_interval
+The minimum interval that Cobalt will wait between saving statefiles for this
+component, in seconds. By default the interval is 10.0 seconds.  Under periods
+of high load on the component, the interval between statefiles may be longer.
+
+.SS Cluster System Sections
+.SS "[cluster_system]"
+.TP
+.B simulation_mode
+Set the cluster_system component to run in a simulation mode.  In this mode,
+The cluster system will not actually run jobs on target nodes in its
+configuration, but it will instead run the
+.SB simulation_executable
+which will provide statistics on what would have ran.  Otherwise the system
+component will track and allocate resources as though it was actually running
+on a multi-node cluster, with a confguration sprcified in the
+.SB hostfile
+entry if true.  This defaults to false.
+.TP
+.B simulation_executable
+Instead of running pre and postscripts, run the specified executable.  This
+must be specified if running in simulation_mode.  Output from this script is
+logged to the cluster_system component's logs.
+.TP
+.B run_remote
+If set to false, do not attempt to run pre/postscripts on remote resources.
+The default is true.
+.TP
+.B hostfile
+This is a list of hostnames for nodes that the cluster system component can
+schedule.  Nodes may be added or removed, and the list of available nodes
+is updated at restart.
+.TP
+.B epilogue
+This is a colon-delimited set of scripts to run on a per-node basis on task
+termination on a resource. If any script returns a non-zero exit status,
+the node will be marked down, and no new jobs will be scheduled on that resource.
+.TP
+.B epilogue_timeout
+The amount of time in seconds to wait for each script to complete.  If the script has
+not completed and exited with a status of 0 before this timeout is reached, that node
+will be marked down.
+
+.TP
+.B prologue
+Not currently used.  Per-node scripts are currently launched as a part of the
+.BR cqm (8)
+resource_prologue
+.TP
+.B prologue_timeout
+This is not currently used within the cluster system component
+.TP
+.B allocation_timeout
+This is the time in seconds to wait when resources are allocated, but have not
+had a job started on them.  This usually occurs when a user deletes a job while
+it is starting up.  After this timeout has elapsed the resources will be
+returned to the pool of available nodes, and a new job may be scheduled on the
+resources.  The default timeout is 300 seconds.
+.TP
+.B drain_mode
+This sets the backfill mode to use and may be one of
+.IR backfill,
+.IR drain_only,
+or
+.IR first_fit.
+The
+.I first_fit
+mode will run the highest scored job that can immediately run on resources
+available.  The
+.I drain_only
+mode will run the highest scored job, if sufficient resources are available or
+it will start draining nodes and then run the job once sufficient resources are
+available.  The
+.I backfill
+mode will run and drain resources as the
+.I drain_only
+mode, but will also attempt to run jobs on the empty, but draining nodes in a
+score-order first-fit manner.  It is recommended that backfill be used if
+draining is permitted for improved utilization of cluster resources.
+.TP
+.B minimum_backfill_window
+This is the minimum amount of backfill time to set for a set of resources that
+being cleaned by post-job epilogue scripts.  The default is 300 seconds.
+
+
+.SS BlueGene/P Sections
+.SS "[bgpm]"
+.TP
+.B mmcs_server_ip
+The IP address of the BlueGene mmcs_server.
+.TP
+.B mpirun
+The location of the BlueGene mpirun binary.  This is typically
+.I /bgsys/drivers/ppcfloor/bin/mpirun
+
+.SS "[bgsystem]"
+
+.TP
+.B kernel
+If true, allow the use of alternative kernels
+.TP
+.B bootprofiles
+This is a path to the directory that holds the alternate kernel subdirectories.
+If alternate kernel support is being used, then this must be set.
+.TP partitionboot
+This is the location of where symlinks to the current profiles of partitions
+should be made.  Cobalt will autogenerate these symlinks as a part of the boot
+process on an as-needed basis.
+.TP
+.B bgtype
+The type of BlueGene being run on.  For BlueGene/Q this should be set to 'bgp'.
+
+
+.SS BlueGene/Q Sections
+.SS "[bgpm]"
+.TP
+.B runjob
+The location of the BlueGene runjob binary.  This is typically
+.I /bgsys/drivers/ppcfloor/bin/runjob
+
+.SS "[bgsystem]"
+.TP
+.B allow_alternate_kernels
+If set to true, allow alternate kernels to be run by users using the
+.I --kernel
+or
+.I --io_kernel
+flags to
+.BR qsub (1).
+This defaults to false.
+.TP
+.B bootprofiles
+This is a path to the directory that holds the alternate kernel subdirectories.
+If alternate kernel support is being used, then this must be set.
+.TP partitionboot
+This is the location of where symlinks to the current profiles of partitions
+should be made.  Cobalt will autogenerate these symlinks as a part of the boot
+process on an as-needed basis.
+.TP
+.B default_kernel
+The default compute-node kernel image to use.  This name should be a directory
+found at the path indicated by
+.SB .
+This value is set to 'default' by default.
+.TP
+.B default_kernel_options
+A list of options to pass to the default kernel image.
+.TP
+.B ion_default_kernel
+The default IO-node kernel image to use.  This name should be a directory
+found at the path indicated by
+.B ion_default_kernel_options
+A list of options to pass to the default kernel image.
+.SB .
+This value is set to 'default' by default.
+.TP
+.B subblock_prefix
+This is a location prefix to attach to subblock names.  Usually this is the
+resource's prefix for the Cobalt instance. The default for subblock use is
+"COBALT".
+.TP
+.B subblock_config
+Sets a configuration for subblock use.  This is a key-value list of the form:
 .RS
-.sp
-.nf
-.ne 0
-[cqm]
-bgkernel=false
-.fi
+.RS
+
+"[blockname1:min_size1],[blockname2:min_size2],..."
+
+.RE
+Blocks must be specified in the BlueGene control system.  Pseudoblocks will
+be generated down to the specified minimum size.  Valid minimum sizes are
+64, 32, 16, 8, 4, 2, 1.  Subblock geometries are per-IBM's recommendations
+in
+.BR runjob (1)
+where appropriate.  If
+.SB subblock_config
+is specified then
+.SB subblock_prefix
+may also be specified.
+.RE
+.TP
+.B ignore_subblock_sizes
+A colon-delimited list of sizes to skip when generating pseudoblocks for
+automatic subblock use.
+.TP
+.B terminal_boot_timeout
+Sets an automatic timeout in seconds for block boots initiated by Cobalt's
+.BR boot_block (1)
+command.  The default is 300 seconds.
+.TP
+.B bgtype
+The type of BlueGene being run on.  For BlueGene/Q this should be set to 'bgq'.
+
+
+
+.SH "ENVIRONMENT"
+.B COBALT_CONFIG_FILES
+If set, Cobalt will use the configuration pointed to by this path.
+
+.SH "FILES"
+
+.TP
+.I /etc/cobalt.conf
+This is the default location for the configuration file used by all Cobalt
+daemons and clients.  Due to the potential for abuse of the
+.SM XMLRPC
+interfaces, access to this file should be carefully controlled.  This file
+does not to be writable under normal conditions, and only must be readable
+by the user used by Cobalt's setgid wrappers.  By default, this is the
+.SM cobalt
+user.
+
+
+
 .SH "SEE ALSO"
-.BR slp(8),
-.BR bgpm(8),
-.BR bgsched(8),
-.BR cqm(8)
+.BR slp (8),
+.BR bgpm (8),
+.BR bgsched (8),
+.BR cqm (8)

@@ -315,7 +315,7 @@ class header_info(object):
             self.custom_header = parser.options.header
 
         if parser.options.Q != None:
-            self.header = ['Name','Users','MinTime','MaxTime','MaxRunning',
+            self.header = ['Name','Users','Groups','MinTime','MaxTime','MaxRunning',
                            'MaxQueued','MaxUserNodes','MaxNodeHours','TotalNodes','State']
         elif parser.options.full != None and parser.options.long != None:
             self.header = self.long_header

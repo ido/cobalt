@@ -74,6 +74,7 @@ import errno
 import logging
 import os
 import pwd
+import grp
 import sys
 import time
 import math
@@ -144,6 +145,7 @@ def get_histm_config(option, default):
         value = default
     return value
 
+CQM_SCALE_DEP_FRAC = str(get_cqm_config('scale_dep_frac', 'false')).lower() in Cobalt.Util.config_true_values
 
 walltime_prediction = get_histm_config("walltime_prediction", "False").lower()   # *AdjEst*
 walltime_prediction_configured = False
@@ -620,17 +622,52 @@ class Job (StateMachine):
         self.path = spec.get("path")
         self.mode = spec.get("mode", "co")
         self.envs = spec.get("envs", {})
-        self.force_kill_delay = spec.get("force_kill_delay", 
+        self.force_kill_delay = spec.get("force_kill_delay",
                 get_cqm_config('force_kill_delay', DEFAULT_FORCE_KILL_DELAY))
         self.attrs = spec.get("attrs", {})
 
+        self.score = float(spec.get("score", 0.0))
+
+        self.__resource_nodects = []
+        self.__timers = dict(
+            queue = Timer(),
+            current_queue = Timer(),
+            user = Timer(),
+        )
+
+        # setting the queue will cause updated accounting records to be
+        #written and the current queue timer to be restarted, so
+        # this needs to be done only after the object has been initialized
+        self.queue = spec.get("queue", "default")
+        self.resid = None #Must be obtained from the scheduler component.
+        self.__timers['queue'].start()
+        self.etime = time.time()
+
+        self.__admin_hold = False
+        self.__user_hold = False
+        self.__dep_hold = False
+
+        # setting the hold flags will automatically cause the appropriate hold
+        #events to be triggered, so this needs to be done
+        # only after the object has been completely initialized
+        if spec.get("admin_hold", False):
+            self.admin_hold = True
+        if spec.get("user_hold", False):
+            self.user_hold = True
+
+        self.dep_fail = False
+        self.dep_frac = None #float(get_cqm_config('dep_frac', 0.5))
         self.all_dependencies = spec.get("all_dependencies")
+        self.satisfied_dependencies = []
         if self.all_dependencies:
             self.all_dependencies = str(self.all_dependencies).split(":")
             logger.info("Job %s/%s: dependencies set to %s", self.jobid, self.user, ":".join(self.all_dependencies))
+            # read passed dependencies and set dep_hold if necessary
+            # set dep_hold as needed:
+            self.update_dep_state()
         else:
             self.all_dependencies = []
-        self.satisfied_dependencies = []
+
 
         self.preemptable = spec.get("preemptable", False)
         self.__preempts = 0
@@ -646,40 +683,8 @@ class Job (StateMachine):
         self.exit_status = None
         self.max_running = False
 
-        self.__admin_hold = False
-        self.__user_hold = False
-
-        self.score = float(spec.get("score", 0.0))
-
-        self.__resource_nodects = []
-        self.__timers = dict(
-            queue = Timer(),
-            current_queue = Timer(),
-            user = Timer(),
-        )
-
-        # setting the queue will cause updated accounting records to be 
-        #written and the current queue timer to be restarted, so
-        # this needs to be done only after the object has been initialized
-        self.queue = spec.get("queue", "default")
-        self.resid = None #Must be obtained from the scheduler component.
-        self.__timers['queue'].start()
-        self.etime = time.time()
-
-        # setting the hold flags will automatically cause the appropriate hold
-        #events to be triggered, so this needs to be done
-        # only after the object has been completely initialized
-        if spec.get("admin_hold", False):
-            self.admin_hold = True
-        if spec.get("user_hold", False):
-            self.user_hold = True
-
         self.total_etime = 0.0
         self.priority_core_hours = None
-        self.dep_fail = False
-        self.prev_dep_hold = False
-        self.called_has_dep_hold_once = False
-        self.dep_frac = None #float(get_cqm_config('dep_frac', 0.5))
         self.user_list = spec.get('user_list', [self.user])
 
         #for imporved script handling:
@@ -694,22 +699,22 @@ class Job (StateMachine):
         self.script_preboot = spec.get("script_preboot", True) #preboot a block for a script.
 
 
-        dbwriter.log_to_db(self.user, "creating", "job_data", 
-                           JobDataMsg(self))
+        dbwriter.log_to_db(self.user, "creating", "job_data", JobDataMsg(self))
         if self.admin_hold:
-            dbwriter.log_to_db(self.user, "admin_hold", "job_prog", 
-                               JobProgMsg(self))
+            dbwriter.log_to_db(self.user, "admin_hold", "job_prog", JobProgMsg(self))
         if self.user_hold:
-            dbwriter.log_to_db(self.user, "user_hold", "job_prog", 
-                               JobProgMsg(self))
+            dbwriter.log_to_db(self.user, "user_hold", "job_prog", JobProgMsg(self))
+
+
         self.initializing = False
 
     # end def __init__()
 
     def no_holds_left(self):
+        '''Check for whether any holds are set on a job'''
         return not (self.admin_hold or 
                 self.user_hold or 
-                self.has_dep_hold or 
+                self.dep_hold or 
                 self.max_running)
 
     def __getstate__(self):
@@ -746,14 +751,6 @@ class Job (StateMachine):
             logger.info("old job missing dep_fail")
             self.dep_fail = False
 
-        if not state.has_key("prev_dep_hold"):
-            logger.info("old job missing prev_dep_hold") 
-            self.prev_dep_hold = False
-
-        if not state.has_key("called_has_dep_hold_once"):
-            logger.info("old job missing called_has_dep_hold_once") 
-            self.called_has_dep_hold_once = False
-
         if not state.has_key("dep_frac"):
             logger.info("old job missing dep_frac")
             self.dep_frac = None
@@ -789,6 +786,9 @@ class Job (StateMachine):
             if self.ion_kerneloptions == False:
                 self.ion_kerneloptions = None
         self.runid = state.get("runid", None)
+        #for old statefiles, make sure to update the dependency state on restart:
+        self.__dep_hold = False
+        self.update_dep_state()
         self.initializing = False
 
     def __task_signal(self, retry = True):
@@ -1242,14 +1242,20 @@ class Job (StateMachine):
             self._sm_raise_exception("user hold set on a job in the '%s' "
                     "state", self._sm_state)
             return
+        if self.__dep_hold:
+            self._sm_raise_exception("dep hold set on a job in the '%s' "
+                                     "state", self._sm_state)
+            return
 
         if args['type'] == 'admin':
             self.__admin_hold = True
         elif args['type'] == 'user':
             self.__user_hold = True
+        elif args['type'] == 'dep':
+            self.__dep_hold = True
         else:
             self._sm_raise_exception("hold type of '%s' is not valid; type "
-                    "must be 'admin' or 'user'" % (args['type'],))
+                    "must be 'admin', 'user' or 'dep'" % (args['type'],))
             return
 
         if not self.__timers.has_key('hold'):
@@ -1267,6 +1273,9 @@ class Job (StateMachine):
         if self.__user_hold:
             self._sm_raise_exception("user hold set on a job in the '%s' state", self._sm_state)
             return
+        if self.__dep_hold:
+            self._sm_raise_exception("dep hold set on a job in the '%s' state", self._sm_state)
+            return
 
         self._sm_log_info("job is not being held; ignoring release request", cobalt_log = True)
 
@@ -1282,8 +1291,12 @@ class Job (StateMachine):
             if not self.__user_hold:
                 self.__user_hold = True
                 activity = True
+        elif args['type'] == 'dep':
+            if not self.__dep_hold:
+                self.__dep_hold = True
+                activity = True
         else:
-            self._sm_raise_exception("hold type of '%s' is not valid; type must be 'admin' or 'user'" % (args['type'],))
+            self._sm_raise_exception("hold type of '%s' is not valid; type must be 'admin', 'user' or 'dep'" % (args['type'],))
             return
 
         if activity:
@@ -1306,8 +1319,12 @@ class Job (StateMachine):
             if self.__user_hold:
                 self.__user_hold = False
                 activity = True
+        elif args['type'] == 'dep':
+            if self.__dep_hold:
+                self.__dep_hold = False
+                activity = True
         else:
-            self._sm_raise_exception("hold type of '%s' is not valid; type must be 'admin' or 'user'" % (args['type'],))
+            self._sm_raise_exception("hold type of '%s' is not valid; type must be 'admin', 'user' or 'dep'" % (args['type'],))
             return
 
         if activity:
@@ -1317,7 +1334,7 @@ class Job (StateMachine):
         else:
             self._sm_log_info("%s hold not present; ignoring release request" % (args['type'],), cobalt_log = True)
 
-        if not self.__admin_hold and not self.__user_hold:
+        if not self.__admin_hold and not self.__user_hold and not self.__dep_hold:
             self._sm_log_info("no holds remain; releasing job", cobalt_log = True)
             self.__timers['hold'].stop()
             self.etime = time.time()
@@ -1656,9 +1673,13 @@ class Job (StateMachine):
             if not self.__user_hold:
                 self.__user_hold = True
                 activity = True
+        elif args['type'] == 'dep':
+            if not self.__dep_hold:
+                self.__dep_hold = True
+                activity = True
         else:
             self._sm_raise_exception("hold type of '%s' is not valid; type must" 
-                " be 'admin' or 'user'" % (args['type'],))
+                " be 'admin', 'user' or 'dep'" % (args['type'],))
             return
 
         if activity:
@@ -1684,9 +1705,13 @@ class Job (StateMachine):
             if self.__user_hold:
                 self.__user_hold = False
                 activity = True
+        elif args['type'] == 'dep':
+            if self.__dep_hold:
+                self.__dep_hold = False
+                activity = True
         else:
             self._sm_raise_exception("hold type of '%s' is not valid; type "
-                    "must be 'admin' or 'user'" % (args['type'],))
+                    "must be 'admin', 'user' or 'dep'" % (args['type'],))
             return
 
         if activity:
@@ -2394,7 +2419,7 @@ class Job (StateMachine):
         self.score = 0.0
 
         # if a pending hold exists, then change to the preempted hold state; otherwise change to the preempted state
-        if self.admin_hold or self.user_hold:
+        if self.admin_hold or self.user_hold or self.dep_hold:
             if not self.__timers.has_key('hold'):
                 self.__timers['hold'] = Timer()
             self.__timers['hold'].start()
@@ -2465,7 +2490,8 @@ class Job (StateMachine):
 
         # start resource prologue scripts #Script forking ***
         resource_scripts = get_cqm_config('resource_prescripts', "").split(':')
-        self._sm_scripts_thread = RunScriptsThread(resource_scripts, self, self.fields)
+        #FIXME: when fixing preemption deal with this --PMR
+        #self._sm_scripts_thread = RunScriptsThread(resource_scripts, self, self.fields)
 
         self._sm_state = 'Prologue'
 
@@ -2761,26 +2787,37 @@ class Job (StateMachine):
 
     user_hold = property(__get_user_hold, __set_user_hold)
 
-    def __has_dep_hold(self):    
-        current_dep_hold = self.all_dependencies and not set(self.all_dependencies).issubset(set(self.satisfied_dependencies))
-        if self.initializing:
-            return current_dep_hold
-        if ((not self.prev_dep_hold) and current_dep_hold and (not self.called_has_dep_hold_once)):
-            self.called_has_dep_hold_once = True
-            dbwriter.log_to_db(None, "dep_hold", "job_prog", JobProgMsg(self))
-        self.called_has_dep_hold_once = False
-        self.prev_dep_hold = current_dep_hold
-        return current_dep_hold
+    def __get_dep_hold(self):    
+        return self.__dep_hold
 
-    has_dep_hold = property(__has_dep_hold)
+    def __set_dep_hold(self, hold_flag):
+        '''
+        clear dependencies if hold_flag == False; update_dep_state() will trigger state transition
+        ignore if hold_flag == True
+        '''
+        if not hold_flag:
+            self.all_dependencies = []
+        self.update_dep_state()
+
+    dep_hold = property(__get_dep_hold, __set_dep_hold)
+
+    def update_dep_state(self):
+        '''
+        set or release dep_hold
+        triggered on setattr(job, ('all_dependencies' | 'satisfied_dependencies'), value)
+        '''
+        prev_dep_hold = self.__dep_hold
+        if self.all_dependencies and not set(self.all_dependencies).issubset(set(self.satisfied_dependencies)):
+            self.trigger_event('Hold', {'type' : 'dep'})
+            # log hold transition
+            if not prev_dep_hold and self.__dep_hold:
+                dbwriter.log_to_db(None, "dep_hold", "job_prog", JobProgMsg(self))
+        else:
+            # trigger state transition only; logging occurs on final dependency's termination
+            self.trigger_event('Release', {'type' : 'dep'})
 
     def __get_job_state(self):
         if self._sm_state in ('Ready', 'Preempted'):
-            if self.has_dep_hold:
-                if self.dep_fail:
-                    return "dep_fail"
-                else:
-                    return "dep_hold"
             if self.max_running:
                 return "maxrun_hold"
         if self._sm_state in ['Ready']:
@@ -2788,8 +2825,12 @@ class Job (StateMachine):
         if self._sm_state in ['Hold', 'Preempted_Hold']:
             if self.user_hold:
                 return "user_hold"
-            else:
-                return "admin_hold"
+            elif self.dep_hold:
+                if self.dep_fail:
+                    return "dep_fail"
+                else:
+                    return "dep_hold"
+            return "admin_hold"
         if self._sm_state in ['Job_Prologue','Job_Prologue_Retry',
                 'Resource_Prologue', 'Resource_Prologue_Retry', 'Run_Retry']:
             return "starting"
@@ -2817,8 +2858,7 @@ class Job (StateMachine):
         of job information.
 
         '''
-        if self._sm_state in ('Ready', 'Preempted') and (self.has_dep_hold or 
-                self.max_running):
+        if self._sm_state in ('Ready', 'Preempted') and self.max_running:
             return "H"
         if self._sm_state == 'Ready':
             return "Q"
@@ -2844,7 +2884,7 @@ class Job (StateMachine):
     def __is_runnable(self):
         '''returns true if the job is runnable'''
         if self._sm_state in ('Ready', 'Preempted'):
-            if self.has_dep_hold or self.max_running:
+            if self.max_running:
                 return False
             return True
         else:
@@ -3155,7 +3195,7 @@ class Restriction (Data):
 
     fields = Data.fields + ["name", "type", "value"]
 
-    __checks__ = {'maxtime':'maxwalltime', 'users':'usercheck',
+    __checks__ = {'maxtime':'maxwalltime', 'users':'usercheck', 'groups':'groupcheck',
                   'maxrunning':'maxuserjobs', 'mintime':'minwalltime',
                   'maxqueued':'maxqueuedjobs', 'maxusernodes':'maxusernodes',
                   'totalnodes':'maxtotalnodes', 'maxnodehours':'maxnodehours' }
@@ -3176,7 +3216,6 @@ class Restriction (Data):
             self.type = spec.get("type", "queue")
         self.value = spec.get("value")
         self.queue = queue
-        logger.debug('created restriction %s with type %s' % (self.name, self.type))
 
     def maxwalltime(self, job, _=None):
         '''checks walltime of job against maxtime of queue'''
@@ -3202,6 +3241,28 @@ class Restriction (Data):
             return (True, "")
         else:
             return (False, "You are not allowed to submit to the '%s' queue" % self.queue.name)
+
+    def groupcheck(self, job, _=None):
+        '''checks if job owner is a member of an approved group'''
+        retval = False
+        retstr = "You are not allowed to submit to the '%s' queue (group restriction)" % self.queue.name
+        queue_groups = self.value.split(':')
+        try:
+            if '*' in queue_groups:
+                retval = True
+                retstr = ""
+            elif grp.getgrgid(pwd.getpwnam(job['user']).pw_gid).gr_name in queue_groups:
+                retval = True
+                retstr = ""
+            else:
+                all_groups = grp.getgrall()
+                for group in all_groups:
+                    if group.gr_name in queue_groups and job['user'] in group.gr_mem:
+                        retval = True
+                        retstr = ""
+        except KeyError:
+            retstr = "Group could not be verified for queue restriction."
+        return retval, retstr
 
     def maxuserjobs(self, job, queuestate=None):
         '''limits how many jobs each user can run by checking queue state
@@ -3262,7 +3323,6 @@ class Restriction (Data):
 
     def CanAccept(self, job, queuestate=None):
         '''Checks if this object will allow the job'''
-        logger.debug('checking restriction %s' % self.name)
         func = getattr(self, self.__checks__[self.name])
         return func(job, queuestate)
 
@@ -3336,6 +3396,7 @@ class Queue (Data):
 
         # test job against queue restrictions
         probs = ''
+        user_grp_results = []
         for restriction in [r for r in self.restrictions.itervalues() if r.type == 'queue']:
             result = restriction.CanAccept(spec)
             if not result[0]:
@@ -3400,7 +3461,6 @@ class QueueDict(DataDict):
             raise QueueError, "Queue '%s' does not exist" % spec['queue']
 
         [testqueue] = [q for q in self.itervalues() if q.name == spec['queue']]
-
         return testqueue.can_queue(spec)
 
     def del_queues(self, specs, callback=None, cargs={}):
@@ -3614,25 +3674,22 @@ class QueueManager(Component):
         if job.exit_status == 0:
             for waiting_job in self.Queues.get_jobs([{'state':"dep_hold"}]):
                 if str(job.jobid) in waiting_job.all_dependencies:
-                    waiting_job.satisfied_dependencies.append(str(job.jobid))
-
-                    if set(waiting_job.all_dependencies).issubset(
-                            set(waiting_job.satisfied_dependencies)):
-                        logger.info("Job %s/%s: dependencies satisfied",
-                                waiting_job.jobid, waiting_job.user) 
-                        dbwriter.log_to_db(None, "dep_hold_release", "job_prog",
-                                JobProgMsg(waiting_job))
+                    waiting_job.satisfied_dependencies = waiting_job.satisfied_dependencies[:] + [str(job.jobid)]
+                    waiting_job.update_dep_state()
+                    if not waiting_job.dep_hold:
+                        logger.info("Job %s/%s: dependencies satisfied", waiting_job.jobid, waiting_job.user)
+                        dbwriter.log_to_db(None, "dep_hold_release", "job_prog", JobProgMsg(waiting_job))
                         if waiting_job.no_holds_left():
-                            dbwriter.log_to_db(None, "all_holds_clear", 
-                                    "job_prog", JobProgMsg(waiting_job))
+                            dbwriter.log_to_db(None, "all_holds_clear", "job_prog", JobProgMsg(waiting_job))
                         if job.dep_frac is None:
-                            job.dep_frac = float(get_cqm_config('dep_frac',
-                                0.5))
-                            new_score = (float(get_cqm_config('dep_frac', 0.5)) 
-                                    * job.score)
-                            dbwriter.log_to_db(None, "dep_frac_update", 
-                                    "job_prog", JobProgDepFracMsg(job))
+                            job.dep_frac = float(get_cqm_config('dep_frac', 0.5))
+                            if CQM_SCALE_DEP_FRAC:
+                                new_score = min(float(waiting_job.nodes) / job.nodes, 1.) * job.dep_frac * job.score
+                            else:
+                                new_score = (float(get_cqm_config('dep_frac', 0.5)) * job.score)
+                            dbwriter.log_to_db(None, "dep_frac_update", "job_prog", JobProgDepFracMsg(job))
                         else:
+                            #hard override for schecdtl --inherit
                             new_score = job.dep_frac * job.score
                         # update with new_score iff waiting_job.project == job.project
                         if waiting_job.project == job.project:
@@ -3790,8 +3847,6 @@ class QueueManager(Component):
                 if job.user not in updates['user_list']:
                     updates['user_list'].insert(0,job.user)
 
-
-
             #if update "user_hold" alone, do not check MaxQueued restriction
             #and "admin_holds" can get the same treatment.
             #This is also the easiest place to get both the change in hold
@@ -3811,7 +3866,8 @@ class QueueManager(Component):
                         message = ":".join(job.all_dependencies)
                     else:
                         message = "[]"
-                    logger.info("Job %s/%s: dependencies set to %s", job.jobid, job.user, message) 
+                    logger.info("Job %s/%s: dependencies set to %s", job.jobid, job.user, message)
+                    job.update_dep_state()
                 self.check_dep_fail()
 
                 # only do this if the new queue can accept this job
@@ -4042,7 +4098,7 @@ class QueueManager(Component):
         # I think this duplicates cobalt's old scheduling policy
         # higher queue priorities win, with jobid being the tie breaker
         def default():
-            #this is a vairable that is always being passed in by us.
+            #this is a variable that is always being passed in by us.
             val = queue_priority + 0.1
             return val
 
@@ -4055,16 +4111,22 @@ class QueueManager(Component):
 
 
     def compute_utility_scores (self):
-        utility_scores = []
+        '''Evaluate score functions for a job based on the job's queue.
+
+        This will increment the job's score based on the score function
+        of each job's queue.
+
+        '''
         current_time = time.time()
 
-        queued_jobs = self.Queues.get_jobs([{'is_runnable':True}]) 
+        queued_jobs = self.Queues.get_jobs([{'is_runnable':True}])
         for job in queued_jobs:
             utility_name = self.Queues[job.queue].policy
-            args = {'queued_time':current_time - float(job.submittime), 
+            args = {'queued_time':current_time - float(job.submittime),
                     'wall_time': 60*float(job.walltime),
-                    'wall_time_p': 60*float(job.walltime_p), 
+                    'wall_time_p': 60*float(job.walltime_p),
                     'hold_time' : job.hold_time,
+                    'total_etime' : job.total_etime,
                     'size': float(job.nodes),
                     'user_name': job.user,
                     'project': job.project,
@@ -4086,28 +4148,28 @@ class QueueManager(Component):
                 # probably go back to the "default" one
 
                 # and if we get here, try to fix it and throw away this scheduling iteration
-                self.logger.error("cannot find utility function '%s' named by queue '%s'" % (utility_name, job.queue))
+                self.logger.error("cannot find utility function '%s' named by queue '%s'", utility_name, job.queue)
                 self.user_utility_functions[utility_name] = self.builtin_utility_functions["default"]
-                self.logger.error("falling back to 'default' policy to replace '%s'" % utility_name)
+                self.logger.error("falling back to 'default' policy to replace '%s'", utility_name)
                 return
-            except:
+            except Exception:
                 # do something sensible when the requested utility function explodes
                 # probably go back to the "default" one
 
                 # and if we get here, try to fix it and throw away this scheduling iteration
-                self.logger.error("error while executing utility function '%s' named by queue '%s'" % (utility_name, job.queue), \
+                self.logger.error("error while executing utility function '%s' named by queue '%s'", utility_name, job.queue,
                     exc_info=True)
                 self.user_utility_functions[utility_name] = self.builtin_utility_functions["default"]
-                self.logger.error("falling back to 'default' policy to replace '%s'" % utility_name)
+                self.logger.error("falling back to 'default' policy to replace '%s'", utility_name)
                 return
 
             try:
                 job.score += score
-            except:
-                self.logger.error("utility function '%s' named by queue '%s' returned a non-number" % (utility_name, job.queue), \
+            except Exception:
+                self.logger.error("utility function '%s' named by queue '%s' returned a non-number", utility_name, job.queue,
                     exc_info=True)
                 self.user_utility_functions[utility_name] = self.builtin_utility_functions["default"]
-                self.logger.error("falling back to 'default' policy to replace '%s'" % utility_name)
+                self.logger.error("falling back to 'default' policy to replace '%s'", utility_name)
                 return
 
         if self.score_timestamp:

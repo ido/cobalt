@@ -246,26 +246,48 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
         return list(boot_set)
 
     def fetch_status_strings(self, location):
-        self.boot_data_lock.acquire()
+        '''Get the status strings for in-flight boots for a particular location.
+
+        Arguments:
+            location: The string location identifier.  This is typically the
+                      target partition, but may be a parent in the event that
+                      pseudoblocks are in use.
+
+        Returns:
+            list of string statues for the boots in-progress.
+
+        '''
         status_strings = []
-        for boot in self.pending_boots:
-            if boot.block_id == location:
-                while True:
-                    status_string = boot.pop_status_string()
-                    if status_string == None:
-                        break
-                    status_strings.append(status_string)
-                break
-        self.boot_data_lock.release()
+        with self.boot_data_lock:
+            for boot in self.pending_boots:
+                if boot.block_id == location:
+                    while True:
+                        status_string = boot.pop_status_string()
+                        if status_string == None:
+                            break
+                        status_strings.append(status_string)
+                    break
         return status_strings
 
     def get_boots_by_jobid(self, job_id):
-        self.boot_data_lock.acquire()
-        boot_set = [pending_boot for pending_boot in list(self.pending_boots) if pending_boot.context.job_id == job_id]
-        self.boot_data_lock.release()
+        '''Fetch all boots associated with a jobid.  This fetches all queued
+        boot objects for that jobid.
+
+        Arguments:
+            job_id: integer id of job to search for.
+
+        Returns:
+            A list of boot objects associated with the given jobid.
+
+        '''
+        with self.boot_data_lock:
+            boot_set = [pending_boot
+                        for pending_boot in list(self.pending_boots)
+                        if pending_boot.context.job_id == job_id]
         return boot_set
 
     def cancel(self, block_id, force=False):
+        '''Cancel an in-flight boot.'''
         raise NotImplementedError
 
     def reap(self, block_id):
@@ -273,13 +295,13 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
 
         Only reap boots that are in a terminal state.
 
+        Intended to be called from outside the BGQBooter thread.
+
         '''
-        boots_to_clear = []
-        self.boot_data_lock.acquire()
-        for boot in self.pending_boots:
-            if boot.block_id == block_id and boot.state in ['complete', 'failed']:
-                self.send(ReapBootMsg(boot.boot_id))
-        self.boot_data_lock.release()
+        with self.boot_data_lock:
+            for boot in self.pending_boots:
+                if boot.block_id == block_id and boot.state in ['complete', 'failed']:
+                    self.send(ReapBootMsg(boot.boot_id))
         return
 
     def handle_reap_boot(self, msg):
@@ -287,8 +309,7 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
 
         '''
         retval = False
-        try:
-            self.boot_data_lock.acquire()
+        with self.boot_data_lock:
             if msg.msg_type == 'reap_boot':
                 found = None
                 for boot in self.pending_boots:
@@ -300,8 +321,6 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
                     self.pending_boots.remove(found)
                     _logger.info('Boot for location %s reaped.', found.block_id)
                     retval = True
-        finally:
-            self.boot_data_lock.release()
         return retval
 
     def initiate_boot(self, block_id, job_id, user, subblock_parent=None, tag=None, timeout=None):

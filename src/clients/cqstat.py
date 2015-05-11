@@ -135,12 +135,12 @@ if __name__ == '__main__':
         user_name = opts['user']
 
     if opts['q']:  # querying for queues
-        query = [{'name' :qname, 'users':'*', 
+        query = [{'name' :qname, 'users':'*', 'groups':'*',
                   'mintime':'*', 'maxtime':'*', 'maxrunning':'*',
                   'maxqueued':'*', 'maxusernodes':'*',
                   'maxnodehours': '*', 
                   'totalnodes':'*', 'state':'*', 'priority':'*'} for qname in names]
-        header = ['Name', 'State', 'Users', 'MinTime', 'MaxTime',
+        header = ['Name', 'State', 'Users', 'Groups', 'MinTime', 'MaxTime',
                   'MaxRunning', 'MaxQueued', 'MaxUserNodes',
                   'MaxNodeHours',
                   'TotalNodes', 'Priority']

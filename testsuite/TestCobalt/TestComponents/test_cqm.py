@@ -32,6 +32,7 @@ from nose.tools import timed, TimeExpired
 import os
 import os.path
 import pwd
+import grp
 import tempfile
 from threading import Lock, Condition
 import traceback
@@ -94,7 +95,7 @@ class TestCQMComponent (TestComponent):
     def setup_jobid(self):
         if TestCQMComponent.cqm_jobid != None:
             Cobalt.Components.cqm.cqm_id_gen.set(TestCQMComponent.cqm_jobid)
-        
+
     def teardown(self):
         if Cobalt.Components.cqm.cqm_id_gen != None:
             TestCQMComponent.cqm_jobid = Cobalt.Components.cqm.cqm_id_gen.get()
@@ -110,39 +111,39 @@ class TestCQMQueueManagement (TestCQMComponent):
     def teardown(self):
         del self.cqm
         TestCQMComponent.teardown(self)
-        
+
     def test_add_queues(self):
         self.cqm.add_queues([{'tag':"queue", 'name':"default"}])
-        
+
         assert len(self.cqm.Queues) == 1
         assert 'default' in self.cqm.Queues
         assert self.cqm.Queues['default'].tag == 'queue'
-        
+
     def test_get_queues(self):
         self.cqm.add_queues([{'tag':"queue", 'name':"default"}])
-         
+
         results = self.cqm.get_queues([{'tag':"queue", 'name':"default"}])
-         
+
         assert len(results) == 1
         assert results[0].name == 'default'
-        
+
         self.cqm.add_queues([{'tag':"queue", 'name':"foo"}])
         self.cqm.add_queues([{'tag':"queue", 'name':"bar"}])
-        
+
         results = self.cqm.get_queues([{'tag':"queue", 'name':"default"}])
-        
+
         assert len(results) == 1
         assert results[0].name == 'default'
 
         results = self.cqm.get_queues([{'tag':"queue", 'name':"*"}])
-         
+
         assert len(results) == 3
- 
+
     def test_del_queues(self):
         self.cqm.add_queues([{'tag':"queue", 'name':"default"}])
         self.cqm.add_queues([{'tag':"queue", 'name':"foo"}])
         self.cqm.add_queues([{'name':"empty"}])
-     
+
         self.cqm.add_jobs([{'tag':"job", 'queue':"default", 'user':"dilbert"}])
         self.cqm.add_jobs([{'tag':"job", 'queue':"default", 'user':"wally"}])
         self.cqm.add_jobs([{'tag':"job", 'queue':"foo", 'user':"dilbert"}])
@@ -153,7 +154,7 @@ class TestCQMQueueManagement (TestCQMComponent):
 
         results = self.cqm.get_jobs([{'tag':"job", 'user':"wally"}])
         assert len(results) == 2
-         
+
         try:
             self.cqm.del_queues([{'tag':"queue", 'name':"foo"}])
         except Exception:
@@ -167,21 +168,21 @@ class TestCQMQueueManagement (TestCQMComponent):
         results = self.cqm.get_jobs([{'tag':"job", 'queue':"foo"}])
         assert len(results) == 2
 
-        self.cqm.del_queues([{'tag':"queue", 'name':"foo"}], force=True)             
+        self.cqm.del_queues([{'tag':"queue", 'name':"foo"}], force=True)
 
         results = self.cqm.get_jobs([{'tag':"job", 'queue':"default"}])
         assert len(results) == 2
 
         results = self.cqm.get_jobs([{'tag':"job", 'queue':"foo"}])
         assert len(results) == 0
-        
+
         r = self.cqm.del_queues([{'name':"empty"}])
         r = self.cqm.get_queues([{'name':"empty"}])
         assert len(r) == 0
-        
+
     def test_set_queues(self):
         self.cqm.add_queues([{'tag':"queue", 'name':"default"}])
-         
+
         self.cqm.set_queues([{'tag':"queue", 'name':"default"}], {'state':'running'})
         results = self.cqm.get_queues([{'tag':"queue", 'name':"default"}])
         assert results[0].state == 'running'
@@ -190,9 +191,9 @@ class TestCQMQueueManagement (TestCQMComponent):
         self.cqm.add_queues([{'tag':"queue", 'name':"bar"}])
         self.cqm.set_queues([{'tag':"queue", 'name':"*"}], {'state':'stopped'})
         results = self.cqm.get_queues([{'tag':"queue", 'name':"*"}])
-    
+
         assert results[0].state == results[1].state == results[2].state == 'stopped'
-         
+
 
 class TestCQMJobManagement (TestCQMComponent):
     def setup(self):
@@ -203,7 +204,7 @@ class TestCQMJobManagement (TestCQMComponent):
     def teardown(self):
         del self.cqm
         TestCQMComponent.teardown(self)
-        
+
     def test_add_jobs(self):
         self.cqm.add_queues([{'tag':"queue", 'name':"default"}])
         self.cqm.add_queues([{'tag':"queue", 'name':"foo"}])
@@ -215,15 +216,15 @@ class TestCQMJobManagement (TestCQMComponent):
             pass
         else:
             assert not "trying to add a job to a non-existent queue should raise an Exception"
-        
+
         self.cqm.add_jobs([{'tag':"job", 'queue':"default"}])
-        
+
         results = self.cqm.get_queues([{'tag':"queue", 'name':"default"}])
         assert len(results[0].jobs) == 1
-        
+
         results = self.cqm.get_queues([{'tag':"queue", 'name':"foo"}])
         assert len(results[0].jobs) == 0
-        
+
         results = self.cqm.get_queues([{'tag':"queue", 'name':"bar"}])
         assert len(results[0].jobs) == 0
 
@@ -233,10 +234,10 @@ class TestCQMJobManagement (TestCQMComponent):
         self.cqm.add_queues([{'tag':"queue", 'name':"bar"}])
 
         self.cqm.add_jobs([{'tag':"job", 'queue':"default"}])
-        
+
         results = self.cqm.get_jobs([{'tag':"job", 'jobid':"*"}])
         assert len(results) == 1
-        
+
         self.cqm.add_jobs([{'tag':"job", 'queue':"foo"}])
 
         results = self.cqm.get_jobs([{'tag':"job", 'jobid':"*"}])
@@ -247,11 +248,11 @@ class TestCQMJobManagement (TestCQMComponent):
 
         results = self.cqm.get_jobs([{'tag':"job", 'jobid':"*", 'queue':"bar"}])
         assert len(results) == 0
-    
+
     def test_del_jobs(self):
         self.cqm.add_queues([{'tag':"queue", 'name':"default"}])
         self.cqm.add_queues([{'tag':"queue", 'name':"foo"}])
-     
+
         self.cqm.add_jobs([{'tag':"job", 'queue':"default", 'user':"dilbert"}])
         self.cqm.add_jobs([{'tag':"job", 'queue':"default", 'user':"wally"}])
         self.cqm.add_jobs([{'tag':"job", 'queue':"foo", 'user':"dilbert"}])
@@ -262,7 +263,7 @@ class TestCQMJobManagement (TestCQMComponent):
 
         results = self.cqm.get_jobs([{'tag':"job", 'user':"wally"}])
         assert len(results) == 2
-         
+
         results = self.cqm.del_jobs([{'tag':"job", 'user':"wally"}])
         assert len(results) == 2
 
@@ -275,14 +276,14 @@ class TestCQMJobManagement (TestCQMComponent):
     def test_set_jobs(self):
         self.cqm.add_queues([{'tag':"queue", 'name':"default"}])
         self.cqm.add_queues([{'tag':"queue", 'name':"foo"}])
-    
+
         self.cqm.add_jobs([{'tag':"job", 'queue':"default"}])
         self.cqm.add_jobs([{'tag':"job", 'queue':"foo"}])
-        
+
         self.cqm.set_jobs([{'tag':"job", 'queue':"*"}], {'jobname':"hello"})
         results = self.cqm.get_jobs([{'tag':"job", 'jobname':"hello"}])
         assert len(results) == 2
-        
+
         self.cqm.set_jobs([{'tag':"job", 'queue':"foo"}], {'jobname':"goodbye"})
         results = self.cqm.get_jobs([{'tag':"job", 'jobname':"hello"}])
         assert len(results) == 1
@@ -295,38 +296,60 @@ class TestCQMJobManagement (TestCQMComponent):
         self.cqm.add_jobs([{'queue':"default"}])
         r = self.cqm.get_jobs([{'jobid':id}])
         assert len(r) == 1
-    
+
     def test_move_jobs(self):
         self.cqm.add_queues([{'name':"default"}])
         self.cqm.add_queues([{'name':"foo"}])
         self.cqm.add_queues([{'name':"restricted"}])
         self.cqm.set_queues([{'name':"restricted"}], {'users':"alice"})
-        
+
         self.cqm.add_jobs([{'queue':"default", 'jobname':"hello"}])
-        
+
         try:
             self.cqm.set_jobs([{'jobname':"hello"}], {'queue': "jonx"})
         except QueueError:
             pass
         else:
             assert not "moving a job to a non-existent queue should cause an exception"
-                                 
+
         self.cqm.set_jobs([{'jobname':"hello"}], {'queue': "foo"})
         r = self.cqm.get_jobs([{'jobname':"hello", 'queue':"*"}])
         assert len(r) == 1
         assert r[0].queue == "foo"
-        
+
         try:
             self.cqm.set_jobs([{'jobname':"hello"}], {'queue': "restricted"})
         except QueueError:
             pass
         else:
             assert not "a job failing can_queue should prevent the set_jobs from succeeding"
-            
+
+    def test_queue_job_group_restriction(self):
+        #Note: apparently CentOS likes to not add your user to your user's default group.  Make sure that
+        #grp will actually return you as a member of the gid you're running under. --PMR
+        group_name = grp.getgrgid(os.getegid()).gr_name #group we're running under for verification check.
+        self.cqm.add_queues([{'name':"default"}])
+        self.cqm.add_queues([{'name':"restricted-group"}])
+        self.cqm.set_queues([{'name':"restricted-group"}], {'groups':'bar'})
+
+        self.cqm.add_jobs([{'queue':"default", 'jobname':"hello", 'user':pwd.getpwuid(os.getuid()).pw_name}])
+        try:
+            self.cqm.set_jobs([{'jobname':"hello"}], {'queue': "restricted-group"})
+        except QueueError:
+            pass
+        else:
+            assert False, "A job not in a specified group must fail to queue."
+        #Disabled until a better, more portable way, is devised to test this.
+        #This current version is extremely environment dependent.
+        #self.cqm.set_queues([{'name':"restricted-group"}], {'groups':'cobalt'})
+        #self.cqm.set_jobs([{'jobname':"hello"}], {'queue': "restricted-group"})
+        #r = self.cqm.get_jobs([{'jobname':"hello", 'queue':"*"}])
+        #assert len(r) == 1
+        #assert r[0].queue == "restricted-group"
 
 class Task (Data):
     required_fields = ['jobid', 'location', 'user', 'cwd', 'executable', 'args', ]
-    fields = Data.fields + ["id", "jobid", "location", "size", "mode", "user", "executable", "args", "env", "cwd", "umask", 
+    fields = Data.fields + ["id", "jobid", "location", "size", "mode", "user", "executable", "args", "env", "cwd", "umask",
         "kernel", "kerneloptions", "cobalt_log_file", "exit_status", "state", ]
 
     def __init__(self, spec):
@@ -353,7 +376,7 @@ class Task (Data):
             return "running"
         else:
             return "terminated"
-    
+
     state = property(_get_state)
 
 class TaskDict (DataDict):
@@ -362,10 +385,10 @@ class TaskDict (DataDict):
     item_cls = None
     key = "id"
     id_gen = IncrID()
-    
+
     # def __init__ (self):
     #     self.id_gen = IncrID()
- 
+
     def q_add (self, specs, callback=None, cargs={}):
         for spec in specs:
             if spec.get("id", "*") != "*":
@@ -528,7 +551,7 @@ class SimulatedSystem (SimulatedTaskManager):
     reserve_resources_until = exposed(reserve_resources_until)
 
 class Child (Data):
-    fields = Data.fields + ['id', 'args', 'env', 'tag', 'runid', 'label', 'stdout', 'stderr', 'complete', 'lost_child', 
+    fields = Data.fields + ['id', 'args', 'env', 'tag', 'runid', 'label', 'stdout', 'stderr', 'complete', 'lost_child',
         'exit_status', 'signum', 'core_dump']
     required = Data.required + ['id']
 
@@ -578,7 +601,7 @@ class ChildDict (DataDict):
                 pass
 
 class SimulatedForker (Component):
-    
+
     name = 'system_script_forker'
     implementation = 'system_script_forker'
 
@@ -598,7 +621,7 @@ class SimulatedForker (Component):
     def set_requested_return_value(self, reutrn_value):
         self.requested_return_value_set = True
         self.requested_return_value = return_value
-    
+
     def clear_requested_effect(self):
         if self.requested_exception_set:
             self.requested_exception = False
@@ -611,10 +634,10 @@ class SimulatedForker (Component):
             self.requested_return_value = None
             return (True, req_return_value)
         return (False, None)
-    
+
 
     def fork(self, args, tag=None, label=None, env=None, preexec_data=None, runid=None):
-        
+
         is_preset_return, preset_return = self.clear_requested_effect()
         if is_preset_return:
             return preset_return
@@ -628,7 +651,7 @@ class SimulatedForker (Component):
         is_preset_return, preset_return = self.clear_requested_effect()
         if is_preset_return:
             return preset_return
-        
+
         if child_ids is None:
             return [child for child in self.children.itervalues() if tag is None or child.tag == tag]
         else:
@@ -678,7 +701,7 @@ class SimulatedForker (Component):
         #don't actually send a signal since we never actually forked anything
 
     signal = exposed(signal)
-    
+
     def active_list(self):
         '''Only useful for pg_forker runs
 
@@ -686,9 +709,9 @@ class SimulatedForker (Component):
         is_preset_return, preset_return = self.clear_requested_effect()
         if is_preset_return:
             return preset_return
-        raise NotImplementedError 
+        raise NotImplementedError
     active_list = exposed(active_list)
-    
+
     def get_status(self):
         '''Only useful for pg_forker runs
 
@@ -696,15 +719,15 @@ class SimulatedForker (Component):
         is_preset_return, preset_return = self.clear_requested_effect()
         if is_preset_return:
             return preset_return
-        raise NotImplementedError 
+        raise NotImplementedError
     get_status = exposed(get_status)
 
     def cleanup_children(self, child_ids):
-        
+
         is_preset_return, preset_return = self.clear_requested_effect()
         if is_preset_return:
             return preset_return
-        
+
         self.children.q_del([{'id':id} for id in child_ids])
 
     cleanup_children = exposed(cleanup_children)
@@ -854,8 +877,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         self.taskman = SimulatedSystem()
         self.taskman_thr = ComponentProgressThread(self.taskman)
         self.taskman_thr.start()
-    
-    
+
     def setup_cqm(self):
         self.qm = QueueManager()
         self.qm_thr = ComponentProgressThread(self.qm)
@@ -1012,6 +1034,36 @@ class CQMIntegrationTestBase (TestCQMComponent):
         self.job = jobs[0]
         self.assert_jobid()
         assert self.job['admin_hold'] == new_hold
+
+    #dep_hold tests.
+
+    def job_add_dep_hold(self):
+        #set dep hold if appropriate on job addition
+        self.cqm.add_jobs([{'nodes':512, 'walltime':10,
+            'queue':'default'}])
+        self.cqm.add_jobs([{'nodes':512, 'walltime':10, 'queue':'default',
+            'all_dependencies':'1'}])
+        job1 = self.cqm.get_jobs([{'queue':'default', 'jobid':1,
+            'all_dependencies':'*', 'dep_hold':'*'}])[0]
+        job2 = self.cqm.get_jobs([{'queue':'default', 'jobid':2,
+            'all_dependencies':'*', 'dep_hold':'*'}])[0]
+        assert job1['dep_hold'] == False, "dep_hold incorrectly set."
+        assert job2['dep_hold'] == True, "dep_hold not set."
+
+    def job_dep_hold_and_release(self):
+        #add two jobs, set dependencies, if deps set, make sure that we are now
+        #in dep_hold
+        self.cqm.add_jobs([{'nodes':512, 'walltime':10, 'queue':'default'}])
+        self.cqm.add_jobs([{'nodes':512, 'walltime':10, 'queue':'default'}])
+        job1 = self.cqm.set_jobs([{'queue':'default', 'jobid':2,
+            'all_dependencies':'*', 'dep_hold':'*'}],
+            {'all_dependencies':'1'})[0]
+        assert job1['dep_hold'] is True, "Dep hold not set on adding dependency."
+        #remove deps, update holds, make sure job no longer in dep_hold
+        job1 = self.cqm.set_jobs([{'queue':'default', 'jobid':2,
+            'all_dependencies':'*', 'dep_hold':'*'}],
+            {'all_dependencies':''})[0]
+        assert job1['dep_hold'] is False, "Job failed to release dep_hold"
 
     def job_run(self, location):
         debug_print("Initiating job run at %s" % location)
@@ -1326,26 +1378,26 @@ class CQMIntegrationTestBase (TestCQMComponent):
             self.job_finished_wait()
         self.test_calls = []
         self.job_exec_driver(
-            #num_preempts = 1, 
-            job_queued = _job_queued, 
-            job_pretask = _job_pretask, 
+            #num_preempts = 1,
+            job_queued = _job_queued,
+            job_pretask = _job_pretask,
             resource_pretask = _resource_pretask,
-            task_active = _task_active, 
-            #preempt_posttask = _preempt_posttask, 
+            task_active = _task_active,
+            #preempt_posttask = _preempt_posttask,
             #job_preempted = _job_preempted,
-            #preempt_pretask = _preempt_pretask, 
-            resource_posttask = _resource_posttask, 
+            #preempt_pretask = _preempt_pretask,
+            resource_posttask = _resource_posttask,
             job_posttask = _job_posttask,
             job_complete = _job_complete)
-        #assert self.test_calls == ["_job_queued", "_job_pretask", "_resource_pretask", "_task_active", "_preempt_posttask", 
+        #assert self.test_calls == ["_job_queued", "_job_pretask", "_resource_pretask", "_task_active", "_preempt_posttask",
         #                           "_job_preempted", "_preempt_pretask", "_task_active", "_resource_posttask", "_job_posttask",
         #                           "_job_complete"]
         #This is adjusted until we have preemption back: PMR 8/8/2011
-        assert self.test_calls == ["_job_queued", 
-                                   "_job_pretask", 
-                                   "_resource_pretask", 
-                                   "_task_active", 
-                                   "_resource_posttask", 
+        assert self.test_calls == ["_job_queued",
+                                   "_job_pretask",
+                                   "_resource_pretask",
+                                   "_task_active",
+                                   "_resource_posttask",
                                    "_job_posttask",
                                    "_job_complete"], "Test-call mismatch.  Got:%s" % self.test_calls
         del self.test_calls
@@ -1357,7 +1409,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
     def test_nonpreempt_queued__run(self):
         # a simple run
         self.job_exec_driver()
-    test_nonpreempt_queued__run.disabled = True 
+    test_nonpreempt_queued__run.disabled = True
 
     @timeout(60)
     def test_nonpreempt_queued__run_failed(self):
@@ -2391,12 +2443,12 @@ class CQMIntegrationTestBase (TestCQMComponent):
         self.job_exec_driver(
             job_queued = _job_queued, job_pretask = _job_pretask, resource_pretask = _resource_pretask, \
             task_active = _task_active, resource_posttask = _resource_posttask, job_posttask = _job_posttask)
-        
+
     #
     # tests for preemptable jobs
     #
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_multiple_runs(self):
         # verify that a job can be preempted multiple times
         def _job_preempted():
@@ -2415,7 +2467,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         del self.test_task_count
 
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_queued__preempt(self):
         # the job is in the hold state; attempts to preempt the job should fail despite the job being preemptable
         def _job_queued():
@@ -2427,7 +2479,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         self.job_exec_driver(num_preempts = 1, job_queued = _job_queued)
 
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_hold__preempt(self):
         # the job is in the hold state; attempts to preempt the job should fail despite the job being preemptable
         def _job_queued():
@@ -2441,7 +2493,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         self.job_exec_driver(num_preempts = 1, job_queued = _job_queued)
 
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_starting__hold(self):
         # the job is starting; attempts to place and release a pending hold on a preemptable job should work
         def _pretask():
@@ -2481,7 +2533,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         self.job_exec_driver(num_preempts = 1, job_pretask = _pretask, resource_pretask = _pretask)
 
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_starting__kill(self):
         # the job is starting but a task is not yet running; attempts to kill the job should succeed without the task ever
         # starting (even if a preempt is pending)
@@ -2500,7 +2552,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         self.job_exec_driver(num_preempts = 1, resource_pretask = _pretask, task_run = _task_run, job_preempt = _job_preempt)
 
     @timeout(140)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_starting__preempt_immediate(self):
         # the job is starting; preempts are immediate after prologue script complete since mintasktime is not set
         def _pretask():
@@ -2520,7 +2572,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         del self.test_task_count
 
     @timeout(70)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_starting__preempt_mintasktime(self):
         # the job is starting; attempts to preempt a preemptable job should be delayed until the minimum task execution timer
         # expires
@@ -2540,14 +2592,14 @@ class CQMIntegrationTestBase (TestCQMComponent):
             task_active = _task_active, job_preempt = _job_preempt)
         timer.stop()
         assert timer.elapsed_time > num_preempts * 60 - 5, "timer expected to be greater than %f but was %f" % \
-            (num_preempts * 60 - 5, timer.elapsed_time) 
+            (num_preempts * 60 - 5, timer.elapsed_time)
         assert self.test_task_count == num_preempts + 1, "tasks executed should have been %d, but %d were executed instead" % \
             (num_preempts + 1, self.test_task_count,)
         del self.test_task_count
 
 
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_running__hold(self):
         def _task_active():
             self.job_user_hold(new_hold = True)
@@ -2573,7 +2625,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         del self.test_task_count
 
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_running__release(self):
         def _task_active():
             self.job_user_hold(new_hold = True)
@@ -2593,7 +2645,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         del self.test_task_count
 
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_running__preempt_immediate(self):
         def _task_active():
             self.assert_job_state("running")
@@ -2613,7 +2665,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         del self.test_task_count
 
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_running__preempt_forced(self):
         def _task_active():
             self.assert_job_state("running")
@@ -2637,7 +2689,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         del self.test_task_count
 
     @timeout(130)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_running__preempt_mintasktime(self):
         def _task_active():
             self.assert_job_state("running")
@@ -2656,7 +2708,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
             task_active = _task_active, job_preempt = _job_preempt)
         timer.stop()
         assert timer.elapsed_time > num_preempts * 60 - 5, "timer expected to be greater than %f but was %f" % \
-            (num_preempts * 60 - 5, timer.elapsed_time) 
+            (num_preempts * 60 - 5, timer.elapsed_time)
         assert self.test_preempt_count == num_preempts, "number of preempts should have been %d, but was %d instead" % \
             (num_preempts, self.test_preempt_count,)
         assert self.test_task_count == num_preempts + 1, "tasks executed should have been %d, but %d were executed instead" % \
@@ -2665,7 +2717,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         del self.test_task_count
 
     @timeout(130)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_running__maxtasktime(self):
         def _task_active():
             self.assert_job_state("running")
@@ -2683,7 +2735,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
             task_active = _task_active, job_preempt = _job_preempt)
         timer.stop()
         assert timer.elapsed_time > num_preempts * 60 - 5, "timer expected to be greater than %f but was %f" % \
-            (num_preempts * 60 - 5, timer.elapsed_time) 
+            (num_preempts * 60 - 5, timer.elapsed_time)
         assert self.test_preempt_count == num_preempts, "number of preempts should have been %d, but was %d instead" % \
             (num_preempts, self.test_preempt_count,)
         assert self.test_task_count == num_preempts + 1, "tasks executed should have been %d, but %d were executed instead" % \
@@ -2692,7 +2744,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         del self.test_task_count
 
     @timeout(190)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_running__maxtasktime_force_kill(self):
         def _task_active():
             self.assert_job_state("running")
@@ -2724,7 +2776,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         del self.test_task_count
 
     @timeout(130)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_running__maxtasktime_nowalltime(self):
         def _task_active():
             self.assert_job_state("running")
@@ -2742,7 +2794,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
             job_preempt = _job_preempt)
         timer.stop()
         assert timer.elapsed_time > num_preempts * 60 - 5, "timer expected to be greater than %f but was %f" % \
-            (num_preempts * 60 - 5, timer.elapsed_time) 
+            (num_preempts * 60 - 5, timer.elapsed_time)
         assert self.test_preempt_count == num_preempts, "number of preempts should have been %d, but was %d instead" % \
             (num_preempts, self.test_preempt_count,)
         assert self.test_task_count == num_preempts + 1, "tasks executed should have been %d, but %d were executed instead" % \
@@ -2751,7 +2803,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         del self.test_task_count
 
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_running__preempt_failed(self):
         def _job_preempt():
             self.taskman.add_exc('signal', BogusException1("error1"))
@@ -2759,7 +2811,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
             self.job_preempt()
             op = self.assert_next_task_op('signal', BogusException1)
             # NOTE: no checkpoint time specified, so the task is signaled to terminate immediately
-            assert op[3] == Signal_Map.terminate 
+            assert op[3] == Signal_Map.terminate
             op = self.assert_next_task_op('signal', BogusException2)
             assert op[3] == Signal_Map.terminate
             op = self.assert_next_task_op('signal')
@@ -2774,7 +2826,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
 
     @whitebox
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_running__preempt_failed_wb(self):
         def _progress_off(op, exc, specs, signame):
             assert op == "signal"
@@ -2787,7 +2839,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
             self.job_preempt()
             op = self.assert_next_task_op('signal', BogusException1)
             # NOTE: no checkpoint time specified, so the task is signaled to terminate immediately
-            assert op[3] == Signal_Map.terminate 
+            assert op[3] == Signal_Map.terminate
             self.qm_thr.pause_wait()
             self.job_get_state(assert_spec = {'state':"preempting", 'sm_state':"Preempt_Retry"})
             self.qm_thr.resume()
@@ -2805,7 +2857,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
 
     @whitebox
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_preempt_retry__hold(self):
         def _progress_off(op, exc, specs, signame):
             assert op == "signal"
@@ -2816,7 +2868,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
             self.taskman.add_exc('signal', BogusException1("error1"), _progress_off)
             self.job_preempt()
             op = self.assert_next_task_op('signal', BogusException1)
-            assert op[3] == Signal_Map.terminate 
+            assert op[3] == Signal_Map.terminate
             self.qm_thr.pause_wait()
             self.job_get_state(assert_spec = {'state':"preempting", 'sm_state':"Preempt_Retry"})
             self.job_user_hold(new_hold = True)
@@ -2833,7 +2885,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
 
     @whitebox
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_preempt_retry__kill(self):
         def _progress_off(op, exc, specs, signame):
             assert op == "signal"
@@ -2864,7 +2916,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
 
     @whitebox
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_preempt_retry__force_kill(self):
         def _progress_off(op, exc, specs, signame):
             assert op == "signal"
@@ -2892,7 +2944,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
 
     @whitebox
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_preempt_retry__task_end_no_signal(self):
         def _progress_off(op, exc, specs, signame):
             assert op == "signal"
@@ -2908,7 +2960,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
             self.taskman.add_exc('signal', BogusException2("error2-%d" % (self.test_fault_count,)), _add_signal_exc)
             self.job_preempt()
             op = self.assert_next_task_op('signal', BogusException1)
-            assert op[3] == Signal_Map.terminate 
+            assert op[3] == Signal_Map.terminate
             self.qm_thr.pause_wait()
             self.job_get_state(assert_spec = {'state':"preempting", 'sm_state':"Preempt_Retry"})
             self.task_finished(0)
@@ -2934,7 +2986,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
 
     @whitebox
     @timeout(130)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_preempt_retry__task_end_after_signal(self):
         def _progress_off(op, exc, specs, signame):
             assert op == "signal"
@@ -2998,7 +3050,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
 
 
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_preempting__hold(self):
         def _job_preempting():
             self.job_preempting_wait()
@@ -3023,7 +3075,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
 
 
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_preempting__release(self):
         def _job_preempting():
             self.job_preempting_wait()
@@ -3041,7 +3093,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
 
 
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_preempting__kill_same_signal(self):
         def _job_preempt():
             self.job_preempt()
@@ -3061,7 +3113,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
 
 
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_preempting__kill_demoted_signal(self):
         def _job_preempt():
             self.job_preempt()
@@ -3079,7 +3131,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
 
 
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_preempting__kill_different_signal(self):
         def _job_preempt():
             self.job_preempt()
@@ -3095,12 +3147,12 @@ class CQMIntegrationTestBase (TestCQMComponent):
             self.assert_next_task_op('wait')
             return False
         num_preempts = 10
-        self.job_exec_driver(num_preempts = num_preempts, spec = {'maxcptime':1}, job_preempt = _job_preempt, 
+        self.job_exec_driver(num_preempts = num_preempts, spec = {'maxcptime':1}, job_preempt = _job_preempt,
             job_preempting = _job_preempting)
 
 
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_preempting__force_kill(self):
         def _job_preempt():
             self.job_preempt()
@@ -3119,7 +3171,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
 
 
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_preempting__finalize_failed(self):
         def _job_preempting():
             self.taskman.add_exc('wait', BogusException1("error1"))
@@ -3134,7 +3186,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
 
     @whitebox
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_preempting__finalize_failed__wb(self):
         def _progress_off(op, exc, specs):
             assert op == "wait"
@@ -3154,7 +3206,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
 
     @whitebox
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_preempt_finalize_retry__hold(self):
         def _progress_off(op, exc, specs):
             assert op == "wait"
@@ -3189,7 +3241,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
 
     @whitebox
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_preempt_finalize_retry__release(self):
         def _progress_off(op, exc, specs):
             assert op == "wait"
@@ -3217,7 +3269,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
 
     @whitebox
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_preempt_finalize_retry__kill(self):
         def _progress_off(op, exc, specs):
             assert op == "wait"
@@ -3240,7 +3292,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
 
     @whitebox
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_preempt_finalize_retry__force_kill(self):
         def _progress_off(op, exc, specs):
             assert op == "wait"
@@ -3266,7 +3318,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
     # BRT: the appropriate behavior needs to be defined for this situation and added to CQM
     #
     # @timeout(135)
-    # @disabled #Preemption 
+    # @disabled #Preemption
     # def test_preempt_preempting__walltime_timeout(self):
     #     def _job_preempt():
     #         # preemption will be started when the checkpoint timer expires, so we don't want job_preempt to be called here
@@ -3281,11 +3333,11 @@ class CQMIntegrationTestBase (TestCQMComponent):
     #     self.job_exec_driver(num_preempts = 1, spec = {'maxcptime':4, 'maxtasktime':5, 'walltime':2},
     #         job_preempt = _job_preempt, resource_posttask = _resource_posttask)
     #     timer.stop()
-    #     assert timer.elapsed_time > 115, "timer expected to be greater than %f but was %f" % (115, timer.elapsed_time) 
-    #     assert timer.elapsed_time < 130, "timer expected to be less than %f but was %f" % (130, timer.elapsed_time) 
+    #     assert timer.elapsed_time > 115, "timer expected to be greater than %f but was %f" % (115, timer.elapsed_time)
+    #     assert timer.elapsed_time < 130, "timer expected to be less than %f but was %f" % (130, timer.elapsed_time)
 
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_posttask__hold(self):
         def _preempt_posttask():
             self.job_user_hold(new_hold = True)
@@ -3306,7 +3358,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         del self.test_preempt_count
 
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_posttask__release(self):
         def _preempt_posttask():
             self.job_user_hold(new_hold = True)
@@ -3320,7 +3372,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         self.job_exec_driver(num_preempts = 1, preempt_posttask = _preempt_posttask)
 
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_posttask__kill(self):
         def _preempt_posttask():
             self.job_kill()
@@ -3328,7 +3380,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         self.job_exec_driver(num_preempts = 1, preempt_posttask = _preempt_posttask)
 
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_posttask__force_kill(self):
         def _preempt_posttask():
             self.job_kill(force = True)
@@ -3336,7 +3388,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         self.job_exec_driver(num_preempts = 1, preempt_posttask = _preempt_posttask)
 
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_preempted__hold(self):
         def _job_preempted():
             self.job_user_hold(new_hold = True)
@@ -3350,7 +3402,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         self.job_exec_driver(num_preempts = 1, job_preempted = _job_preempted)
 
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_preempted__kill(self):
         def _job_preempted():
             self.job_kill()
@@ -3358,7 +3410,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         self.job_exec_driver(num_preempts = 1, job_preempted = _job_preempted)
 
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_preempted__force_kill(self):
         def _job_preempted():
             self.job_kill(force = True)
@@ -3366,7 +3418,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         self.job_exec_driver(num_preempts = 1, job_preempted = _job_preempted)
 
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_exiting__hold(self):
         # the job is exiting; attempts to place and release a pending hold on a preemptable job should be ignored
         def _posttask():
@@ -3382,7 +3434,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         del self.test_posttask_count
 
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_exiting__release(self):
         # the job is exiting; attempts to release a nonexistent hold should be ignored
         def _posttask():
@@ -3398,7 +3450,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         del self.test_posttask_count
 
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_exiting__kill(self):
         # the job is exiting; attempts to kill the job should be ignored
         def _posttask():
@@ -3412,7 +3464,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         del self.test_posttask_count
 
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_exiting__force_kill(self):
         def _posttask():
             self.job_kill(force = True)
@@ -3420,7 +3472,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         self.job_exec_driver(num_preempts = num_preempts, job_posttask = _posttask)
 
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_exiting__preempt(self):
         # the job is exiting; attempts to preempt a preemptable job should be ignored
         def _posttask():
@@ -3435,7 +3487,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
 
     blockcomment2 = """
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_validate_multiple_scripts(self):
         num_scripts = 3
         syncs = []
@@ -3487,7 +3539,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
                 delete_output_files(syncs)
     """
     @timeout(60)
-    @disabled #Preemption 
+    @disabled #Preemption
     def test_preempt_validate_script_states(self):
         def _job_queued():
             sleep(1)
@@ -3527,7 +3579,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
             resource_pretask = _resource_pretask, task_active = _task_active, job_preempt = _job_preempt,
             preempt_posttask = _preempt_posttask, job_preempted = _job_preempted, preempt_pretask = _preempt_pretask,
             resource_posttask = _resource_posttask, job_posttask = _job_posttask)
-        
+
 
 class TestCQMIntegration (CQMIntegrationTestBase):
     logger = setup_file_logging("TestCQMSystemIntegration", LOG_FILE, "DEBUG")

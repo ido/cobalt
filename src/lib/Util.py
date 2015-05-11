@@ -271,38 +271,69 @@ def dgetopt(arglist, opt, vopt, msg):
 
 def merge_nodelist(locations):
     '''create a set of dashed-ranges from a node list'''
-    reg = re.compile('(\D+)(\d+)')
-    prefix = reg.match(locations[0]).group(1)
+    reg = re.compile(r'(\D+)(\d+)')
 
-    # create a sorted list of the node numbers
-    uniq = []
+    # create a dictionary with a key for each node prefix,
+    # with sorted lists of node numbers as the values
+    noderanges = {}
+    prefix_min_digits = {}
+    prefix_max_digits = {}
+    prefix_format_str = {}
+
     for name in locations:
-        newnum = int(reg.match(name).group(2))
-        if not newnum in uniq:
-            uniq.append(newnum)
-    uniq.sort()
+        prefix = reg.match(name).group(1)
+        nodenum = reg.match(name).group(2)
+        num_digits = len(nodenum)
+        newnum = int(nodenum)
+        if not prefix in noderanges:
+            noderanges[prefix] = [newnum]
+            prefix_min_digits[prefix] = num_digits
+            prefix_max_digits[prefix] = num_digits
+        elif not newnum in noderanges[prefix]:
+            noderanges[prefix].append(newnum)
+            prefix_min_digits[prefix] = min(prefix_min_digits[prefix], num_digits)
+            prefix_max_digits[prefix] = max(prefix_max_digits[prefix], num_digits)
 
-    # iterate through the sorted list, identifying gaps in the sequential numbers
-    breaks = []
-    start = 0
-    idx = 0
-    for idx in range(1,len(uniq)):
-        if uniq[idx] != uniq[idx-1] + 1:
-            breaks.append((start,idx-1))
-            start = idx
-            
-    breaks.append((start, idx))
-
-    # produce pretty output for contiguous ranges
-    ret = []
-    for t in breaks:
-        if uniq[t[1]] - uniq[t[0]] > 0:
-            ret.append("[%s%s-%s]" % (prefix, uniq[t[0]], uniq[t[1]]))
+    #set format string.  Compensate for constant-length naming conventions.
+    #Thanks Andrew!
+    for prefix in prefix_min_digits.keys():
+        if prefix_min_digits[prefix] == prefix_max_digits[prefix]:
+            prefix_format_str[prefix] = {
+                    'compact': ("[%%s%%%d.%dd-%%%d.%dd]" %
+                        (prefix_min_digits[prefix], prefix_min_digits[prefix],
+                        prefix_min_digits[prefix], prefix_min_digits[prefix])),
+                    'single': ("%%s%%%d.%dd" % (prefix_min_digits[prefix],
+                               prefix_min_digits[prefix]))
+                    }
         else:
-            ret.append("%s%s" % (prefix, uniq[t[0]]))
+            prefix_format_str[prefix] = {'compact': "[%s%s-%s]",
+                                         'single': "%s%s"}
+
+    # iterate through the sorted lists, identifying gaps in the sequential numbers
+    ret = []
+    for prefix in sorted(noderanges.keys()):
+        noderanges[prefix].sort()
+        breaks = []
+        start = 0
+        idx = 0
+        for idx in range(1, len(noderanges[prefix])):
+            if noderanges[prefix][idx] != noderanges[prefix][idx-1] + 1:
+                breaks.append((start, idx-1))
+                start = idx
+
+        breaks.append((start, idx))
+
+        # produce pretty output for contiguous ranges
+        for brk in breaks:
+            if noderanges[prefix][brk[1]] - noderanges[prefix][brk[0]] > 0:
+                ret.append(prefix_format_str[prefix]['compact'] %
+                        (prefix, noderanges[prefix][brk[0]],
+                            noderanges[prefix][brk[1]]))
+            else:
+                ret.append(prefix_format_str[prefix]['single'] %
+                        (prefix, noderanges[prefix][brk[0]]))
 
     return ','.join(ret)
-
 
 def dgetopt_long(arglist, opt, vopt, msg):
     '''parse options into a dictionary, long and short options supported'''
