@@ -1,5 +1,21 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 0.99.38 ==
+ * Added numerous dependency changes.  Notably, jobs in dep_hold states will no
+   longer accrue eligible wait time or score.  Previously, dep_hold jobs would
+   accrue eligible wait times unlike admin_hold or user_hold states.
+   (Cobalt Ticket #4308)
+ * Two display fixes for cluster systems that allow multiple node-name prefixes
+   to be handled correctly by the nodelist merging code  and to correctly
+   compact names if leading 0's are used in location numbers like
+   "foo001.machine". (Cobalt Ticket #4313 and #4277)
+ * Corrected two race conditions in the BlueGene/Q system components where a
+   location with offline hardware could be selected for draining on a
+   scheduling pass.  Though Cobalt would never try to actually run on the
+   offline block, It could end up draining resources needlessly, and impact
+   machine usage.  The first could happen at any time, the second only occurred
+   at the end of booting a block. (Cobalt Ticket #4311)
+
 == Changes to 0.99.37 ==
  * Fixed issue where a reservation could hit it's activation check while it is being
    deactivated, causing those events should be reversed.  Released reservations can't
