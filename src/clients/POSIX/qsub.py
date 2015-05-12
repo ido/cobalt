@@ -291,20 +291,28 @@ def logjob(jobid, spec, logToConsole):
             client_utils.logger.info(jobid)
         if spec.has_key('cobalt_log_file'):
             filename = spec['cobalt_log_file']
-            t = string.Template(filename)
-            filename = t.safe_substitute(jobid=jobid)
+            template = string.Template(filename)
+            filename = template.safe_substitute(jobid=jobid)
         else:
             filename = "%s/%s.cobaltlog" % (spec['outputdir'], jobid)
-
+        #fetch tty session information.
+        ttyname = None
         try:
-            cobalt_log_file = open(filename, "a")
-            
-            print >> cobalt_log_file, "Jobid: %s" % jobid
-            print >> cobalt_log_file, "qsub %s" % (" ".join(sys.argv[1:]))
-            print >> cobalt_log_file, "%s submitted with cwd set to: %s" % ( client_utils.sec_to_str(time.time()), spec['cwd'])
-            cobalt_log_file.close()
-        except Exception, e:
-            client_utils.logger.error("WARNING: failed to create cobalt log file at: %s: %s", filename, e)
+            stdoutfh = sys.stdout.fileno()
+            ttyname = os.ttyname(stdoutfh)
+        except OSError, IOError:
+            client_utils.logger.debug("fd %d not associated with a terminal device", stdoutfh)
+        try:
+            with open(filename, "a") as cobalt_log_file:
+                print >> cobalt_log_file, "Jobid: %s" % jobid
+                print >> cobalt_log_file, "qsub %s" % (" ".join(sys.argv[1:]))
+                print >> cobalt_log_file, ("%s submitted with cwd set to: %s" %
+                    (client_utils.sec_to_str(time.time()), spec['cwd']))
+                if ttyname is not None:
+                    print >> cobalt_log_file, ("jobid %d submitted from terminal %s" %
+                        (jobid, ttyname))
+        except IOError:
+            client_utils.logger.error("WARNING: failed to create cobalt log file at: %s: %s", filename, exc_info=True)
     else:
         client_utils.logger.error("failed to create the job.  Maybe a queue isn't there?")
 
