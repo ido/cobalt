@@ -59,6 +59,7 @@ import string
 import os
 import sys
 import signal
+import socket
 from Cobalt import client_utils
 from Cobalt.client_utils import \
     cb_debug, cb_env, cb_nodes, cb_time, cb_umask, cb_path, cb_dep, \
@@ -274,37 +275,54 @@ def update_spec(parser, opts, spec, opt2spec):
     # Get the key validated values into spec dictionary
     for opt in ['mode', 'proccount', 'nodecount']:
         spec[opt2spec[opt]] = opts[opt]
-    
+
     # Hack until the Cluster Systems get re-written.
     if parser.options.mode == 'interactive' and 'command' in opts and 'args' in opts:
         spec['command'] = opts['command']
         spec['args']    = opts['args']
 
+    #stamp the tty info, if it exists into the spec.
+    spec['ttysession'] = fetch_tty_session()
+    spec['submithost'] = socket.gethostname()
 
-def logjob(jobid, spec, logToConsole):
+def fetch_tty_session():
+    '''Grab the tty session stdout is attached to.  This will return None
+    if stdout is not going to a terminal.
+
+    '''
+    ttyname = None
+    try:
+        stdoutfh = sys.stdout.fileno()
+        ttyname = os.ttyname(stdoutfh)
+    except [OSError, IOError]:
+        client_utils.logger.debug("fd %d not associated with a terminal device", stdoutfh)
+    return ttyname
+
+def logjob(jobid, spec, log_to_console, ttyname=None):
     """
     log job info
     """
     # log jobid to stdout
     if jobid:
-        if logToConsole:
+        if log_to_console:
             client_utils.logger.info(jobid)
         if spec.has_key('cobalt_log_file'):
             filename = spec['cobalt_log_file']
-            t = string.Template(filename)
-            filename = t.safe_substitute(jobid=jobid)
+            template = string.Template(filename)
+            filename = template.safe_substitute(jobid=jobid)
         else:
             filename = "%s/%s.cobaltlog" % (spec['outputdir'], jobid)
-
         try:
-            cobalt_log_file = open(filename, "a")
-            
-            print >> cobalt_log_file, "Jobid: %s" % jobid
-            print >> cobalt_log_file, "qsub %s" % (" ".join(sys.argv[1:]))
-            print >> cobalt_log_file, "%s submitted with cwd set to: %s" % ( client_utils.sec_to_str(time.time()), spec['cwd'])
-            cobalt_log_file.close()
-        except Exception, e:
-            client_utils.logger.error("WARNING: failed to create cobalt log file at: %s: %s", filename, e)
+            with open(filename, "a") as cobalt_log_file:
+                print >> cobalt_log_file, "Jobid: %s" % jobid
+                print >> cobalt_log_file, "qsub %s" % (" ".join(sys.argv[1:]))
+                print >> cobalt_log_file, ("%s submitted with cwd set to: %s" %
+                    (client_utils.sec_to_str(time.time()), spec['cwd']))
+                if ttyname is not None:
+                    print >> cobalt_log_file, ("jobid %d submitted from terminal %s" %
+                        (jobid, ttyname))
+        except IOError:
+            client_utils.logger.error("WARNING: failed to create cobalt log file at: %s: %s", filename, exc_info=True)
     else:
         client_utils.logger.error("failed to create the job.  Maybe a queue isn't there?")
 
@@ -428,10 +446,10 @@ def run_job(parser, user, spec, opts):
 
         # If this is an interactive job, wait for it to start, then start user shell
         if parser.options.mode == 'interactive':
-            logjob(jobid, spec, False)
+            logjob(jobid, spec, False, spec['ttysession'])
             deljob = run_interactive_job(jobid, user,  opts['disable_preboot'], opts['nodecount'], opts['proccount'])
         else:
-            logjob(jobid, spec, True)
+            logjob(jobid, spec, True, spec['ttysession'])
     except Exception, e:
         client_utils.logger.error(e)
         exc_occurred = True
