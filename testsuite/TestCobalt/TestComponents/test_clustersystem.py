@@ -49,6 +49,18 @@ def gen_std_config_files():
     Cobalt.CONFIG_FILES[0] = STD_COBALT_CONFIG_FILE_NAME
 gen_std_config_files()
 
+def compare_dict(d1, d2):
+    '''Compare dicts, regardless of order of entries'''
+    equiv = True
+    for key in d1.keys():
+        try:
+            equiv  = equiv & (d1[key] == d2[key])
+        except KeyError:
+            equiv = False
+        if not equiv:
+            break
+    return equiv
+
 import Cobalt.Components.cluster_base_system
 import Cobalt.Components.cluster_system
 import time
@@ -496,7 +508,7 @@ class TestClusterSystem(object):
         del self.cluster_system.active_queues[2]
         del jobs_first_pass[0]
         self.cluster_system.find_job_location(jobs_first_pass, end_times)
-        assert str(self.cluster_system.draining_queues) == str(expected_draining_queues), \
+        assert compare_dict(self.cluster_system.draining_queues, expected_draining_queues), \
                 "draining_queues\nExpected:\n%s\nGot:\n%s" % (self.cluster_system.draining_queues, expected_draining_queues)
 
     def test_drain_disjoint_queues(self):
@@ -522,10 +534,11 @@ class TestClusterSystem(object):
         assert best_location == {}, "ERROR: got a best location for job_q1!"
         best_location = self.cluster_system.find_job_location(jobs_q2, end_times)
         assert best_location == {}, "ERROR: got a best location for job_q2!"
-        assert str(self.cluster_system.draining_nodes) == str(expected_draining_nodes), \
+        assert compare_dict(self.cluster_system.draining_nodes, expected_draining_nodes), \
             "Draining nodes:\nExpected: %s\nGot: %s" % (expected_draining_nodes, self.cluster_system.draining_nodes)
-        assert str(self.cluster_system.draining_queues) == str(expected_draining_queues), \
+        assert compare_dict(self.cluster_system.draining_queues, expected_draining_queues), \
             "Draining nodes:\nExpected: %s\nGot: %s" % (expected_draining_queues, self.cluster_system.draining_queues)
+
 
     def test_first_fit(self):
         #make sure if first fit is set that we don't try to drain, and just run the first fit.
