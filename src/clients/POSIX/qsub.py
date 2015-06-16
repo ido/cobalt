@@ -294,7 +294,7 @@ def fetch_tty_session():
     try:
         stdoutfh = sys.stdout.fileno()
         ttyname = os.ttyname(stdoutfh)
-    except [OSError, IOError]:
+    except (OSError, IOError):
         client_utils.logger.debug("fd %d not associated with a terminal device", stdoutfh)
     return ttyname
 
