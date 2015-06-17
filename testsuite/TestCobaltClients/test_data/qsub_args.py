@@ -9,7 +9,7 @@ test_argslist - is a list of dictionaries, each dictionary has all the necessary
 """
 
 test_argslist = [
-    { "tc_name" : "all_options_1", "args" : """-v -A myproj --attrs=a=1:b=2 --cwd /tmp -d --debuglog=/tmp/d --dependencies=1:2:3 -e /tmp/e --env v1=1:v2=2 --geometry 198x198x198x198 -h -i /bin/ls -M myemal@gmail.com -n10 -o /tmp/o -O /tmp --proccount 10 -qqueue --run_users user1:user2:user3 --run_project -t 10 --mode script --kernel kernel -K kopts /bin/ls""", 'skip_list' : ['not_bsim'], },
+    { "tc_name" : "all_options_1", "args" : """-v -A myproj --attrs=a=1:b=2 --cwd /tmp -d --debuglog=/tmp/d --dependencies=1:2:3 -e /tmp/e --env v1=1:v2=2 --geometry 198x198x198x198 -h -i /bin/ls -M myemal@gmail.com -n10 -o /tmp/o -O tmp --proccount 10 -qqueue --run_users user1:user2:user3 --run_project -t 10 --mode script --kernel kernel -K kopts /bin/ls""", 'skip_list' : ['not_bsim'], },
     { "tc_name" : "misc_1", "args" : """--mode script -n 512 --env BG_COREDUMPDISABLED=1 --proccount 512 -t 30 -q testing /bin/ls""", 'skip_list' : ['not_bsim'], },
     { "tc_name" : "no_options_passed", "args" : """/bin/ls""", },
     { "tc_name" : "non_existant_option", "args" : """-z -t10 -n10 /bin/ls""", },
@@ -39,7 +39,7 @@ test_argslist = [
     { "tc_name" : "inputfile_option_1", "args" : """-i none -t10 -n 10 /bin/ls""", },
     { "tc_name" : "inputfile_option_2", "args" : """-i y -t10 -n 10 /bin/ls""", },
     { "tc_name" : "email_option", "args" : """-M g -t10 -n10 /bin/ls""", },
-    { "tc_name" : "outputprefix", "args" : """-O /tmp -t10 -n10 /bin/ls""", },
+    { "tc_name" : "outputprefix", "args" : """-O tmp -t10 -n10 /bin/ls""", },
     { "tc_name" : "invalid_user", "args" : """--run_users naughtyuser -t10 -n10 /bin/ls""", },
     { "tc_name" : "mode_option_1", "args" : """-t10 -n512 --proccount 1023 --mode vn /bin/ls""", 'skip_list' : ['not_bsim'], },
     { "tc_name" : "mode_option_2", "args" : """-t10 -n512 --proccount 1023 --mode vn /bin/ls""", },

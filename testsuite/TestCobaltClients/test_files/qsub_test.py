@@ -7,7 +7,7 @@ def test_qsub_all_options_1():
 
     """
 
-    args      = """-v -A myproj --attrs=a=1:b=2 --cwd /tmp -d --debuglog=/tmp/d --dependencies=1:2:3 -e /tmp/e --env v1=1:v2=2 --geometry 198x198x198x198 -h -i /bin/ls -M myemal@gmail.com -n10 -o /tmp/o -O /tmp --proccount 10 -qqueue --run_users user1:user2:user3 --run_project -t 10 --mode script --kernel kernel -K kopts /bin/ls"""
+    args      = """-v -A myproj --attrs=a=1:b=2 --cwd /tmp -d --debuglog=/tmp/d --dependencies=1:2:3 -e /tmp/e --env v1=1:v2=2 --geometry 198x198x198x198 -h -i /bin/ls -M myemal@gmail.com -n10 -o /tmp/o -O tmp --proccount 10 -qqueue --run_users user1:user2:user3 --run_project -t 10 --mode script --kernel kernel -K kopts /bin/ls"""
 
     cmdout    = \
 """1
@@ -15,7 +15,7 @@ def test_qsub_all_options_1():
 
     cmderr    = \
 """
-qsub.py -v -A myproj --attrs=a=1:b=2 --cwd /tmp -d --debuglog=/tmp/d --dependencies=1:2:3 -e /tmp/e --env v1=1:v2=2 --geometry 198x198x198x198 -h -i /bin/ls -M myemal@gmail.com -n10 -o /tmp/o -O /tmp --proccount 10 -qqueue --run_users user1:user2:user3 --run_project -t 10 --mode script --kernel kernel -K kopts /bin/ls
+qsub.py -v -A myproj --attrs=a=1:b=2 --cwd /tmp -d --debuglog=/tmp/d --dependencies=1:2:3 -e /tmp/e --env v1=1:v2=2 --geometry 198x198x198x198 -h -i /bin/ls -M myemal@gmail.com -n10 -o /tmp/o -O tmp --proccount 10 -qqueue --run_users user1:user2:user3 --run_project -t 10 --mode script --kernel kernel -K kopts /bin/ls
 
 component: "queue-manager.get_jobs", defer: True
   get_jobs(
@@ -25,7 +25,7 @@ component: "queue-manager.get_jobs", defer: True
 
 component: "system.validate_job", defer: False
   validate_job(
-     {'kernel': 'kernel', 'verbose': True, 'held': True, 'notify': 'myemal@gmail.com', 'ion_kerneloptions': False, 'project': 'myproj', 'preemptable': False, 'forcenoval': False, 'umask': False, 'version': False, 'env': 'v1=1:v2=2', 'cwd': '/tmp', 'run_project': True, 'outputprefix': '/tmp', 'kerneloptions': 'kopts', 'time': '10', 'jobname': False, 'debug': True, 'dependencies': '1:2:3', 'debuglog': '/tmp/d', 'ion_kernel': 'default', 'proccount': '10', 'disable_preboot': False, 'geometry': '198x198x198x198', 'queue': 'queue', 'mode': 'script', 'error': '/tmp/e', 'nodecount': '10', 'output': '/tmp/o', 'inputfile': '/bin/ls', 'attrs': {'a': '1', 'b': '2'}, 'user_list': 'user1:user2:user3', 'interactive': False},
+     {'kernel': 'kernel', 'verbose': True, 'held': True, 'notify': 'myemal@gmail.com', 'ion_kerneloptions': False, 'project': 'myproj', 'preemptable': False, 'forcenoval': False, 'umask': False, 'version': False, 'env': 'v1=1:v2=2', 'cwd': '/tmp', 'run_project': True, 'outputprefix': 'tmp', 'kerneloptions': 'kopts', 'time': '10', 'jobname': False, 'debug': True, 'dependencies': '1:2:3', 'debuglog': '/tmp/d', 'ion_kernel': 'default', 'proccount': '10', 'disable_preboot': False, 'geometry': '198x198x198x198', 'queue': 'queue', 'mode': 'script', 'error': '/tmp/e', 'nodecount': '10', 'output': '/tmp/o', 'inputfile': '/bin/ls', 'attrs': {'a': '1', 'b': '2'}, 'user_list': 'user1:user2:user3', 'interactive': False},
      )
 
 
@@ -165,7 +165,7 @@ notify:myemal@gmail.com
 notify type: <type 'str'>
 output:/tmp/o
 output type: <type 'str'>
-outputprefix:/tmp
+outputprefix:tmp
 outputprefix type: <type 'str'>
 preemptable:False
 preemptable type: <type 'bool'>
@@ -3356,24 +3356,13 @@ def test_qsub_outputprefix():
 
     """
 
-    args      = """-O /tmp -t10 -n10 /bin/ls"""
+    args      = """-O tmp -t10 -n10 /bin/ls"""
 
     cmdout    = \
 """1
 """
 
-    cmderr    = \
-"""Traceback (most recent call last):
-  File "/usr/lib64/python2.6/logging/__init__.py", line 776, in emit
-    msg = self.format(record)
-  File "/usr/lib64/python2.6/logging/__init__.py", line 654, in format
-    return fmt.format(record)
-  File "/usr/lib64/python2.6/logging/__init__.py", line 436, in format
-    record.message = record.getMessage()
-  File "/usr/lib64/python2.6/logging/__init__.py", line 306, in getMessage
-    msg = msg % self.args
-TypeError: not enough arguments for format string
-"""
+    cmderr    = ''
 
     stubout   = \
 """
@@ -3381,13 +3370,13 @@ ADD_JOBS
 
 args:[]
 args type: <type 'list'>
-cobalt_log_file:/tmp.cobaltlog
+cobalt_log_file:/tmp/tmp.cobaltlog
 cobalt_log_file type: <type 'str'>
 command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
 cwd type: <type 'str'>
-errorpath:/tmp.error
+errorpath:/tmp/tmp.error
 errorpath type: <type 'str'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
@@ -3401,7 +3390,7 @@ nodes:10
 nodes type: <type 'int'>
 outputdir:/tmp
 outputdir type: <type 'str'>
-outputpath:/tmp.output
+outputpath:/tmp/tmp.output
 outputpath type: <type 'str'>
 path:/tmp
 path type: <type 'str'>
@@ -3474,7 +3463,7 @@ notify:False
 notify type: <type 'bool'>
 output:False
 output type: <type 'bool'>
-outputprefix:/tmp
+outputprefix:tmp
 outputprefix type: <type 'str'>
 preemptable:False
 preemptable type: <type 'bool'>
@@ -4854,18 +4843,136 @@ def test_qsub_script_1():
 
     args      = """cobalt_script1.sh"""
 
-    cmdout    = ''
-
-    cmderr    = \
-"""command /tmp/cobalt_script1.sh not found, or is not a file
+    cmdout    = \
+"""1
 """
 
-    stubout   = ''
+    cmderr    = ''
+
+    stubout   = \
+"""
+ADD_JOBS
+
+args:[]
+args type: <type 'list'>
+command:/tmp/cobalt_script1.sh
+command type: <type 'str'>
+cwd:/tmp
+cwd type: <type 'str'>
+envs:{'a': '1', 'c': '3', 'b': '2'}
+envs type: <type 'dict'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+jobid:*
+jobid type: <type 'str'>
+kernel:default
+kernel type: <type 'str'>
+mode:script
+mode type: <type 'str'>
+nodes:100
+nodes type: <type 'int'>
+outputdir:/tmp
+outputdir type: <type 'str'>
+path:/tmp
+path type: <type 'str'>
+procs:512
+procs type: <type 'str'>
+queue:default
+queue type: <type 'str'>
+run_project:False
+run_project type: <type 'bool'>
+script_preboot:True
+script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
+umask:18
+umask type: <type 'int'>
+user:gooduser
+user type: <type 'str'>
+user_list:['gooduser']
+user_list type: <type 'list'>
+walltime:75
+walltime type: <type 'str'>
+
+VALIDATE_JOB
+
+attrs:{}
+attrs type: <type 'dict'>
+cwd:/tmp
+cwd type: <type 'str'>
+debug:False
+debug type: <type 'bool'>
+debuglog:False
+debuglog type: <type 'bool'>
+dependencies:False
+dependencies type: <type 'bool'>
+disable_preboot:False
+disable_preboot type: <type 'bool'>
+env:a=1:c=3:b=2
+env type: <type 'str'>
+error:False
+error type: <type 'bool'>
+forcenoval:False
+forcenoval type: <type 'bool'>
+geometry:False
+geometry type: <type 'bool'>
+held:False
+held type: <type 'bool'>
+inputfile:False
+inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
+kernel:default
+kernel type: <type 'str'>
+kerneloptions:False
+kerneloptions type: <type 'bool'>
+mode:script
+mode type: <type 'str'>
+nodecount:100
+nodecount type: <type 'str'>
+notify:False
+notify type: <type 'bool'>
+output:False
+output type: <type 'bool'>
+outputprefix:False
+outputprefix type: <type 'bool'>
+preemptable:False
+preemptable type: <type 'bool'>
+proccount:False
+proccount type: <type 'bool'>
+project:False
+project type: <type 'bool'>
+queue:default
+queue type: <type 'str'>
+run_project:False
+run_project type: <type 'bool'>
+time:75
+time type: <type 'str'>
+umask:False
+umask type: <type 'bool'>
+user_list:False
+user_list type: <type 'bool'>
+verbose:False
+verbose type: <type 'bool'>
+version:False
+version type: <type 'bool'>
+
+"""
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       256, # Expected return status 
+                       0, # Expected return status 
                        cmdout, # Expected command output
                        stubout, # Expected stub functions output
                        cmderr, # Expected command error output 
@@ -4891,18 +4998,136 @@ def test_qsub_script_2():
 
     args      = """-t 50 cobalt_script1.sh"""
 
-    cmdout    = ''
-
-    cmderr    = \
-"""command /tmp/cobalt_script1.sh not found, or is not a file
+    cmdout    = \
+"""1
 """
 
-    stubout   = ''
+    cmderr    = ''
+
+    stubout   = \
+"""
+ADD_JOBS
+
+args:[]
+args type: <type 'list'>
+command:/tmp/cobalt_script1.sh
+command type: <type 'str'>
+cwd:/tmp
+cwd type: <type 'str'>
+envs:{'a': '1', 'c': '3', 'b': '2'}
+envs type: <type 'dict'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+jobid:*
+jobid type: <type 'str'>
+kernel:default
+kernel type: <type 'str'>
+mode:script
+mode type: <type 'str'>
+nodes:100
+nodes type: <type 'int'>
+outputdir:/tmp
+outputdir type: <type 'str'>
+path:/tmp
+path type: <type 'str'>
+procs:512
+procs type: <type 'str'>
+queue:default
+queue type: <type 'str'>
+run_project:False
+run_project type: <type 'bool'>
+script_preboot:True
+script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
+tag:job
+tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
+umask:18
+umask type: <type 'int'>
+user:gooduser
+user type: <type 'str'>
+user_list:['gooduser']
+user_list type: <type 'list'>
+walltime:50
+walltime type: <type 'str'>
+
+VALIDATE_JOB
+
+attrs:{}
+attrs type: <type 'dict'>
+cwd:/tmp
+cwd type: <type 'str'>
+debug:False
+debug type: <type 'bool'>
+debuglog:False
+debuglog type: <type 'bool'>
+dependencies:False
+dependencies type: <type 'bool'>
+disable_preboot:False
+disable_preboot type: <type 'bool'>
+env:a=1:c=3:b=2
+env type: <type 'str'>
+error:False
+error type: <type 'bool'>
+forcenoval:False
+forcenoval type: <type 'bool'>
+geometry:False
+geometry type: <type 'bool'>
+held:False
+held type: <type 'bool'>
+inputfile:False
+inputfile type: <type 'bool'>
+interactive:False
+interactive type: <type 'bool'>
+ion_kernel:default
+ion_kernel type: <type 'str'>
+ion_kerneloptions:False
+ion_kerneloptions type: <type 'bool'>
+jobname:False
+jobname type: <type 'bool'>
+kernel:default
+kernel type: <type 'str'>
+kerneloptions:False
+kerneloptions type: <type 'bool'>
+mode:script
+mode type: <type 'str'>
+nodecount:100
+nodecount type: <type 'str'>
+notify:False
+notify type: <type 'bool'>
+output:False
+output type: <type 'bool'>
+outputprefix:False
+outputprefix type: <type 'bool'>
+preemptable:False
+preemptable type: <type 'bool'>
+proccount:False
+proccount type: <type 'bool'>
+project:False
+project type: <type 'bool'>
+queue:default
+queue type: <type 'str'>
+run_project:False
+run_project type: <type 'bool'>
+time:50
+time type: <type 'str'>
+umask:False
+umask type: <type 'bool'>
+user_list:False
+user_list type: <type 'bool'>
+verbose:False
+verbose type: <type 'bool'>
+version:False
+version type: <type 'bool'>
+
+"""
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       256, # Expected return status 
+                       0, # Expected return status 
                        cmdout, # Expected command output
                        stubout, # Expected stub functions output
                        cmderr, # Expected command error output 
@@ -4931,7 +5156,7 @@ def test_qsub_script_3():
     cmdout    = ''
 
     cmderr    = \
-"""command /tmp/cobalt_script1.sh not found, or is not a file
+"""Mode already set to 'script' and trying to set it again to 'vn'
 """
 
     stubout   = ''
@@ -4971,7 +5196,7 @@ def test_qsub_script_4():
 """
 qsub.py -d cobalt_script2.sh
 
-command /tmp/cobalt_script2.sh not found, or is not a file
+Mode already set to 'script' and trying to set it again to 'vn'
 """
 
     stubout   = ''
