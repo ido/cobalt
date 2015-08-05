@@ -1011,20 +1011,23 @@ class BGSched (Component):
                         forbidden_locations.update(cur_res.partitions.split(':'))
                         if cur_res.block_passthrough:
                             pt_blocking_locations.update(cur_res.partitions.split(':'))
-
-                job_location_args.append( 
-                    { 'jobid': str(job.jobid), 
-                      'nodes': job.nodes, 
-                      'queue': job.queue, 
-                      'forbidden': list(forbidden_locations),
-                      'pt_forbidden': list(pt_blocking_locations),
-                      'utility_score': job.score,
-                      'walltime': job.walltime,
-                      'walltime_p': job.walltime_p, #*AdjEst*
-                      'attrs': job.attrs,
-                      'user': job.user,
-                      'geometry':job.geometry
-                    } )
+                job_info = { 'jobid': str(job.jobid),
+                             'nodes': job.nodes,
+                             'queue': job.queue,
+                             'forbidden': list(forbidden_locations),
+                             'pt_forbidden': list(pt_blocking_locations),
+                             'utility_score': job.score,
+                             'walltime': job.walltime,
+                             'walltime_p': job.walltime_p, #*AdjEst*
+                             'attrs': job.attrs,
+                             'user': job.user,
+                             'geometry':job.geometry,
+                           }
+                for eq_class in equiv:
+                    if job.queue in eq_class['queues']:
+                        job_info['queue_equivalence'] = eq_class['queues']
+                        break
+                job_location_args.append(job_info)
 
             try:
                 self.logger.debug("calling from main sched %s", eq_class)
