@@ -388,35 +388,46 @@ class ClusterBaseSystem (Component):
 
     # the argument "required" is used to pass in the set of locations allowed by a reservation;
     def find_job_location(self, job_list, end_times):
-        '''Find the best location for a job and start the job allocation process (this is different from
-        what happens on BlueGenes!)
+        '''Find the best location for a job and start the job allocation
+        process (this is different from what happens on BlueGenes!)
 
-        job_list = list of dictionaries of job data.  Each entry has the following fields:
+        job_list: list of dictionaries of job data.  Each entry has the
+        following fields:
+
         user -- username of the job
         pt_forbidden -- (ignored for cluster_systems)
         geometry -- (ignored for cluster_systems)
-        forbidden -- locations that are forbidden for scheduling, usually due to reservations
+        forbidden -- locations that are forbidden for scheduling, usually due
+                     to reservations
         jobid -- id of the Cobalt job
         queue -- queue of the Cobalt job
-        walltime_p -- predicted wallclock time of the job (not used in cluster_systems currently)
+        walltime_p -- predicted wallclock time of the job (not used in
+                      cluster_systems currently)
         walltime -- requested wall clock time for the job
         utility_score -- score of the job
-        attrs -- a list of attributes on the job (currently used to constrain locations)
+        attrs -- a list of attributes on the job (currently used to constrain
+                 locations)
         nodes -- number of requested nodes
+        queue_equivalence -- the other queues to consider with this job
 
-        end_times: This is a list of locations and when the job on them is expected to expire.
+        end_times: This is a list of locations and when the job on them is
+                   expected to expire.
+
         This may be run with:
         first_fit - run immediately in a location
         backfill - drain for jobs and allow for backfilling
 
         Reservation handling:
-        Reservations are a special case, as they don't (necessarially) have queues bound tightly to resources in the system
-        component.  Under the current behavior, they should first-fit their jobs.  A reservation pass on this function can will
-        have 'requires' set in the passed in jobs, allowing us to react accordingly.
+        Reservations are a special case, as they don't (necessarily) have
+        queues bound tightly to resources in the system component.  Under the
+        current behavior, they should first-fit their jobs.  A reservation pass
+        on this function can will have 'requires' set in the passed in jobs,
+        allowing us to react accordingly.
 
-        Reservation passes do not respect drain decisions otherwise.  The behavior of two overlaping reservations is undefined,
-        since a reservation is effectively max-priority on the affected resources.  All reservations are equal and will race as
-        such.
+        Reservation passes do not respect drain decisions otherwise.  The
+        behavior of two overlapping reservations is undefined, since a
+        reservation is effectively max-priority on the affected resources.  All
+        reservations are equal and will race as such.
 
         '''
         best_location_dict = {}
@@ -425,12 +436,14 @@ class ClusterBaseSystem (Component):
         now = int(time.time())
         drain_locs_by_queue = {}
         self.init_drain_times(end_times)
-        #self.draining_nodes cannot be reset here, due to the fact that this may be called on a second pass if you have multiple
+        #self.draining_nodes cannot be reset here, due to the fact that this
+        #may be called on a second pass if you have multiple
         #queue equivalence classes.
         self.logger.debug('job_list: %s', job_list)
         # first time through, try for starting jobs based on utility scores
 
-        #remove queues from draining if they are not in the active queue list, from the scheduler via find_queue_equivalence_classes
+        #remove queues from draining if they are not in the active queue list,
+        #from the scheduler via find_queue_equivalence_classes
         inactive_queues = []
         for queue in self.draining_queues.keys():
             if queue not in self.active_queues:
@@ -438,26 +451,24 @@ class ClusterBaseSystem (Component):
         for queue in inactive_queues:
             del self.draining_queues[queue]
 
-        #first identify the list of queues in our jobs:
-        considered_queues = []
-        for job in job_list:
-            if job['queue'] not in considered_queues:
-                considered_queues.append(job['queue'])
-        #to make sure that we properly reevalueate the drains on this pass, we need to clear out old times, make sure not to clear
+        #to make sure that we properly reevaluated the drains on this pass,
+        #we need to clear out old times, make sure not to clear
         #out times that are in use by other equivalence classes.
-        for queue in considered_queues:
-            if queue in self.draining_queues.keys():
-                del self.draining_queues[queue]
-        still_draining_times = [str(t) for t in self.draining_queues.values()]
-        not_found_times = [t for t in self.draining_nodes.keys() if t not in still_draining_times]
-        for drain_time in not_found_times:
-            del self.draining_nodes[drain_time]
+        if 'queue_equivalence' in job_list[0]:
+            current_equiv = job_list[0]['queue_equivalence']
+            for queue in current_equiv:
+                if queue in self.draining_queues.keys():
+                    del self.draining_queues[queue]
+            still_draining_times = [str(t) for t in self.draining_queues.values()]
+            not_found_times = [t for t in self.draining_nodes.keys() if t not in still_draining_times]
+            for drain_time in not_found_times:
+                del self.draining_nodes[drain_time]
 
-        self.logger.debug('*' * 80)
-        self.logger.debug('initial draining_queues:\n%s', self.draining_queues)
-        self.logger.debug('stilldraining times:\n%s', still_draining_times)
-        self.logger.debug('initial draining_nodes:\n%s', self.draining_nodes)
-        self.logger.debug('*' * 80)
+            self.logger.debug('*' * 80)
+            self.logger.debug('initial draining_queues:\n%s', self.draining_queues)
+            self.logger.debug('stilldraining times:\n%s', still_draining_times)
+            self.logger.debug('initial draining_nodes:\n%s', self.draining_nodes)
+            self.logger.debug('*' * 80)
 
         for jobs in job_list:
             jobid = int(jobs['jobid'])
@@ -468,7 +479,7 @@ class ClusterBaseSystem (Component):
                 if jobs['required']:
                     #if this exists we're scheduling on the reservation pass, treat accordingly.
                     has_required = True
-            except KeyError: #requried locations is totally optional and may not be in the dict.
+            except KeyError: #required locations is totally optional and may not be in the dict.
                 pass
             drain_time = 0
             self.logger.debug('Queue considered: %s', queue)
@@ -481,7 +492,7 @@ class ClusterBaseSystem (Component):
             self.logger.debug("current draining nodes: %s", self.draining_nodes)
             already_draining = set([loc for drain_locs in self.draining_nodes.values() for loc in drain_locs])
             self.logger.debug("Already draining: %s" % already_draining)
-            #short circut, we won't be able to schedule anything if our entire queue is being drained.
+            #short circuit, we won't be able to schedule anything if our entire queue is being drained.
             try:
                 if self.queue_assignments[queue].issubset(already_draining):
                     self.logger.debug("queue %s has no nodes that aren't already drained.", queue)
@@ -496,11 +507,14 @@ class ClusterBaseSystem (Component):
                     self.draining_queues[queue] = shortest_time
                     continue
             except KeyError:
-                #Reservation queues will cause a key error on this test, the queue is not actually assigned to resources
-                #in the component.  Treat as though this check passed, reservations don't drain. --PMR
+                #Reservation queues will cause a key error on this test, the
+                #queue is not actually assigned to resources in the component.
+                #Treat as though this check passed, reservations don't
+                #drain. --PMR
                 pass
             try:
-                location_data, drain_time, ready_to_run = self._find_job_location(jobs, now, already_draining=already_draining)
+                location_data, drain_time, ready_to_run = self._find_job_location(jobs,
+                        now, already_draining=already_draining)
             except RequiredLocationError:
                 self.logger.debug("Required location error PRIMARY LOOP!")
                 continue #location_data, drain_time and ready_to_run not set.
@@ -522,10 +536,8 @@ class ClusterBaseSystem (Component):
         self.logger.debug('primary pass complete')
 
         #make a second pass to pick a job for the draining nodes
-        #self.draining_nodes = {}
 
         #for queue in drain_locs_by_queue.keys():
-        #    self.draining_nodes[str(self.draining_queues[queue])] = list(drain_locs_by_queue[queue])
         if drain_locs_by_queue != {} and self.drain_mode == 'backfill':
             #only make this pass if we are allowing backfilling.
             self.logger.debug("locs_by_queue: %s", drain_locs_by_queue)
@@ -548,8 +560,8 @@ class ClusterBaseSystem (Component):
                     if ready_to_run:
                         #first backfill we find is the winner, and we start it.
                         best_location_dict.update(location_data)
-                        self.logger.info("%s/%s: job selected for backfill on locations %s from queue %s", user, jobid,
-                                ':'.join(location_data[str(jobid)]), jobs['queue'])
+                        self.logger.info("%s/%s: job selected for backfill on locations %s from queue %s",
+                                user, jobid, ':'.join(location_data[str(jobid)]), jobs['queue'])
                         break
 
         self.logger.debug('secondary_pass_complete')
@@ -677,24 +689,36 @@ class ClusterBaseSystem (Component):
     def _walltimecmp(self, dict1, dict2):
         return -cmp(float(dict1['walltime']), float(dict2['walltime']))
 
-    def find_queue_equivalence_classes(self, reservation_dict, active_queue_names, passthrough_partitions=[]):
-        '''Aggregate queues together that can impact eachother in the same general pass (both drain and backfill pass) in
-        find_job_location.  Equivalence classes will then be used in FJL to consider placement of jobs and resources, in separate
-        passes.  If multiple equivalence classes are returned, then they must contain orthogonal sets of resources.
+    def find_queue_equivalence_classes(self, reservation_dict, active_queue_names,
+            passthrough_partitions=[]):
+        '''Aggregate queues together that can impact eachother in the same
+        general pass (both drain and backfill pass) in find_job_location.
+        Equivalence classes will then be used in FJL to consider placement of
+        jobs and resources, in separate passes.  If multiple equivalence
+        classes are returned, then they must contain orthogonal sets
+        of resources.
 
         Inputs:
-        reservation_dict -- a mapping of active reservations to resrouces.  These will block any job in a normal queue.
-        active_queue_names -- A list of queues that are currently enabled.  Queues that are not in the 'running' state
+        reservation_dict -- a mapping of active reservations to resrouces.
+                            These will block any job in a normal queue.
+        active_queue_names -- A list of queues that are currently enabled.
+                              Queues that are not in the 'running' state
                               are ignored.
-        passthrough_partitions -- Not used in the general cluster_system version.  Nominally this would be a list of location
-                                  identifiers that would be impacted by runs on a queue, but would not be directly scheduled.
-                                  The implication is that these locations may be made unavailable by having resources in this
-                                  equivalence class scheduled, or vice-versa.
+        passthrough_partitions -- Not used in the general cluster_system
+                                  version.  Nominally this would be a list of
+                                  location identifiers that would be impacted
+                                  by runs on a queue, but would not be directly
+                                  scheduled. The implication is that these
+                                  locations may be made unavailable by having
+                                  resources in this equivalence class
+                                  scheduled, or vice-versa.
 
         Output:
-        A list of dictionaries of queues that may impact eachother while scheduling resources.
+        A list of dictionaries of queues that may impact eachother while
+        scheduling resources.
 
-        Side effects: updates a list of currently active queues used for find_job_location
+        Side effects:
+        Updates a list of currently active queues used for find_job_location.
 
         Internal Data:
         queue_assignments: a mapping of queues to schedulable locations.
