@@ -1,5 +1,11 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 0.99.39 ==
+ * Session information added to job submission information.  This also includes
+   submitting host information (Cobalt Ticket #4315)
+ * A fix for a bug that can cause "phantom drains" to occur on lightly loaded
+   cluster systems. (Cobalt Ticket #4319)
+
 == Changes to 0.99.38 ==
  * Added numerous dependency changes.  Notably, jobs in dep_hold states will no
    longer accrue eligible wait time or score.  Previously, dep_hold jobs would
