@@ -6,6 +6,7 @@ import pwd
 import os
 import getpass
 import testutils
+import socket
 
 def stub_time():
     return 1364335099.14
@@ -27,6 +28,9 @@ def stub_getuser():
 def stub_system(cmd):
     return 0
 
+def stub_gethostname():
+    return "foo.bar"
+
 # redefine the standard time() function
 time.time = stub_time
 
@@ -47,6 +51,9 @@ getpass.getuser = stub_getuser
 
 # redfine system
 os.system = stub_system
+
+#redefine gethostname, so this is host agnostic -PMR
+socket.gethostname = stub_gethostname
 
 fn = 'stub.out'
 fd = open(fn,'w')

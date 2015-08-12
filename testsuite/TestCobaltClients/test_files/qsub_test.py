@@ -7,7 +7,7 @@ def test_qsub_all_options_1():
 
     """
 
-    args      = """-v -A myproj --attrs=a=1:b=2 --cwd /tmp -d --debuglog=/tmp/d --dependencies=1:2:3 -e /tmp/e --env v1=1:v2=2 --geometry 198x198x198x198 -h -i /bin/ls -M myemal@gmail.com -n10 -o /tmp/o -O /tmp --proccount 10 -qqueue --run_users user1:user2:user3 --run_project -t 10 --mode script --kernel kernel -K kopts /bin/ls"""
+    args      = """-v -A myproj --attrs=a=1:b=2 --cwd /tmp -d --debuglog=/tmp/d --dependencies=1:2:3 -e /tmp/e --env v1=1:v2=2 --geometry 198x198x198x198 -h -i /bin/ls -M myemal@gmail.com -n10 -o /tmp/o -O tmp --proccount 10 -qqueue --run_users user1:user2:user3 --run_project -t 10 --mode script --kernel kernel -K kopts /bin/ls"""
 
     cmdout    = \
 """1
@@ -15,7 +15,7 @@ def test_qsub_all_options_1():
 
     cmderr    = \
 """
-qsub.py -v -A myproj --attrs=a=1:b=2 --cwd /tmp -d --debuglog=/tmp/d --dependencies=1:2:3 -e /tmp/e --env v1=1:v2=2 --geometry 198x198x198x198 -h -i /bin/ls -M myemal@gmail.com -n10 -o /tmp/o -O /tmp --proccount 10 -qqueue --run_users user1:user2:user3 --run_project -t 10 --mode script --kernel kernel -K kopts /bin/ls
+qsub.py -v -A myproj --attrs=a=1:b=2 --cwd /tmp -d --debuglog=/tmp/d --dependencies=1:2:3 -e /tmp/e --env v1=1:v2=2 --geometry 198x198x198x198 -h -i /bin/ls -M myemal@gmail.com -n10 -o /tmp/o -O tmp --proccount 10 -qqueue --run_users user1:user2:user3 --run_project -t 10 --mode script --kernel kernel -K kopts /bin/ls
 
 component: "queue-manager.get_jobs", defer: True
   get_jobs(
@@ -25,13 +25,14 @@ component: "queue-manager.get_jobs", defer: True
 
 component: "system.validate_job", defer: False
   validate_job(
-     {'kernel': 'kernel', 'verbose': True, 'held': True, 'notify': 'myemal@gmail.com', 'ion_kerneloptions': False, 'project': 'myproj', 'preemptable': False, 'forcenoval': False, 'umask': False, 'version': False, 'env': 'v1=1:v2=2', 'cwd': '/tmp', 'run_project': True, 'outputprefix': '/tmp', 'kerneloptions': 'kopts', 'time': '10', 'jobname': False, 'debug': True, 'dependencies': '1:2:3', 'debuglog': '/tmp/d', 'ion_kernel': 'default', 'proccount': '10', 'disable_preboot': False, 'geometry': '198x198x198x198', 'queue': 'queue', 'mode': 'script', 'error': '/tmp/e', 'nodecount': '10', 'output': '/tmp/o', 'inputfile': '/bin/ls', 'attrs': {'a': '1', 'b': '2'}, 'user_list': 'user1:user2:user3', 'interactive': False},
+     {'kernel': 'kernel', 'verbose': True, 'held': True, 'notify': 'myemal@gmail.com', 'ion_kerneloptions': False, 'project': 'myproj', 'preemptable': False, 'forcenoval': False, 'umask': False, 'version': False, 'env': 'v1=1:v2=2', 'cwd': '/tmp', 'run_project': True, 'outputprefix': 'tmp', 'kerneloptions': 'kopts', 'time': '10', 'jobname': False, 'debug': True, 'dependencies': '1:2:3', 'debuglog': '/tmp/d', 'ion_kernel': 'default', 'proccount': '10', 'disable_preboot': False, 'geometry': '198x198x198x198', 'queue': 'queue', 'mode': 'script', 'error': '/tmp/e', 'nodecount': '10', 'output': '/tmp/o', 'inputfile': '/bin/ls', 'attrs': {'a': '1', 'b': '2'}, 'user_list': 'user1:user2:user3', 'interactive': False},
      )
 
 
+fd 1 not associated with a terminal device
 component: "queue-manager.add_jobs", defer: False
   add_jobs(
-     [{'kernel': 'kernel', 'errorpath': '/tmp/e', 'outputpath': '/tmp/o', 'tag': 'job', 'notify': 'myemal@gmail.com', 'outputdir': '/tmp', 'queue': 'queue', 'envs': {'v1': '1', 'v2': '2'}, 'umask': 18, 'nodes': 10, 'cwd': '/tmp', 'run_project': True, 'kerneloptions': 'kopts', 'args': [], 'cobalt_log_file': '/tmp/d', 'user': 'gooduser', 'path': '/tmp', 'ion_kernel': 'default', 'procs': '10', 'walltime': '10', 'geometry': [198, 198, 198, 198, 2], 'user_hold': True, 'jobid': '*', 'project': 'myproj', 'script_preboot': True, 'command': '/bin/ls', 'mode': 'script', 'all_dependencies': '1:2:3', 'attrs': {'a': '1', 'b': '2'}, 'user_list': ['gooduser', 'user1', 'user2', 'user3'], 'inputfile': '/bin/ls'}],
+     [{'kernel': 'kernel', 'errorpath': '/tmp/e', 'outputpath': '/tmp/o', 'tag': 'job', 'notify': 'myemal@gmail.com', 'outputdir': '/tmp', 'queue': 'queue', 'envs': {'v1': '1', 'v2': '2'}, 'umask': 18, 'submithost': 'foo.bar', 'nodes': 10, 'cwd': '/tmp', 'run_project': True, 'ttysession': None, 'kerneloptions': 'kopts', 'args': [], 'cobalt_log_file': '/tmp/d', 'user': 'gooduser', 'path': '/tmp', 'ion_kernel': 'default', 'procs': '10', 'walltime': '10', 'geometry': [198, 198, 198, 198, 2], 'user_hold': True, 'jobid': '*', 'project': 'myproj', 'script_preboot': True, 'command': '/bin/ls', 'mode': 'script', 'all_dependencies': '1:2:3', 'attrs': {'a': '1', 'b': '2'}, 'user_list': ['gooduser', 'user1', 'user2', 'user3'], 'inputfile': '/bin/ls'}],
      )
 
 
@@ -101,8 +102,12 @@ run_project:True
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -160,7 +165,7 @@ notify:myemal@gmail.com
 notify type: <type 'str'>
 output:/tmp/o
 output type: <type 'str'>
-outputprefix:/tmp
+outputprefix:tmp
 outputprefix type: <type 'str'>
 preemptable:False
 preemptable type: <type 'bool'>
@@ -254,8 +259,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -753,8 +762,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -904,8 +917,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -1055,8 +1072,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -1243,8 +1264,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -1431,8 +1456,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -1582,8 +1611,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -1733,8 +1766,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -1884,8 +1921,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -2035,8 +2076,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -2186,8 +2231,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -2337,8 +2386,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -2527,8 +2580,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -2680,8 +2737,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -2835,8 +2896,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -3023,8 +3088,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -3174,8 +3243,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -3283,15 +3356,13 @@ def test_qsub_outputprefix():
 
     """
 
-    args      = """-O /tmp -t10 -n10 /bin/ls"""
+    args      = """-O tmp -t10 -n10 /bin/ls"""
 
     cmdout    = \
 """1
 """
 
-    cmderr    = \
-"""WARNING: failed to create cobalt log file at: /tmp.cobaltlog: [Errno 13] Permission denied: '/tmp.cobaltlog'
-"""
+    cmderr    = ''
 
     stubout   = \
 """
@@ -3299,13 +3370,13 @@ ADD_JOBS
 
 args:[]
 args type: <type 'list'>
-cobalt_log_file:/tmp.cobaltlog
+cobalt_log_file:/tmp/tmp.cobaltlog
 cobalt_log_file type: <type 'str'>
 command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
 cwd type: <type 'str'>
-errorpath:/tmp.error
+errorpath:/tmp/tmp.error
 errorpath type: <type 'str'>
 ion_kernel:default
 ion_kernel type: <type 'str'>
@@ -3319,7 +3390,7 @@ nodes:10
 nodes type: <type 'int'>
 outputdir:/tmp
 outputdir type: <type 'str'>
-outputpath:/tmp.output
+outputpath:/tmp/tmp.output
 outputpath type: <type 'str'>
 path:/tmp
 path type: <type 'str'>
@@ -3331,8 +3402,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -3388,7 +3463,7 @@ notify:False
 notify type: <type 'bool'>
 output:False
 output type: <type 'bool'>
-outputprefix:/tmp
+outputprefix:tmp
 outputprefix type: <type 'str'>
 preemptable:False
 preemptable type: <type 'bool'>
@@ -3517,8 +3592,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -3666,8 +3745,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -3817,8 +3900,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -4003,8 +4090,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:False
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -4154,8 +4245,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -4305,8 +4400,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -4430,9 +4529,10 @@ component: "system.validate_job", defer: False
      )
 
 
+fd 1 not associated with a terminal device
 component: "queue-manager.add_jobs", defer: False
   add_jobs(
-     [{'kernel': 'default', 'args': [], 'outputdir': '/tmp', 'envs': {'var1': 'val1', 'var3': 'val3', 'var2': 'svar1=sval1:svar2=sval2'}, 'user_list': ['gooduser'], 'umask': 18, 'jobid': '*', 'queue': 'default', 'script_preboot': True, 'tag': 'job', 'command': '/bin/ls', 'mode': 'c1', 'run_project': False, 'path': '/tmp', 'nodes': 10, 'walltime': '50', 'ion_kernel': 'default', 'cwd': '/tmp', 'procs': '512', 'user': 'gooduser'}],
+     [{'kernel': 'default', 'tag': 'job', 'outputdir': '/tmp', 'envs': {'var1': 'val1', 'var3': 'val3', 'var2': 'svar1=sval1:svar2=sval2'}, 'umask': 18, 'command': '/bin/ls', 'nodes': 10, 'cwd': '/tmp', 'run_project': False, 'ttysession': None, 'args': [], 'user': 'gooduser', 'path': '/tmp', 'ion_kernel': 'default', 'procs': '512', 'walltime': '50', 'jobid': '*', 'queue': 'default', 'script_preboot': True, 'submithost': 'foo.bar', 'mode': 'c1', 'user_list': ['gooduser']}],
      )
 
 
@@ -4473,8 +4573,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -4624,8 +4728,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -4775,8 +4883,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -4926,8 +5038,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -5152,8 +5268,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -5410,8 +5530,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -5584,8 +5708,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
@@ -5758,8 +5886,12 @@ run_project:False
 run_project type: <type 'bool'>
 script_preboot:True
 script_preboot type: <type 'bool'>
+submithost:foo.bar
+submithost type: <type 'str'>
 tag:job
 tag type: <type 'str'>
+ttysession:None
+ttysession type: <type 'NoneType'>
 umask:18
 umask type: <type 'int'>
 user:gooduser
