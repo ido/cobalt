@@ -439,7 +439,7 @@ class ClusterBaseSystem (Component):
         #self.draining_nodes cannot be reset here, due to the fact that this
         #may be called on a second pass if you have multiple
         #queue equivalence classes.
-        self.logger.debug('job_list: %s', job_list)
+        #self.logger.debug('job_list: %s', job_list)
         # first time through, try for starting jobs based on utility scores
 
         #remove queues from draining if they are not in the active queue list,
@@ -460,7 +460,8 @@ class ClusterBaseSystem (Component):
                 if queue in self.draining_queues.keys():
                     del self.draining_queues[queue]
             still_draining_times = [str(t) for t in self.draining_queues.values()]
-            not_found_times = [t for t in self.draining_nodes.keys() if t not in still_draining_times]
+            not_found_times = [t for t in self.draining_nodes.keys()
+                    if t not in still_draining_times]
             for drain_time in not_found_times:
                 del self.draining_nodes[drain_time]
 
