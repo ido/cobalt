@@ -18,3 +18,8 @@ src/Cobalt
 .DS_Store
 *.swo
 *.swp
+*.o
+*.so
+tools/pybgsched/*.py
+tools/pybgsched/*.cxx
+
