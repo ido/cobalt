@@ -80,7 +80,7 @@ def test_showres_arg_2():
     cmdout    = \
 """Reservation  Queue  User      Start                     Duration  Passthrough  Partitions  Remaining  T-Minus  
 ===============================================================================================================
-*            kebra  gooduser  Tue Mar 26 16:56:40 2013  00:08     Blocked      [P1-10]     15:56:40   active   
+*            kebra  gooduser  Tue Mar 26 21:56:40 2013  00:08     Blocked      [P1-10]     15:56:40   active   
 """
 
     cmderr    = ''
@@ -286,7 +286,7 @@ def test_showres_l_option_2():
     cmdout    = \
 """Reservation  Queue  User      Start                     Duration  End Time                  Cycle Time  Passthrough  Partitions  Remaining  T-Minus  
 =====================================================================================================================================================
-*            kebra  gooduser  Tue Mar 26 16:56:40 2013  00:08     Tue Mar 26 17:05:00 2013  00:05       Blocked      [P1-10]     15:56:40   active   
+*            kebra  gooduser  Tue Mar 26 21:56:40 2013  00:08     Tue Mar 26 22:05:00 2013  00:05       Blocked      [P1-10]     15:56:40   active   
 """
 
     cmderr    = ''
@@ -422,7 +422,7 @@ def test_showres_x_option_2():
     cmdout    = \
 """Reservation  Queue  User      Start                     Duration  End Time                  Cycle Time  Passthrough  Partitions  Project  ResID  CycleID  Remaining  T-Minus  
 ==============================================================================================================================================================================
-*            kebra  gooduser  Tue Mar 26 16:56:40 2013  00:08     Tue Mar 26 17:05:00 2013  00:05       Blocked      [P1-10]     proj     id     10       15:56:40   active   
+*            kebra  gooduser  Tue Mar 26 21:56:40 2013  00:08     Tue Mar 26 22:05:00 2013  00:05       Blocked      [P1-10]     proj     id     10       15:56:40   active   
 """
 
     cmderr    = ''

@@ -1,5 +1,4 @@
 import testutils
-import time
 
 # ---------------------------------------------------------------------------------
 def test_setres_id_change_1():
@@ -423,10 +422,10 @@ def test_setres_force_3():
 
     """
 
-    args      = """--force_id -p ANL-R00-R01-2048 -s 2013_12_31-11:59"""
+    args      = """--force_id -p ANL-R00-R01-2048 -s 2020_12_31-11:59"""
 
     cmdout    = \
-"""Got starttime Tue Dec 31 17:59:00 2013 +0000 (UTC)
+"""Got starttime Thu Dec 31 11:59:00 2020 +0000 (UTC)
 """
 
     cmderr    = \
@@ -658,12 +657,12 @@ def test_setres_modify_4():
 
     """
 
-    args      = """-m -n resname -D -s 2013_12_31-11:59:10"""
+    args      = """-m -n resname -D -s 2020_12_31-11:59:10"""
 
     cmdout    = ''
 
     cmderr    = \
-"""start time '2013_12_31-11:59:10. Error: Bad datetime format string.' is invalid
+"""start time '2020_12_31-11:59:10. Error: Bad datetime format string.' is invalid
 start time is expected to be in the format: YYYY_MM_DD-HH:MM
 """
 
@@ -696,10 +695,10 @@ def test_setres_modify_5():
 
     """
 
-    args      = """-m -n resname -D -s 2013_12_31-11:59"""
+    args      = """-m -n resname -D -s 2020_12_31-11:59"""
 
     cmdout    = \
-"""Got starttime Tue Dec 31 17:59:00 2013 +0000 (UTC)
+"""Got starttime Thu Dec 31 11:59:00 2020 +0000 (UTC)
 """
 
     cmderr    = \
@@ -738,7 +737,7 @@ def test_setres_modify_6():
     args      = """-m -n resname -D -d 10:10:10"""
 
     cmdout    = \
-"""Setting new start time for for reservation 'resname': Tue Mar 26 17:01:40 2013
+"""Setting new start time for for reservation 'resname': Tue Mar 26 22:01:40 2013
 [{'users': 'gooduser', 'block_passthrough': True, 'active': True, 'duration': 500, 'partitions': 'P1:P2:P3:P4:P5:P6:P7:P8:P9:P10', 'project': 'proj', 'cycle_id': 10, 'name': 'resname', 'queue': 'kebra', 'start': 1000000, 'cycle': 300, 'res_id': 'id'}]
 True
 """
@@ -820,10 +819,10 @@ def test_setres_modify_7():
 
     """
 
-    args      = """-m -n resname -s 2013_12_31-11:59 -c 10:30:30 -d 00:01:00"""
+    args      = """-m -n resname -s 2020_12_31-11:59 -c 10:30:30 -d 00:01:00"""
 
     cmdout    = \
-"""Got starttime Tue Dec 31 17:59:00 2013 +0000 (UTC)
+"""Got starttime Thu Dec 31 11:59:00 2020 +0000 (UTC)
 [{'users': 'gooduser', 'block_passthrough': True, 'active': True, 'duration': 500, 'partitions': 'P1:P2:P3:P4:P5:P6:P7:P8:P9:P10', 'project': 'proj', 'cycle_id': 10, 'name': 'resname', 'queue': 'kebra', 'start': 1000000, 'cycle': 300, 'res_id': 'id'}]
 True
 """
@@ -851,7 +850,7 @@ cycle:37800
 cycle type: <type 'int'>
 duration:60
 duration type: <type 'int'>
-start:1388512740.0
+start:1609415940.0
 start type: <type 'float'>
 user: gooduser
 
@@ -907,10 +906,10 @@ def test_setres_modify_8():
 
     """
 
-    args      = """-m -n resname -s 2013_12_31-11:59 -c 10 -d 50 -u user1"""
+    args      = """-m -n resname -s 2020_12_31-11:59 -c 10 -d 50 -u user1"""
 
     cmdout    = \
-"""Got starttime Tue Dec 31 17:59:00 2013 +0000 (UTC)
+"""Got starttime Thu Dec 31 11:59:00 2020 +0000 (UTC)
 [{'users': 'gooduser', 'block_passthrough': True, 'active': True, 'duration': 500, 'partitions': 'P1:P2:P3:P4:P5:P6:P7:P8:P9:P10', 'project': 'proj', 'cycle_id': 10, 'name': 'resname', 'queue': 'kebra', 'start': 1000000, 'cycle': 300, 'res_id': 'id'}]
 True
 """
@@ -938,7 +937,7 @@ cycle:600
 cycle type: <type 'int'>
 duration:3000
 duration type: <type 'int'>
-start:1388512740.0
+start:1609415940.0
 start type: <type 'float'>
 users:user1
 users type: <type 'str'>
@@ -996,10 +995,10 @@ def test_setres_modify_9():
 
     """
 
-    args      = """-m -n resname -s 2013_12_31-11:59 -c 10 -d 50 -u user1:user2"""
+    args      = """-m -n resname -s 2020_12_31-11:59 -c 10 -d 50 -u user1:user2"""
 
     cmdout    = \
-"""Got starttime Tue Dec 31 17:59:00 2013 +0000 (UTC)
+"""Got starttime Thu Dec 31 11:59:00 2020 +0000 (UTC)
 [{'users': 'gooduser', 'block_passthrough': True, 'active': True, 'duration': 500, 'partitions': 'P1:P2:P3:P4:P5:P6:P7:P8:P9:P10', 'project': 'proj', 'cycle_id': 10, 'name': 'resname', 'queue': 'kebra', 'start': 1000000, 'cycle': 300, 'res_id': 'id'}]
 True
 """
@@ -1027,7 +1026,7 @@ cycle:600
 cycle type: <type 'int'>
 duration:3000
 duration type: <type 'int'>
-start:1388512740.0
+start:1609415940.0
 start type: <type 'float'>
 users:user1:user2
 users type: <type 'str'>
@@ -1085,10 +1084,10 @@ def test_setres_modify_10():
 
     """
 
-    args      = """-m -n resname -s 2013_12_31-11:59 -c 10 -d 50 -A myproj -u user1"""
+    args      = """-m -n resname -s 2020_12_31-11:59 -c 10 -d 50 -A myproj -u user1"""
 
     cmdout    = \
-"""Got starttime Tue Dec 31 17:59:00 2013 +0000 (UTC)
+"""Got starttime Thu Dec 31 11:59:00 2020 +0000 (UTC)
 [{'users': 'gooduser', 'block_passthrough': True, 'active': True, 'duration': 500, 'partitions': 'P1:P2:P3:P4:P5:P6:P7:P8:P9:P10', 'project': 'proj', 'cycle_id': 10, 'name': 'resname', 'queue': 'kebra', 'start': 1000000, 'cycle': 300, 'res_id': 'id'}]
 True
 """
@@ -1118,7 +1117,7 @@ duration:3000
 duration type: <type 'int'>
 project:myproj
 project type: <type 'str'>
-start:1388512740.0
+start:1609415940.0
 start type: <type 'float'>
 users:user1
 users type: <type 'str'>
@@ -1176,10 +1175,10 @@ def test_setres_modify_11():
 
     """
 
-    args      = """-m -n resname -s 2013_12_31-11:59 -c 10 -d 50 -A myproj --block_passthrough"""
+    args      = """-m -n resname -s 2020_12_31-11:59 -c 10 -d 50 -A myproj --block_passthrough"""
 
     cmdout    = \
-"""Got starttime Tue Dec 31 17:59:00 2013 +0000 (UTC)
+"""Got starttime Thu Dec 31 11:59:00 2020 +0000 (UTC)
 [{'users': 'gooduser', 'block_passthrough': True, 'active': True, 'duration': 500, 'partitions': 'P1:P2:P3:P4:P5:P6:P7:P8:P9:P10', 'project': 'proj', 'cycle_id': 10, 'name': 'resname', 'queue': 'kebra', 'start': 1000000, 'cycle': 300, 'res_id': 'id'}]
 True
 """
@@ -1211,7 +1210,7 @@ duration:3000
 duration type: <type 'int'>
 project:myproj
 project type: <type 'str'>
-start:1388512740.0
+start:1609415940.0
 start type: <type 'float'>
 user: gooduser
 
@@ -1267,10 +1266,10 @@ def test_setres_modify_12():
 
     """
 
-    args      = """-m -n resname -s 2013_12_31-11:59 -c 10 -d 50 -A myproj --allow_passthrough"""
+    args      = """-m -n resname -s 2020_12_31-11:59 -c 10 -d 50 -A myproj --allow_passthrough"""
 
     cmdout    = \
-"""Got starttime Tue Dec 31 17:59:00 2013 +0000 (UTC)
+"""Got starttime Thu Dec 31 11:59:00 2020 +0000 (UTC)
 [{'users': 'gooduser', 'block_passthrough': True, 'active': True, 'duration': 500, 'partitions': 'P1:P2:P3:P4:P5:P6:P7:P8:P9:P10', 'project': 'proj', 'cycle_id': 10, 'name': 'resname', 'queue': 'kebra', 'start': 1000000, 'cycle': 300, 'res_id': 'id'}]
 True
 """
@@ -1302,7 +1301,7 @@ duration:3000
 duration type: <type 'int'>
 project:myproj
 project type: <type 'str'>
-start:1388512740.0
+start:1609415940.0
 start type: <type 'float'>
 user: gooduser
 
@@ -1958,10 +1957,10 @@ def test_setres_add_res_3():
 
     """
 
-    args      = """-n resname -s 2013_12_31-11:59 ANL-R00-R01-2048 ANL-R00-1024"""
+    args      = """-n resname -s 2020_12_31-11:59 ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Got starttime Tue Dec 31 17:59:00 2013 +0000 (UTC)
+"""Got starttime Thu Dec 31 11:59:00 2020 +0000 (UTC)
 """
 
     cmderr    = \
@@ -1997,10 +1996,10 @@ def test_setres_add_res_4():
 
     """
 
-    args      = """-n resname -s 2013_12_31-11:59 -d 50 ANL-R00-R01-2048 ANL-R00-1024"""
+    args      = """-n resname -s 2020_12_31-11:59 -d 50 ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Got starttime Tue Dec 31 17:59:00 2013 +0000 (UTC)
+"""Got starttime Thu Dec 31 11:59:00 2020 +0000 (UTC)
 True
 True
 """
@@ -2031,7 +2030,7 @@ partitions:ANL-R00-R01-2048:ANL-R00-1024
 partitions type: <type 'str'>
 project:None
 project type: <type 'NoneType'>
-start:1388512740.0
+start:1609415940.0
 start type: <type 'float'>
 users:None
 users type: <type 'NoneType'>
@@ -2068,10 +2067,10 @@ def test_setres_add_res_5():
 
     """
 
-    args      = """-n resname -s 2013_12_31-11:59 -d 50 -c 10:10:10 ANL-R00-R01-2048 ANL-R00-1024"""
+    args      = """-n resname -s 2020_12_31-11:59 -d 50 -c 10:10:10 ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Got starttime Tue Dec 31 17:59:00 2013 +0000 (UTC)
+"""Got starttime Thu Dec 31 11:59:00 2020 +0000 (UTC)
 True
 True
 """
@@ -2102,7 +2101,7 @@ partitions:ANL-R00-R01-2048:ANL-R00-1024
 partitions type: <type 'str'>
 project:None
 project type: <type 'NoneType'>
-start:1388512740.0
+start:1609415940.0
 start type: <type 'float'>
 users:None
 users type: <type 'NoneType'>
@@ -2139,10 +2138,10 @@ def test_setres_add_res_6():
 
     """
 
-    args      = """-s 2013_12_31-11:59 -n resname -d 50 -c 10:10:10 ANL-R00-R01-2048 ANL-R00-1024"""
+    args      = """-s 2020_12_31-11:59 -n resname -d 50 -c 10:10:10 ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Got starttime Tue Dec 31 17:59:00 2013 +0000 (UTC)
+"""Got starttime Thu Dec 31 11:59:00 2020 +0000 (UTC)
 True
 True
 """
@@ -2173,7 +2172,7 @@ partitions:ANL-R00-R01-2048:ANL-R00-1024
 partitions type: <type 'str'>
 project:None
 project type: <type 'NoneType'>
-start:1388512740.0
+start:1609415940.0
 start type: <type 'float'>
 users:None
 users type: <type 'NoneType'>
@@ -2210,10 +2209,10 @@ def test_setres_add_res_7():
 
     """
 
-    args      = """-s 2013_12_31-11:59 -n resname -d 10:10:10 -p ANL-R00-R01-2048 --block_passthrough"""
+    args      = """-s 2020_12_31-11:59 -n resname -d 10:10:10 -p ANL-R00-R01-2048 --block_passthrough"""
 
     cmdout    = \
-"""Got starttime Tue Dec 31 17:59:00 2013 +0000 (UTC)
+"""Got starttime Thu Dec 31 11:59:00 2020 +0000 (UTC)
 True
 True
 """
@@ -2240,7 +2239,7 @@ partitions:ANL-R00-R01-2048
 partitions type: <type 'str'>
 project:None
 project type: <type 'NoneType'>
-start:1388512740.0
+start:1609415940.0
 start type: <type 'float'>
 users:None
 users type: <type 'NoneType'>
@@ -2277,10 +2276,10 @@ def test_setres_add_res_8():
 
     """
 
-    args      = """-s 2013_12_31-11:59 -n resname -d 10:10:10 -p ANL-R00-R01-2048 --block_passthrough -q myq -A myproj"""
+    args      = """-s 2020_12_31-11:59 -n resname -d 10:10:10 -p ANL-R00-R01-2048 --block_passthrough -q myq -A myproj"""
 
     cmdout    = \
-"""Got starttime Tue Dec 31 17:59:00 2013 +0000 (UTC)
+"""Got starttime Thu Dec 31 11:59:00 2020 +0000 (UTC)
 True
 True
 """
@@ -2309,7 +2308,7 @@ project:myproj
 project type: <type 'str'>
 queue:myq
 queue type: <type 'str'>
-start:1388512740.0
+start:1609415940.0
 start type: <type 'float'>
 users:None
 users type: <type 'NoneType'>
@@ -2346,17 +2345,17 @@ def test_setres_add_res_9():
 
     """
 
-    args      = """-s 2013_12_31-11:59 -n resname -d 10:10:10 -p ANL-R00-R01-2048 --block_passthrough -q myq -A myproj --debug"""
+    args      = """-s 2020_12_31-11:59 -n resname -d 10:10:10 -p ANL-R00-R01-2048 --block_passthrough -q myq -A myproj --debug"""
 
     cmdout    = \
-"""Got starttime Tue Dec 31 17:59:00 2013 +0000 (UTC)
+"""Got starttime Thu Dec 31 11:59:00 2020 +0000 (UTC)
 True
 True
 """
 
     cmderr    = \
 """
-setres.py -s 2013_12_31-11:59 -n resname -d 10:10:10 -p ANL-R00-R01-2048 --block_passthrough -q myq -A myproj --debug
+setres.py -s 2020_12_31-11:59 -n resname -d 10:10:10 -p ANL-R00-R01-2048 --block_passthrough -q myq -A myproj --debug
 
 component: "system.verify_locations", defer: False
   verify_locations(
@@ -2366,7 +2365,7 @@ component: "system.verify_locations", defer: False
 
 component: "scheduler.add_reservations", defer: False
   add_reservations(
-     [{'queue': 'myq', 'name': 'resname', 'block_passthrough': True, 'project': 'myproj', 'start': 1388512740.0, 'duration': 36600, 'users': None, 'cycle': None, 'partitions': 'ANL-R00-R01-2048'}],
+     [{'queue': 'myq', 'name': 'resname', 'block_passthrough': True, 'project': 'myproj', 'start': 1609415940.0, 'duration': 36600, 'users': None, 'cycle': None, 'partitions': 'ANL-R00-R01-2048'}],
      gooduser,
      )
 
@@ -2400,7 +2399,7 @@ project:myproj
 project type: <type 'str'>
 queue:myq
 queue type: <type 'str'>
-start:1388512740.0
+start:1609415940.0
 start type: <type 'float'>
 users:None
 users type: <type 'NoneType'>
@@ -2437,10 +2436,10 @@ def test_setres_add_res_10():
 
     """
 
-    args      = """-s 2013_12_31-11:59 -d 10:10:10 -p ANL-R00-R01-2048 --block_passthrough -q myq -A myproj --debug"""
+    args      = """-s 2020_12_31-11:59 -d 10:10:10 -p ANL-R00-R01-2048 --block_passthrough -q myq -A myproj --debug"""
 
     cmdout    = \
-"""Got starttime Tue Dec 31 17:59:00 2013 +0000 (UTC)
+"""Got starttime Thu Dec 31 11:59:00 2020 +0000 (UTC)
 Usage: setres.py --help
 Usage: setres.py [options] <partition1> ... <partitionN>
 
@@ -2448,7 +2447,7 @@ Usage: setres.py [options] <partition1> ... <partitionN>
 
     cmderr    = \
 """
-setres.py -s 2013_12_31-11:59 -d 10:10:10 -p ANL-R00-R01-2048 --block_passthrough -q myq -A myproj --debug
+setres.py -s 2020_12_31-11:59 -d 10:10:10 -p ANL-R00-R01-2048 --block_passthrough -q myq -A myproj --debug
 
 No arguments or options provided
 
@@ -2704,10 +2703,10 @@ def test_setres_add_res_14():
 
     """
 
-    args      = """-n resname -s 2013_03_26-16:57 -d 00:01 -c 10:10:10 -p p1:p2:p3 p4"""
+    args      = """-n resname -s 2020_03_26-16:57 -d 00:01 -c 10:10:10 -p p1:p2:p3 p4"""
 
     cmdout    = \
-"""Got starttime Tue Mar 26 21:57:00 2013 +0000 (UTC)
+"""Got starttime Thu Mar 26 16:57:00 2020 +0000 (UTC)
 True
 True
 """
@@ -2746,7 +2745,7 @@ partitions:p4:p1:p2:p3
 partitions type: <type 'str'>
 project:None
 project type: <type 'NoneType'>
-start:1364335020.0
+start:1585241820.0
 start type: <type 'float'>
 users:None
 users type: <type 'NoneType'>
@@ -2783,15 +2782,15 @@ def test_setres_add_res_15():
 
     """
 
-    args      = """-n resname -s 2013_03_26-16:56 -d 00:01 -c 10:10:10 -p p1:p2:p3 p4"""
+    args      = """-n resname -s 2020_03_26-16:56 -d 00:01 -c 10:10:10 -p p1:p2:p3 p4"""
 
     cmdout    = \
-"""Got starttime Tue Mar 26 21:56:00 2013 +0000 (UTC)
+"""Got starttime Thu Mar 26 16:56:00 2020 +0000 (UTC)
+True
+True
 """
 
-    cmderr    = \
-"""Start time + duration Tue Mar 26 21:57:00 2013 +0000 (UTC) already in the pass
-"""
+    cmderr    = ''
 
     stubout   = \
 """
@@ -2810,12 +2809,35 @@ location list: ['p4', 'p1', 'p2', 'p3']
 VERIFY_LOCATIONS
 
 location list: ['p4', 'p1', 'p2', 'p3']
+
+ADD_RESERVATIONS
+
+block_passthrough:False
+block_passthrough type: <type 'bool'>
+cycle:36600
+cycle type: <type 'int'>
+duration:60
+duration type: <type 'int'>
+name:resname
+name type: <type 'str'>
+partitions:p4:p1:p2:p3
+partitions type: <type 'str'>
+project:None
+project type: <type 'NoneType'>
+start:1585241760.0
+start type: <type 'float'>
+users:None
+users type: <type 'NoneType'>
+user: gooduser
+
+CHECK_RESERVATIONS
+
 """
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       256, # Expected return status 
+                       0, # Expected return status 
                        cmdout, # Expected command output
                        stubout, # Expected stub functions output
                        cmderr, # Expected command error output 

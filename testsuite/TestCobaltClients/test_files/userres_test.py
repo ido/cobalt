@@ -90,7 +90,7 @@ def test_userres_arg_2():
     args      = """s1"""
 
     cmdout    = \
-"""Setting new start time for for reservation 's1': Tue Mar 26 17:01:40 2013
+"""Setting new start time for for reservation 's1': Tue Mar 26 22:01:40 2013
 """
 
     cmderr    = ''
@@ -149,9 +149,9 @@ def test_userres_arg_3():
     args      = """s1 s2 s3"""
 
     cmdout    = \
-"""Setting new start time for for reservation 's1': Tue Mar 26 17:01:40 2013
-Setting new start time for for reservation 's2': Tue Mar 26 17:01:40 2013
-Setting new start time for for reservation 's3': Tue Mar 26 17:01:40 2013
+"""Setting new start time for for reservation 's1': Tue Mar 26 22:01:40 2013
+Setting new start time for for reservation 's2': Tue Mar 26 22:01:40 2013
+Setting new start time for for reservation 's3': Tue Mar 26 22:01:40 2013
 """
 
     cmderr    = ''
@@ -385,9 +385,9 @@ def test_userres_arg_6():
     args      = """s1 s2 s3"""
 
     cmdout    = \
-"""Setting new start time for for reservation 's1': Tue Mar 26 17:01:40 2013
-Setting new start time for for reservation 's2': Tue Mar 26 17:01:40 2013
-Setting new start time for for reservation 's3': Tue Mar 26 17:01:40 2013
+"""Setting new start time for for reservation 's1': Tue Mar 26 22:01:40 2013
+Setting new start time for for reservation 's2': Tue Mar 26 22:01:40 2013
+Setting new start time for for reservation 's3': Tue Mar 26 22:01:40 2013
 """
 
     cmderr    = ''
@@ -482,10 +482,10 @@ def test_userres_arg_7():
     args      = """s1 s2 s3 s4"""
 
     cmdout    = \
-"""Setting new start time for for reservation 's1': Tue Mar 26 17:01:40 2013
-Setting new start time for for reservation 's2': Tue Mar 26 17:01:40 2013
-Setting new start time for for reservation 's3': Tue Mar 26 17:01:40 2013
-Setting new start time for for reservation 's4': Tue Mar 26 17:01:40 2013
+"""Setting new start time for for reservation 's1': Tue Mar 26 22:01:40 2013
+Setting new start time for for reservation 's2': Tue Mar 26 22:01:40 2013
+Setting new start time for for reservation 's3': Tue Mar 26 22:01:40 2013
+Setting new start time for for reservation 's4': Tue Mar 26 22:01:40 2013
 """
 
     cmderr    = ''
@@ -598,10 +598,10 @@ def test_userres_arg_8():
     args      = """-d p1 s1 s2 s3"""
 
     cmdout    = \
-"""Setting new start time for for reservation 'p1': Tue Mar 26 17:01:40 2013
-Setting new start time for for reservation 's1': Tue Mar 26 17:01:40 2013
-Setting new start time for for reservation 's2': Tue Mar 26 17:01:40 2013
-Setting new start time for for reservation 's3': Tue Mar 26 17:01:40 2013
+"""Setting new start time for for reservation 'p1': Tue Mar 26 22:01:40 2013
+Setting new start time for for reservation 's1': Tue Mar 26 22:01:40 2013
+Setting new start time for for reservation 's2': Tue Mar 26 22:01:40 2013
+Setting new start time for for reservation 's3': Tue Mar 26 22:01:40 2013
 """
 
     cmderr    = \
@@ -756,10 +756,10 @@ def test_userres_arg_9():
     args      = """--debug p1 s1 s2 s3"""
 
     cmdout    = \
-"""Setting new start time for for reservation 'p1': Tue Mar 26 17:01:40 2013
-Setting new start time for for reservation 's1': Tue Mar 26 17:01:40 2013
-Setting new start time for for reservation 's2': Tue Mar 26 17:01:40 2013
-Setting new start time for for reservation 's3': Tue Mar 26 17:01:40 2013
+"""Setting new start time for for reservation 'p1': Tue Mar 26 22:01:40 2013
+Setting new start time for for reservation 's1': Tue Mar 26 22:01:40 2013
+Setting new start time for for reservation 's2': Tue Mar 26 22:01:40 2013
+Setting new start time for for reservation 's3': Tue Mar 26 22:01:40 2013
 """
 
     cmderr    = \
