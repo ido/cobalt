@@ -5,7 +5,7 @@ __revision__ = "$Revision$"
 
 import logging
 from Cobalt.Data import Data, DataDict, IncrID
-from Cobalt.Exceptions import DataCreationError
+from Cobalt.Exceptions import DataCreationError, ProcessGroupStartupError
 from Cobalt.Proxy import ComponentProxy
 
 _logger = logging.getLogger()
@@ -120,9 +120,10 @@ class ProcessGroup(Data):
                 self.head_pid = ComponentProxy(self.forker, retry=False).fork([self.executable] + self.args, self.tag,
                     "Job %s/%s/%s" %(self.jobid, self.user, self.id), self.env, data, self.runid)
             except:
-                _logger.error("Job %s/%s/%s: problem forking; %s did not return a child id", self.jobid, self.user, self.id,
-                    self.forker)
-                raise
+                err = "Job %s/%s/%s: problem forking; %s did not return a child id" % (self.jobid,
+                        self.user, self.id, self.forker)
+                _logger.error(err)
+                raise ProcessGroupStartupError(err)
 
     def prefork (self):
         """This method is called before the fork, while it's still safe to 

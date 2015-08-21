@@ -146,3 +146,7 @@ class RequiredLocationError(LookupError):
     '''
     log = True
     fault_code = fault_code_counter.next()
+
+class ProcessGroupStartupError(Exception):
+    log = True
+    fault_code = fault_code_counter.next()
