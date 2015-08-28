@@ -3,6 +3,7 @@
 """
 from nose.tools import raises
 from Cobalt.Components.system.resource import *
+from Cobalt.Components.system.ClusterNode import ClusterNode
 import time
 
 class TestSystemResource(object):
@@ -168,3 +169,37 @@ class TestSystemResource(object):
         #if we're not managing it, we can't release it.
         self.resource_list[0].managed = False
         self.resource_list[0].release()
+
+class TestClusterNode(object):
+
+    def test_init(self):
+        #test basic initialization
+        spec = {'name': 'node1',
+                'attributes': {'ncpu': 1, 'mem':4},
+                'queues': ['foo', 'bar'],
+                'backfill_epsilon': 600,
+                }
+        node = ClusterNode(spec)
+        assert node.name == 'node1', "name not set"
+        assert node.attributes == {'ncpu': 1, 'mem':4}, "Attributes not set."
+        assert not node.schedulable, "defaulted to schedulable"
+        assert node.drain_until is None, "drain_until should not be set"
+        assert node.drain_jobid is None, "drain_jobid should not be set"
+        assert node.queues == ['foo', 'bar'], "queues not set"
+        assert node.backfill_epsilon == 500, "backfill_epsilon not set"
+
+    def test_init_defaults(self):
+        #test that defaults are being properly set
+        spec = {'name': 'node1'}
+        node = ClusterNode(spec)
+        assert node.attributes == {}, 'bad default attributes'
+        assert node.queues == ['default'], 'bad default queues'
+        assert node.backfill_epsilon == 120, 'bad default backfill_epsilon'
+
+    def setup_test_node(self):
+        spec = {'name': 'node1'}
+        self.nodelist = [ClusterNode(spec)]
+        self.testnode = self.nodelist[0]
+
+
+
