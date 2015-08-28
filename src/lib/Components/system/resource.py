@@ -29,6 +29,8 @@ class ReservationError(Exception):
 
     '''
     pass
+class InitializationError(Exception):
+    pass
 
 class Resource(object):
     '''Generic resource class.  This may be used as a base for any schedulable
@@ -52,6 +54,9 @@ class Resource(object):
     def __hash__(self):
         '''Hash is the hash of the string name for the resource.'''
         return hash(self.name)
+
+    def __str__(self):
+        return "\n".join([ "%s: %s," % (key, val) for key, val in self.__dict__.items()])
 
     @property
     def reserved(self):
@@ -114,9 +119,8 @@ class Resource(object):
 
         '''
         self._check_managed()
-        if (self.reserved and user != self.reserved_by and
-                jobid != self.reserved_jobid and user is not None and
-                jobid is not None):
+        if (self.reserved and ((user != self.reserved_by and user is not None) or
+                (jobid != self.reserved_jobid and jobid is not None))):
             raise ReservationError('%s/%s/%s: Unable to reserve already reserved resource' % \
                     (until, user, jobid))
         self.reserved_until = until
@@ -144,6 +148,7 @@ class Resource(object):
 
         '''
         self._check_managed()
+        released = False
         if not self.reserved:
             _logger.warning('Release of already free resource %s attempted.' \
                     ' Release ignored.', self.name)
@@ -152,24 +157,11 @@ class Resource(object):
             self.reserved_until = None
             self.reserved_by = None
             self.reserved_jobid = None
+            released = True
         else:
             _logger.warning('%s/%s: Attempted to release reservation '\
                     'owned by %s/%s', user, jobid, self.reserved_by,
                     self.reserved_jobid)
-            return False
         self.status = 'idle'
-        return True
+        return released
 
-    def start_initialization(self, user, jobid):
-        self._check_managed()
-        if not self.reserved and self.status not 'allocated':
-            raise InitializationError('%s Unable to initialize unallocated resource.')
-        
-        raise NotImplementedError
-
-    def wait_initialization(self):
-        raise NotImplementedError
-
-    def start_cleanup(self, user=None, jobid=None, force=False):
-        self._check_managed()
-        raise NotImplementedError
