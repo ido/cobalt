@@ -186,7 +186,7 @@ class TestClusterNode(object):
         assert node.drain_until is None, "drain_until should not be set"
         assert node.drain_jobid is None, "drain_jobid should not be set"
         assert node.queues == ['foo', 'bar'], "queues not set"
-        assert node.backfill_epsilon == 500, "backfill_epsilon not set"
+        assert node.backfill_epsilon == 600, "backfill_epsilon not set"
 
     def test_init_defaults(self):
         #test that defaults are being properly set
