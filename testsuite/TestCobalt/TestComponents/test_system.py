@@ -3,7 +3,7 @@
 """
 from nose.tools import raises
 from Cobalt.Components.system.resource import *
-from Cobalt.Components.system.ClusterNode import ClusterNode
+from Cobalt.Components.system.ClusterNode import ClusterNode, UnschedulableNodeError
 import time
 
 class TestSystemResource(object):
@@ -172,6 +172,22 @@ class TestSystemResource(object):
 
 class TestClusterNode(object):
 
+    def setup(self):
+        '''Set up common test parameters. Run as a part of every test.'''
+        self.now = time.time()
+
+    def teardown(self):
+        '''Clean up any default parameters that need it.  Run every test.'''
+        pass
+
+
+    def setup_test_node(self):
+        '''Generate a bare-bones test node.'''
+        spec = {'name': 'node1'}
+        self.nodelist = [ClusterNode(spec)]
+        self.testnode = self.nodelist[0]
+        self.testnode.schedulable = True
+
     def test_init(self):
         #test basic initialization
         spec = {'name': 'node1',
@@ -196,10 +212,56 @@ class TestClusterNode(object):
         assert node.queues == ['default'], 'bad default queues'
         assert node.backfill_epsilon == 120, 'bad default backfill_epsilon'
 
-    def setup_test_node(self):
-        spec = {'name': 'node1'}
-        self.nodelist = [ClusterNode(spec)]
-        self.testnode = self.nodelist[0]
+
+    def test_set_drain(self):
+        #Set all draining parameters correctly.
+        self.setup_test_node()
+        self.testnode.set_drain(self.now + 500, 1234)
+        assert self.testnode.draining, "Node not reporting that it is draining"
+        assert self.testnode.drain_jobid == 1234, \
+                "Draining jobid set incorrectly."
+        assert self.testnode.drain_until == int(self.now + 500), \
+                "Drain until set incorrectly."
+
+    def test_clear_drain(self):
+        #make sure draining gets cleared correctly
+        self.setup_test_node()
+        self.testnode.set_drain(self.now + 500, 1234)
+        self.testnode.clear_drain()
+        assert not self.testnode.draining, "Node still draining."
+        assert self.testnode.drain_jobid == None, "Draining jobid still set."
+        assert self.testnode.drain_until == None, "Drain until still set."
 
 
+    def test_read_only_attrs(self):
+        #These are read-only attributes. Make sure they stay that way.
+        self.setup_test_node()
+        testattrs = ['drain_until', 'drain_jobid', 'draining']
+        for attr in testattrs:
+            try:
+                setattr(self.testnode, attr, 'foo')
+            except AttributeError:
+                pass
+            else:
+                assert False, ("Read only attribute %s did not raise exception"
+                         % (attr))
 
+    @raises(ValueError)
+    def test_no_negative_backfill_epsilon(self):
+        #ensure ValueError raised for backfill_epsilon
+        self.setup_test_node()
+        self.testnode.backfill_epsilon = -1
+
+    @raises(UnschedulableNodeError)
+    def test_no_drain_down(self):
+        #don't drain down hardware
+        self.setup_test_node()
+        self.testnode.status = 'down'
+        self.testnode.set_drain(self.now, 1234)
+
+    @raises(UnschedulableNodeError)
+    def test_no_drain_unschedulable(self):
+        #don't drain on unscheduled hardware
+        self.setup_test_node()
+        self.testnode.schedulable = False
+        self.testnode.set_drain(self.now, 1234)

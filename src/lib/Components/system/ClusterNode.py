@@ -5,6 +5,12 @@ require that may not be needed for indirectly allocated resources like wires.
 
 from Cobalt.Components.system.resource import Resource
 import time
+import logging
+
+_logger = logging.getLogger()
+
+class UnschedulableNodeError(RuntimeError):
+    '''Raise if an action isn't valid on a node marked "unscheduled"'''
 
 class ClusterNode(Resource):
 
@@ -32,7 +38,8 @@ class ClusterNode(Resource):
         self.schedulable = False
         self._drain_until = None
         self._drain_jobid = None
-        self._backfill_epsilon = spec.get('backfill_epsilon', 120)
+        self._backfill_epsilon = None
+        self.backfill_epsilon = int(spec.get('backfill_epsilon', 120))
 
     @property
     def drain_until(self):
@@ -73,6 +80,7 @@ class ClusterNode(Resource):
 
     def set_drain(self, drain_until, jobid):
         '''Set a node to draining and mark with the jobid that caused it.
+        A non-schedulable node cannot be marked as draining.
         Inputs:
             drain_until - time in seconds from epoch that the job is scheduled
                           to drain until.
@@ -80,13 +88,18 @@ class ClusterNode(Resource):
 
         Returns: None
         '''
-        self.drain_until = int(drain_until)
-        self.drain_jobid = int(jobid)
+        if not self.schedulable or self.status == 'down':
+            err = '%s: Attempted to drain unscheduled or down node.' % self.name 
+            _logger.warning(err)
+            raise UnschedulableNodeError(err)
+
+        self._drain_until = int(drain_until)
+        self._drain_jobid = int(jobid)
 
     def clear_drain(self):
         '''Clear the draining data from a block.'''
-        self.drain_until = None
-        self.drain_jobid = None
+        self._drain_until = None
+        self._drain_jobid = None
 
     @property
     def backfill_epsilon(self):
@@ -98,8 +111,8 @@ class ClusterNode(Resource):
         return self._backfill_epsilon
 
     @backfill_epsilon.setter
-    def set_backfill_epsilon(self, epsilon):
+    def backfill_epsilon(self, epsilon):
         '''set the backfill epsilon.  Must be nonnegative'''
         if epsilon < 0:
             raise ValueError("epsilon must be a non-negative value")
-        self.backfill_epsilon = int(epsilon)
+        self._backfill_epsilon = int(epsilon)
