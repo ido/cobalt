@@ -148,5 +148,28 @@ class RequiredLocationError(LookupError):
     fault_code = fault_code_counter.next()
 
 class ProcessGroupStartupError(Exception):
+    '''Error while starting a process group'''
+    log = True
+    fault_code = fault_code_counter.next()
+
+# New system component exceptions.
+class UnmanagedResourceError(Exception):
+    '''Raised if an invalid action is performed on a tracked, but
+    unmanaged resource.
+
+    '''
+    log = True
+    fault_code = fault_code_counter.next()
+
+class InvalidStatusError(ValueError):
+    '''Raised if a resource is set to a status not in its predefined resource
+    status list.
+
+    '''
+    log = True
+    fault_code = fault_code_counter.next()
+
+class UnschedulableNodeError(RuntimeError):
+    '''Raise if an action isn't valid on a node marked "unscheduled"'''
     log = True
     fault_code = fault_code_counter.next()

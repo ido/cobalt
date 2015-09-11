@@ -3,34 +3,13 @@ allocatable reource.  Under certain circumstances this may also be used as a
 base for a resource grouping, like a machine parition.
 
 """
-
+from Cobalt.Exceptions import UnmanagedResourceError, InvalidStatusError
+from Cobalt.Exceptions import ResourceReservationFailure
 import logging
 
 _logger = logging.getLogger()
 
 
-class UnmanagedResourceError(Exception):
-    '''Raised if an invalid action is performed on a tracked, but
-    unmanaged resource.
-
-    '''
-    pass
-
-class InvalidStatusError(ValueError):
-    '''Raised if a resource is set to a status not in its predefined resource
-    status list.
-
-    '''
-    pass
-
-class ReservationError(Exception):
-    '''Raise if error while trying to reserve a resource.  Usually due to a
-    double-reservation.
-
-    '''
-    pass
-class InitializationError(Exception):
-    pass
 
 class Resource(object):
     '''Generic resource class.  This may be used as a base for any schedulable
@@ -121,8 +100,7 @@ class Resource(object):
         self._check_managed()
         if (self.reserved and ((user != self.reserved_by and user is not None) or
                 (jobid != self.reserved_jobid and jobid is not None))):
-            raise ReservationError('%s/%s/%s: Unable to reserve already reserved resource' % \
-                    (until, user, jobid))
+            raise ResourceReservationFailure('%s/%s/%s: Unable to reserve already reserved resource' % (until, user, jobid))
         self.reserved_until = until
         self.reserved_by = user
         self.reserved_jobid = jobid

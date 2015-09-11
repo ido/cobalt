@@ -4,13 +4,12 @@ require that may not be needed for indirectly allocated resources like wires.
 """
 
 from Cobalt.Components.system.resource import Resource
+from Cobalt.Exceptions import UnschedulableNodeError
 import time
 import logging
 
 _logger = logging.getLogger()
 
-class UnschedulableNodeError(RuntimeError):
-    '''Raise if an action isn't valid on a node marked "unscheduled"'''
 
 class ClusterNode(Resource):
 

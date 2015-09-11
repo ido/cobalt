@@ -3,7 +3,8 @@
 """
 from nose.tools import raises
 from Cobalt.Components.system.resource import *
-from Cobalt.Components.system.ClusterNode import ClusterNode, UnschedulableNodeError
+from Cobalt.Components.system.ClusterNode import ClusterNode
+import Cobalt.Exceptions
 import time
 
 class TestSystemResource(object):
@@ -36,7 +37,7 @@ class TestSystemResource(object):
         assert resource.status == 'idle', "Default resource not idle"
         assert not resource.managed, "Default resource shouldn't be managed"
 
-    @raises(InvalidStatusError)
+    @raises(Cobalt.Exceptions.InvalidStatusError)
     def test_resource_set_bad_state(self):
         #Make sure the resource state constraint is obeyed.
         self.resource_list[0].status = 'badstatus'
@@ -67,10 +68,10 @@ class TestSystemResource(object):
         assert res.reserve(now, user, jobid), "failed initial reservation"
         try:
             res.reserve(until, "bar", 1)
-        except ReservationError:
+        except Cobalt.Exceptions.ResourceReservationFailure:
             pass
         else:
-            assert False, "ReservationError not raised"
+            assert False, "ResourceReservationFailure not raised"
         assert res.reserved_until == now, "reserved until modified."
         assert res.reserved_by == user, "reserved user modified."
         assert res.reserved_jobid == jobid, "reserved jobid modified."
@@ -86,10 +87,10 @@ class TestSystemResource(object):
         assert res.reserve(now, user, jobid), "failed initial reservation"
         try:
             res.reserve(until, user, 2)
-        except ReservationError:
+        except Cobalt.Exceptions.ResourceReservationFailure:
             pass
         else:
-            assert False, "ReservationError not raised"
+            assert False, "ResourceReservationFailure not raised"
         assert res.reserved_until == now, "reserved until modified."
         assert res.reserved_by == user, "reserved user modified."
         assert res.reserved_jobid == jobid, "reserved jobid modified."
@@ -158,13 +159,13 @@ class TestSystemResource(object):
         assert res.reserved_jobid == jobid, 'reserve jobid unset'
         assert res.status != 'allocated', 'imporper status'
 
-    @raises(UnmanagedResourceError)
+    @raises(Cobalt.Exceptions.UnmanagedResourceError)
     def test_unmanaged_reserve(self):
         #can't do anything to unmanaged resources
         self.resource_list[0].managed = False
         self.resource_list[0].reserve(time.time())
 
-    @raises(UnmanagedResourceError)
+    @raises(Cobalt.Exceptions.UnmanagedResourceError)
     def test_unmanaged_release(self):
         #if we're not managing it, we can't release it.
         self.resource_list[0].managed = False
@@ -181,7 +182,7 @@ class TestClusterNode(object):
         pass
 
 
-    def setup_test_node(self):
+    def setup_base_node(self):
         '''Generate a bare-bones test node.'''
         spec = {'name': 'node1'}
         self.nodelist = [ClusterNode(spec)]
@@ -215,7 +216,7 @@ class TestClusterNode(object):
 
     def test_set_drain(self):
         #Set all draining parameters correctly.
-        self.setup_test_node()
+        self.setup_base_node()
         self.testnode.set_drain(self.now + 500, 1234)
         assert self.testnode.draining, "Node not reporting that it is draining"
         assert self.testnode.drain_jobid == 1234, \
@@ -225,7 +226,7 @@ class TestClusterNode(object):
 
     def test_clear_drain(self):
         #make sure draining gets cleared correctly
-        self.setup_test_node()
+        self.setup_base_node()
         self.testnode.set_drain(self.now + 500, 1234)
         self.testnode.clear_drain()
         assert not self.testnode.draining, "Node still draining."
@@ -235,7 +236,7 @@ class TestClusterNode(object):
 
     def test_read_only_attrs(self):
         #These are read-only attributes. Make sure they stay that way.
-        self.setup_test_node()
+        self.setup_base_node()
         testattrs = ['drain_until', 'drain_jobid', 'draining']
         for attr in testattrs:
             try:
@@ -249,19 +250,19 @@ class TestClusterNode(object):
     @raises(ValueError)
     def test_no_negative_backfill_epsilon(self):
         #ensure ValueError raised for backfill_epsilon
-        self.setup_test_node()
+        self.setup_base_node()
         self.testnode.backfill_epsilon = -1
 
-    @raises(UnschedulableNodeError)
+    @raises(Cobalt.Exceptions.UnschedulableNodeError)
     def test_no_drain_down(self):
         #don't drain down hardware
-        self.setup_test_node()
+        self.setup_base_node()
         self.testnode.status = 'down'
         self.testnode.set_drain(self.now, 1234)
 
-    @raises(UnschedulableNodeError)
+    @raises(Cobalt.Exceptions.UnschedulableNodeError)
     def test_no_drain_unschedulable(self):
         #don't drain on unscheduled hardware
-        self.setup_test_node()
+        self.setup_base_node()
         self.testnode.schedulable = False
         self.testnode.set_drain(self.now, 1234)
