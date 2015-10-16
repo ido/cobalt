@@ -100,6 +100,9 @@ class UserScriptChild (PGChild):
         PGChild.preexec_last(self)
 
     def signal(self, signum, pg=True):
+        _logger.info('Data has: %s', self.pg)
+        if self.pg.attrs.has_key('nopgkill'):
+            pg = False
         PGChild.signal(self, signum, pg)
 
 
@@ -147,7 +150,9 @@ class UserScriptForker (PGForker):
         except AttributeError:
             _logger.error("%s: %s is not a valid signal name; child not signaled", child.label, signame)
             raise
-
-        super(UserScriptChild, self.children[child_id]).signal(signum, pg=True)
+        pg = True
+        if self.children[child_id].pg.attrs.has_key('nopgkill'):
+            pg = False
+        super(UserScriptChild, self.children[child_id]).signal(signum, pg=pg)
 
     signal = exposed(signal) 
