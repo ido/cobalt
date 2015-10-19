@@ -43,6 +43,12 @@ Set post-job scripts to be run upon completion of a job. If the script(s) does n
 .TP
 .B cqstat_header=attr fields
 Set custom display header for cqstat, using colon-separated job attributes (pick from the cqstat -lf listing)
+.SH NOTES
+On BlueGene/Q systems, setting nopgkill in the attrs option for job submission
+will cause Cobalt to send signals to the head pid of a script job, rather than
+sending the signal to the entire process group.  This should not be used with
+csh-type shell scripts due to how signals are propigated, due to the chance
+that process cleanup on the script host will fail.
 .SH "SEE ALSO"
 .BR cqsub (1),
 .BR cqstat (1),
