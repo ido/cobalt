@@ -49,7 +49,8 @@ class ProcessGroup(Data):
                             "mode", "nodefile", "size", "state", "stderr",
                             "stdin", "stdout", "umask", "user", "starttime",
                             "walltime", "resid", "runid", "forker",
-                            "subblock", "subblock_parent", "corner", "extents"]
+                            "subblock", "subblock_parent", "corner", "extents",
+                            "attrs"]
 
     required = Data.required + ["args", "cwd", "executable", "jobid",
                                 "location", "size", "user"]
@@ -90,7 +91,7 @@ class ProcessGroup(Data):
         self.subblock_parent = spec.get("subblock_parent", None)
         self.corner = spec.get("corner", None)
         self.extents = spec.get("extents", None)
-
+        self.attrs = spec.get("attrs", {})
 
     def __getstate__(self):
         data = {}

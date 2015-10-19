@@ -28,10 +28,13 @@ config_fp.close()
 config = ConfigParser.ConfigParser()
 config.read(Cobalt.CONFIG_FILES)
 
-import Cobalt
-import Cobalt.Components.base_forker
-Cobalt.Components.base_forker.config = config
 
+from mock import Mock, MagicMock, patch
+
+import Cobalt.Components.base_forker
+from Cobalt.Components.user_script_forker import UserScriptForker
+from Cobalt.Components.user_script_forker import UserScriptChild
+Cobalt.Components.base_forker.config = config
 
 class TestChild(Cobalt.Components.base_forker.BaseChild):
 
@@ -75,3 +78,44 @@ class TestBaseForker(object):
         self.bf._wait() #SIGKILL and we're done
         assert self.bf.children[self.child_id].signum == 9, 'Job not SIGKILLed'
 
+
+class TestUserScriptForker(object):
+
+    @patch('Cobalt.os.killpg')
+    @patch('Cobalt.os.kill')
+    def test_signal_pgroup(self, mock_kill, mock_killpg):
+        #send a killpg to a script process group
+        usf = UserScriptForker()
+        usf.children[1] = UserScriptChild(data={'nodect':512, 'args':[],
+            'cwd':'/dev/null', 'location':'foo', 'jobid':2, 'executable':'bar',
+            'user':'frodo', 'size':512})
+        usf.children[1].pid = 1234
+        usf.signal(1, "SIGTERM")
+        mock_killpg.assert_called_with(1234, 15)
+        mock_kill.assert_not_called()
+
+
+    @patch('Cobalt.os.killpg')
+    @patch('Cobalt.os.kill')
+    def test_signal_nokillpg(self, mock_kill, mock_killpg):
+        #use kill if appropriate attr set.
+        usf = UserScriptForker()
+        usf.children[1] = UserScriptChild(data={'nodect':512, 'args':[],
+            'cwd':'/dev/null', 'location':'foo', 'jobid':2, 'executable':'bar',
+            'user':'frodo', 'size':512, 'attrs':{'nopgkill': True}})
+        usf.children[1].pid = 1234
+        usf.signal(1, "SIGTERM")
+        mock_kill.assert_called_with(1234, 15)
+        mock_killpg.assert_not_called()
+
+
+    @patch('Cobalt.os.killpg')
+    @patch('Cobalt.os.kill')
+    def test_signal_no_pid_no_kill(self, mock_kill, mock_killpg):
+        usf = UserScriptForker()
+        usf.children[1] = UserScriptChild(data={'nodect':512, 'args':[],
+            'cwd':'/dev/null', 'location':'foo', 'jobid':2, 'executable':'bar',
+            'user':'frodo', 'size':512, 'attrs':{'nopgkill': True}})
+        usf.signal(1, "SIGTERM")
+        mock_kill.assert_not_called()
+        mock_killpg.assert_not_called()

@@ -30,7 +30,7 @@ else:
 
 class PGChild (BaseChild):
     '''Class for handling pre-exec tasks for a job.
-    Initilaization takes a job-data object.  This allows id's to be set 
+    Initilaization takes a job-data object.  This allows id's to be set
     properly and other bookkeeping tasks to be correctly set.
 
     '''
@@ -72,7 +72,7 @@ class PGChild (BaseChild):
                 _logger.error("%s: an unexpected exception occurred while opening %s file %s: %s", self.label, desc, filename, e)
                 self.print_clf_error("an unexpected exception occurred while opening %s file %s: %s", desc, filename, e)
         return in_file
-    
+
     def _open_output(self, filename, scratch_filename, desc):
         out_file = None
         try:
@@ -102,7 +102,7 @@ class PGChild (BaseChild):
                     _logger.warning("%s: set the scratch_dir option in the [forker] section of cobalt.conf to salvage %s",
                         self.label, desc)
                     output_to_devnull = True
-    
+
                 if output_to_devnull:
                     out_file = open("/dev/null", 'a')
                     _logger.warning("%s: sending %s to /dev/null", self.label, desc)
@@ -196,22 +196,22 @@ class PGChild (BaseChild):
 
 
 class PGForker (BaseForker):
-    
+
     """Component for starting script jobs"""
-    
+
     # name = __name__.split('.')[-1]
     # implementation = name
 
     def __init__ (self, *args, **kwargs):
         """Initialize a new BG mpirun forker.
-        
+
         All arguments are passed to the base forker constructor.
         """
         global _logger
         _logger = self.logger
 
         BaseForker.__init__(self, *args, **kwargs)
-        
+
     def __getstate__(self):
         state = {}
         state.update(BaseForker.__getstate__(self))

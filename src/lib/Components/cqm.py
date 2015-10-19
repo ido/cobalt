@@ -859,7 +859,8 @@ class Job (StateMachine):
                 'walltime':walltime,
                 'killtime':self.force_kill_delay + 1,
                 'resid': self.resid,
-                'runid': self.runid
+                'runid': self.runid,
+                'attrs': self.attrs,
             }])
             if pgroup[0].has_key('id'):
                 self.taskid = pgroup[0]['id']
