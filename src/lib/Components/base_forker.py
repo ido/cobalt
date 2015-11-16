@@ -106,6 +106,11 @@ class BaseChild (object):
         self.stderr_data = None
         self.return_output = False
 
+        #Pipe handling for string to child stdin case.
+        self.pipe_read = None
+        self.pipe_write = None
+        self.stdin_string = kwargs.get('stdin_string', None)
+
         self.complete = False
         self.lost_child = False
         self.exit_status = None
@@ -120,7 +125,7 @@ class BaseChild (object):
         self._cobalt_log_failed = False
         self._cobalt_log_reporting_errors = False
         self._cobalt_log_have_blank_line = False
-    
+
     def __getstate__(self):
         '''
         Return the data to be pickled or copied (via copy.copy).  The standard I/O file objects are removed since they cannot be
@@ -197,7 +202,7 @@ class BaseChild (object):
 
     def print_clf_warning(self, fmt, *args):
         self.print_clf("WARNING: " + fmt, *args, error=True)
-    
+
     def print_clf_error(self, fmt, *args):
         self.print_clf("ERROR: " + fmt, *args, error=True)
 
@@ -259,8 +264,7 @@ class BaseChild (object):
                 _logger.error("%s: unable to change to the current working directory to \"%s\"", self.label, self.cwd)
                 self.print_clf_error("unable to change to the current working directory to \"%s\"; terminating job", self.cwd)
                 raise
-
-        if self.stdin_file:
+        if self.stdin_file and self.stdin_string is None:
             _logger.debug("%s: redirecting stdin", self.label)
             try:
                 os.dup2(self.stdin_file.fileno(), sys.__stdin__.fileno())
@@ -269,6 +273,16 @@ class BaseChild (object):
                 _logger.error("%s: unable to redirect file %s to stdin: %s", self.label, self.stdin_file.name, e)
                 self.print_clf_error("unable to redirect file %s to stdin: %s", self.stdin_file.name, e)
                 self.stdin_file = None
+        elif self.stdin_string is not None:
+            #receive stdin from parent.
+            _logger.debug('%s: Redirecting stdin to string', self.label)
+            try:
+                os.dup2(self.pipe_read, sys.__stdin__.fileno())
+            except Exception as exc:
+                _logger.error("%s unable to redirect stdin to pipee: %s",
+                        self.label, exc, exc_info=True)
+            finally:
+                self._close_pipes()
         if self.stdout_file:
             _logger.debug("%s: redirecting stdout", self.label)
             try:
@@ -317,7 +331,28 @@ class BaseChild (object):
         if self.stdout_file or self.stderr_file:
             self.print_clf("")
 
+    def parent_postfork(self):
+        '''Take actions required after fork in parent.'''
+        if self.stdin_string is not None:
+            #pipe opened as a part of start prior to fork call.
+            os.write(self.pipe_write, self.stdin_string)
+            self._close_pipes()
+        return
+
+    def _close_pipes(self):
+        if self.pipe_read is not None:
+            os.close(self.pipe_read)
+            self.pipe_read = None
+        if self.pipe_write is not None:
+            os.close(self.pipe_write)
+            self.pipe_write  = None
+
     def start(self):
+
+        if self.stdin_string is not None:
+            _logger.debug("%s: setting stdin pipe",  self.label)
+            self.pipe_read, self.pipe_write = os.pipe()
+
         _logger.debug("%s: forking process", self.label)
         try:
             gc_enabled = gc.isenabled()
@@ -326,11 +361,13 @@ class BaseChild (object):
                 self.pid = os.fork()
             except OSError, e:
                 _logger.error("%s: fork failed: %s", self.label, e.strerror)
+                self._close_pipes()
                 raise
         finally:
             if gc_enabled:
                 gc.enable()
         if self.pid != 0:
+            self.parent_postfork()
             return
 
         _logger.info("%s: child process %s created to run '%s'", self.label, os.getpid(), self.args[0])
@@ -348,7 +385,6 @@ class BaseChild (object):
 
         if self._cobalt_log_file:
             self._cobalt_log_file.flush()
-
         try:
             if self.env is None:
                 os.execvp(self.exe, self.args)
@@ -390,9 +426,9 @@ class BaseChild (object):
 
 
 class BaseForker (Component):
-    
+
     """Generic implementation of the service-location component.
-    
+
     Methods:
     fork -- takes a dictionary specifying parameters for the forked task (exposed)
     signal -- signal a child with the specified signame (exposed)
@@ -400,7 +436,7 @@ class BaseForker (Component):
     get_status -- return a dictionary of status information for a finished process (exposed)
     wait -- wait on children and record their status (automatic)
     """
-    
+
     # name = __name__.split('.')[-1]
     # implementation = name
 
@@ -408,12 +444,12 @@ class BaseForker (Component):
 
     UNKNOWN_ERROR = 256
     DEATH_TIMEOUT = 300 # seconds
-    
+
     __statefields__ = ['next_task_id', 'children']
 
     def __init__(self, *args, **kwargs):
         """Initialize a new BaseForker.
-        
+
         All arguments are passed to the component constructor.
         """
         Component.__init__(self, *args, **kwargs)
@@ -435,7 +471,7 @@ class BaseForker (Component):
                 'active_runids': self.active_runids,
                 'marked_for_death': self.marked_for_death})
         return state
-   
+
     def __setstate__(self, state):
         Component.__setstate__(self, state)
 
@@ -466,18 +502,20 @@ class BaseForker (Component):
         '''Periodically save off a statefile.'''
         Component.save(self)
     __save_me = automatic(__save_me, float(get_forker_config('save_me_interval', 10)))
-        
-    def fork(self, args, tag=None, label=None, env=None, preexec_data=None, runid=None):
-        """Fork a child task.  
+
+    def fork(self, args, tag=None, label=None, env=None, preexec_data=None,
+            runid=None, stdin_string=None):
+        """Fork a child task.
         args -- A list of strings: the command and relevant arguments.
         tag -- a tag identifying the type of job, such as a script
         label -- a label for logger lines.  Somehthing like "<jobid>/<pgid>"
         env -- A mapping of environemnt variables to be included in the child's
-        environment. 
+        environment.
         data -- user data to interpreted by a more specialized forker
         runid -- an indentifier generated by the client and used by forker to
         prevent starting a task multiple times during XML-RPC communication
         failure / retry scenarios.
+        stdin_string -- a string to send to the forked child's stdin at startup.
 
         returns the forker id of the child process object.
 
@@ -492,7 +530,7 @@ class BaseForker (Component):
                         "already running. Returning running child id." % label)
                 for child,child_obj in self.children.iteritems():
                     if child_obj.runid == runid:
-                        return child_obj.id 
+                        return child_obj.id
 
             # os.environ silently calls putenv().  It also shallow-copies.
             # I'm checking here to make sure user-environments don't leak
@@ -505,7 +543,9 @@ class BaseForker (Component):
 
             child = None
             try:
-                child = self.child_cls(label_prefix=label, tag=tag, args=args, env=env, runid=runid, data=preexec_data)
+                child = self.child_cls(label_prefix=label, tag=tag, args=args,
+                        env=env, runid=runid, data=preexec_data,
+                        stdin_string=stdin_string)
             except:
                 _logger.error("%s: failed to create child object; aborting fork", label, exc_info=True)
             else:
@@ -531,15 +571,15 @@ class BaseForker (Component):
             else:
                 return None
         except Exception, e:
-            _logger.error("%s: failed due to an unexpected exception: %s", child.label, e, exc_info=True)
+            _logger.error("%s: failed due to an unexpected exception: %s", label, e, exc_info=True)
             raise
 
     fork = exposed(fork)
-    
+
     def signal(self, child_id, signame):
         """
         Signal a child process.
-        
+
         Arguments:
         child_id -- id of the child to signal
         signame -- signal name
@@ -557,7 +597,7 @@ class BaseForker (Component):
         self.children[child_id].signal(signum)
 
     signal = exposed(signal)
-    
+
     def get_children(self, tag=None, child_ids=None):
         """
         Retrieve a list of child processes. If a tag is supplied, return only the children with that tag.  If a set of child ids
@@ -585,7 +625,7 @@ class BaseForker (Component):
         return ret
 
     get_children = exposed(get_children)
-   
+
     def cleanup_children(self, child_ids):
         '''Let the forker know that we are done with the child process data.
         and clean up.  Only call this if you have some sort of return code.
@@ -598,7 +638,7 @@ class BaseForker (Component):
             if not self.children.has_key(child_id):
                 _logger.debug("Child %s: unable to cleanup nonexistent child", child_id)
                 continue
-         
+
             child = self.children[child_id]
             if not child.complete:
                 self.marked_for_death[child.id] = child
@@ -634,11 +674,11 @@ class BaseForker (Component):
                 if os.WCOREDUMP(status):
                     core_dump = True
                 exit_status = 128 + signum
-                
+
             if exit_status is None:
                 _logger.info("pid %s died but had no status", pid)
                 break
-            
+
             if signum:
                 _logger.info("pid %s died with status %s and signal %s; coredump=%s", pid, exit_status, signum, core_dump)
             else:
@@ -681,7 +721,7 @@ class BaseForker (Component):
                         _logger.info("pid %s found in marked for death list", pid)
                         del self.marked_for_death[child_id]
                         break
-            
+
         # signal any children marked for death
         for child_id in self.marked_for_death.keys():
             child = self.marked_for_death[child_id]
@@ -708,28 +748,43 @@ class BaseForker (Component):
 
 if __name__ == "__main__":
 
+    import time
     print "Initiating forker unit tests"
     test_count = IncrID()
-    
+    with open("CHANGES") as test_in:
+        test_str = "#".join(test_in)
     forker = BaseForker()
+    forker.child_cls = BaseChild
+    child_id = forker.fork(['/usr/bin/grep', '.*'], stdin_string=test_str)
 
-    init_pid = forker.fork("/bin/ls", runid=1)
-    print test_count.next(),":", "forked process with pid %s" % init_pid
-    assert (init_pid == 1), "init_id wrong"
-    pid_2 = forker.fork("/bin/ls", runid=2)
-    assert (pid_2 == 2), "pid_2 wrong"
-    print test_count.next(),":", "forked process with pid %s" % pid_2
-    pid_3 = forker.fork("/bin/ls", runid=1)
-    print test_count.next(),":", "forked process with pid %s" % pid_3
+    complete = False
+    child = None
+    while(not complete):
+        forker._wait()
+        children = forker.get_children(child_ids=[child_id])
+        child = children[0]
+        print child
+        complete = child['complete']
+        time.sleep(1)
+    forker.cleanup_children([child_id])
 
-    print forker.active_runids
-    print forker.children
-    forker.child_cleanup([init_pid, pid_2, pid_3])
-
-    print forker.active_runids
-    print forker.children
-    pid_4 = forker.fork("/bin/ls", runid=1)
-    pid_5 = forker.fork("/bin/ls")
-    print pid_4
-    forker.child_cleanup([pid_4])
-
+#    init_pid = forker.fork("/bin/ls", runid=1)
+#    print test_count.next(),":", "forked process with pid %s" % init_pid
+#    assert (init_pid == 1), "init_id wrong"
+#    pid_2 = forker.fork("/bin/ls", runid=2)
+#    assert (pid_2 == 2), "pid_2 wrong"
+#    print test_count.next(),":", "forked process with pid %s" % pid_2
+#    pid_3 = forker.fork("/bin/ls", runid=1)
+#    print test_count.next(),":", "forked process with pid %s" % pid_3
+#
+#    print forker.active_runids
+#    print forker.children
+#    forker.child_cleanup([init_pid, pid_2, pid_3])
+#
+#    print forker.active_runids
+#    print forker.children
+#    pid_4 = forker.fork("/bin/ls", runid=1)
+#    pid_5 = forker.fork("/bin/ls")
+#    print pid_4
+#    forker.child_cleanup([pid_4])
+#
