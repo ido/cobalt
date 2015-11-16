@@ -15,12 +15,12 @@ _logger = logging.getLogger(__name__.split('.')[-1])
 class SystemScriptChild (BaseChild):
     def __init__(self, id = None, **kwargs):
         BaseChild.__init__(self, id=id, **kwargs)
-
-        try:
-            self.stdin_file = open("/dev/null")
-        except (OSError, IOError), e:
-            _logger.error("%s: unable to open /dev/null (to redirect stdin): %s", self.label, e)
-            raise
+        if self.stdin_string is None:
+            try:
+                self.stdin_file = open("/dev/null")
+            except (OSError, IOError), e:
+                _logger.error("%s: unable to open /dev/null (to redirect stdin): %s", self.label, e)
+                raise
 
         stdout_fn = None
         try:
