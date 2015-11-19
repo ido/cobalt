@@ -18,6 +18,7 @@ import signal
 import sys
 import ConfigParser
 import time
+import errno
 
 import Cobalt
 import Cobalt.Components.base
@@ -335,23 +336,68 @@ class BaseChild (object):
         '''Take actions required after fork in parent.'''
         if self.stdin_string is not None:
             #pipe opened as a part of start prior to fork call.
-            os.write(self.pipe_write, self.stdin_string)
+            written = 0
+            while (written < len(self.stdin_string)):
+                try:
+                    written += os.write(self.pipe_write, self.stdin_string[written:])
+                except (OSError, IOError) as exc:
+                    if exc.errno in [errno.EAGAIN, errno.EWOULDBLOCK,
+                            errno.EINTR]:
+                        # I expect this to happen, especially if we end up using
+                        # O_NONBLOCKING.  Don't make noise, just continue.
+                        # Is the return for os.write well-defined at this point?
+                        pass
+                    elif exc.errno in [errno.EPIPE]:
+                        _logger.warning("%s: Broken pipe recieved while writing to stdin", self.label)
+                    else:
+                        _logger.critical("%s Unexpected IOError recieved while writing to child stdin.",
+                                self.label, exc_info=True)
             self._close_pipes()
         return
 
     def _close_pipes(self):
+        #ADD OS ERROR catch here
+        def close_and_check(pipe):
+            retry = True
+            while(retry):
+                retry = False
+                try:
+                    os.close(pipe)
+                except (IOError, OSError) as exc:
+                    if exc.errno == errno.EBADF:
+                        _logger.warning('%s: Tried to close a pipe twice.',
+                                self.label)
+                    elif exc.errno == errno.EINTR:
+                        _logger.warning('%s: Close interrupted by system call.',
+                                self.label)
+                        retry = True
+                    elif exc.errno == errno.EIO:
+                        _logger.warning('%s: IO Error while closing pipe.',
+                                self.label)
+                    else:
+                        raise
+                finally:
+                    pipe = None
+
         if self.pipe_read is not None:
-            os.close(self.pipe_read)
-            self.pipe_read = None
+            close_and_check(self.pipe_read)
         if self.pipe_write is not None:
-            os.close(self.pipe_write)
-            self.pipe_write  = None
+            close_and_check(self.pipe_write)
 
     def start(self):
 
         if self.stdin_string is not None:
             _logger.debug("%s: setting stdin pipe",  self.label)
-            self.pipe_read, self.pipe_write = os.pipe()
+            try:
+                self.pipe_read, self.pipe_write = os.pipe()
+            except (OSError, IOError) as exc:
+                if exc.errno in [errno.EFAULT, errno.EINVAL, errno.EMFILE,
+                        errno.ENFILE]:
+                    #we flat-out cannot make this pipe happen.  Log failure and
+                    #abort startup.  Not sure if this should  be a higher
+                    #logging level.
+                    _logger.critical("%s: FATAL: FIFO creation failed with error: %s",
+                            self.label, errno.errorcode[exc.errno])
 
         _logger.debug("%s: forking process", self.label)
         try:
@@ -504,7 +550,8 @@ class BaseForker (Component):
     __save_me = automatic(__save_me, float(get_forker_config('save_me_interval', 10)))
 
     def fork(self, args, tag=None, label=None, env=None, preexec_data=None,
-            runid=None, stdin_string=None):
+            runid=None, stdin_string=None, stdout_string=False,
+            stderr_string=False):
         """Fork a child task.
         args -- A list of strings: the command and relevant arguments.
         tag -- a tag identifying the type of job, such as a script
@@ -516,7 +563,9 @@ class BaseForker (Component):
         prevent starting a task multiple times during XML-RPC communication
         failure / retry scenarios.
         stdin_string -- a string to send to the forked child's stdin at startup.
-
+        stdout_string -- store stdout as a string in child data.
+        stderr_string -- store stderr as a string in the child data.  If used
+                         stdout_string, both outputs will be interleaved.
         returns the forker id of the child process object.
 
         """
@@ -751,7 +800,7 @@ if __name__ == "__main__":
     import time
     print "Initiating forker unit tests"
     test_count = IncrID()
-    with open("CHANGES") as test_in:
+    with open("bigfile") as test_in:
         test_str = "#".join(test_in)
     forker = BaseForker()
     forker.child_cls = BaseChild
