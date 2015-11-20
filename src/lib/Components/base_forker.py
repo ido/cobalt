@@ -19,6 +19,7 @@ import sys
 import ConfigParser
 import time
 import errno
+import fcntl
 
 import Cobalt
 import Cobalt.Components.base
@@ -42,6 +43,9 @@ _logger = logging.getLogger(__name__.split('.')[-1])
 
 config = ConfigParser.ConfigParser()
 config.read(Cobalt.CONFIG_FILES)
+
+
+PIPE_BUFSIZE = 4096
 
 def get_forker_config(option, default):
     try:
@@ -107,10 +111,12 @@ class BaseChild (object):
         self.stderr_data = None
         self.return_output = False
 
-        #Pipe handling for string to child stdin case.
+        #Pipe handling for parent piping stdin/stdout
         self.pipe_read = None
         self.pipe_write = None
-        self.stdin_string = kwargs.get('stdin_string', None)
+        self.stdin_string = kwargs.get('stdin_string', None) #string to send
+        self.use_stdout_string = kwargs.get('stdout_string', False)
+        self.stdout_string = ''
 
         self.complete = False
         self.lost_child = False
@@ -176,6 +182,7 @@ class BaseChild (object):
         d['exit_status'] = self.exit_status
         d['signum'] = self.signum
         d['core_dump'] = self.core_dump
+        d['stdout_string'] = self.stdout_string
         return d
 
     def _open_clf(self):
@@ -280,11 +287,15 @@ class BaseChild (object):
             try:
                 os.dup2(self.pipe_read, sys.__stdin__.fileno())
             except Exception as exc:
-                _logger.error("%s unable to redirect stdin to pipee: %s",
+                _logger.error("%s unable to redirect stdin to pipe: %s",
                         self.label, exc, exc_info=True)
             finally:
-                self._close_pipes()
-        if self.stdout_file:
+                self.close_read_pipe()
+        if self.stdin_string is None and self.pipe_read is not None:
+            #close for one-sided case
+            self.close_read_pipe()
+
+        if self.stdout_file and (not self.use_stdout_string):
             _logger.debug("%s: redirecting stdout", self.label)
             try:
                 os.dup2(self.stdout_file.fileno(), sys.__stdout__.fileno())
@@ -293,6 +304,19 @@ class BaseChild (object):
                 _logger.error("%s: unable to redirect stdout to file %s: %s", self.label, self.stdout_file.name, e)
                 self.print_clf_error("unable to redirect stdout to file %s: %s", self.stdout_file.name, e)
                 self.stdout_file = None
+        elif self.use_stdout_string:
+            _logger.debug('%s: Redirecting stdout to pipe', self.label)
+            try:
+                os.dup2(self.pipe_write, sys.__stdout__.fileno())
+            except Exception as exc:
+                _logger.error("%s unable to redirect stdout to pipe: %s",
+                        self.label, exc, exc_info=True)
+            finally:
+                self.close_write_pipe()
+        if not self.use_stdout_string and self.pipe_write is not None:
+            #close for one-sided case
+            self.close_write_pipe()
+
         if self.stderr_file:
             try:
                 # if we are about to redirect the stderr file descriptor currently used by a logging handler, then create a new
@@ -352,37 +376,47 @@ class BaseChild (object):
                     else:
                         _logger.critical("%s Unexpected IOError recieved while writing to child stdin.",
                                 self.label, exc_info=True)
-            self._close_pipes()
+        self.close_write_pipe()
+        if not self.use_stdout_string:
+            #leave this side open if we're going to read from the child later.
+            self.close_read_pipe()
         return
 
-    def _close_pipes(self):
-        #ADD OS ERROR catch here
-        def close_and_check(pipe):
-            retry = True
-            while(retry):
-                retry = False
-                try:
-                    os.close(pipe)
-                except (IOError, OSError) as exc:
-                    if exc.errno == errno.EBADF:
-                        _logger.warning('%s: Tried to close a pipe twice.',
-                                self.label)
-                    elif exc.errno == errno.EINTR:
-                        _logger.warning('%s: Close interrupted by system call.',
-                                self.label)
-                        retry = True
-                    elif exc.errno == errno.EIO:
-                        _logger.warning('%s: IO Error while closing pipe.',
-                                self.label)
-                    else:
-                        raise
-                finally:
-                    pipe = None
+    def _close_pipe_and_check(self, pipe):
+        '''Close the fd's tied to a pipe to this child.
+        Gracefully handle errors.
 
+        '''
+        retry = True
+        while(retry):
+            retry = False
+            try:
+                os.close(pipe)
+            except (IOError, OSError) as exc:
+                if exc.errno == errno.EBADF:
+                    _logger.warning('%s: Tried to close a pipe twice.',
+                            self.label)
+                elif exc.errno == errno.EINTR:
+                    _logger.warning('%s: Close interrupted by system call.',
+                            self.label)
+                    retry = True
+                elif exc.errno == errno.EIO:
+                    _logger.warning('%s: IO Error while closing pipe.',
+                            self.label)
+                else:
+                    raise
+            finally:
+                pipe = None
+
+    def close_read_pipe(self):
+        '''close the read side of the pipe to this child'''
         if self.pipe_read is not None:
-            close_and_check(self.pipe_read)
+            self._close_pipe_and_check(self.pipe_read)
+
+    def close_write_pipe(self):
+        '''close the write side of the pipe to this child'''
         if self.pipe_write is not None:
-            close_and_check(self.pipe_write)
+            self._close_pipe_and_check(self.pipe_write)
 
     def start(self):
 
@@ -390,6 +424,7 @@ class BaseChild (object):
             _logger.debug("%s: setting stdin pipe",  self.label)
             try:
                 self.pipe_read, self.pipe_write = os.pipe()
+                fcntl.fcntl(self.pipe_read, fcntl.F_SETFL, os.O_NONBLOCK)
             except (OSError, IOError) as exc:
                 if exc.errno in [errno.EFAULT, errno.EINVAL, errno.EMFILE,
                         errno.ENFILE]:
@@ -407,7 +442,8 @@ class BaseChild (object):
                 self.pid = os.fork()
             except OSError, e:
                 _logger.error("%s: fork failed: %s", self.label, e.strerror)
-                self._close_pipes()
+                self.close_read_pipe()
+                self.close_write_pipe()
                 raise
         finally:
             if gc_enabled:
@@ -594,7 +630,7 @@ class BaseForker (Component):
             try:
                 child = self.child_cls(label_prefix=label, tag=tag, args=args,
                         env=env, runid=runid, data=preexec_data,
-                        stdin_string=stdin_string)
+                        stdin_string=stdin_string, stdout_string=stdout_string)
             except:
                 _logger.error("%s: failed to create child object; aborting fork", label, exc_info=True)
             else:
@@ -704,6 +740,29 @@ class BaseForker (Component):
     def _wait(self):
         """Call os.waitpid to status of dead processes.
         """
+        #read any connected stdout to string pipes.
+        for child in self.children.itervalues():
+            if child.use_stdout_string:
+                while True:
+                    try:
+                        child_str = os.read(child.pipe_read, PIPE_BUFSIZE)
+                    except (OSError, IOError) as exc:
+                        if exc.errno in [errno.EAGAIN, errno.EWOULDBLOCK]:
+                            #read would block.  Don't block and continue.
+                            _logger.debug("%s: Read from child would block.",
+                                    child.label)
+                            break
+                        elif exc.errno in [errno.EBADF, errno.EINVAL, errno.EPIPE]:
+                            _logger.error("%s: Error reading stdout from child pipe.",
+                                    child.label)
+                            break
+                        elif exc.errno in [errno.ENITR]:
+                            #Try again
+                            continue
+                    else:
+                        if child_str == '':
+                            break #we're done
+                        child.stdout_string += child_str
         while True:
             try:
                 pid, status = os.waitpid(-1, os.WNOHANG)
@@ -735,6 +794,7 @@ class BaseForker (Component):
 
             found = False
             for child in self.children.itervalues():
+
                 if child.pid == pid:
                     _logger.info("task %s: dead pid %s matches child %s", child.label, pid, child.id)
                     child.exit_status = exit_status
@@ -744,6 +804,12 @@ class BaseForker (Component):
                     child.complete = True
                     if self.marked_for_death.has_key(child.id):
                         del self.marked_for_death[child.id]
+                    if child.use_stdout_string:
+                        #need to close pipe.  Have alredy read above and if
+                        #we're here, the child's already dead anyway and the
+                        #last of the data in the pipe would have been read by
+                        #now.  Write pipe was closed a long time ago.
+                        child.close_read_pipe()
                     if child.return_output:
                         try:
                             if child.stdout_file:
@@ -800,11 +866,12 @@ if __name__ == "__main__":
     import time
     print "Initiating forker unit tests"
     test_count = IncrID()
-    with open("bigfile") as test_in:
+    with open("CHANGES") as test_in:
         test_str = "#".join(test_in)
     forker = BaseForker()
     forker.child_cls = BaseChild
-    child_id = forker.fork(['/usr/bin/grep', '.*'], stdin_string=test_str)
+    child_id = forker.fork(['/usr/bin/grep', '.*'], stdin_string=test_str,
+            stdout_string=True)
 
     complete = False
     child = None
@@ -812,7 +879,8 @@ if __name__ == "__main__":
         forker._wait()
         children = forker.get_children(child_ids=[child_id])
         child = children[0]
-        print child
+        if child['complete']:
+            print child['stdout_string']
         complete = child['complete']
         time.sleep(1)
     forker.cleanup_children([child_id])
