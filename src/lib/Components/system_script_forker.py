@@ -22,30 +22,31 @@ class SystemScriptChild (BaseChild):
                 _logger.error("%s: unable to open /dev/null (to redirect stdin): %s", self.label, e)
                 raise
 
-        stdout_fn = None
-        try:
+        if not self.use_stdout_string:
+            stdout_fn = None
             try:
-                stdout_fd, stdout_fn = tempfile.mkstemp(prefix="cobalt_ssf_%s_" % (self.id,), suffix=".stdout")
-            except (OSError, IOError), e:
-                _logger.error("%s: unable to create temporary stdout file: %s", self.label, e)
-            else:
                 try:
-                    self.stdout_file = os.fdopen(stdout_fd, 'a+', 1)
+                    stdout_fd, stdout_fn = tempfile.mkstemp(prefix="cobalt_ssf_%s_" % (self.id,), suffix=".stdout")
                 except (OSError, IOError), e:
-                    _logger.error("%s: unable to open temporary stdout file: %s", self.label, e)
-        finally:
-            if stdout_fn is not None:
+                    _logger.error("%s: unable to create temporary stdout file: %s", self.label, e)
+                else:
+                    try:
+                        self.stdout_file = os.fdopen(stdout_fd, 'a+', 1)
+                    except (OSError, IOError), e:
+                        _logger.error("%s: unable to open temporary stdout file: %s", self.label, e)
+            finally:
+                if stdout_fn is not None:
+                    try:
+                        os.unlink(stdout_fn)
+                    except (OSError, IOError), e:
+                        _logger.warning("%s: unable to remove temporary stdout file: %s", self.label, e)
+            if self.stdout_file is None:
                 try:
-                    os.unlink(stdout_fn)
+                    _logger.warning("%s: redirecting stdout to /dev/null", self.label)
+                    self.stdout_file = open("/dev/null")
                 except (OSError, IOError), e:
-                    _logger.warning("%s: unable to remove temporary stdout file: %s", self.label, e)
-        if self.stdout_file is None:
-            try:
-                _logger.warning("%s: redirecting stdout to /dev/null", self.label)
-                self.stdout_file = open("/dev/null")
-            except (OSError, IOError), e:
-                _logger.error("%s: unable to open /dev/null (to redirect stdout): %s", self.label, e)
-                raise
+                    _logger.error("%s: unable to open /dev/null (to redirect stdout): %s", self.label, e)
+                    raise
 
         stderr_fn = None
         try:
