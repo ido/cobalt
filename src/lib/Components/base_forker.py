@@ -19,7 +19,8 @@ import sys
 import ConfigParser
 import time
 import errno
-import fcntl
+import select
+
 
 import Cobalt
 import Cobalt.Components.base
@@ -112,6 +113,8 @@ class BaseChild (object):
         self.return_output = False
 
         #Pipe handling for parent piping stdin/stdout
+        self.pipe_child_stdin = None
+        self.pipe_child_stdout = None
         self.pipe_read = None
         self.pipe_write = None
         self.stdin_string = kwargs.get('stdin_string', None) #string to send
@@ -261,6 +264,13 @@ class BaseChild (object):
                 self._umask_failed = True
 
     def preexec_last(self):
+        if self.stdin_string is not None:
+            self.pipe_read = self.pipe_child_stdin[0]
+            os.close(self.pipe_child_stdin[1])
+        if self.use_stdout_string:
+            self.pipe_write = self.pipe_child_stdout[1]
+            os.close(self.pipe_child_stdout[0])
+
         if hasattr(self, '_umask_failed'):
             self.print_clf_error("failed to set umask to %s", self.umask)
 
@@ -285,7 +295,10 @@ class BaseChild (object):
             #receive stdin from parent.
             _logger.debug('%s: Redirecting stdin to string', self.label)
             try:
+                fcntl.fcntl(self.pipe_read, fcntl.F_SETFL, not os.O_NONBLOCK)
                 os.dup2(self.pipe_read, sys.__stdin__.fileno())
+                _logger.debug('%s: flags are: %s', self.label,
+                        fcntl.fcntl(sys.__stdin__.fileno(), fcntl.F_GETFL))
             except Exception as exc:
                 _logger.error("%s unable to redirect stdin to pipe: %s",
                         self.label, exc, exc_info=True)
@@ -358,6 +371,17 @@ class BaseChild (object):
 
     def parent_postfork(self):
         '''Take actions required after fork in parent.'''
+        if self.use_stdout_string:
+
+            self.pipe_read = self.pipe_child_stdout[0]
+            os.close(self.pipe_child_stdout[1])
+            #set stdout reader to nonblocking
+            fcntl.fcntl(self.pipe_read, fcntl.F_SETFL, os.O_NONBLOCK)
+        if self.stdin_string is not None:
+            self.pipe_write = self.pipe_child_stdin[1]
+            os.close(self.pipe_child_stdin[0])
+
+        #fcntl.fcntl(self.pipe_write, fcntl.F_SETFL, os.O_NONBLOCK)
         if self.stdin_string is not None:
             #pipe opened as a part of start prior to fork call.
             written = 0
@@ -423,8 +447,21 @@ class BaseChild (object):
         if self.stdin_string is not None:
             _logger.debug("%s: setting stdin pipe",  self.label)
             try:
-                self.pipe_read, self.pipe_write = os.pipe()
-                fcntl.fcntl(self.pipe_read, fcntl.F_SETFL, os.O_NONBLOCK)
+                #self.pipe_read, self.pipe_write = os.pipe()
+                self.pipe_child_stdin = os.pipe()
+            except (OSError, IOError) as exc:
+                if exc.errno in [errno.EFAULT, errno.EINVAL, errno.EMFILE,
+                        errno.ENFILE]:
+                    #we flat-out cannot make this pipe happen.  Log failure and
+                    #abort startup.  Not sure if this should  be a higher
+                    #logging level.
+                    _logger.critical("%s: FATAL: FIFO creation failed with error: %s",
+                            self.label, errno.errorcode[exc.errno])
+        if self.use_stdout_string:
+            _logger.debug("%s: setting stdout pipe",  self.label)
+            try:
+                #self.pipe_read, self.pipe_write = os.pipe()
+                self.pipe_child_stdout = os.pipe()
             except (OSError, IOError) as exc:
                 if exc.errno in [errno.EFAULT, errno.EINVAL, errno.EMFILE,
                         errno.ENFILE]:
@@ -744,6 +781,9 @@ class BaseForker (Component):
         for child in self.children.itervalues():
             if child.use_stdout_string:
                 while True:
+                    #(rd_list, wr_list, exc_list) =  select.select([child.pipe_read],[],[],0)
+                    #if len(rd_list) == 0:
+                    #    break
                     try:
                         child_str = os.read(child.pipe_read, PIPE_BUFSIZE)
                     except (OSError, IOError) as exc:
