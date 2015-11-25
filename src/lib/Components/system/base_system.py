@@ -15,7 +15,7 @@ Cluster-based equivalence classes
 
 """
 import logging
-from Cobalt import exposed, automatic, query, locking
+from Cobalt.Components.base import exposed, automatic, query, locking
 from Cobalt.Util import init_cobalt_config, get_config_option
 
 _logger = logging.getLogger()
@@ -27,9 +27,8 @@ init_cobalt_config()
 class BaseSystem(object):
 
     def __init__(self, *args, **kwargs):
-        pass
-        #self.process manager = ClusterNodeProcessManager()
-        #self.resource manager = CluserNodeResourceManager()
+        self.process_manager = ProcessManager()
+        self.resource_manager = ResourceManager()
 
     #TODO: Add setstate/getstate
 
@@ -55,6 +54,14 @@ class BaseSystem(object):
 
     @exposed
     def signal_process_groups(self):
+        raise NotImplementedError
+
+    @exposed
+    def get_nodes(self):
+        raise NotImplementedError
+
+    @exposed
+    def update_nodes(self, updates):
         raise NotImplementedError
 
 class ResourceManager(object):
