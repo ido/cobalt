@@ -25,21 +25,60 @@ CHILD_SLEEP_TIMEOUT = 1.0
 
 
 class BridgeError(Exception):
-    
+
     pass
 
-def reserve():
+def reserve(node_id_list=None):
 
     '''reserve a set of nodes in ALPS'''
-    pass
+    raise NotImplementedError
 
-def release():
-    '''release a set of nodes in an ALPS reservation'''
-    pass
+def release(res_id):
+    '''release a set of nodes in an ALPS reservation.  May be used on a
+    reservation with running jobs.  If that occurs, the reservation will be
+    released when the jobs exit/are terminated.
 
-def confirm():
-    '''confirm an ALPS reservation'''
-    pass
+    Input:
+        alps_res_id - id of the ALPS reservation to release.
+
+    Returns:
+        True if relese was successful
+
+    Side Effects:
+        ALPS reservation will be released.  New aprun attempts agianst
+        reservation will fail.
+
+    Exceptions:
+        None Yet
+
+    '''
+    params = { 'reservation': alps_res_id}
+    retval = _call_sys_forker(BASIL_PATH, str(BasilRequest('RELEASE',
+            params=params)))
+    return retval
+
+def confirm(alps_res_id, pg_id):
+    '''confirm an ALPS reservation.  Call this after we have the process group
+    id of the user job that we are reserving nodes for.
+
+    Input:
+        alps_res_id - The id of the reservation that is being confirmed.
+        pg_id - process group id to bind the reservation to.
+
+    Return:
+        True if the reservation is confirmed.  False otherwise.
+
+    Side effects:
+        None
+
+    Exceptions:
+        None Yet.
+    '''
+    params = {'pagg_id': pg_id,
+              'reservation': alps_res_id}
+    retval = _call_sys_forker(BASIL_PATH, str(BasilRequest('CONFIRM',
+            params=params)))
+    return retval
 
 def fetch_inventory(changecount=None, resinfo=False):
     '''fetch the inventory for the machine
@@ -88,6 +127,7 @@ def _call_sys_forker(basil_path, in_str):
         if complete:
             break
         sleep(CHILD_SLEEP_TIMEOUT)
+
     return parse_response(resp)
 
 def print_node_names(spec):
@@ -98,3 +138,5 @@ def print_node_names(spec):
 
 if __name__ == '__main__':
     print_node_names(fetch_inventory(resinfo=True))
+
+    print fetch_inventory(changecount=0)

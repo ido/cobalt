@@ -16,6 +16,7 @@ Cluster-based equivalence classes
 """
 import logging
 from Cobalt.Components.base import exposed, automatic, query, locking
+from Cobalt.Components.base import Component
 from Cobalt.Util import init_cobalt_config, get_config_option
 
 _logger = logging.getLogger()
@@ -24,9 +25,11 @@ init_cobalt_config()
 
 
 
-class BaseSystem(object):
+class BaseSystem(Component):
+
 
     def __init__(self, *args, **kwargs):
+        super(BaseSystem, self).__init__(*args, **kwargs)
         self.process_manager = ProcessManager()
         self.resource_manager = ResourceManager()
 

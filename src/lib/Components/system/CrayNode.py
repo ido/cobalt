@@ -10,8 +10,7 @@ class CrayNode(ClusterNode):
 
     def __init__(self, spec):
         super(CrayNode, self).__init__(spec)
-        print spec
-        self.state = self.CRAY_STATE_MAP[spec['state'].upper()]
+        self._status = self.CRAY_STATE_MAP[spec['state'].upper()]
         self.node_id = spec['node_id']
         self.role = spec['role']
         self.attributes['architecture'] = spec['architecture']
@@ -21,4 +20,25 @@ class CrayNode(ClusterNode):
         return self.__dict__
 
     def __str__(self):
-        return str(to_dict)
+        return str(self.to_dict())
+
+    @property
+    def status(self):
+        return super(CrayNode, self).status()
+
+    @status.setter
+    def status(self, new_status):
+        '''set status using cray states, as well as internal state.
+        also, coerce to allocated if we are used by something, but still marked
+        idle.
+
+        '''
+        if new_status.upper() in self.CRAY_STATE_MAP.keys():
+            self._status = self.CRAY_STATE_MAP[new_status.upper()]
+        elif new_status in self.RESOURCE_STATUSES:
+            self._status = new_status
+        else:
+            raise KeyError('%s is not a valid state for Cray Nodes.', new_status)
+        if self._status == 'idle' and self.reserved:
+            self.status == 'allocated'
+
