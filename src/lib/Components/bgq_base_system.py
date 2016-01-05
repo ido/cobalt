@@ -1174,8 +1174,10 @@ class BGBaseSystem (Component):
         geometry = job.get('geometry', None)
         # if the user requested a particular block, we only try to drain that one
         if job['attrs'].has_key("location"):
-            target_name = job['attrs']['location']
-            return self.cached_blocks.get(target_name, None)
+            #don't drain a dead block
+            if job['attrs']['location'] not in self.offline_blocks:
+                target_name = job['attrs']['location']
+                return self.cached_blocks.get(target_name, None)
 
         drain_block = None
         locations = self.possible_locations(job['nodes'], job['queue'])
