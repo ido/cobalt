@@ -1178,6 +1178,10 @@ class BGBaseSystem (Component):
             if job['attrs']['location'] not in self.offline_blocks:
                 target_name = job['attrs']['location']
                 return self.cached_blocks.get(target_name, None)
+            else:
+                #return this drain location or not at all for this job
+                return None
+
 
         drain_block = None
         locations = self.possible_locations(job['nodes'], job['queue'])
