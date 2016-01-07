@@ -257,15 +257,17 @@ class BGSystem (BGBaseSystem):
         logger.debug('__setstate__ config()')
         self.configure(config_file=sim_xml_file)
 
+        self.available_block_geometries = set([])
         if 'block_flags' in state:
             for bname, flags in state['block_flags'].items():
                 if bname in self._blocks:
                     self._blocks[bname].scheduled = flags[0]
                     self._blocks[bname].functional = flags[1]
                     self._blocks[bname].queue = flags[2]
+                    if self._blocks[bname].scheduled and self._blocks[bname].functional:
+                        self.available_block_geometries.add(self._blocks[bname].geometry_string)
                 else:
                     self.logger.info("Block %s is no longer defined" % bname)
-
         self.update_relatives()
 
         if state.has_key('managed_io_blocks'):
