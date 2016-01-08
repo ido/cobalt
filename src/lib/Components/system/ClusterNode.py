@@ -33,7 +33,7 @@ class ClusterNode(Resource):
     def __init__(self, spec):
         '''Initialize a ClusterNode object.'''
         super(ClusterNode, self).__init__(spec)
-        self.queues = spec.get('queues', ['default'])
+        self.queues = spec.get('queues', ['default']) #list of queues
         self.schedulable = False
         self._drain_until = None
         self._drain_jobid = None

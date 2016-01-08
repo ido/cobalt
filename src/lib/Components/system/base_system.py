@@ -52,7 +52,12 @@ class BaseSystem(Component):
         raise NotImplementedError
 
     @exposed
-    def find_queue_equivalence_classes(self):
+    def find_queue_equivalence_classes(self, reservation_dict,
+            active_queue_names, passthrough_blocking_res_list=[]):
+        raise NotImplementedError
+
+    @exposed
+    def find_job_location(self, arg_list, end_times, pt_blocking_locations=[]):
         raise NotImplementedError
 
     @exposed

@@ -124,6 +124,100 @@ class CraySystem(BaseSystem):
 
         return
 
+    @exposed
+    def find_queue_equivalence_classes(self, reservation_dict,
+            active_queue_names, passthrough_blocking_res_list=[]):
+        '''Aggregate queues together that can impact eachother in the same
+        general pass (both drain and backfill pass) in find_job_location.
+        Equivalence classes will then be used in find_job_location to consider
+        placement of jobs and resources, in separate passes.  If multiple
+        equivalence classes are returned, then they must contain orthogonal sets
+        of resources.
+
+        Inputs:
+        reservation_dict -- a mapping of active reservations to resrouces.
+                            These will block any job in a normal queue.
+        active_queue_names -- A list of queues that are currently enabled.
+                              Queues that are not in the 'running' state
+                              are ignored.
+        passthrough_partitions -- Not used on Cray systems currently.  This is
+                                  for handling hardware that supports
+                                  partitioned interconnect networks.
+
+        Output:
+        A list of dictionaries of queues that may impact eachother while
+        scheduling resources.
+
+        Side effects:
+        None
+
+        Internal Data:
+        queue_assignments: a mapping of queues to schedulable locations.
+
+        '''
+        equiv = []
+        #reverse mapping of queues to nodes
+        for node in self.nodes.values():
+            if node.managed and node.schedulable:
+                #only condiser nodes that we are scheduling.
+                node_active_queues = []
+                for queue in node.queues:
+                    if queue in active_queue_names:
+                        node_active_queues.append(queue)
+                if node_active_queues == []:
+                    #this node has nothing active.  The next check can get
+                    #expensive, so skip it.
+                    continue
+            #determine the queues that overlap.  Hardware has to be included so
+            #that reservations can be mapped into the equiv classes.
+            found_a_match = False
+            for e in equiv:
+                for queue in node_active_queues:
+                    if queue in e['queues']:
+                        e['data'].add(node.name)
+                        e['queues'] = e['queues'] | set(node_active_queues)
+                        found_a_match = True
+                        break
+                if found_a_match:
+                    break
+            if not found_a_match:
+                equiv.append({'queues': set([node_active_queues]),
+                              'data': set([node.name]),
+                             'reservations': set()})
+        #second pass to merge queue lists based on hardware
+        real_equiv = []
+        for eq_class in equiv:
+            found_a_match = False
+            for e in real_equiv:
+                if e['data'].intersection(eq_class['data']):
+                    e['queues'].update(eq_class['queues'])
+                    e['data'].update(eq_class['data'])
+                    found_a_match = True
+                    break
+            if not found_a_match:
+                real_equiv.append(eq_class)
+        equiv = real_equiv
+        #add in reservations:
+        for eq_class in equiv:
+            for res_name in reservation_dict:
+                for node_name in reservation_dict[res_name].split(":"):
+                    if node_name in eq_class['data']:
+                        eq_class['reservations'].add(res_name)
+                        break
+            #don't send what could be a large block list back in the return
+            for key in eq_class:
+                eq_class[key] = list(eq_class[key])
+            del eq_class['data']
+        return equiv
+
+    @exposed
+    def find_job_location(self, arg_list, end_times, pt_blocking_locations=[]):
+        raise NotImplementedError
+
+    @exposed
+    def reserve_resources_until(self, ):
+        raise NotImplementedError
+
 
 class ALPSReservation(object):
 
