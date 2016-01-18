@@ -28,12 +28,20 @@ class BridgeError(Exception):
 
     pass
 
-def reserve(node_id_list=None):
+def reserve(user, jobid, nodecount, node_id_list=None):
 
     '''reserve a set of nodes in ALPS'''
-    raise NotImplementedError
+    params = {}
+    params['user_name'] = user
+    params['batch_id'] = jobid
+    params['width'] = nodecount
+    params['depth'] = 1 #FIXME fix this.  Pass this in from qsub. FIXME
+    print str(BasilRequest('RESERVE', params=params))
+    retval = _call_sys_forker(BASIL_PATH, str(BasilRequest('RESERVE',
+        params=params)))
+    return retval
 
-def release(res_id):
+def release(alps_res_id):
     '''release a set of nodes in an ALPS reservation.  May be used on a
     reservation with running jobs.  If that occurs, the reservation will be
     released when the jobs exit/are terminated.
@@ -139,4 +147,5 @@ def print_node_names(spec):
 if __name__ == '__main__':
     print_node_names(fetch_inventory(resinfo=True))
 
-    print fetch_inventory(changecount=0)
+    #print fetch_inventory(changecount=0)
+    print reserve('richp', 42, 11)

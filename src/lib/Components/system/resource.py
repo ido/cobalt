@@ -17,7 +17,8 @@ class Resource(object):
     resources as well.
 
     '''
-    RESOURCE_STATUSES = ['idle', 'allocated', 'down', 'busy', 'cleanup']
+    RESOURCE_STATUSES = ['idle', 'allocated', 'down', 'busy', 'cleanup',
+            'cleanup-pending']
 
     def __init__(self, spec):
         self.name = spec['name']
@@ -140,6 +141,6 @@ class Resource(object):
             _logger.warning('%s/%s: Attempted to release reservation '\
                     'owned by %s/%s', user, jobid, self.reserved_by,
                     self.reserved_jobid)
-        self.status = 'idle'
+        self.status = 'cleanup_pending'
         return released
 
