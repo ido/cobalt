@@ -387,9 +387,69 @@ class CraySystem(BaseSystem):
                 rc = True
         return rc
 
-    def add_jobs(self, specs):
+    @exposed
+    def add_process_groups(self, specs):
+        '''Add process groups and start their runs.  Adjust the resource
+        reservation time to full run time at this point.
+
+        '''
+        _logger.debug("add_process_groups(%r)", specs)
+        start_apg_timer = int(time.time())
+
+        for spec in specs:
+            new_pgroups = self.process_manager.init_groups(specs)
+
+        for pgroup in new_pgroups:
+            _logger.info('%s: process group %s created to track job status',
+                    pgroup.label, pgroup.id)
+            #check resource reservation, and attempt to start.  If there's a
+            #failure here, set exit status in process group to a sentinel value.
+            try:
+                started = self.process_manager.start_groups(pgroup.id)
+            except ComponentLookupError as exc:
+                _logger.error("%s: failed to contact the %s component",
+                        pgroup.label, pgroup.forker)
+                #this should be reraised and the queue-manager handle it
+                #that would allow re-requesting the run instead of killing the
+                #job --PMR
+            except xmlrpclib.Fault as exc:
+                _logger.error("%s: a fault occurred while attempting to start "
+                        "the process group using the %s component",
+                        pgroup.label, pgroup.forker)
+                pgroup.exit_status = 255
+                self.reserve_resources_until(pgroup.location, None,
+                        pgroup.jobid)
+            except Exception as exc:
+                _logger.error("%s: an unexpected exception occurred while "
+                        "attempting to start the process group using the %s "
+                        "component; releasing resources", pgroup.label,
+                        pgroup.forker, exc_info=True)
+                pgroup.exit_status = 255
+                self.reserve_resources_until(pgroup.location, None,
+                        pgroup.jobid)
+            else:
+                if started is not None and started != []:
+                    _logger.info('%s: Process Group %s started successfully.',
+                            pgroup.label, pgroup.id)
+                else:
+                    _logger.error('%s: Process Group startup failed. Aborting.',
+                            pgroup.label)
+                    pgroup.exit_status = 255
+                    self.reserve_resources_until(pgroup.location, None,
+                            pgroup.jobid)
+
+        end_apg_timer = int(time.time())
+        self.logger.debug("add_process_groups startup time: %s sec",
+                (end_apg_timer - start_apg_timer))
+        return new_pgroups
+
+    @exposed
+    def wait_process_groups(self, specs):
         raise NotImplementedError
 
+    @exposed
+    def signal_process_groups(self, specs, signame="SIGINT"):
+        raise NotImplementedError
 
 class ALPSReservation(object):
 

@@ -32,12 +32,22 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
 #TODO: add getstate and setstate methods.
 
     def init_groups(self, specs):
-        '''Add a set of process groups from specs.  Generate a unique id.'''
+        '''Add a set of process groups from specs.  Generate a unique id.]
+
+        Input:
+            specs - a list of dictionaries that specify process groups for a
+                    given system
+
+        Returns:
+            list of process groups that were just added.
+
+        '''
         pg_to_add = {}
         for spec in specs:
             spec['id'] = self._pg_id_gen.next()
             pg_to_add[spec['id']] = ProcessGroup(spec)
         self.process_groups.update(pg_to_add)
+        return list(pg_to_add.values())
 
     def signal_groups(self, pgids, signame="SIGINT"):
         '''Send signal with signame to a list of process groups.
@@ -141,4 +151,3 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
         '''
         for pg_id in pgids:
             del self.process_groups[pg_id]
-

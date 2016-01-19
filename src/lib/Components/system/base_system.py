@@ -40,15 +40,13 @@ class BaseSystem(Component):
         raise NotImplementedError
 
     @exposed
+    @query
     def add_process_groups(self, specs):
         raise NotImplementedError
 
     @exposed
+    @query
     def wait_process_groups(self, specs):
-        raise NotImplementedError
-
-    @exposed
-    def del_process_groups(self, specs):
         raise NotImplementedError
 
     @exposed
@@ -61,7 +59,8 @@ class BaseSystem(Component):
         raise NotImplementedError
 
     @exposed
-    def signal_process_groups(self):
+    @query
+    def signal_process_groups(self, specs, signame="SIGINT"):
         raise NotImplementedError
 
     @exposed
