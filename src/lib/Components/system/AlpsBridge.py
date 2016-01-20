@@ -36,6 +36,8 @@ def reserve(user, jobid, nodecount, node_id_list=None):
     params['batch_id'] = jobid
     params['width'] = nodecount
     params['depth'] = 1 #FIXME fix this.  Pass this in from qsub. FIXME
+    if node_id_list is not None:
+        params['node_id_list'] = node_id_list
     print str(BasilRequest('RESERVE', params=params))
     retval = _call_sys_forker(BASIL_PATH, str(BasilRequest('RESERVE',
         params=params)))
