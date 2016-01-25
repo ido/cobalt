@@ -25,7 +25,7 @@ _logger = logging.getLogger(__name__.split('.')[-1])
 BASIL_PATH = '/home/richp/alps_simulator/apbasil.sh' #fetch this from config
 
 
-class UserScriptChild (PGChild):
+class ALPSScriptChild (PGChild):
     def __init__(self, id = None, **kwargs):
         PGChild.__init__(self, id=id, **kwargs)
 
@@ -172,13 +172,13 @@ class UserScriptChild (PGChild):
 
 
 
-class UserScriptForker (PGForker):
+class ALPSScriptForker (PGForker):
     """Component for starting script jobs"""
 
     name = __name__.split('.')[-1]
     implementation = name
 
-    child_cls = UserScriptChild
+    child_cls = ALPSScriptChild
 
     logger = _logger
 
@@ -198,7 +198,7 @@ class UserScriptForker (PGForker):
     def signal(self, child_id, signame):
         """
         Signal a child process.
-        
+
         Arguments:
         child_id -- id of the child to signal
         signame -- signal name
