@@ -52,10 +52,15 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
     def signal_groups(self, pgids, signame="SIGINT"):
         '''Send signal with signame to a list of process groups.
 
+        Returns:
+        List of signaled process groups
+
         '''
+        signaled_pgs = []
         for pgid in pgids:
-            self.process_groups[pgid].signal(signame)
-        return
+            if self.process_groups[pgid].signal(signame):
+                signaled_pgs.append(self.process_groups[pgid])
+        return signaled_pgs
 
     def terminate_groups(self, pgids):
         '''Send SIGINTs to process groups to allow them to terminate gracefully.
