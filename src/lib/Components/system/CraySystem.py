@@ -111,27 +111,65 @@ class CraySystem(BaseSystem):
         stateus as reported by ALPS
 
         '''
-        with self._node_lock:
-            original_nodes = copy.deepcopy(self.nodes)
-        updates = {} #node_id and node to update
+        #Check clenaup progress.  Check ALPS reservations.  Check allocated
+        #nodes.  If there is no resource reservation and the node is not in
+        #current alps reservations, the node is ready to schedule again.
         inventory = AlpsBridge.fetch_inventory(resinfo=True) #This is a full-refresh,
-                                                 #summary should be used otherwise
+        #determine if summary may be used under normal operation
         inven_nodes  = inventory['nodes']
         inven_reservations = inventory['reservations']
-        #find hardware status
         with self._node_lock:
+            #Check our reservations.  If it's ID is not in the inventory, then the
+            #nodes need to be returned to the pool. Give them the 'idle' state
+            res_jobid_to_delete = []
+            for alps_res in self.alps_reservation.values():
+                #find alps_id associated reservation
+                found = False
+                for res_info in inven_reservations:
+                    if int(alps_res.alps_res_id) == int(res_info['reservation_id']):
+                        found = True
+                if not found:
+                    for node_id in alps_res.node_ids:
+                        if not self.nodes[node_id].reserved:
+                            #pending hardware status update
+                            self.nodes[node_id].status = 'idle'
+                    res_jobid_to_delete.append(alps_res.jobid)
+            for jobid in res_jobid_to_delete:
+                _logger.info('%s: ALPS reservation for this job complete.',
+                        jobid)
+                del self.alps_reservations[jobid]
+            #process group should already be on the way down since cqm released the
+            #resource reservation
+            cleanup_nodes = [node for node in self.nodes
+                    if node.status == 'cleanup_pending']
+            #If we have a block marked for cleanup, send a relesae message.
+            released_res_jobids = []
+            for node in cleanup_nodes:
+                for alps_res in self.alps_reservations:
+                    if (alps_res.jobid not in released_res_jobids and
+                            node.node_id in alps_res.node_ids):
+                        alps_res.release()
+
+        #find hardware status
             for inven_node in inven_nodes:
-                if self.nodes.has_key(inven_node['name']):
-                    self.nodes[inven_node['name']].status = inven_node['state'].upper()
+                if self.nodes.has_key(inven_node['node_id']):
+                    node = self.nodes[inven_node['node_id']]
+                    if node.reserved:
+                        if self.alps_reservations.has_key(int(node.reserved_by)):
+                            node.status = 'busy'
+                        else:
+                            node.status = 'allocated'
+                    else:
+                       node.status = inven_node['state'].upper()
                 else:
                     # Cannot add nodes on the fly.  Or at lesat we shouldn't be
                     # able to.
                     _logger.error('UNS: ALPS reports node %s but not in our node list.',
                             inven_node['name'])
-        #check/update reservation information and currently running locations?
-        #fetch info from process group manager for currently running jobs.
-        #should down win over running in terms of display?
-
+            #should down win over running in terms of display?
+            #keep node that are marked for cleanup still in cleanup
+            for node in cleanup_nodes:
+                node.status = 'cleanup_pending'
         return
 
     @exposed
@@ -445,11 +483,39 @@ class CraySystem(BaseSystem):
 
     @exposed
     def wait_process_groups(self, specs):
-        raise NotImplementedError
+        '''Get the exit status of any completed process groups.  If completed,
+        initiate the partition cleaning process, and remove the process group
+        from system's list of active processes.
+
+        '''
+
+        process_groups = [pg for pg in self.process_manager.process_groups
+                if pg.exit_status is not None]
+        for process_group in process_groups:
+            del self.process_manager.process_groups[process_group.id]
+        return process_groups
+
 
     @exposed
     def signal_process_groups(self, specs, signame="SIGINT"):
-        raise NotImplementedError
+        '''Send a signal to underlying child process.  Defalut signal is SIGINT.
+        May be any signal avaliable to the system.  This signal goes to the head
+        process group.
+
+        '''
+        pgids = [spec['id'] for spec in specs]
+        return self.process_manager.signal_groups(pgids, signame)
+
+    @automatic(10)
+    def _get_exit_status(self):
+        '''Check running process groups and set exit statuses.
+
+        If status is set, cleanup will be invoked next time wait_process_groups
+        is called.
+
+        '''
+        self.process_manager.update_groups()
+        return
 
 class ALPSReservation(object):
 
