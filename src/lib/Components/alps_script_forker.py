@@ -1,7 +1,7 @@
 import logging
 import os
+import sys
 import pwd
-import tempfile
 import signal
 import subprocess
 
@@ -28,6 +28,8 @@ BASIL_PATH = '/home/richp/alps_simulator/apbasil.sh' #fetch this from config
 class ALPSScriptChild (PGChild):
     def __init__(self, id = None, **kwargs):
         PGChild.__init__(self, id=id, **kwargs)
+        self.pagg_id = None
+        self.alps_res_id = None
 
         try:
             self.bg_partition = self.pg.location[0]
@@ -108,10 +110,16 @@ class ALPSScriptChild (PGChild):
         #with hardware in system componient.
         if not success:
             #rereserve
-            reserve_request(self.pg.user, self.pg.jobid, self.pg.nodect,
-                    self.pg.node_ids)
+            params = {}
+            params['user_name'] = self.pg.user
+            params['batch_id'] = self.pg.jobid
+            params['width'] = self.pg.nodect
+            params['depth'] = 1 #FIXME fix this.  Pass this in from qsub. FIXME
+            #params['node_id_list'] = self.pg.node_ids
+            reserve_request = BasilRequest('RESERVE', params=params)
             basil = subprocess.Popen(BASIL_PATH, stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, stderr = basil.communicate(str(reserve_request))
             if basil.returncode != 0:
                 try:
                     response = parse_response(stdout)
@@ -129,22 +137,24 @@ class ALPSScriptChild (PGChild):
                 #process now.
                 _logger.error('%s re-resevation failed.', self.pg.label)
         else:
-            self.logger.info('%s: ALPS reservation %s confirmed', self.pg.label,
+            _logger.info('%s: ALPS reservation %s confirmed', self.pg.label,
                     self.pg.alps_res_id)
             rc = True
         return rc
 
     def _send_confirm(self):
         success = False
-        params = {'alps_res_id': self.pg.alps_res_id,
-                  'pagg_id': os.getpgid()}
-        confirm_request = BasilRequest('CONFIRM', params)
+        params = {'reservation_id': self.pg.alps_res_id,
+                  'pagg_id': os.getpgid(0)}
+        confirm_request = BasilRequest('CONFIRM', params=params)
         #call alps
         #if confirmed, we should have the process group as pagg_id
         basil = subprocess.Popen(BASIL_PATH, stdin=subprocess.PIPE,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         #couldn't confirm, log message and let failure happen
         stdout, stderr = basil.communicate(str(confirm_request))
+        print stdout
+        print stderr
         if basil.returncode == 0:
             #if we get a nonzero, that's a failure, fall through to return no
             #success
@@ -210,14 +220,16 @@ class ALPSScriptForker (PGForker):
             _logger.error("Child %s: child not found; unable to signal", child_id)
             return
 
+        child = self.children[child_id]
         try:
             signum = getattr(signal, signame)
         except AttributeError:
-            _logger.error("%s: %s is not a valid signal name; child not signaled", child.label, signame)
+            _logger.error("%s: %s is not a valid signal name; child not signaled",
+                          child.label, signame)
             raise
-        pg = True
-        if self.children[child_id].pg.attrs.has_key('nopgkill'):
-            pg = False
-        super(UserScriptChild, self.children[child_id]).signal(signum, pg=pg)
-
+        #pg = True
+        #if self.children[child_id].pg.attrs.has_key('nopgkill'):
+        #    pg = False
+        #super(ALPSScriptChild, self.children[child_id]).signal(signum, pg=pg)
+        child.signal(signum, pg=True)
     signal = exposed(signal)

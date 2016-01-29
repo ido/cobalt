@@ -24,7 +24,7 @@ class CrayNode(ClusterNode):
 
     @property
     def status(self):
-        return super(CrayNode, self).status()
+        return super(CrayNode, self).status
 
     @status.setter
     def status(self, new_status):
@@ -35,10 +35,10 @@ class CrayNode(ClusterNode):
         '''
         if new_status.upper() in self.CRAY_STATE_MAP.keys():
             self._status = self.CRAY_STATE_MAP[new_status.upper()]
-        elif new_status in self.RESOURCE_STATUSES:
+        elif new_status in CrayNode.RESOURCE_STATUSES:
             self._status = new_status
         else:
-            raise KeyError('%s is not a valid state for Cray Nodes.', new_status)
+            raise KeyError('%s is not a valid state for Cray Nodes.' % new_status)
         if self._status == 'idle' and self.reserved:
             self.status == 'allocated'
 

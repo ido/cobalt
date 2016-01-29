@@ -57,7 +57,7 @@ class ProcessGroup(Data):
                             "stdin", "stdout", "umask", "user", "starttime",
                             "walltime", "resid", "runid", "forker",
                             "subblock", "subblock_parent", "corner", "extents",
-                            "attrs"]
+                            "attrs", "alps_res_id"]
 
     required = Data.required + ["args", "cwd", "executable", "jobid",
                                 "location", "size", "user"]
@@ -100,6 +100,9 @@ class ProcessGroup(Data):
         self.extents = spec.get("extents", None)
         self.attrs = spec.get("attrs", {})
         self.label = "%s/%s/%s" % (self.jobid, self.user, self.id)
+        self.sigkill_timeout = None
+        #TODO: extract into subclass
+        self.alps_res_id = spec.get('alps_res_id', None)
 
     def __getstate__(self):
         data = {}

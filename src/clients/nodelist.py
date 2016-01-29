@@ -51,7 +51,6 @@ def main():
     impl = client_utils.component_call(SYSMGR, False, 'get_implementation', ())
 
     # make sure we're on a cluster-system
-    print impl
     if impl not in ['cluster_system', 'alps_system']:
         client_utils.logger.error("nodelist is only supported on cluster systems.  Try partlist instead.")
         sys.exit(0)
@@ -59,9 +58,8 @@ def main():
     if impl == 'alps_system':
         from Cobalt.Proxy import ComponentProxy
         nodes = ComponentProxy('system').get_nodes(True)
-        print nodes
         header = nodes['c0-1c0s1n3'].keys()
-        header = ['Status', 'Name', 'Node_id']
+        header = [ 'Name', 'Node_id', 'Queues', 'status']
         print_nodes = []
         for node in nodes.values():
             entry = []

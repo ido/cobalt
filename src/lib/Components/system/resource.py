@@ -3,9 +3,10 @@ allocatable reource.  Under certain circumstances this may also be used as a
 base for a resource grouping, like a machine parition.
 
 """
+import logging
+
 from Cobalt.Exceptions import UnmanagedResourceError, InvalidStatusError
 from Cobalt.Exceptions import ResourceReservationFailure
-import logging
 
 _logger = logging.getLogger()
 
@@ -18,7 +19,7 @@ class Resource(object):
 
     '''
     RESOURCE_STATUSES = ['idle', 'allocated', 'down', 'busy', 'cleanup',
-            'cleanup-pending']
+                         'cleanup-pending']
 
     def __init__(self, spec):
         self.name = spec['name']
@@ -36,7 +37,7 @@ class Resource(object):
         return hash(self.name)
 
     def __str__(self):
-        return "\n".join([ "%s: %s," % (key, val) for key, val in self.__dict__.items()])
+        return "\n".join(["%s: %s," % (key, val) for key, val in self.__dict__.items()])
 
     @property
     def reserved(self):
@@ -99,9 +100,14 @@ class Resource(object):
 
         '''
         self._check_managed()
-        if (self.reserved and ((user != self.reserved_by and user is not None) or
-                (jobid != self.reserved_jobid and jobid is not None))):
-            raise ResourceReservationFailure('%s/%s/%s: Unable to reserve already reserved resource' % (until, user, jobid))
+        # we need to be able to update reserved time in this call.  If
+        # user/jobid match, then allow the set to go through.
+        if jobid is not None:
+            jobid = int(jobid)
+        if (self.reserved and
+                ((user is not None and user != self.reserved_by) or
+                 (jobid is not None and jobid != self.reserved_jobid))):
+            raise ResourceReservationFailure('%s/%s/%s: Unable to reserve already reserved resource' % (self.name, user, jobid))
         self.reserved_until = until
         self.reserved_by = user
         self.reserved_jobid = jobid
@@ -131,16 +137,15 @@ class Resource(object):
         if not self.reserved:
             _logger.warning('Release of already free resource %s attempted.' \
                     ' Release ignored.', self.name)
-        elif (force or (user == self.reserved_by and
+        elif (force or (user == self.reserved_by or
                         jobid == self.reserved_jobid)):
             self.reserved_until = None
             self.reserved_by = None
             self.reserved_jobid = None
             released = True
         else:
-            _logger.warning('%s/%s: Attempted to release reservation '\
-                    'owned by %s/%s', user, jobid, self.reserved_by,
-                    self.reserved_jobid)
-        self.status = 'cleanup_pending'
+            _logger.warning('%s/%s: Attempted to release reservation owned by %s/%s',
+                    user, jobid, self.reserved_by, self.reserved_jobid)
+        self.status = 'cleanup-pending'
         return released
 

@@ -10,7 +10,6 @@ import logging
 
 _logger = logging.getLogger()
 
-
 class ClusterNode(Resource):
 
     '''Cluster nodes have a few extra fields beyond the default resource
@@ -34,7 +33,7 @@ class ClusterNode(Resource):
         '''Initialize a ClusterNode object.'''
         super(ClusterNode, self).__init__(spec)
         self.queues = spec.get('queues', ['default']) #list of queues
-        self.schedulable = False
+        self.schedulable = True
         self._drain_until = None
         self._drain_jobid = None
         self._backfill_epsilon = None

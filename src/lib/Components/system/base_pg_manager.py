@@ -7,7 +7,7 @@ import logging
 import time
 import Queue
 from Cobalt.Proxy import ComponentProxy
-from Cobalt.DataTypes.ProcessGroup import ProcessGroup
+from Cobalt.DataTypes.ProcessGroup import ProcessGroup, ProcessGroupDict
 from Cobalt.Exceptions import ProcessGroupStartupError, ComponentLookupError
 from Cobalt.Util import init_cobalt_config, get_config_option
 from Cobalt.Data import IncrID
@@ -25,7 +25,7 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
 
     def __init__(self):
         self._pg_id_gen = IncrID()
-        self.process_groups = {}
+        self.process_groups = ProcessGroupDict()
         self.process_group_actions = {}
         self.forkers = [] #list of forker identifiers to use with ComponentProxy
 
@@ -42,12 +42,14 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
             list of process groups that were just added.
 
         '''
-        pg_to_add = {}
-        for spec in specs:
-            spec['id'] = self._pg_id_gen.next()
-            pg_to_add[spec['id']] = ProcessGroup(spec)
-        self.process_groups.update(pg_to_add)
-        return list(pg_to_add.values())
+        #pg_to_add = {}
+        #for spec in specs:
+        #    spec['id'] = self._pg_id_gen.next()
+        #    pg_to_add[spec['id']] = ProcessGroup(spec)
+        #self.process_groups.update(pg_to_add)
+
+        #return list(pg_to_add.values())
+        return self.process_groups.q_add(specs)
 
     def signal_groups(self, pgids, signame="SIGINT"):
         '''Send signal with signame to a list of process groups.
@@ -100,6 +102,7 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
         children = {}
         completed = {}
         orphaned = []
+        completed_pgs = []
         now = int(time.time())
         for forker in self.forkers:
             completed[forker] = []
@@ -116,39 +119,47 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
                     children[(forker, child['id'])] = child
 
         #clean up orphaned process groups
-        for pg_id, pg in self.process_groups:
+        for pg in self.process_groups.values():
+            pg_id = pg.id
             child_uid = (pg.forker, pg.head_pid)
             if child_uid not in children:
                 orphaned.append(pg_id)
+                _logger.warning('%s: job exited with unknown status', pg.jobid)
                 pg.exit_status = 1234567 #FIXME: what should this sentinel be?
+                completed_pgs.append(pg)
             else:
                 children[child_uid]['found'] = True
                 pg.update_data(children[child_uid])
                 if pg.exit_status is not None:
+                    _logger.info('%s: job exited with status %s', pg.jobid,
+                                 pg.exit_status)
                     completed[pg.forker].append(children[child_uid]['id'])
-
+                    completed_pgs.append(pg)
         #check for children without process groups and clean
-        for key, child in children.keys():
-            forker, child_id = key
+        for forker, child_id  in children.keys():
             if not children[(forker, child_id)].has_key('found'):
-                completed[forker].append(child)
+                completed[forker].append(child_id)
 
         #clear completed
         for forker in completed:
-            try:
-                ComponentProxy(forker).cleanup_children(completed[forker])
-            except ComponentLookupError:
-                _logger.error("failed to contact the %s component to cleanup children", forker)
-            except Exception:
-                _logger.error("unexpected exception while requesting that the %s component perform cleanup",
-                        forker, exc_info=True)
+            if not completed[forker] == []:
+                try:
+                    ComponentProxy(forker).cleanup_children(completed[forker])
+                except ComponentLookupError:
+                    _logger.error("failed to contact the %s component to cleanup children",
+                                  forker)
+                except Exception:
+                    _logger.error("unexpected exception while requesting that the %s component perform cleanup",
+                            forker, exc_info=True)
 
         #Send any needed SIGKILLs for children that have been sent a SIGINT.
-        for pg in self.process_groups:
-            if now >= pg.sigkill_timeout and pg.exit_status is None:
+        for pg in self.process_groups.values():
+            if (pg.sigkill_timeout is not None and
+                    now >= pg.sigkill_timeout and
+                    pg.exit_status is None):
                 pg.signal('SIGKILL')
-
-        return
+        #return the exited process groups so we can invoke cleanup
+        return completed_pgs
 
     def cleanup_groups(self, pgids):
         '''Clean up process group data from completed and logged process groups.

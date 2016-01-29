@@ -41,6 +41,7 @@ def reserve(user, jobid, nodecount, node_id_list=None):
     print str(BasilRequest('RESERVE', params=params))
     retval = _call_sys_forker(BASIL_PATH, str(BasilRequest('RESERVE',
         params=params)))
+    print str(retval)
     return retval
 
 def release(alps_res_id):
@@ -62,7 +63,7 @@ def release(alps_res_id):
         None Yet
 
     '''
-    params = { 'reservation': alps_res_id}
+    params = {'reservation_id': alps_res_id}
     retval = _call_sys_forker(BASIL_PATH, str(BasilRequest('RELEASE',
             params=params)))
     return retval

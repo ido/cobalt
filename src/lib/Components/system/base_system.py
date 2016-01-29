@@ -36,6 +36,10 @@ class BaseSystem(Component):
     #TODO: Add setstate/getstate
 
     @exposed
+    def validate_job(self, spec):
+        raise NotImplementedError
+
+    @exposed
     def reserve_resources_until(self, location, time, jobid):
         raise NotImplementedError
 
@@ -61,6 +65,11 @@ class BaseSystem(Component):
     @exposed
     @query
     def signal_process_groups(self, specs, signame="SIGINT"):
+        raise NotImplementedError
+
+    @exposed
+    @query
+    def get_process_groups(self, specs):
         raise NotImplementedError
 
     @exposed
