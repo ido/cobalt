@@ -6,6 +6,7 @@
 import logging
 import time
 import Queue
+from threading import RLock
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup, ProcessGroupDict
 from Cobalt.Exceptions import ProcessGroupStartupError, ComponentLookupError
@@ -23,12 +24,20 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
 
     SIGKILL_TIMEOUT = int(get_config_option('system', 'sigkill_timeout', 300))
 
-    def __init__(self):
+    def __init__(self, pgroup_type=ProcessGroup):
+        '''Initialize process group manager.
+
+        Input:
+            pgroup_type: [optional] type of process group class to use. Must be
+            compatible with the ProcessGroupDict class.
+
+        '''
+
         self._pg_id_gen = IncrID()
         self.process_groups = ProcessGroupDict()
         self.process_group_actions = {}
         self.forkers = [] #list of forker identifiers to use with ComponentProxy
-
+        self.process_groups_lock = RLock()
 #TODO: add getstate and setstate methods.
 
     def init_groups(self, specs):
@@ -42,13 +51,6 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
             list of process groups that were just added.
 
         '''
-        #pg_to_add = {}
-        #for spec in specs:
-        #    spec['id'] = self._pg_id_gen.next()
-        #    pg_to_add[spec['id']] = ProcessGroup(spec)
-        #self.process_groups.update(pg_to_add)
-
-        #return list(pg_to_add.values())
         return self.process_groups.q_add(specs)
 
     def signal_groups(self, pgids, signame="SIGINT"):
@@ -73,8 +75,7 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
         now = int(time.time())
         self.signal_groups(pgids)
         for pg_id in pgids:
-            self.process_groups[pg_id].sigkill_timeout = int(now +
-                    self.SIGKILL_TIMEOUT)
+            self.process_groups[pg_id].sigkill_timeout = int(now + self.SIGKILL_TIMEOUT)
 
     def start_groups(self, pgids):
         '''Start process groups. Return groups that succeeded startup.
