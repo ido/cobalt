@@ -3,20 +3,19 @@
 import logging
 import threading
 import thread
-import copy
 import time
 import xmlrpclib
 
 import Cobalt.Util
 import Cobalt.Components.system.AlpsBridge as ALPSBridge
 
-from Cobalt.Components.base import Component, exposed, automatic, query
+from Cobalt.Components.base import Component, exposed, query
 from Cobalt.Components.system.base_system import BaseSystem
 from Cobalt.Components.system.CrayNode import CrayNode
 from Cobalt.Components.system.base_pg_manager import ProcessGroupManager
 from Cobalt.Exceptions import ComponentLookupError
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
-
+from Cobalt.Util import compact_num_list, expand_num_list
 
 _logger = logging.getLogger(__name__)
 
@@ -26,15 +25,18 @@ TEMP_RESERVATION_TIME = 300 #Time in seconds to set a temp resource res for star
 
 
 class ALPSProcessGroup(ProcessGroup):
+    '''ALPS-specific PocessGroup modifications.'''
 
     def __init__(self, spec):
         super(ALPSProcessGroup, self).__init__(spec)
         self.alps_res_id = spec['alps_res_id']
 
-
-
 class CraySystem(BaseSystem):
+    '''Cray/ALPS-specific system component.  Behaviors should go here.  Direct
+    ALPS interaction through BASIL/other APIs should go through the ALPSBridge
+    (or other bridge) module as appropriate.
 
+    '''
     name = "system"
     implementation = "alps_system"
     logger = _logger
@@ -56,9 +58,11 @@ class CraySystem(BaseSystem):
         self.node_name_to_id = {} #cray node name to node_id map.
         self.alps_reservations = {}
         self._init_nodes_and_reservations()
+        self.nodes_by_queue = {} #queue:[node_ids]
         #populate initial state
         #state update thread and lock
         self._node_lock = threading.RLock()
+        self._gen_node_to_queue()
         self.node_update_thread = thread.start_new_thread(self._run_update_state,
                 tuple())
         _logger.info('UPDATE THREAD STARTED')
@@ -88,6 +92,17 @@ class CraySystem(BaseSystem):
         #    self.alps_reservations[resspec['reservation_id']] = ALPSReservation(2, resspec)
         #Have to persist this otherwise.  Subsequent reservation calls don't
         #help here.
+
+    def _gen_node_to_queue(self):
+        '''Generate a mapping for fast lookup of node-id's to queues.'''
+        with self._node_lock:
+            for node in self.nodes.values():
+                for queue in node.queues:
+                    if queue in self.nodes_by_queue.keys():
+                        self.nodes_by_queue[queue].append(node.node_id)
+                    else:
+                        self.nodes_by_queue[queue] = [node.node_id]
+
 
     @exposed
     def get_nodes(self, as_dict=False, node_ids=None):
@@ -139,12 +154,10 @@ class CraySystem(BaseSystem):
             #determine if summary may be used under normal operation
             inven_nodes = inventory['nodes']
             inven_reservations = inventory['reservations']
-            print inven_reservations
             start_time = time.time()
             #Check our reservations.  If it's ID is not in the inventory, then the
             #nodes need to be returned to the pool. Give them the 'idle' state
             res_jobid_to_delete = []
-            print self.alps_reservations
             if self.alps_reservations == {}:
                 # if we have nodes in cleanup-pending but no alps reservations,
                 # then the nodes in cleanup pending are considered idle (or
@@ -155,49 +168,38 @@ class CraySystem(BaseSystem):
                         node.status = 'idle'
 
             for alps_res in self.alps_reservations.values():
-                print 'checking reservations'
                 #find alps_id associated reservation
                 found = False
                 current_reservation_ids = [int(res['reservation_id'])
                                            for res in inven_reservations]
-                print current_reservation_ids
-                print alps_res
                 if int(alps_res.alps_res_id) not in current_reservation_ids:
                 #for res_info in inven_reservations:
                     #if int(alps_res.alps_res_id) == int(res_info['reservation_id']):
                     #    found = True
                 #if not found:
                     for node_id in alps_res.node_ids:
-                        print "Reserved: ", self.nodes[str(node_id)].reserved
-                        print "Reserved by: ", self.nodes[str(node_id)].reserved_by
                         if not self.nodes[str(node_id)].reserved:
                             #pending hardware status update
                             self.nodes[str(node_id)].status = 'idle'
                     res_jobid_to_delete.append(alps_res.jobid)
             for jobid in res_jobid_to_delete:
-                print 'clearing reservations'
                 _logger.info('%s: ALPS reservation for this job complete.', jobid)
                 del self.alps_reservations[str(jobid)]
             #process group should already be on the way down since cqm released the
             #resource reservation
             cleanup_nodes = [node for node in self.nodes.values()
                              if node.status == 'cleanup-pending']
-            print 'cleanup nodes saved'
             #If we have a block marked for cleanup, send a relesae message.
             released_res_jobids = []
             for node in cleanup_nodes:
-                print 'releasing alps reservations'
                 for alps_res in self.alps_reservations.values():
-                    print alps_res.node_ids
                     if (alps_res.jobid not in released_res_jobids and
                             str(node.node_id) in alps_res.node_ids):
                         #send only one release per iteration
-                        print 'attempting release'
-                        print  alps_res.release()
+                        alps_res.release()
                         released_res_jobids.append(alps_res.jobid)
 
         #find hardware status
-            print 'updating hardware status'
             for inven_node in inven_nodes:
                 if self.nodes.has_key(str(inven_node['node_id'])):
                     node = self.nodes[str(inven_node['node_id'])]
@@ -216,7 +218,6 @@ class CraySystem(BaseSystem):
             #should down win over running in terms of display?
             #keep node that are marked for cleanup still in cleanup
             for node in cleanup_nodes:
-                print "setting cleanup"
                 node.status = 'cleanup-pending'
         _logger.debug("time in UNS lock: %s seconds", (time.time() - start_time))
         return
@@ -255,6 +256,7 @@ class CraySystem(BaseSystem):
         equiv = []
         node_active_queues = []
         self.current_equivalence_classes = []
+        self.nodes_by_queues = {}
         #reverse mapping of queues to nodes
         for node in self.nodes.values():
             if node.managed and node.schedulable:
@@ -344,19 +346,29 @@ class CraySystem(BaseSystem):
 
         '''
         #TODO: make not first-fit
+        #TODO: add queue constraints.
         now = time.time()
         resource_until_time = now + TEMP_RESERVATION_TIME
         with self._node_lock:
             idle_nodecount = len([node for node in self.nodes.values() if
                 node.managed and node.status is 'idle'])
-            print arg_list[0]
             self._clear_draining_for_queues(arg_list[0]['queue'])
             #check if we can run immedaitely, if not drain.  Keep going until all
             #nodes are marked for draining or have a pending run.
             best_match = {} #jobid: list(locations)
             current_idle_nodecount = idle_nodecount
-            print "cinc: ", current_idle_nodecount
             for job in arg_list:
+                node_id_list = self.nodes_by_queue[job['queue']]
+                if 'location' in job['attrs'].keys():
+                    job_set = set([int(nid) for nid in
+                        expand_num_list(job['attrs']['location'])])
+                    queue_set = set([int(nid) for nid in node_id_list])
+                    if job_set <= queue_set:
+                        node_id_list = job['attrs']['location']
+                    else:
+                        _logger.warning('Job %s: requesting locations that are not in queue for that job.',
+                                job['jobid'])
+
                 if idle_nodecount == 0:
                     break
                 elif idle_nodecount < 0:
@@ -366,8 +378,7 @@ class CraySystem(BaseSystem):
                     label = '%s/%s' % (job['jobid'], job['user'])
                     #this can be run immediately
                     job_locs = self._ALPS_reserve_resources(job,
-                            resource_until_time)
-                    print "job locs", job_locs
+                            resource_until_time, node_id_list)
                     if job_locs is not None and len(job_locs) == int(job['nodes']):
                         #temporary reservation until job actually starts
                         self.reserve_resources_until(job_locs,
@@ -383,7 +394,7 @@ class CraySystem(BaseSystem):
             #TODO: backfill pass goes here
             return best_match
 
-    def _ALPS_reserve_resources(self, job, new_time):
+    def _ALPS_reserve_resources(self, job, new_time, node_id_list):
         '''Call ALPS to reserve resrources.  Use their allocator.  We can change
         this later to substitute our own allocator if-needed.
 
@@ -397,20 +408,19 @@ class CraySystem(BaseSystem):
         on the set of nodes, and will mark nodes as allocated.
 
         '''
-        #TODO: passthrough from attrs for cray-specific options
-        print "reserving resources"
+        attrs = job['attrs']
+        _logger.debug('ATTRS %s %s', type(job['attrs']), job['attrs'])
         res_info = ALPSBridge.reserve(job['user'], job['jobid'],
-                int(job['nodes']))
-        print "res_info: ", res_info
+                int(job['nodes']), job['attrs'], node_id_list)
         new_alps_res = None
         if res_info is not None:
             new_alps_res = ALPSReservation(job, res_info, self.nodes)
             self.alps_reservations[job['jobid']] = new_alps_res
         #place a resource_reservation
         if new_alps_res is not None:
-            self.reserve_resources_until(new_alps_res.node_names, new_time,
-                    job['jobid'])
-        return new_alps_res.node_names
+            self.reserve_resources_until(new_alps_res.node_ids, new_time,
+                                         job['jobid'])
+        return new_alps_res.node_ids
 
     def _clear_draining_for_queues(self, queue):
         '''Given a list of queues, remove the draining flags on nodes.
@@ -424,8 +434,6 @@ class CraySystem(BaseSystem):
 
         '''
         current_queues = []
-        print queue
-        print "curr equiv class: %s" % self.current_equivalence_classes
         for equiv_class in self.current_equivalence_classes:
             if queue in equiv_class['queues']:
                 current_queues = equiv_class['queues']
@@ -455,38 +463,56 @@ class CraySystem(BaseSystem):
 
         Notes:
             This holds the node data lock while it's running.
+
         '''
-        rc = False
+        completed = False
         with self._node_lock:
+            succeeded_nodes = []
+            failed_nodes = []
             if new_time is not None:
                 #reserve the location. Unconfirmed reservations will have to
                 #be lengthened.  Maintain a list of what we have reserved, so we
                 #extend on the fly, and so that we don't accidentally get an
                 #overallocation/user
                 for loc in location:
-                    node = self.nodes[self.node_name_to_id[loc]]
+                    # node = self.nodes[self.node_name_to_id[loc]]
+                    node = self.nodes[loc]
                     try:
                         node.reserve(new_time, jobid=jobid)
+                        succeeded_nodes.append(loc)
                     except Cobalt.Exceptions.ResourceReservationFailure as exc:
                         self.logger.error(exc)
-                    self.logger.info("job %s: block '%s' now reserved until %s",
-                        jobid, loc, time.asctime(time.gmtime(new_time)))
-                rc = True
+                        failed_nodes.append(loc)
+                self.logger.info("job %s: nodes '%s' now reserved until %s",
+                    jobid, compact_num_list(succeeded_nodes),
+                    time.asctime(time.gmtime(new_time)))
+                if failed_nodes != []:
+                    self.logger.warning("job %s: failed to reserve nodes '%s'",
+                        jobid, compact_num_list(failed_nodes))
+                else:
+                    completed = True
             else:
                 #release the reservation and the underlying ALPS reservation
                 #and the reserration on blocks.
                 for loc in location:
-                    node = self.nodes[self.node_name_to_id[loc]]
+                    # node = self.nodes[self.node_name_to_id[loc]]
+                    node = self.nodes[loc]
                     try:
                         node.release(user=None, jobid=jobid)
+                        succeeded_nodes.append(loc)
                     except Cobalt.Exceptions.ResourceReservationFailure as exc:
                         self.logger.error(exc)
+                        failed_nodes.append(loc)
                     #cleanup pending has to be dealt with.  Do this in UNS for
                     #now
-                    self.logger.info("job %s:  node '%s' released. Cleanup pending.",
-                        jobid, loc)
-                rc = True
-        return rc
+                self.logger.info("job %s:  nodes '%s' released. Cleanup pending.",
+                    jobid, compact_num_list(succeeded_nodes))
+                if failed_nodes != []:
+                    self.logger.warning("job %s: failed to reserve nodes '%s'",
+                        jobid, compact_num_list(failed_nodes))
+                else:
+                    completed = True
+        return completed
 
     @exposed
     def add_process_groups(self, specs):
@@ -511,20 +537,20 @@ class CraySystem(BaseSystem):
             #failure here, set exit status in process group to a sentinel value.
             try:
                 started = self.process_manager.start_groups([pgroup.id])
-            except ComponentLookupError as exc:
+            except ComponentLookupError:
                 _logger.error("%s: failed to contact the %s component",
                         pgroup.label, pgroup.forker)
                 #this should be reraised and the queue-manager handle it
                 #that would allow re-requesting the run instead of killing the
                 #job --PMR
-            except xmlrpclib.Fault as exc:
+            except xmlrpclib.Fault:
                 _logger.error("%s: a fault occurred while attempting to start "
                         "the process group using the %s component",
                         pgroup.label, pgroup.forker)
                 pgroup.exit_status = 255
                 self.reserve_resources_until(pgroup.location, None,
                         pgroup.jobid)
-            except Exception as exc:
+            except Exception:
                 _logger.error("%s: an unexpected exception occurred while "
                         "attempting to start the process group using the %s "
                         "component; releasing resources", pgroup.label,
@@ -588,8 +614,8 @@ class CraySystem(BaseSystem):
 
         '''
         completed_pgs = self.process_manager.update_groups()
-        for pg in completed_pgs:
-            self.reserve_resources_until(pg.location, None, pg.jobid)
+        for pgroup in completed_pgs:
+            self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
         return
 
     @exposed
@@ -604,6 +630,13 @@ class CraySystem(BaseSystem):
         return spec
 
 class ALPSReservation(object):
+    '''Container for ALPS Reservation information.  Can be used to update
+    reservations and also internally relases reservation.
+
+    Should be built from an ALPS reservation response dict as returned by the
+    bridge.
+
+    '''
 
     def __init__(self, job, spec, nodes):
         '''spec should be the information returned from the Reservation Response
@@ -661,20 +694,3 @@ class ALPSReservation(object):
         else:
             _logger.info('ALPS reservation: %s has no claims left.',
                 self.alps_res_id)
-
-
-#if __name__ == '__main__':
-#
-#    cs = CraySystem()
-#    nodes = cs.get_nodes()
-#
-#    for node_name, node in nodes.iteritems():
-#        print "Name: %s" % node_name
-#        for key, val in node.to_dict().iteritems():
-#            print "    %s: %s" % (key, val)
-#
-#    for res_id, reservation in cs.alps_reservations.items():
-#        print "Resid: %s" % res_id
-#        for key, val in reservation.__dict__.items():
-#            print "    %s: %s" % (key, val)
-#
