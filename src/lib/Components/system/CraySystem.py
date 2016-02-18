@@ -48,6 +48,17 @@ class CraySystem(BaseSystem):
         '''
         start_time = time.time()
         super(CraySystem, self).__init__(*args, **kwargs)
+        bridge_pending = True
+        while bridge_pending:
+            # purge stale children from prior run.  Also ensure the
+            # system_script_forker is currently up.
+            try:
+                ALPSBridge.init_bridge()
+            except ALPSBridge.BridgeError:
+                _logger.error('Bridge Initialization failed.  Retrying.')
+            else:
+                bridge_pending = False
+                _logger.info('BRIDGE INITIALIZED')
         _logger.info('BASE SYSTEM INITIALIZED')
         #process manager setup
         self.process_manager = ProcessGroupManager()
@@ -72,6 +83,7 @@ class CraySystem(BaseSystem):
         _logger.info('ALPS SYSTEM COMPONENT READY TO RUN')
         _logger.info('Initilaization complete in %s sec.', (time.time() -
                 start_time))
+
 
     def _init_nodes_and_reservations(self):
         '''Initialize nodes from ALPS bridge data'''
@@ -409,7 +421,6 @@ class CraySystem(BaseSystem):
 
         '''
         attrs = job['attrs']
-        _logger.debug('ATTRS %s %s', type(job['attrs']), job['attrs'])
         res_info = ALPSBridge.reserve(job['user'], job['jobid'],
                 int(job['nodes']), job['attrs'], node_id_list)
         new_alps_res = None

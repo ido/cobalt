@@ -30,6 +30,22 @@ class BridgeError(Exception):
     '''Exception class so that we may easily recognize bridge-specific errors.'''
     pass
 
+def init_bridge():
+    '''Initialize the bridge.  This includes purging all old bridge messages
+    from the system_script_forker.  On restart or reinitialization, these old
+    children should be considered invalid and purged.
+
+    '''
+    forker = ComponentProxy(FORKER, defer=False)
+    try:
+        stale_children = forker.get_children('apbridge', None)
+        forker.cleanup_children([int(child['id']) for child in stale_children])
+    except Exception:
+        _logger.error('Unable to clear children from prior runs.  Init failed.',
+                exc_info=True)
+        raise BridgeError('Bridge initialization failed.')
+    return
+
 def reserve(user, jobid, nodecount, attributes=None, node_id_list=None):
 
     '''reserve a set of nodes in ALPS'''
