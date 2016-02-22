@@ -32,13 +32,32 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
             compatible with the ProcessGroupDict class.
 
         '''
+        self._common_init_restart()
 
-        self._pg_id_gen = IncrID()
-        self.process_groups = ProcessGroupDict()
+
+    def _common_init_restart(self, state=None):
+        '''common intitialization code for both cold initilaization and
+        reinitialization.
+
+        '''
+        if state is None:
+            self.process_groups = ProcessGroupDict()
+        else:
+            self.process_groups = state['process_groups']
+            self.process_groups.id_gen.set(int(state['next_pg_id']))
         self.process_group_actions = {}
         self.forkers = [] #list of forker identifiers to use with ComponentProxy
         self.process_groups_lock = RLock()
-#TODO: add getstate and setstate methods.
+
+    def __getstate__(self):
+        state = {}
+        state['process_groups'] = self.process_groups
+        state['next_pg_id'] = self.process_groups.id_gen.idnum + 1
+        return state
+
+    def __setstate__(self, state):
+        self._common_init_restart(state)
+        return self
 
     def init_groups(self, specs):
         '''Add a set of process groups from specs.  Generate a unique id.]

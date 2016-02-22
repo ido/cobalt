@@ -9,20 +9,24 @@ import xmlrpclib
 import Cobalt.Util
 import Cobalt.Components.system.AlpsBridge as ALPSBridge
 
-from Cobalt.Components.base import Component, exposed, query
+from Cobalt.Components.base import Component, exposed, automatic, query
 from Cobalt.Components.system.base_system import BaseSystem
 from Cobalt.Components.system.CrayNode import CrayNode
 from Cobalt.Components.system.base_pg_manager import ProcessGroupManager
 from Cobalt.Exceptions import ComponentLookupError
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
 from Cobalt.Util import compact_num_list, expand_num_list
+from Cobalt.Util import init_cobalt_config, get_config_option
 
 _logger = logging.getLogger(__name__)
 
-#TODO: these need to be config options
-UPDATE_THREAD_TIMEOUT = 10 #TODO: Time in seconds, make setable
-TEMP_RESERVATION_TIME = 300 #Time in seconds to set a temp resource res for startup
+init_cobalt_config()
 
+UPDATE_THREAD_TIMEOUT = int(get_config_option('alpssystem',
+    'update_thread_timeout', 10))
+TEMP_RESERVATION_TIME = int(get_config_option('alpssystem',
+    'temp_reservation_time', 300))
+SAVE_ME_INTERVAL = float(get_config_option('alpsssytem', 'save_me_interval', 10.0))
 
 class ALPSProcessGroup(ProcessGroup):
     '''ALPS-specific PocessGroup modifications.'''
@@ -48,6 +52,7 @@ class CraySystem(BaseSystem):
         '''
         start_time = time.time()
         super(CraySystem, self).__init__(*args, **kwargs)
+        _logger.info('BASE SYSTEM INITIALIZED')
         bridge_pending = True
         while bridge_pending:
             # purge stale children from prior run.  Also ensure the
@@ -59,15 +64,29 @@ class CraySystem(BaseSystem):
             else:
                 bridge_pending = False
                 _logger.info('BRIDGE INITIALIZED')
-        _logger.info('BASE SYSTEM INITIALIZED')
+        self._common_init_restart()
+        _logger.info('ALPS SYSTEM COMPONENT READY TO RUN')
+        _logger.info('Initilaization complete in %s sec.', (time.time() -
+                start_time))
+
+    def _common_init_restart(self, spec=None):
+        '''Common routine for cold and restart intialization of the system
+        component.
+
+        '''
         #process manager setup
-        self.process_manager = ProcessGroupManager()
+        if spec is None:
+            self.process_manager = ProcessGroupManager()
+        else:
+            self.process_manager = ProcessGroupManager().__setstate__(spec['process_manager'])
         self.process_manager.forkers.append('alps_script_forker')
         _logger.info('PROCESS MANAGER INTIALIZED')
         #resource management setup
         self.nodes = {} #cray node_id: CrayNode
-        self.node_name_to_id = {} #cray node name to node_id map.
-        self.alps_reservations = {}
+        self.node_name_to_id = {} #cray node name to node_id map
+        self.alps_reservations = {} #cobalt jobid : AlpsReservation object
+        if spec is not None:
+            self.alps_reservations = spec['alps_reservations']
         self._init_nodes_and_reservations()
         self.nodes_by_queue = {} #queue:[node_ids]
         #populate initial state
@@ -77,13 +96,44 @@ class CraySystem(BaseSystem):
         self.node_update_thread = thread.start_new_thread(self._run_update_state,
                 tuple())
         _logger.info('UPDATE THREAD STARTED')
-        self.alps_reservations = {} #cobalt jobid : AlpsReservation object
         self.current_equivalence_classes = []
 
+
+    def __getstate__(self):
+        '''Save process, alps-reservation information, along with base
+        information'''
+        state = {}
+        state.update(super(CraySystem, self).__getstate__())
+        state['alps_system_statefile_version'] = 1
+        state['process_manager'] = self.process_manager.__getstate__()
+        state['alps_reservations'] = self.alps_reservations
+        return state
+
+    def __setstate__(self, state):
+        start_time = time.time()
+        super(CraySystem, self).__setstate__(state)
+        _logger.info('BASE SYSTEM INITIALIZED')
+        bridge_pending = True
+        while bridge_pending:
+            # purge stale children from prior run.  Also ensure the
+            # system_script_forker is currently up.
+            try:
+                ALPSBridge.init_bridge()
+            except ALPSBridge.BridgeError:
+                _logger.error('Bridge Initialization failed.  Retrying.')
+            else:
+                bridge_pending = False
+                _logger.info('BRIDGE INITIALIZED')
+        self._common_init_restart(state)
         _logger.info('ALPS SYSTEM COMPONENT READY TO RUN')
-        _logger.info('Initilaization complete in %s sec.', (time.time() -
+        _logger.info('Reinitilaization complete in %s sec.', (time.time() -
                 start_time))
 
+    def save_me(self):
+        '''Automatically save a copy of the state of the system component.'''
+        #should we be holding the block lock as well?
+        Component.save(self)
+    save_me = automatic(save_me, SAVE_ME_INTERVAL)
 
     def _init_nodes_and_reservations(self):
         '''Initialize nodes from ALPS bridge data'''
