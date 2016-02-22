@@ -30,10 +30,20 @@ class BaseSystem(Component):
 
     def __init__(self, *args, **kwargs):
         super(BaseSystem, self).__init__(*args, **kwargs)
-        self.process_manager = ProcessManager()
-        self.resource_manager = ResourceManager()
+        self._init_restart_common()
 
-    #TODO: Add setstate/getstate
+    def _init_restart_common(self, state=None):
+        '''Common (re)initialization for restarts/clean starts'''
+        if state is not None:
+            self.process_manager = ProcessManager()
+            self.resource_manager = ResourceManager()
+
+    def __getstate__(self):
+       return super(BaseSystem, self).__getstate__()
+
+    def __setstate__(self, state):
+        super(BaseSystem, self).__setstate__(state)
+        self._init_restart_common(state)
 
     @exposed
     def validate_job(self, spec):
