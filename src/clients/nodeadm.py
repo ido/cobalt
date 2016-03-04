@@ -2,7 +2,7 @@
 """
 nodeadm - Nodeadm is the administrative interface for cluster systems
 
-Usage: %prog [-l] [--down part1 part2] [--up part1 part2]"
+Usage: %prog [flags] [part1 part2...]"
 version: "%prog " + __revision__ + , Cobalt  + __version__
 
 OPTIONS DEFINITIONS:
@@ -12,6 +12,7 @@ OPTIONS DEFINITIONS:
 '--up',dest='up',help='mark nodes as up (even if allocated)',action='store_true'
 '--queue',action='store', dest='queue', help='set queue associations'
 '-l','--list_nstates',action='store_true', dest='list_nstates', help='list the node states'
+'-b','--list_details',action='store_true', dest='list_details', help='list detalied information for specified nodes'
 
 """
 import logging
@@ -20,7 +21,8 @@ from Cobalt import client_utils
 from Cobalt.client_utils import cb_debug
 import time
 from Cobalt.arg_parser import ArgParse
-
+from Cobalt.Util import compact_num_list, expand_num_list
+import itertools
 __revision__ = ''
 __version__ = ''
 
@@ -43,12 +45,13 @@ def validate_args(parser):
     impl = client_utils.component_call(SYSMGR, False, 'get_implementation', ())
 
     # make sure we're on a cluster-system
-    if "cluster_system" != impl:
+    if impl not in ['cluster_system', 'alps_system']:
         client_utils.logger.error("nodeadm is only supported on cluster systems.  Try partlist instead.")
         sys.exit(0)
 
     # Check mutually exclusive options
-    mutually_exclusive_option_lists = [['down', 'up', 'list_nstates', 'queue']]
+    mutually_exclusive_option_lists = [['down', 'up', 'list_nstates',
+        'list_details', 'queue']]
 
     if opt_count > 1:
         client_utils.validate_conflicting_options(parser, mutually_exclusive_option_lists)
@@ -79,36 +82,84 @@ def main():
     opt  = parser.options
     args = parser.args
 
-    if opt.down:
-        delta = client_utils.component_call(SYSMGR, False, 'nodes_down', (args, whoami))
-        client_utils.logger.info("nodes marked down:")
-        for d in delta:
-            client_utils.logger.info("   %s" % d)
-        client_utils.logger.info("")
-        client_utils.logger.info("unknown nodes:")
-        for a in args:
-            if a not in delta:
-                client_utils.logger.info("   %s" % a)
 
-    elif opt.up:
-        delta = client_utils.component_call(SYSMGR, False, 'nodes_up', (args, whoami))
-        client_utils.logger.info("nodes marked up:")
-        for d in delta:
-            client_utils.logger.info("   %s" % d)
-        client_utils.logger.info('')
-        client_utils.logger.info("nodes that weren't in the down list:")
-        for a in args:
-            if a not in delta:
-                client_utils.logger.info("   %s" %a)
+    #get type of system, Cray systems handled differently
 
-    elif opt.list_nstates:
-        header, output = client_utils.cluster_display_node_info()
-        client_utils.printTabular(header + output)
+    impl = client_utils.component_call(SYSMGR, False, 'get_implementation', ())
 
-    elif opt.queue:
-        data = client_utils.component_call(SYSMGR, False, 'set_queue_assignments', (opt.queue, args, whoami))
-        client_utils.logger.info(data)
+    if impl in ['alps_system']:
+        updates = {}
+        if opt.list_nstates:
+            nodes = client_utils.component_call(SYSMGR, False, 'get_nodes',
+                    (True,))
+            if len(nodes) > 0:
+                header = ['Node_id', 'Name', 'Queues', 'status']
+                print_nodes = []
+                for node in nodes.values():
+                    entry = []
+                    for key in header:
+                        entry.append(node[key.lower()])
+                    print_nodes.append(entry)
+                client_utils.printTabular([header] + print_nodes)
+            else:
+                client_utils.logger.info('System has no nodes defined')
+            return
+        if opt.list_details:
+            #list details and bail
+            return
+        update_type = 'ERROR'
+        if opt.down:
+            update_type = 'node down'
+            updates['down'] = True
+        elif opt.up:
+            update_type = 'node up'
+            updates['up'] = True
+        elif opt.queue:
+            update_type = 'queue'
+            updates['queues'] = opt.queue
+        print args
+        #expand arguments
+        exp_arg_list = []
+        for arg in args:
+            exp_arg_list.extend(expand_num_list(arg))
+        print exp_arg_list
+        mod_nodes = client_utils.component_call(SYSMGR, False, 'update_nodes',
+                (updates, exp_arg_list, whoami))
+        client_utils.logger.info('Update %s applied to nodes %s', update_type,
+                compact_num_list(mod_nodes))
 
+    else:
+        if opt.down:
+            delta = client_utils.component_call(SYSMGR, False, 'nodes_down', (args, whoami))
+            client_utils.logger.info("nodes marked down:")
+            for d in delta:
+                client_utils.logger.info("   %s" % d)
+            client_utils.logger.info("")
+            client_utils.logger.info("unknown nodes:")
+            for a in args:
+                if a not in delta:
+                    client_utils.logger.info("   %s" % a)
+
+        elif opt.up:
+            delta = client_utils.component_call(SYSMGR, False, 'nodes_up', (args, whoami))
+            client_utils.logger.info("nodes marked up:")
+            for d in delta:
+                client_utils.logger.info("   %s" % d)
+            client_utils.logger.info('')
+            client_utils.logger.info("nodes that weren't in the down list:")
+            for a in args:
+                if a not in delta:
+                    client_utils.logger.info("   %s" %a)
+
+        elif opt.list_nstates:
+            header, output = client_utils.cluster_display_node_info()
+            client_utils.printTabular(header + output)
+
+        elif opt.queue:
+            data = client_utils.component_call(SYSMGR, False, 'set_queue_assignments', (opt.queue, args, whoami))
+            client_utils.logger.info(data)
+
+    
 if __name__ == '__main__':
     try:
         main()

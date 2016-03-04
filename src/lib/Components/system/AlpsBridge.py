@@ -36,7 +36,7 @@ def init_bridge():
     children should be considered invalid and purged.
 
     '''
-    forker = ComponentProxy(FORKER, defer=False)
+    forker = ComponentProxy(FORKER, defer=True)
     try:
         stale_children = forker.get_children('apbridge', None)
         forker.cleanup_children([int(child['id']) for child in stale_children])
@@ -70,8 +70,7 @@ def reserve(user, jobid, nodecount, attributes=None, node_id_list=None):
         if val is not None:
             params[key] = val
     if node_id_list is not None:
-        params['node_id_list'] = compact_num_list(node_id_list)
-    print str(BasilRequest('RESERVE', params=params))
+        params['node_list'] = [int(i) for i in node_id_list]
     retval = _call_sys_forker(BASIL_PATH, str(BasilRequest('RESERVE',
         params=params)))
     print str(retval)

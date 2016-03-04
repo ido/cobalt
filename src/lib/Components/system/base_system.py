@@ -87,7 +87,7 @@ class BaseSystem(Component):
         raise NotImplementedError
 
     @exposed
-    def update_nodes(self, updates):
+    def update_nodes(self, updates, node_list, user):
         raise NotImplementedError
 
 class ResourceManager(object):
