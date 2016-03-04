@@ -280,6 +280,12 @@ def merge_nodelist(locations):
     prefix_max_digits = {}
     prefix_format_str = {}
 
+    #if this doesn't have a prefix, like a Cray nidlist, short circut
+    if len(locations) >= 1:
+        if reg.match(locations[0]) is None:
+            #this is cray-style
+            return compact_num_list(locations)
+
     for name in locations:
         prefix = reg.match(name).group(1)
         nodenum = reg.match(name).group(2)

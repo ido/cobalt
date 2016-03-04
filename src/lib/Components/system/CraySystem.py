@@ -18,6 +18,8 @@ from Cobalt.DataTypes.ProcessGroup import ProcessGroup
 from Cobalt.Util import compact_num_list, expand_num_list
 from Cobalt.Util import init_cobalt_config, get_config_option
 
+
+
 _logger = logging.getLogger(__name__)
 
 init_cobalt_config()
@@ -53,17 +55,6 @@ class CraySystem(BaseSystem):
         start_time = time.time()
         super(CraySystem, self).__init__(*args, **kwargs)
         _logger.info('BASE SYSTEM INITIALIZED')
-        bridge_pending = True
-        while bridge_pending:
-            # purge stale children from prior run.  Also ensure the
-            # system_script_forker is currently up.
-            try:
-                ALPSBridge.init_bridge()
-            except ALPSBridge.BridgeError:
-                _logger.error('Bridge Initialization failed.  Retrying.')
-            else:
-                bridge_pending = False
-                _logger.info('BRIDGE INITIALIZED')
         self._common_init_restart()
         _logger.info('ALPS SYSTEM COMPONENT READY TO RUN')
         _logger.info('Initilaization complete in %s sec.', (time.time() -
@@ -74,6 +65,22 @@ class CraySystem(BaseSystem):
         component.
 
         '''
+        #initilaize bridge.
+        bridge_pending = True
+        while bridge_pending:
+            # purge stale children from prior run.  Also ensure the
+            # system_script_forker is currently up.
+            try:
+                ALPSBridge.init_bridge()
+            except ALPSBridge.BridgeError:
+                _logger.error('Bridge Initialization failed.  Retrying.')
+                Cobalt.Util.sleep(10)
+            except ComponentLookupError:
+                _logger.warning('Error reaching forker.  Retrying.')
+                Cobalt.Util.sleep(10)
+            else:
+                bridge_pending = False
+                _logger.info('BRIDGE INITIALIZED')
         #process manager setup
         if spec is None:
             self.process_manager = ProcessGroupManager()
@@ -88,6 +95,10 @@ class CraySystem(BaseSystem):
         if spec is not None:
             self.alps_reservations = spec['alps_reservations']
         self._init_nodes_and_reservations()
+        if spec is not None:
+            node_info = spec.get('node_info', {})
+            for nid, node in node_info.items():
+                self.nodes[nid].queues = node.queues
         self.nodes_by_queue = {} #queue:[node_ids]
         #populate initial state
         #state update thread and lock
@@ -107,23 +118,13 @@ class CraySystem(BaseSystem):
         state['alps_system_statefile_version'] = 1
         state['process_manager'] = self.process_manager.__getstate__()
         state['alps_reservations'] = self.alps_reservations
+        state['node_info'] = self.nodes
         return state
 
     def __setstate__(self, state):
         start_time = time.time()
         super(CraySystem, self).__setstate__(state)
         _logger.info('BASE SYSTEM INITIALIZED')
-        bridge_pending = True
-        while bridge_pending:
-            # purge stale children from prior run.  Also ensure the
-            # system_script_forker is currently up.
-            try:
-                ALPSBridge.init_bridge()
-            except ALPSBridge.BridgeError:
-                _logger.error('Bridge Initialization failed.  Retrying.')
-            else:
-                bridge_pending = False
-                _logger.info('BRIDGE INITIALIZED')
         self._common_init_restart(state)
         _logger.info('ALPS SYSTEM COMPONENT READY TO RUN')
         _logger.info('Reinitilaization complete in %s sec.', (time.time() -
@@ -139,7 +140,18 @@ class CraySystem(BaseSystem):
         '''Initialize nodes from ALPS bridge data'''
 
         retnodes = {}
-        inventory = ALPSBridge.fetch_inventory(resinfo=True)
+        pending = True
+        while pending:
+            try:
+                inventory = ALPSBridge.fetch_inventory(resinfo=True)
+            except Exception:
+                #don't crash out here.  That may trash a statefile.
+                _logger.error('Possible transient encountered during initialization. Retrying.',
+                        err_info=True)
+                Cobalt.Util.sleep(10)
+            else:
+                pending = False
+
         for nodespec in inventory['nodes']:
             node = CrayNode(nodespec)
             node.managed = True
@@ -156,14 +168,15 @@ class CraySystem(BaseSystem):
         #help here.
 
     def _gen_node_to_queue(self):
-        '''Generate a mapping for fast lookup of node-id's to queues.'''
+        '''(Re)Generate a mapping for fast lookup of node-id's to queues.'''
         with self._node_lock:
+            self.nodes_by_queue = {}
             for node in self.nodes.values():
                 for queue in node.queues:
                     if queue in self.nodes_by_queue.keys():
-                        self.nodes_by_queue[queue].append(node.node_id)
+                        self.nodes_by_queue[queue].add(node.node_id)
                     else:
-                        self.nodes_by_queue[queue] = [node.node_id]
+                        self.nodes_by_queue[queue] = set([node.node_id])
 
 
     @exposed
@@ -212,8 +225,13 @@ class CraySystem(BaseSystem):
         #nodes.  If there is no resource reservation and the node is not in
         #current alps reservations, the node is ready to schedule again.
         with self._node_lock:
-            inventory = ALPSBridge.fetch_inventory(resinfo=True) #This is a full-refresh,
-            #determine if summary may be used under normal operation
+            try:
+                inventory = ALPSBridge.fetch_inventory(resinfo=True) #This is a full-refresh,
+                #determine if summary may be used under normal operation
+            except (ALPSBridge.ALPSError, ComponentLookupError):
+                _logger.warning('Error contacting ALPS for state update.  Aborting this update',
+                        exc_info=True)
+                return
             inven_nodes = inventory['nodes']
             inven_reservations = inventory['reservations']
             start_time = time.time()
@@ -318,7 +336,6 @@ class CraySystem(BaseSystem):
         equiv = []
         node_active_queues = []
         self.current_equivalence_classes = []
-        self.nodes_by_queues = {}
         #reverse mapping of queues to nodes
         for node in self.nodes.values():
             if node.managed and node.schedulable:
@@ -407,8 +424,8 @@ class CraySystem(BaseSystem):
         in this case post job startup.
 
         '''
+        #TODO: add reservation handling
         #TODO: make not first-fit
-        #TODO: add queue constraints.
         now = time.time()
         resource_until_time = now + TEMP_RESERVATION_TIME
         with self._node_lock:
@@ -420,7 +437,11 @@ class CraySystem(BaseSystem):
             best_match = {} #jobid: list(locations)
             current_idle_nodecount = idle_nodecount
             for job in arg_list:
-                node_id_list = self.nodes_by_queue[job['queue']]
+                if not job['queue'] in self.nodes_by_queue.keys():
+                    # Either a new queue with no resources, or a possible
+                    # reservation need to do extra work for a reservation
+                    continue
+                node_id_list = list(self.nodes_by_queue[job['queue']])
                 if 'location' in job['attrs'].keys():
                     job_set = set([int(nid) for nid in
                         expand_num_list(job['attrs']['location'])])
@@ -430,6 +451,11 @@ class CraySystem(BaseSystem):
                     else:
                         _logger.warning('Job %s: requesting locations that are not in queue for that job.',
                                 job['jobid'])
+                        continue
+                if int(job['nodes']) > len(node_id_list):
+                    _logger.warning('Job %s: requested nodecount of %s exceeds number of nodes in queue %s',
+                            job['jobid'], job['nodes'], len(node_id_list))
+                    continue
 
                 if idle_nodecount == 0:
                     break
@@ -471,8 +497,13 @@ class CraySystem(BaseSystem):
 
         '''
         attrs = job['attrs']
-        res_info = ALPSBridge.reserve(job['user'], job['jobid'],
+        try:
+            res_info = ALPSBridge.reserve(job['user'], job['jobid'],
                 int(job['nodes']), job['attrs'], node_id_list)
+        except ALPSBridge.ALPSError as exc:
+            _logger.warning('unable to reserve resources from ALPS: %s',
+                    exc.message)
+            return None
         new_alps_res = None
         if res_info is not None:
             new_alps_res = ALPSReservation(job, res_info, self.nodes)
@@ -689,6 +720,42 @@ class CraySystem(BaseSystem):
         #Right now this does nothing.  Still figuring out what a valid
         #specification looks like.
         return spec
+
+    @exposed
+    def update_nodes(self, updates, node_list, user):
+        '''Apply update to a node's status from an external client.
+
+        Updates apply to all nodes.  User is for logging purposes.
+
+        node_list should be a list of nodeids from the cray system
+
+        Hold the node lock while doing this.
+
+        Force a status update while doing this operation.
+
+        '''
+        mod_nodes = []
+        with self._node_lock:
+            for node_id in node_list:
+                node = self.nodes[str(node_id)]
+                try:
+                    if updates.get('down', False):
+                        node.status = 'down'
+                    elif updates.get('up', False):
+                        node.status = 'idle'
+                    elif updates.get('queues', None):
+                        node.queues = list(updates['queues'].split(':'))
+                except Exception:
+                    _logger.error("Unexpected exception encountered!", exc_info=True)
+                else:
+                    mod_nodes.append(node_id)
+        if updates.get('queues', False):
+            self._gen_node_to_queue()
+        if mod_nodes != []:
+            self.update_node_state()
+        _logger.info('Updates %s applied to nodes %s by %s', updates,
+                compact_num_list(mod_nodes), user)
+        return mod_nodes
 
 class ALPSReservation(object):
     '''Container for ALPS Reservation information.  Can be used to update
