@@ -199,11 +199,11 @@ class ProcessGroup(Data):
                 else:
                     core_dump_str = ""
                 _logger.info("%s: terminated with signal %s%s", self.label, child["signum"], core_dump_str)
-        else:
-            if self.exit_status is None:
-                # the forker has lost the child for our process group
-                _logger.info("%s: job exited with unknown status", self.label)
-                self.exit_status = 1234567 #FIXME: What should this sentinel be?
+        # else:
+            # if self.exit_status is None:
+                # # the forker has lost the child for our process group
+                # _logger.info("%s: job exited with unknown status", self.label)
+                # self.exit_status = 1234567 #FIXME: What should this sentinel be?
 
 
 
