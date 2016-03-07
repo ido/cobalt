@@ -190,23 +190,27 @@ class CraySystem(BaseSystem):
             dictionary for XMLRPC purposes
 
         '''
+        def cook_node_dict(node):
+            '''strip leading '_' for display purposes'''
+            raw_node = node.to_dict()
+            cooked_node = {}
+            for key, val in raw_node.items():
+                if key.startswith('_'):
+                    cooked_node[key[1:]] = val
+                else:
+                    cooked_node[key] = val
+            return cooked_node
+
         if node_ids is None:
             if as_dict:
-                retdict = {}
-                for node in self.nodes.values():
-                    raw_node = node.to_dict()
-                    cooked_node = {}
-                    for key, val in raw_node.items():
-                        if key.startswith('_'):
-                            cooked_node[key[1:]] = val
-                        else:
-                            cooked_node[key] = val
-                    retdict[node.name] = cooked_node
-                return retdict
+                return {k:cook_node_dict(v) for k, v in self.nodes.items()}
             else:
                 return self.nodes
         else:
-            raise NotImplementedError
+            if as_dict:
+                return {k:cook_node_dict(v) for k, v in self.nodes.items() if int(k) in node_ids}
+            else:
+                return {k:v for k,v in self.nodes.items() if int(k) in node_ids}
 
     def _run_update_state(self):
         '''automated node update functions on the update timer go here.'''
@@ -431,6 +435,7 @@ class CraySystem(BaseSystem):
         with self._node_lock:
             idle_nodecount = len([node for node in self.nodes.values() if
                 node.managed and node.status is 'idle'])
+            idle_nodes_by_queue = {}
             self._clear_draining_for_queues(arg_list[0]['queue'])
             #check if we can run immedaitely, if not drain.  Keep going until all
             #nodes are marked for draining or have a pending run.
@@ -465,8 +470,10 @@ class CraySystem(BaseSystem):
                 elif int(job['nodes']) <= idle_nodecount:
                     label = '%s/%s' % (job['jobid'], job['user'])
                     #this can be run immediately
+                    _logger.debug('reserving resources')
                     job_locs = self._ALPS_reserve_resources(job,
                             resource_until_time, node_id_list)
+                    _logger.debug('reserving complete')
                     if job_locs is not None and len(job_locs) == int(job['nodes']):
                         #temporary reservation until job actually starts
                         self.reserve_resources_until(job_locs,
@@ -476,6 +483,7 @@ class CraySystem(BaseSystem):
                         best_match[job['jobid']] = job_locs
                         _logger.info("%s: Job selected for running on nodes  %s",
                                 label, " ".join(job_locs))
+                        break
                 else:
                     #TODO: draining goes here
                     pass

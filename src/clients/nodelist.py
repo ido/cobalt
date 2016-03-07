@@ -8,6 +8,7 @@ version: "%prog " + __revision__ + , Cobalt  + __version__
 OPTIONS DEFINITIONS: None
 
 '-d','--debug',dest='debug',help='turn on communication debugging',callback=cb_debug
+'-b','--list_details',action='store_true', dest='list_details', help='list detalied information for specified nodes'
 '--noheader',dest='noheader',action='store_true',help='disable display of header information'
 
 """
@@ -24,9 +25,6 @@ __version__ = 'TBD'
 SYSMGR = client_utils.SYSMGR
 
 def main():
-    """
-    qmove main
-    """
     # setup logging for client. The clients should call this before doing anything else.
     client_utils.setup_logging(logging.INFO)
 
@@ -44,9 +42,11 @@ def main():
     # Set required default values: None
 
     parser.parse_it() # parse the command line
+    opt = parser.options
+    args = parser.args
 
-    if not parser.no_args():
-        client_utils.logger.error("No arguments needed")
+    #if not parser.no_args():
+    #    client_utils.logger.error("No arguments needed")
 
     impl = client_utils.component_call(SYSMGR, False, 'get_implementation', ())
 
@@ -56,17 +56,12 @@ def main():
         sys.exit(0)
 
     if impl == 'alps_system':
-        from Cobalt.Proxy import ComponentProxy
-        nodes = ComponentProxy('system').get_nodes(True)
-        header = nodes['c0-1c0s1n3'].keys()
-        header = [ 'Name', 'Node_id', 'Queues', 'status']
-        print_nodes = []
-        for node in nodes.values():
-            entry = []
-            for key in header:
-                entry.append(node[key.lower()])
-            print_nodes.append(entry)
-        client_utils.printTabular([header] + print_nodes)
+        if opt.list_details:
+            # get list from arguments.  Currently assuing a comma separated,
+            # hyphen-condensed nodelist
+            client_utils.print_node_details(args)
+        else:
+            client_utils.print_node_list()
         return
 
 
