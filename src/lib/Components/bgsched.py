@@ -827,7 +827,6 @@ class BGSched (Component):
             # best_partition_dict.  There is no draining, backfill windows are
             # meaningless within reservations.
             try:
-                self.logger.debug("calling from reservation")
                 best_partition_dict = ComponentProxy("system").find_job_location(job_location_args, [])
             except:
                 self.logger.error("failed to connect to system component")
@@ -1030,7 +1029,6 @@ class BGSched (Component):
                 job_location_args.append(job_info)
 
             try:
-                self.logger.debug("calling from main sched %s", eq_class)
                 best_partition_dict = ComponentProxy("system").find_job_location(job_location_args, end_times)
             except:
                 self.logger.error("failed to connect to system component")
