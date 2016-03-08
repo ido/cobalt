@@ -191,6 +191,10 @@ class ProcessGroup(Data):
         if child['complete']:
             if self.exit_status is None:
                 self.exit_status = child['exit_status']
+            if child['lost_child']:
+                self.exit_status = 256
+                _logger.warning('%s: child process reported lost from %s',
+                        self.label, self.forker)
             if child['signum'] == 0:
                 _logger.info("%s: job exited with status %s", self.label, self.exit_status)
             else:
