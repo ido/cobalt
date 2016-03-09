@@ -22,6 +22,11 @@ class CrayNode(ClusterNode):
     def __str__(self):
         return str(self.to_dict())
 
+    def reset_info(self, node):
+        '''reset node information on restart from a stored node object'''
+        super(CrayNode, self).reset_info(node)
+        self.status = node.status
+
     @property
     def status(self):
         return super(CrayNode, self).status

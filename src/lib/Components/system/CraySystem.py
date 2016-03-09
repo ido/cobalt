@@ -9,7 +9,7 @@ import xmlrpclib
 import Cobalt.Util
 import Cobalt.Components.system.AlpsBridge as ALPSBridge
 
-from Cobalt.Components.base import Component, exposed, automatic, query
+from Cobalt.Components.base import Component, exposed, automatic, query, locking
 from Cobalt.Components.system.base_system import BaseSystem
 from Cobalt.Components.system.CrayNode import CrayNode
 from Cobalt.Components.system.base_pg_manager import ProcessGroupManager
@@ -98,7 +98,7 @@ class CraySystem(BaseSystem):
         if spec is not None:
             node_info = spec.get('node_info', {})
             for nid, node in node_info.items():
-                self.nodes[nid].queues = node.queues
+                self.nodes[nid].reset_info(node)
         self.nodes_by_queue = {} #queue:[node_ids]
         #populate initial state
         #state update thread and lock
@@ -162,10 +162,6 @@ class CraySystem(BaseSystem):
             self.node_name_to_id[node.name] = node.node_id
         _logger.info('NODE INFORMATION INITIALIZED')
         _logger.info('ALPS REPORTS %s NODES', len(self.nodes))
-        #for resspec in inventory['reservations']:
-        #    self.alps_reservations[resspec['reservation_id']] = ALPSReservation(2, resspec)
-        #Have to persist this otherwise.  Subsequent reservation calls don't
-        #help here.
 
     def _gen_node_to_queue(self):
         '''(Re)Generate a mapping for fast lookup of node-id's to queues.'''
@@ -395,6 +391,7 @@ class CraySystem(BaseSystem):
             self.current_equivalence_classes.append(eq_class)
         return equiv
 
+    @locking
     @exposed
     def find_job_location(self, arg_list, end_times, pt_blocking_locations=[]):
         '''Given a list of jobs, and when jobs are ending, return a set of
@@ -470,10 +467,8 @@ class CraySystem(BaseSystem):
                 elif int(job['nodes']) <= idle_nodecount:
                     label = '%s/%s' % (job['jobid'], job['user'])
                     #this can be run immediately
-                    _logger.debug('reserving resources')
                     job_locs = self._ALPS_reserve_resources(job,
                             resource_until_time, node_id_list)
-                    _logger.debug('reserving complete')
                     if job_locs is not None and len(job_locs) == int(job['nodes']):
                         #temporary reservation until job actually starts
                         self.reserve_resources_until(job_locs,
@@ -620,7 +615,6 @@ class CraySystem(BaseSystem):
         reservation time to full run time at this point.
 
         '''
-        _logger.debug("add_process_groups(%r)", specs)
         start_apg_timer = int(time.time())
 
         for spec in specs:

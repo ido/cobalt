@@ -32,6 +32,14 @@ class Resource(object):
         self.init_actions = []
         self.cleanup_actions = []
 
+    def reset_info(self, node):
+        '''reset node information on restart from a stored node object'''
+        self.attributes = node.attributes
+        self.reserved_by = node.reserved_by
+        self.reserved_jobid = node.reserved_jobid
+        self.reserved_until = node.reserved_until
+        self.managed = node.managed
+
     def __hash__(self):
         '''Hash is the hash of the string name for the resource.'''
         return hash(self.name)
