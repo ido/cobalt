@@ -122,6 +122,13 @@ def confirm(alps_res_id, pg_id):
             params=params)))
     return retval
 
+def system():
+    '''fetch system information using the SYSTEM query.  Provides memory
+    information'''
+    params = {}
+    req = BasilRequest('QUERY', 'SYSTEM', params)
+    return _call_sys_forker(BASIL_PATH, str(req))
+
 def fetch_inventory(changecount=None, resinfo=False):
     '''fetch the inventory for the machine
 
