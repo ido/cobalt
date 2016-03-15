@@ -147,6 +147,9 @@ class Resource(object):
                     ' Release ignored.', self.name)
         elif (force or (user == self.reserved_by or
                         jobid == self.reserved_jobid)):
+            if force:
+                _logger.warning('Release of reservation on %s forced. jobid: %s, user %s.',
+                        self.name, jobid, user)
             self.reserved_until = None
             self.reserved_by = None
             self.reserved_jobid = None
