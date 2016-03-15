@@ -109,7 +109,6 @@ class CraySystem(BaseSystem):
         _logger.info('UPDATE THREAD STARTED')
         self.current_equivalence_classes = []
 
-
     def __getstate__(self):
         '''Save process, alps-reservation information, along with base
         information'''
@@ -147,7 +146,7 @@ class CraySystem(BaseSystem):
             except Exception:
                 #don't crash out here.  That may trash a statefile.
                 _logger.error('Possible transient encountered during initialization. Retrying.',
-                        err_info=True)
+                        exc_info=True)
                 Cobalt.Util.sleep(10)
             else:
                 pending = False
@@ -224,6 +223,7 @@ class CraySystem(BaseSystem):
         #Check clenaup progress.  Check ALPS reservations.  Check allocated
         #nodes.  If there is no resource reservation and the node is not in
         #current alps reservations, the node is ready to schedule again.
+        now = time.time()
         with self._node_lock:
             try:
                 inventory = ALPSBridge.fetch_inventory(resinfo=True) #This is a full-refresh,
@@ -235,8 +235,23 @@ class CraySystem(BaseSystem):
             inven_nodes = inventory['nodes']
             inven_reservations = inventory['reservations']
             start_time = time.time()
-            #Check our reservations.  If it's ID is not in the inventory, then the
-            #nodes need to be returned to the pool. Give them the 'idle' state
+            # if node.status not in ['cleanup', 'cleanup-pending']:
+                # node.status = 'idle'
+            # check our reservation objects.  If a res object doesn't correspond
+            # to any backend reservations, this reservation object should be
+            # dropped
+            alps_res_to_delete = []
+            current_alps_res_ids = [int(res['reservation_id']) for res in
+                    inven_reservations]
+            for alps_res in self.alps_reservations.values():
+                if not alps_res.alps_res_id in current_alps_res_ids:
+                    alps_res_to_delete.append(alps_res)
+            for res in alps_res_to_delete:
+                _logger.warning('Deleting orphaned ALPS reservation %s',
+                        res.alps_res_id)
+                del self.alps_reservations[str(res.jobid)]
+            # Check our reservations.  If it's ID is not in the inventory, then the
+            # nodes need to be returned to the pool. Give them the 'idle' state
             res_jobid_to_delete = []
             if self.alps_reservations == {}:
                 # if we have nodes in cleanup-pending but no alps reservations,
@@ -250,9 +265,7 @@ class CraySystem(BaseSystem):
             for alps_res in self.alps_reservations.values():
                 #find alps_id associated reservation
                 found = False
-                current_reservation_ids = [int(res['reservation_id'])
-                                           for res in inven_reservations]
-                if int(alps_res.alps_res_id) not in current_reservation_ids:
+                if int(alps_res.alps_res_id) not in current_alps_res_ids:
                 #for res_info in inven_reservations:
                     #if int(alps_res.alps_res_id) == int(res_info['reservation_id']):
                     #    found = True
@@ -284,11 +297,19 @@ class CraySystem(BaseSystem):
                 if self.nodes.has_key(str(inven_node['node_id'])):
                     node = self.nodes[str(inven_node['node_id'])]
                     if node.reserved:
-                        if self.alps_reservations.has_key(str(node.reserved_by)):
+                        #node marked as reserved.
+                        if self.alps_reservations.has_key(str(node.reserved_jobid)):
                             node.status = 'busy'
                         else:
-                            node.status = 'allocated'
+                            # check to see if the resource reservation should be
+                            # released.
+                            if node.reserved_until >= now:
+                                node.status = 'allocated'
+                            else:
+                                node.release(user=None, jobid=None, force=True)
                     else:
+                        _logger.debug('node %s should be marked idle',
+                                node.node_id)
                         node.status = inven_node['state'].upper()
                 else:
                     # Cannot add nodes on the fly.  Or at lesat we shouldn't be
@@ -432,17 +453,20 @@ class CraySystem(BaseSystem):
         with self._node_lock:
             idle_nodecount = len([node for node in self.nodes.values() if
                 node.managed and node.status is 'idle'])
-            idle_nodes_by_queue = {}
+            # only valid for this scheduler iteration.
+            idle_nodes_by_queue = self._idle_nodes_by_queue()
             self._clear_draining_for_queues(arg_list[0]['queue'])
             #check if we can run immedaitely, if not drain.  Keep going until all
             #nodes are marked for draining or have a pending run.
             best_match = {} #jobid: list(locations)
-            current_idle_nodecount = idle_nodecount
             for job in arg_list:
                 if not job['queue'] in self.nodes_by_queue.keys():
                     # Either a new queue with no resources, or a possible
                     # reservation need to do extra work for a reservation
                     continue
+                idle_nodecount = idle_nodes_by_queue[job['queue']]
+                _logger.debug('idle_nodes_by_queue: %s',
+                        idle_nodes_by_queue[job['queue']])
                 node_id_list = list(self.nodes_by_queue[job['queue']])
                 if 'location' in job['attrs'].keys():
                     job_set = set([int(nid) for nid in
@@ -474,16 +498,32 @@ class CraySystem(BaseSystem):
                         self.reserve_resources_until(job_locs,
                                 resource_until_time, job['jobid'])
                         #set resource reservation, adjust idle count
-                        idle_nodecount -= int(job['nodes'])
+                        idle_nodes_by_queue[job['queue']] -= int(job['nodes'])
                         best_match[job['jobid']] = job_locs
                         _logger.info("%s: Job selected for running on nodes  %s",
                                 label, " ".join(job_locs))
+                        # do we want to allow multiple placements in a single
+                        # pass? That would likely help startup times.
                         break
                 else:
                     #TODO: draining goes here
                     pass
             #TODO: backfill pass goes here
             return best_match
+
+    def _idle_nodes_by_queue(self):
+        '''get the count of currently idle nodes by queue.
+
+        '''
+        # TODO: make sure this plays nice with reservations.
+        retdict = {} #queue_name: nodecount
+        for queue, nodes in self.nodes_by_queue.items():
+            retdict[queue] = 0
+            for node_id in nodes:
+                if self.nodes[node_id].status in ['idle']:
+                    retdict[queue] += 1
+        return retdict
+
 
     def _ALPS_reserve_resources(self, job, new_time, node_id_list):
         '''Call ALPS to reserve resrources.  Use their allocator.  We can change
