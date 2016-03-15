@@ -33,11 +33,19 @@ class ClusterNode(Resource):
         '''Initialize a ClusterNode object.'''
         super(ClusterNode, self).__init__(spec)
         self.queues = spec.get('queues', ['default']) #list of queues
-        self.schedulable = True
-        self._drain_until = None
-        self._drain_jobid = None
+        self.schedulable = spec.get('schedulable', True)
+        self._drain_until = spec.get('drain_until', None)
+        self._drain_jobid = spec.get('drain_jobid', None)
         self._backfill_epsilon = None
         self.backfill_epsilon = int(spec.get('backfill_epsilon', 120))
+
+    def reset_info(self, node):
+        '''reset node information on restart from a stored node object'''
+        super(ClusterNode, self).reset_info(node)
+        self.queues = node.queues
+        self.schedulable = node.schedulable
+        self._drain_until = node.drain_until
+        self._drain_jobid = node.drain_jobid
 
     @property
     def drain_until(self):

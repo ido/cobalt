@@ -32,6 +32,14 @@ class Resource(object):
         self.init_actions = []
         self.cleanup_actions = []
 
+    def reset_info(self, node):
+        '''reset node information on restart from a stored node object'''
+        self.attributes = node.attributes
+        self.reserved_by = node.reserved_by
+        self.reserved_jobid = node.reserved_jobid
+        self.reserved_until = node.reserved_until
+        self.managed = node.managed
+
     def __hash__(self):
         '''Hash is the hash of the string name for the resource.'''
         return hash(self.name)
@@ -139,6 +147,9 @@ class Resource(object):
                     ' Release ignored.', self.name)
         elif (force or (user == self.reserved_by or
                         jobid == self.reserved_jobid)):
+            if force:
+                _logger.warning('Release of reservation on %s forced. jobid: %s, user %s.',
+                        self.name, jobid, user)
             self.reserved_until = None
             self.reserved_by = None
             self.reserved_jobid = None

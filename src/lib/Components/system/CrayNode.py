@@ -1,8 +1,17 @@
 """Cray-specific node information"""
 
+import logging
 from Cobalt.Components.system.ClusterNode import ClusterNode
 
+_logger = logging.getLogger(__name__)
+
 class CrayNode(ClusterNode):
+    '''Extension of ClusterNodes for Cray specific systems.  The first system
+    targeted for this node type is Cray's XC-40 KNL nodes.
+
+
+    Intended for use with ALPS.  Not Native mode.
+    '''
 
     CRAY_STATE_MAP = {'UP': 'idle', 'DOWN':'down', 'UNAVAILABLE':'down',
             'ROUTING':'down', 'SUSPECT':'down', 'ADMIN':'down',
@@ -21,6 +30,11 @@ class CrayNode(ClusterNode):
 
     def __str__(self):
         return str(self.to_dict())
+
+    def reset_info(self, node):
+        '''reset node information on restart from a stored node object'''
+        super(CrayNode, self).reset_info(node)
+        self.status = node.status
 
     @property
     def status(self):

@@ -5,7 +5,7 @@
 #forker isn't.  These will be able to block for now.
 
 import logging
-
+import xml.etree
 from cray_messaging import InvalidBasilMethodError, BasilRequest
 from cray_messaging import parse_response, ALPSError
 from Cobalt.Proxy import ComponentProxy
@@ -18,8 +18,8 @@ _logger = logging.getLogger()
 init_cobalt_config()
 
 FORKER = get_config_option('alps', 'forker', 'system_script_forker')
-BASIL_PATH = get_config_option('alps', 'basil_path',
-                               '/home/richp/alps_simulator/apbasil.sh')
+BASIL_PATH = get_config_option('alps', 'basil',
+                               '/home/richp/alps-simulator/apbasil.sh')
 
 _RUNID_GEN = IncrID()
 CHILD_SLEEP_TIMEOUT = float(get_config_option('alps', 'child_sleep_timeout',
@@ -73,7 +73,6 @@ def reserve(user, jobid, nodecount, attributes=None, node_id_list=None):
         params['node_list'] = [int(i) for i in node_id_list]
     retval = _call_sys_forker(BASIL_PATH, str(BasilRequest('RESERVE',
         params=params)))
-    print str(retval)
     return retval
 
 def release(alps_res_id):
@@ -123,6 +122,13 @@ def confirm(alps_res_id, pg_id):
             params=params)))
     return retval
 
+def system():
+    '''fetch system information using the SYSTEM query.  Provides memory
+    information'''
+    params = {}
+    req = BasilRequest('QUERY', 'SYSTEM', params)
+    return _call_sys_forker(BASIL_PATH, str(req))
+
 def fetch_inventory(changecount=None, resinfo=False):
     '''fetch the inventory for the machine
 
@@ -148,7 +154,7 @@ def _call_sys_forker(basil_path, in_str):
     runid = None #_RUNID_GEN.next()i
     resp = None
     try:
-        child = ComponentProxy(FORKER).fork([BASIL_PATH], 'apbridge',
+        child = ComponentProxy(FORKER).fork([basil_path], 'apbridge',
                 'alps', None, None, runid, in_str, True)
         runid = child
     except Exception:
@@ -171,7 +177,13 @@ def _call_sys_forker(basil_path, in_str):
             break
         sleep(CHILD_SLEEP_TIMEOUT)
 
-    return parse_response(resp)
+    parsed_resp = {}
+    try:
+        parsed_resp = parse_response(resp)
+    except xml.etree.ElementTree.ParseError as exc:
+        _logger.error('Error parsing response "%s"', resp)
+        raise exc
+    return parsed_resp
 
 def print_node_names(spec):
     '''Debugging utility to print nodes returned by ALPS'''

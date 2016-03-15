@@ -1273,3 +1273,53 @@ def cluster_display_node_info():
         output.append([host_name, ":".join(queues), status, backfill_time])
 
     return header, output
+
+
+
+def print_node_list():
+    '''fetch and print a list of node information with default headers'''
+    nodes = component_call(SYSMGR, False, 'get_nodes',
+            (True,))
+    if len(nodes) > 0:
+        header = ['Node_id', 'Name', 'Queues', 'status']
+        print_nodes = []
+        for node in nodes.values():
+            entry = []
+            for key in header:
+                entry.append(node[key.lower()])
+            print_nodes.append(entry)
+        printTabular([header] + print_nodes)
+    else:
+        logger.info('System has no nodes defined')
+
+def print_node_details(args):
+    '''fetch and print a detailed view of node information'''
+    nodes = component_call(SYSMGR, False, 'get_nodes',
+            (True, expand_node_args(args)))
+    for node in nodes.values():
+        header_list = []
+        value_list = []
+        header_list.append('node_id')
+        value_list.append(node['node_id'])
+        for key, value in node.iteritems():
+            if isinstance(value, dict):
+                header_list.append(key)
+                for k, v in value.iteritems():
+                    value_list.append('%s: %s'% (k, v))
+            elif isinstance(value, list):
+                header_list.append(key)
+                value_list.append('\n'.join([str(v) for v in value]))
+            elif key == 'node_id':
+                pass
+            else:
+                header_list.append(key)
+                value_list.append(value)
+        print_vertical([header_list, value_list])
+    return
+
+def expand_node_args(arg_list):
+    '''expand a comma-separated, hyphen-condensed list'''
+    exp_arg_list = []
+    for arg in arg_list:
+        exp_arg_list.extend(Cobalt.Util.expand_num_list(arg))
+    return exp_arg_list

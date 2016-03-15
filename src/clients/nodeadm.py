@@ -90,22 +90,13 @@ def main():
     if impl in ['alps_system']:
         updates = {}
         if opt.list_nstates:
-            nodes = client_utils.component_call(SYSMGR, False, 'get_nodes',
-                    (True,))
-            if len(nodes) > 0:
-                header = ['Node_id', 'Name', 'Queues', 'status']
-                print_nodes = []
-                for node in nodes.values():
-                    entry = []
-                    for key in header:
-                        entry.append(node[key.lower()])
-                    print_nodes.append(entry)
-                client_utils.printTabular([header] + print_nodes)
-            else:
-                client_utils.logger.info('System has no nodes defined')
+            client_utils.print_node_list()
             return
         if opt.list_details:
-            #list details and bail
+            # list details and bail
+            # get list from arguments.  Currently assuing a comma separated,
+            # hyphen-condensed nodelist
+            client_utils.print_node_details(args)
             return
         update_type = 'ERROR'
         if opt.down:
@@ -117,14 +108,8 @@ def main():
         elif opt.queue:
             update_type = 'queue'
             updates['queues'] = opt.queue
-        print args
-        #expand arguments
-        exp_arg_list = []
-        for arg in args:
-            exp_arg_list.extend(expand_num_list(arg))
-        print exp_arg_list
         mod_nodes = client_utils.component_call(SYSMGR, False, 'update_nodes',
-                (updates, exp_arg_list, whoami))
+                (updates, client_utils.expand_node_args(args), whoami))
         client_utils.logger.info('Update %s applied to nodes %s', update_type,
                 compact_num_list(mod_nodes))
 
@@ -159,7 +144,10 @@ def main():
             data = client_utils.component_call(SYSMGR, False, 'set_queue_assignments', (opt.queue, args, whoami))
             client_utils.logger.info(data)
 
-    
+
+
+
+
 if __name__ == '__main__':
     try:
         main()
