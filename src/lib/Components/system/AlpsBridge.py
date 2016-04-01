@@ -24,7 +24,7 @@ BASIL_PATH = get_config_option('alps', 'basil',
 _RUNID_GEN = IncrID()
 CHILD_SLEEP_TIMEOUT = float(get_config_option('alps', 'child_sleep_timeout',
                                               1.0))
-DEFAULT_DEPTH = int(get_config_option('alps', 'default_depth', 8))
+DEFAULT_DEPTH = int(get_config_option('alps', 'default_depth', 72))
 
 class BridgeError(Exception):
     '''Exception class so that we may easily recognize bridge-specific errors.'''
@@ -56,9 +56,9 @@ def reserve(user, jobid, nodecount, attributes=None, node_id_list=None):
 
     params['user_name'] = user
     params['batch_id'] = jobid
-    param_attrs['width'] = attributes.get('width', nodecount)
-    param_attrs['depth'] = attributes.get('depth', DEFAULT_DEPTH)
-    param_attrs['nppn'] = attributes.get('nnpn', None)
+    param_attrs['width'] = attributes.get('width', nodecount * DEFAULT_DEPTH)
+    param_attrs['depth'] = attributes.get('depth', None)
+    param_attrs['nppn'] = attributes.get('nppn', DEFAULT_DEPTH)
     param_attrs['npps'] = attributes.get('nnps', None)
     param_attrs['nspn'] = attributes.get('nspn', None)
     param_attrs['reservation_mode'] = attributes.get('reservation_mode',
@@ -71,8 +71,11 @@ def reserve(user, jobid, nodecount, attributes=None, node_id_list=None):
             params[key] = val
     if node_id_list is not None:
         params['node_list'] = [int(i) for i in node_id_list]
+    _logger.debug('reserve request: %s', str(BasilRequest('RESERVE',
+        params=params)))
     retval = _call_sys_forker(BASIL_PATH, str(BasilRequest('RESERVE',
         params=params)))
+    _logger.debug('reserve return %s', retval)
     return retval
 
 def release(alps_res_id):
@@ -144,7 +147,18 @@ def fetch_inventory(changecount=None, resinfo=False):
         params['changecount'] = changecount
     if resinfo:
         params['resinfo'] = True
+    #TODO: add a flag for systems with version <=1.4 of ALPS
     req = BasilRequest('QUERY', 'INVENTORY', params)
+    return _call_sys_forker(BASIL_PATH, str(req))
+
+def fetch_system():
+    params = {}
+    req = BasilRequest('QUERY', 'SYSTEM', params)
+    return _call_sys_forker(BASIL_PATH, str(req))
+
+def fetch_reserved_nodes():
+    params = {}
+    req = BasilRequest('QUERY', 'RESERVEDNODES', params)
     return _call_sys_forker(BASIL_PATH, str(req))
 
 def _call_sys_forker(basil_path, in_str):
@@ -196,4 +210,4 @@ if __name__ == '__main__':
     print_node_names(fetch_inventory(resinfo=True))
 
     #print fetch_inventory(changecount=0)
-    print reserve('richp', 42, 11)
+    print fetch_system()
