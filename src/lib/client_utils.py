@@ -1286,9 +1286,12 @@ def print_node_list():
         for node in nodes.values():
             entry = []
             for key in header:
-                entry.append(node[key.lower()])
+                if key.lower() == 'node_id':
+                    entry.append(int(node[key.lower()]))
+                else:
+                    entry.append(node[key.lower()])
             print_nodes.append(entry)
-        printTabular([header] + print_nodes)
+        printTabular([header] + sorted(print_nodes))
     else:
         logger.info('System has no nodes defined')
 
