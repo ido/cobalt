@@ -12,7 +12,7 @@ from Cobalt.Proxy import ComponentProxy
 from Cobalt.Data import IncrID
 from Cobalt.Util import sleep
 from Cobalt.Util import init_cobalt_config, get_config_option
-from Cobalt.Util import compact_num_list
+from Cobalt.Util import compact_num_list, expand_num_list
 
 _logger = logging.getLogger()
 init_cobalt_config()
@@ -149,17 +149,45 @@ def fetch_inventory(changecount=None, resinfo=False):
         params['resinfo'] = True
     #TODO: add a flag for systems with version <=1.4 of ALPS
     req = BasilRequest('QUERY', 'INVENTORY', params)
+    #print str(req)
     return _call_sys_forker(BASIL_PATH, str(req))
 
-def fetch_system():
-    params = {}
-    req = BasilRequest('QUERY', 'SYSTEM', params)
+def fetch_reservations():
+    '''fetch reservation data.  This includes reservation metadata but not the
+    reserved nodes.
+
+    '''
+    params = {'resinfo': True, 'nonodes' : True}
+    req = BasilRequest('QUERY', 'INVENTORY', params)
     return _call_sys_forker(BASIL_PATH, str(req))
 
-def fetch_reserved_nodes():
+def reserved_nodes():
     params = {}
     req = BasilRequest('QUERY', 'RESERVEDNODES', params)
     return _call_sys_forker(BASIL_PATH, str(req))
+
+def fetch_aggretate_reservation_data():
+    '''correlate node and reservation data to get which nodes are in which
+    reservation.
+
+    '''
+
+def extract_system_node_data(node_data):
+    ret_nodeinfo = {}
+    for node_info in node_data['nodes']:
+        #extract nodeids, construct from bulk data block...
+        for node_id in expand_num_list(node_info['node_ids']):
+            node = {}
+            node['node_id'] = node_id
+            node['state'] = node_info['state']
+            node['role'] = node_info['role']
+            node['attrs'] = node_info
+            ret_nodeinfo[str(node_id)] = node
+        del node_info['state']
+        del node_info['node_ids']
+        del node_info['role']
+    return ret_nodeinfo
+
 
 def _call_sys_forker(basil_path, in_str):
     '''take a parameter dictionary and make appropriate call through to BASIL
@@ -207,7 +235,10 @@ def print_node_names(spec):
         print node['name']
 
 if __name__ == '__main__':
-    print_node_names(fetch_inventory(resinfo=True))
+    #print_node_names(fetch_inventory(resinfo=True))
 
-    #print fetch_inventory(changecount=0)
-    print fetch_system()
+    # print fetch_inventory(changecount=0)
+    # print extract_system_node_data(system())
+    # print fetch_reserved_nodes()
+    # print fetch_inventory(resinfo=True)
+    print fetch_reservations()

@@ -1297,6 +1297,16 @@ def print_node_list():
 
 def print_node_details(args):
     '''fetch and print a detailed view of node information'''
+    def gen_printable_value(value):
+        if isinstance(value, dict):
+            retval = ', '.join(['%s: %s'% (k, gen_printable_value(v)) for k, v in
+                value.iteritems()])
+        elif isinstance(value, list):
+            retval = ', '.join([gen_printable_value(v) for v in value])
+        else:
+            retval = str(value)
+        return retval
+
     nodes = component_call(SYSMGR, False, 'get_nodes',
             (True, expand_node_args(args)))
     for node in nodes.values():
@@ -1305,18 +1315,17 @@ def print_node_details(args):
         header_list.append('node_id')
         value_list.append(node['node_id'])
         for key, value in node.iteritems():
-            if isinstance(value, dict):
-                header_list.append(key)
-                for k, v in value.iteritems():
-                    value_list.append('%s: %s'% (k, v))
-            elif isinstance(value, list):
-                header_list.append(key)
-                value_list.append('\n'.join([str(v) for v in value]))
-            elif key == 'node_id':
+            # if isinstance(value, dict):
+                # header_list.append(key)
+                # value_list.append(gen_printable_value(value))
+            # elif isinstance(value, list):
+                # header_list.append(key)
+                # value_list.append(gen_printable_value(value))
+            if key == 'node_id':
                 pass
             else:
                 header_list.append(key)
-                value_list.append(value)
+                value_list.append(gen_printable_value(value))
         print_vertical([header_list, value_list])
     return
 
