@@ -250,20 +250,24 @@ class CraySystem(BaseSystem):
         #current alps reservations, the node is ready to schedule again.
         now = time.time()
         with self._node_lock:
+            fetch_time_start = time.time()
             try:
                 #I have seen problems with the kitchen-sink query here, where
                 #the output gets truncated on it's way into Cobalt.
-                inventory = ALPSBridge.fetch_inventory(resinfo=True) #This is a full-refresh,
+                #inventory = ALPSBridge.fetch_inventory(resinfo=True) #This is a full-refresh,
                 #determine if summary may be used under normal operation
                 #updated for >= 1.6 interface
-                #inventory = ALPSBridge.fetch_system()
-                #reserved_nodes = ALPSBridge.fetch_reserved_nodes()
+                inven_nodes = ALPSBridge.extract_system_node_data(ALPSBridge.system())
+                #inventory = ALPSBridge.system()
+                reservations = ALPSBridge.fetch_reservations()
+                #reserved_nodes = ALPSBridge.reserved_nodes()
             except (ALPSBridge.ALPSError, ComponentLookupError):
                 _logger.warning('Error contacting ALPS for state update.  Aborting this update',
                         exc_info=True)
                 return
-            inven_nodes = inventory['nodes']
-            inven_reservations = inventory['reservations']
+            inven_reservations = reservations.get('reservations', []) # no reservations will be blank
+            fetch_time_start = time.time()
+            _logger.debug("time in ALPS fetch: %s seconds", (time.time() - fetch_time_start))
             start_time = time.time()
             # if node.status not in ['cleanup', 'cleanup-pending']:
                 # node.status = 'idle'
@@ -322,7 +326,7 @@ class CraySystem(BaseSystem):
                         released_res_jobids.append(alps_res.jobid)
 
         #find hardware status
-            for inven_node in inven_nodes:
+            for inven_node in inven_nodes.values():
                 if self.nodes.has_key(str(inven_node['node_id'])):
                     node = self.nodes[str(inven_node['node_id'])]
                     if node.reserved:

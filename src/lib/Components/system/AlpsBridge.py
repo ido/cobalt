@@ -171,6 +171,7 @@ def fetch_aggretate_reservation_data():
     reservation.
 
     '''
+    pass
 
 def extract_system_node_data(node_data):
     ret_nodeinfo = {}
