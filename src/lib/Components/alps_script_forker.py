@@ -10,7 +10,7 @@ import Cobalt.Components.pg_forker
 PGChild = Cobalt.Components.pg_forker.PGChild
 PGForker = Cobalt.Components.pg_forker.PGForker
 import Cobalt.Util
-
+from Cobalt.Util import init_cobalt_config, get_config_option
 
 from cray_messaging import BasilRequest
 from cray_messaging import parse_response, ALPSError
@@ -22,7 +22,10 @@ convert_argv_to_quoted_command_string = Cobalt.Util.convert_argv_to_quoted_comma
 _logger = logging.getLogger(__name__.split('.')[-1])
 
 #CONFIG POINT TO ALPS
-BASIL_PATH = '/home/richp/alps_simulator/apbasil.sh' #fetch this from config
+
+init_cobalt_config()
+BASIL_PATH = get_config_option('alps', 'basil',
+                               '/home/richp/alps-simulator/apbasil.sh')
 
 
 class ALPSScriptChild (PGChild):

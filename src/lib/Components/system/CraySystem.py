@@ -142,7 +142,14 @@ class CraySystem(BaseSystem):
         pending = True
         while pending:
             try:
-                inventory = ALPSBridge.fetch_inventory(resinfo=True)
+                # None of these queries has strictly degenerate data.  Inventory
+                # is needed for raw reservation data.  System gets memory and a
+                # much more compact representation of data.  Reservednodes gives
+                # which notes are reserved.
+                inventory = ALPSBridge.fetch_inventory()
+                system = ALPSBridge.extract_system_node_data(ALPSBridge.system())
+                reservations = ALPSBridge.fetch_reservations()
+                # reserved_nodes = ALPSBridge.reserved_nodes()
             except Exception:
                 #don't crash out here.  That may trash a statefile.
                 _logger.error('Possible transient encountered during initialization. Retrying.',
@@ -151,16 +158,34 @@ class CraySystem(BaseSystem):
             else:
                 pending = False
 
-        for nodespec in inventory['nodes']:
-            node = CrayNode(nodespec)
-            node.managed = True
-            retnodes[node.node_id] = node
-        self.nodes = retnodes
+        self._assemble_nodes(inventory, system)
         #Reversing the node name to id lookup is going to save a lot of cycles.
         for node in self.nodes.values():
             self.node_name_to_id[node.name] = node.node_id
         _logger.info('NODE INFORMATION INITIALIZED')
         _logger.info('ALPS REPORTS %s NODES', len(self.nodes))
+        # self._assemble_reservations(reservations, reserved_nodes)
+        return
+
+    def _assemble_nodes(self, inventory, system):
+        '''merge together the INVENTORY and SYSTEM query data to form as
+        complete a picture of a node as we can.
+
+        '''
+        nodes = {}
+        for nodespec in inventory['nodes']:
+            node = CrayNode(nodespec)
+            node.managed = True
+            nodes[node.node_id] = node
+        for node_id, nodespec in system.iteritems():
+            nodes[node_id].attributes.update(nodespec['attrs'])
+            nodes[node_id].status = nodespec['state']
+            #TODO: put in a disable for nodes in a non-batch role
+        self.nodes = nodes
+
+    def _assemble_reservations(self, reservations, reserved_nodes):
+        # FIXME: we can recover reservations now.  Implement this.
+        pass
 
     def _gen_node_to_queue(self):
         '''(Re)Generate a mapping for fast lookup of node-id's to queues.'''
@@ -225,15 +250,24 @@ class CraySystem(BaseSystem):
         #current alps reservations, the node is ready to schedule again.
         now = time.time()
         with self._node_lock:
+            fetch_time_start = time.time()
             try:
-                inventory = ALPSBridge.fetch_inventory(resinfo=True) #This is a full-refresh,
+                #I have seen problems with the kitchen-sink query here, where
+                #the output gets truncated on it's way into Cobalt.
+                #inventory = ALPSBridge.fetch_inventory(resinfo=True) #This is a full-refresh,
                 #determine if summary may be used under normal operation
+                #updated for >= 1.6 interface
+                inven_nodes = ALPSBridge.extract_system_node_data(ALPSBridge.system())
+                #inventory = ALPSBridge.system()
+                reservations = ALPSBridge.fetch_reservations()
+                #reserved_nodes = ALPSBridge.reserved_nodes()
             except (ALPSBridge.ALPSError, ComponentLookupError):
                 _logger.warning('Error contacting ALPS for state update.  Aborting this update',
                         exc_info=True)
                 return
-            inven_nodes = inventory['nodes']
-            inven_reservations = inventory['reservations']
+            inven_reservations = reservations.get('reservations', []) # no reservations will be blank
+            fetch_time_start = time.time()
+            _logger.debug("time in ALPS fetch: %s seconds", (time.time() - fetch_time_start))
             start_time = time.time()
             # if node.status not in ['cleanup', 'cleanup-pending']:
                 # node.status = 'idle'
@@ -264,7 +298,6 @@ class CraySystem(BaseSystem):
 
             for alps_res in self.alps_reservations.values():
                 #find alps_id associated reservation
-                found = False
                 if int(alps_res.alps_res_id) not in current_alps_res_ids:
                 #for res_info in inven_reservations:
                     #if int(alps_res.alps_res_id) == int(res_info['reservation_id']):
@@ -293,7 +326,7 @@ class CraySystem(BaseSystem):
                         released_res_jobids.append(alps_res.jobid)
 
         #find hardware status
-            for inven_node in inven_nodes:
+            for inven_node in inven_nodes.values():
                 if self.nodes.has_key(str(inven_node['node_id'])):
                     node = self.nodes[str(inven_node['node_id'])]
                     if node.reserved:
@@ -308,8 +341,6 @@ class CraySystem(BaseSystem):
                             else:
                                 node.release(user=None, jobid=None, force=True)
                     else:
-                        _logger.debug('node %s should be marked idle',
-                                node.node_id)
                         node.status = inven_node['state'].upper()
                 else:
                     # Cannot add nodes on the fly.  Or at lesat we shouldn't be
@@ -465,8 +496,6 @@ class CraySystem(BaseSystem):
                     # reservation need to do extra work for a reservation
                     continue
                 idle_nodecount = idle_nodes_by_queue[job['queue']]
-                _logger.debug('idle_nodes_by_queue: %s',
-                        idle_nodes_by_queue[job['queue']])
                 node_id_list = list(self.nodes_by_queue[job['queue']])
                 if 'location' in job['attrs'].keys():
                     job_set = set([int(nid) for nid in
@@ -539,7 +568,7 @@ class CraySystem(BaseSystem):
         on the set of nodes, and will mark nodes as allocated.
 
         '''
-        attrs = job['attrs']
+        _logger.debug('attrs: %s', job['attrs'])
         try:
             res_info = ALPSBridge.reserve(job['user'], job['jobid'],
                 int(job['nodes']), job['attrs'], node_id_list)
@@ -761,6 +790,12 @@ class CraySystem(BaseSystem):
         '''
         #Right now this does nothing.  Still figuring out what a valid
         #specification looks like.
+        # FIXME: Pull this out of the system configuration from ALPS ultimately.
+        # For now, set this from config for the PE count per node
+        # nodes = int(spec['nodes'])
+        # proccount = spec.get('proccount', None)
+        # if proccount is None:
+            # nodes * 
         return spec
 
     @exposed

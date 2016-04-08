@@ -12,7 +12,7 @@ from Cobalt.Proxy import ComponentProxy
 from Cobalt.Data import IncrID
 from Cobalt.Util import sleep
 from Cobalt.Util import init_cobalt_config, get_config_option
-from Cobalt.Util import compact_num_list
+from Cobalt.Util import compact_num_list, expand_num_list
 
 _logger = logging.getLogger()
 init_cobalt_config()
@@ -24,7 +24,7 @@ BASIL_PATH = get_config_option('alps', 'basil',
 _RUNID_GEN = IncrID()
 CHILD_SLEEP_TIMEOUT = float(get_config_option('alps', 'child_sleep_timeout',
                                               1.0))
-DEFAULT_DEPTH = int(get_config_option('alps', 'default_depth', 8))
+DEFAULT_DEPTH = int(get_config_option('alps', 'default_depth', 72))
 
 class BridgeError(Exception):
     '''Exception class so that we may easily recognize bridge-specific errors.'''
@@ -56,9 +56,9 @@ def reserve(user, jobid, nodecount, attributes=None, node_id_list=None):
 
     params['user_name'] = user
     params['batch_id'] = jobid
-    param_attrs['width'] = attributes.get('width', nodecount)
-    param_attrs['depth'] = attributes.get('depth', DEFAULT_DEPTH)
-    param_attrs['nppn'] = attributes.get('nnpn', None)
+    param_attrs['width'] = attributes.get('width', nodecount * DEFAULT_DEPTH)
+    param_attrs['depth'] = attributes.get('depth', None)
+    param_attrs['nppn'] = attributes.get('nppn', DEFAULT_DEPTH)
     param_attrs['npps'] = attributes.get('nnps', None)
     param_attrs['nspn'] = attributes.get('nspn', None)
     param_attrs['reservation_mode'] = attributes.get('reservation_mode',
@@ -71,8 +71,11 @@ def reserve(user, jobid, nodecount, attributes=None, node_id_list=None):
             params[key] = val
     if node_id_list is not None:
         params['node_list'] = [int(i) for i in node_id_list]
+    _logger.debug('reserve request: %s', str(BasilRequest('RESERVE',
+        params=params)))
     retval = _call_sys_forker(BASIL_PATH, str(BasilRequest('RESERVE',
         params=params)))
+    _logger.debug('reserve return %s', retval)
     return retval
 
 def release(alps_res_id):
@@ -144,8 +147,48 @@ def fetch_inventory(changecount=None, resinfo=False):
         params['changecount'] = changecount
     if resinfo:
         params['resinfo'] = True
+    #TODO: add a flag for systems with version <=1.4 of ALPS
+    req = BasilRequest('QUERY', 'INVENTORY', params)
+    #print str(req)
+    return _call_sys_forker(BASIL_PATH, str(req))
+
+def fetch_reservations():
+    '''fetch reservation data.  This includes reservation metadata but not the
+    reserved nodes.
+
+    '''
+    params = {'resinfo': True, 'nonodes' : True}
     req = BasilRequest('QUERY', 'INVENTORY', params)
     return _call_sys_forker(BASIL_PATH, str(req))
+
+def reserved_nodes():
+    params = {}
+    req = BasilRequest('QUERY', 'RESERVEDNODES', params)
+    return _call_sys_forker(BASIL_PATH, str(req))
+
+def fetch_aggretate_reservation_data():
+    '''correlate node and reservation data to get which nodes are in which
+    reservation.
+
+    '''
+    pass
+
+def extract_system_node_data(node_data):
+    ret_nodeinfo = {}
+    for node_info in node_data['nodes']:
+        #extract nodeids, construct from bulk data block...
+        for node_id in expand_num_list(node_info['node_ids']):
+            node = {}
+            node['node_id'] = node_id
+            node['state'] = node_info['state']
+            node['role'] = node_info['role']
+            node['attrs'] = node_info
+            ret_nodeinfo[str(node_id)] = node
+        del node_info['state']
+        del node_info['node_ids']
+        del node_info['role']
+    return ret_nodeinfo
+
 
 def _call_sys_forker(basil_path, in_str):
     '''take a parameter dictionary and make appropriate call through to BASIL
@@ -193,7 +236,10 @@ def print_node_names(spec):
         print node['name']
 
 if __name__ == '__main__':
-    print_node_names(fetch_inventory(resinfo=True))
+    #print_node_names(fetch_inventory(resinfo=True))
 
-    #print fetch_inventory(changecount=0)
-    print reserve('richp', 42, 11)
+    # print fetch_inventory(changecount=0)
+    # print extract_system_node_data(system())
+    # print fetch_reserved_nodes()
+    # print fetch_inventory(resinfo=True)
+    print fetch_reservations()
