@@ -258,34 +258,22 @@ class CraySystem(BaseSystem):
                 #determine if summary may be used under normal operation
                 #updated for >= 1.6 interface
                 inven_nodes = ALPSBridge.extract_system_node_data(ALPSBridge.system())
-                #inventory = ALPSBridge.system()
                 reservations = ALPSBridge.fetch_reservations()
                 #reserved_nodes = ALPSBridge.reserved_nodes()
             except (ALPSBridge.ALPSError, ComponentLookupError):
                 _logger.warning('Error contacting ALPS for state update.  Aborting this update',
                         exc_info=True)
                 return
-            inven_reservations = reservations.get('reservations', []) # no reservations will be blank
+            inven_reservations = reservations.get('reservations', [])
             fetch_time_start = time.time()
             _logger.debug("time in ALPS fetch: %s seconds", (time.time() - fetch_time_start))
             start_time = time.time()
-            # if node.status not in ['cleanup', 'cleanup-pending']:
-                # node.status = 'idle'
             # check our reservation objects.  If a res object doesn't correspond
             # to any backend reservations, this reservation object should be
             # dropped
             alps_res_to_delete = []
             current_alps_res_ids = [int(res['reservation_id']) for res in
                     inven_reservations]
-            for alps_res in self.alps_reservations.values():
-                if not alps_res.alps_res_id in current_alps_res_ids:
-                    alps_res_to_delete.append(alps_res)
-            for res in alps_res_to_delete:
-                _logger.warning('Deleting orphaned ALPS reservation %s',
-                        res.alps_res_id)
-                del self.alps_reservations[str(res.jobid)]
-            # Check our reservations.  If it's ID is not in the inventory, then the
-            # nodes need to be returned to the pool. Give them the 'idle' state
             res_jobid_to_delete = []
             if self.alps_reservations == {}:
                 # if we have nodes in cleanup-pending but no alps reservations,
@@ -295,14 +283,9 @@ class CraySystem(BaseSystem):
                 for node in self.nodes.values():
                     if node.status in ['cleanup', 'cleanup-pending']:
                         node.status = 'idle'
-
             for alps_res in self.alps_reservations.values():
                 #find alps_id associated reservation
                 if int(alps_res.alps_res_id) not in current_alps_res_ids:
-                #for res_info in inven_reservations:
-                    #if int(alps_res.alps_res_id) == int(res_info['reservation_id']):
-                    #    found = True
-                #if not found:
                     for node_id in alps_res.node_ids:
                         if not self.nodes[str(node_id)].reserved:
                             #pending hardware status update
@@ -311,6 +294,15 @@ class CraySystem(BaseSystem):
             for jobid in res_jobid_to_delete:
                 _logger.info('%s: ALPS reservation for this job complete.', jobid)
                 del self.alps_reservations[str(jobid)]
+            # Check our reservations.  If it's ID is not in the inventory, then the
+            # nodes need to be returned to the pool. Give them the 'idle' state
+            for alps_res in self.alps_reservations.values():
+                if not alps_res.alps_res_id in current_alps_res_ids:
+                    alps_res_to_delete.append(alps_res)
+            for res in alps_res_to_delete:
+                _logger.warning('Deleting orphaned ALPS reservation %s',
+                        res.alps_res_id)
+                del self.alps_reservations[str(res.jobid)]
             #process group should already be on the way down since cqm released the
             #resource reservation
             cleanup_nodes = [node for node in self.nodes.values()
@@ -672,7 +664,7 @@ class CraySystem(BaseSystem):
                 self.logger.info("job %s:  nodes '%s' released. Cleanup pending.",
                     jobid, compact_num_list(succeeded_nodes))
                 if failed_nodes != []:
-                    self.logger.warning("job %s: failed to reserve nodes '%s'",
+                    self.logger.warning("job %s: failed to release nodes '%s'",
                         jobid, compact_num_list(failed_nodes))
                 else:
                     completed = True

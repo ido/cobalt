@@ -145,6 +145,7 @@ class Resource(object):
         if not self.reserved:
             _logger.warning('Release of already free resource %s attempted.' \
                     ' Release ignored.', self.name)
+            released = True
         elif (force or (user == self.reserved_by or
                         jobid == self.reserved_jobid)):
             if force:

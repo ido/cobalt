@@ -71,11 +71,8 @@ def reserve(user, jobid, nodecount, attributes=None, node_id_list=None):
             params[key] = val
     if node_id_list is not None:
         params['node_list'] = [int(i) for i in node_id_list]
-    _logger.debug('reserve request: %s', str(BasilRequest('RESERVE',
-        params=params)))
     retval = _call_sys_forker(BASIL_PATH, str(BasilRequest('RESERVE',
         params=params)))
-    _logger.debug('reserve return %s', retval)
     return retval
 
 def release(alps_res_id):
