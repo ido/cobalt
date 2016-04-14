@@ -15,15 +15,17 @@ class CrayNode(ClusterNode):
 
     CRAY_STATE_MAP = {'UP': 'idle', 'DOWN':'down', 'UNAVAILABLE':'down',
             'ROUTING':'down', 'SUSPECT':'down', 'ADMIN':'down',
-            'UNKNOWN':'down'}
+            'UNKNOWN':'down', 'UNAVAIL': 'down', 'SWDOWN': 'down',
+            'REBOOTQ':'down'}
 
     def __init__(self, spec):
         super(CrayNode, self).__init__(spec)
         self._status = self.CRAY_STATE_MAP[spec['state'].upper()]
         self.node_id = spec['node_id']
-        self.role = spec['role']
+        self.role = spec['role'].upper()
         self.attributes['architecture'] = spec['architecture']
         self.segment_details = spec['SocketArray']
+        CrayNode.RESOURCE_STATUSES.append('alps-interactive')
 
     def to_dict(self):
         return self.__dict__
