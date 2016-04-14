@@ -433,6 +433,26 @@ class CraySystem(BaseSystem):
             self.current_equivalence_classes.append(eq_class)
         return equiv
 
+    def _assemble_queue_data(self, queue_name):
+        '''put together data for a queue, or queue-like reservation structure.
+
+        return count of idle resources, and a list of valid nodes..
+
+
+        '''
+        node_id_list = list(set(job.get('required', []) -
+            job.get('forbidden', [])))
+        idle_nodecount = 0
+        unavailable_nodes = []
+        for node_id in node_id_list:
+            if self.nodes[str(node_id)].status in ['idle']:
+                idle_nodecount += 1
+            else:
+                unavailable_nodes.append(node_id)
+        for node_id in unavailable_nodes:
+            node_id_list.remove(node_id)
+        return (idle_nodecount, node_id_list)
+
     @locking
     @exposed
     def find_job_location(self, arg_list, end_times, pt_blocking_locations=[]):
@@ -472,25 +492,36 @@ class CraySystem(BaseSystem):
         now = time.time()
         resource_until_time = now + TEMP_RESERVATION_TIME
         with self._node_lock:
+            # general idle nodecount
             idle_nodecount = len([node for node in self.nodes.values() if
                 node.managed and node.status is 'idle'])
             # only valid for this scheduler iteration.
+            # RESERVATION SUPPORT: Reservation queues are ephemeral, so we will
+            # not find the queue normally. In the event of a reservation we'll
+            # have to intersect required nodes with the idle and available
+            # we also have to forbid a bunch of locations, in  this case.
             idle_nodes_by_queue = self._idle_nodes_by_queue()
+
             self._clear_draining_for_queues(arg_list[0]['queue'])
             #check if we can run immedaitely, if not drain.  Keep going until all
             #nodes are marked for draining or have a pending run.
             best_match = {} #jobid: list(locations)
+            reservation_queue_info = {}
             for job in arg_list:
                 if not job['queue'] in self.nodes_by_queue.keys():
                     # Either a new queue with no resources, or a possible
                     # reservation need to do extra work for a reservation
-                    continue
-                idle_nodecount = idle_nodes_by_queue[job['queue']]
-                node_id_list = list(self.nodes_by_queue[job['queue']])
+                    idle_nodecount, node_id_list = self._assemble_queue_data(job['queue'])
+                else:
+                    idle_nodecount = idle_nodes_by_queue[job['queue']]
+                    node_id_list = list(self.nodes_by_queue[job['queue']])
                 if 'location' in job['attrs'].keys():
                     job_set = set([int(nid) for nid in
                         expand_num_list(job['attrs']['location'])])
                     queue_set = set([int(nid) for nid in node_id_list])
+                    forbidden = set(job.get('forbidden', []))
+                    required = set(job.get('required', []))
+                    queue_set = (queue_set - forbidden) | required
                     if job_set <= queue_set:
                         node_id_list = job['attrs']['location']
                     else:
