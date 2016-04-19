@@ -398,7 +398,7 @@ class CraySystem(BaseSystem):
             for e in equiv:
                 for queue in node_active_queues:
                     if queue in e['queues']:
-                        e['data'].add(node.name)
+                        e['data'].add(node.node_id)
                         e['queues'] = e['queues'] | set(node_active_queues)
                         found_a_match = True
                         break
@@ -406,7 +406,7 @@ class CraySystem(BaseSystem):
                     break
             if not found_a_match:
                 equiv.append({'queues': set(node_active_queues),
-                              'data': set([node.name]),
+                              'data': set([node.node_id]),
                               'reservations': set()})
         #second pass to merge queue lists based on hardware
         real_equiv = []
@@ -424,8 +424,8 @@ class CraySystem(BaseSystem):
         #add in reservations:
         for eq_class in equiv:
             for res_name in reservation_dict:
-                for node_name in reservation_dict[res_name].split(":"):
-                    if node_name in eq_class['data']:
+                for node_id in reservation_dict[res_name].split(":"):
+                    if node_id in eq_class['data']:
                         eq_class['reservations'].add(res_name)
                         break
             #don't send what could be a large block list back in the return
