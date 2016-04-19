@@ -269,7 +269,7 @@ class CraySystem(BaseSystem):
                 return
             inven_reservations = reservations.get('reservations', [])
             fetch_time_start = time.time()
-            _logger.debug("time in ALPS fetch: %s seconds", (time.time() - fetch_time_start))
+            #_logger.debug("time in ALPS fetch: %s seconds", (time.time() - fetch_time_start))
             start_time = time.time()
             # check our reservation objects.  If a res object doesn't correspond
             # to any backend reservations, this reservation object should be
@@ -294,6 +294,8 @@ class CraySystem(BaseSystem):
                             #pending hardware status update
                             self.nodes[str(node_id)].status = 'idle'
                     res_jobid_to_delete.append(alps_res.jobid)
+                    _logger.info('Nodes %s cleanup complete.',
+                            compact_num_list(alps_res.node_ids))
             for jobid in res_jobid_to_delete:
                 _logger.info('%s: ALPS reservation for this job complete.', jobid)
                 del self.alps_reservations[str(jobid)]
@@ -340,7 +342,7 @@ class CraySystem(BaseSystem):
             #keep node that are marked for cleanup still in cleanup
             for node in cleanup_nodes:
                 node.status = 'cleanup-pending'
-        _logger.debug("time in UNS lock: %s seconds", (time.time() - start_time))
+        #_logger.debug("time in UNS lock: %s seconds", (time.time() - start_time))
         return
 
 
@@ -433,24 +435,51 @@ class CraySystem(BaseSystem):
             self.current_equivalence_classes.append(eq_class)
         return equiv
 
-    def _assemble_queue_data(self, queue_name):
+    def _assemble_queue_data(self, job, idle_nodes_by_queue):
         '''put together data for a queue, or queue-like reservation structure.
 
         return count of idle resources, and a list of valid nodes..
 
 
         '''
-        node_id_list = list(set(job.get('required', []) -
-            job.get('forbidden', [])))
+        # RESERVATION SUPPORT: Reservation queues are ephemeral, so we will
+        # not find the queue normally. In the event of a reservation we'll
+        # have to intersect required nodes with the idle and available
+        # we also have to forbid a bunch of locations, in  this case.
         idle_nodecount = 0
         unavailable_nodes = []
-        for node_id in node_id_list:
-            if self.nodes[str(node_id)].status in ['idle']:
-                idle_nodecount += 1
+        forbidden = set(job.get('forbidden', []))
+        required = set(job.get('required', []))
+        requested_locations = expand_num_list(job['attrs'].get('location', ''))
+        if not job['queue'] in self.nodes_by_queue.keys():
+            # Either a new queue with no resources, or a possible
+            # reservation need to do extra work for a reservation
+            node_id_list = list(required - forbidden)
+            for node_id in node_id_list:
+                if self.nodes[str(node_id)].status in ['idle']:
+                    idle_nodecount += 1
+                else:
+                    unavailable_nodes.append(node_id)
+            for node_id in unavailable_nodes:
+                node_id_list.remove(node_id)
+        else:
+            idle_nodecount = idle_nodes_by_queue[job['queue']] - len(forbidden)
+            node_id_list = list(set(self.nodes_by_queue[job['queue']]) - forbidden)
+        if requested_locations != []:
+            job_set = set([int(nid) for nid in requested_locations])
+            if job_set <= set([int(node_id) for node_id in
+                                self.nodes_by_queue[job['queue']]]):
+                node_id_list = requested_locations
+                if not set(node_id_list).isdisjoint(forbidden):
+                    # this job has requested locations that are a part of an
+                    # active reservation.  Remove locaitons and drop available
+                    # nodecount appropriately.
+                    node_id_list = list(set(node_id_list) - forbidden)
+                idle_nodecount = len(node_id_list)
             else:
-                unavailable_nodes.append(node_id)
-        for node_id in unavailable_nodes:
-            node_id_list.remove(node_id)
+                idle_nodecount = 0
+                node_id_list = []
+                raise ValueError
         return (idle_nodecount, node_id_list)
 
     @locking
@@ -487,7 +516,6 @@ class CraySystem(BaseSystem):
         in this case post job startup.
 
         '''
-        #TODO: add reservation handling
         #TODO: make not first-fit
         now = time.time()
         resource_until_time = now + TEMP_RESERVATION_TIME
@@ -496,45 +524,26 @@ class CraySystem(BaseSystem):
             idle_nodecount = len([node for node in self.nodes.values() if
                 node.managed and node.status is 'idle'])
             # only valid for this scheduler iteration.
-            # RESERVATION SUPPORT: Reservation queues are ephemeral, so we will
-            # not find the queue normally. In the event of a reservation we'll
-            # have to intersect required nodes with the idle and available
-            # we also have to forbid a bunch of locations, in  this case.
             idle_nodes_by_queue = self._idle_nodes_by_queue()
-
             self._clear_draining_for_queues(arg_list[0]['queue'])
             #check if we can run immedaitely, if not drain.  Keep going until all
             #nodes are marked for draining or have a pending run.
             best_match = {} #jobid: list(locations)
             reservation_queue_info = {}
             for job in arg_list:
-                if not job['queue'] in self.nodes_by_queue.keys():
-                    # Either a new queue with no resources, or a possible
-                    # reservation need to do extra work for a reservation
-                    idle_nodecount, node_id_list = self._assemble_queue_data(job['queue'])
-                else:
-                    idle_nodecount = idle_nodes_by_queue[job['queue']]
-                    node_id_list = list(self.nodes_by_queue[job['queue']])
-                if 'location' in job['attrs'].keys():
-                    job_set = set([int(nid) for nid in
-                        expand_num_list(job['attrs']['location'])])
-                    queue_set = set([int(nid) for nid in node_id_list])
-                    forbidden = set(job.get('forbidden', []))
-                    required = set(job.get('required', []))
-                    queue_set = (queue_set - forbidden) | required
-                    if job_set <= queue_set:
-                        node_id_list = job['attrs']['location']
-                    else:
-                        _logger.warning('Job %s: requesting locations that are not in queue for that job.',
-                                job['jobid'])
-                        continue
+                try:
+                    idle_nodecount, node_id_list = self._assemble_queue_data(job, idle_nodes_by_queue)
+                except ValueError as exc:
+                    _logger.warning('Job %s: requesting locations that are not in queue for that job.', job['jobid'])
+                    continue
                 if int(job['nodes']) > len(node_id_list):
-                    _logger.warning('Job %s: requested nodecount of %s exceeds number of nodes in queue %s',
-                            job['jobid'], job['nodes'], len(node_id_list))
+                    # will happen with reserved jobs.
+                    #_logger.warning('Job %s: requested nodecount of %s exceeds number of nodes in queue %s',
+                           # job['jobid'], job['nodes'], len(node_id_list))
                     continue
 
                 if idle_nodecount == 0:
-                    break
+                    continue
                 elif idle_nodecount < 0:
                     _logger.error("FJL showing negative nodecount of %s",
                             idle_nodecount)
@@ -548,7 +557,10 @@ class CraySystem(BaseSystem):
                         self.reserve_resources_until(job_locs,
                                 resource_until_time, job['jobid'])
                         #set resource reservation, adjust idle count
-                        idle_nodes_by_queue[job['queue']] -= int(job['nodes'])
+                        if job['queue'] in idle_nodes_by_queue.keys():
+                            # will recalculate this for reservation-type queues.
+                            # If a reservation, this may not even exist.
+                            idle_nodes_by_queue[job['queue']] -= int(job['nodes'])
                         best_match[job['jobid']] = job_locs
                         _logger.info("%s: Job selected for running on nodes  %s",
                                 label, " ".join(job_locs))
@@ -589,7 +601,7 @@ class CraySystem(BaseSystem):
         on the set of nodes, and will mark nodes as allocated.
 
         '''
-        _logger.debug('attrs: %s', job['attrs'])
+        #_logger.debug('attrs: %s', job['attrs'])
         try:
             res_info = ALPSBridge.reserve(job['user'], job['jobid'],
                 int(job['nodes']), job['attrs'], node_id_list)
@@ -820,6 +832,15 @@ class CraySystem(BaseSystem):
         return spec
 
     @exposed
+    def verify_locations(self, nodes):
+        '''verify that a list of nodes exist on this system.  Return the list
+        that can be found.
+
+        '''
+        good_nodes = [node for node in nodes if str(node) in self.nodes.keys()]
+        return good_nodes
+
+    @exposed
     def update_nodes(self, updates, node_list, user):
         '''Apply update to a node's status from an external client.
 
@@ -883,6 +904,8 @@ class ALPSReservation(object):
         #self.gid = spec['account_name'] #appears to be gid.
         self.dying = False
         self.dead = False #System no longer has this alps reservation
+        _logger.info('ALPS Reservation %s registered for job %s',
+                self.alps_res_id, self.jobid)
 
     def __str__(self):
         return ", ".join([str(self.jobid), str(self.node_ids),
@@ -904,6 +927,8 @@ class ALPSReservation(object):
 
         '''
         self.pg_id = pagg_id
+        _logger.info('ALPS Reservation %s for job %s confirmed',
+                self.alps_res_id, self.jobid)
 
     def release(self):
         '''Release an underlying ALPS reservation.
@@ -913,6 +938,9 @@ class ALPSReservation(object):
         claims are gone
 
         '''
+        if self.dying:
+            #release already issued.  Ignore
+            return
         status = ALPSBridge.release(self.alps_res_id)
         if int(status['claims']) != 0:
             _logger.info('ALPS reservation: %s still has %s claims.',

@@ -36,7 +36,7 @@ import sys
 import time
 from Cobalt import client_utils
 from Cobalt.client_utils import cb_debug, cb_time, cb_date, cb_passthrough, cb_res_users
-
+from Cobalt.Util import expand_num_list, compact_num_list
 from Cobalt.arg_parser import ArgParse
 
 __revision__ = '$Id: setres.py 2154 2011-05-25 00:22:56Z richp $'
@@ -82,10 +82,19 @@ def verify_locations(partitions):
     """
     verify that partitions are valid
     """
-    for p in partitions:
-        test_parts = client_utils.component_call(SYSMGR, False, 'verify_locations', (partitions,))
-        if len(test_parts) != len(partitions):
-            missing = [p for p in partitions if p not in test_parts]
+    check_partitions = partitions
+    system_type = client_utils.component_call(SYSMGR, False, 'get_implementation', ())
+    # if we have args then verify the args (partitions)
+    if system_type in ['alpssystem']:
+        # nodes come in as a compact list.  expand this.
+        check_partitions = []
+        for num_list in partitions:
+            check_partitions.extend(expand_num_list(num_list))
+    for p in check_partitions:
+        test_parts = client_utils.component_call(SYSMGR, False,
+                'verify_locations', (check_partitions,))
+        if len(test_parts) != len(check_partitions):
+            missing = [p for p in check_partitions if p not in test_parts]
             client_utils.logger.error("Missing partitions: %s" % (" ".join(missing)))
             sys.exit(1)
 
@@ -141,7 +150,6 @@ def validate_args(parser,spec,opt_count):
             client_utils.logger.error("Cannot use -D while changing start or cycle time")
             sys.exit(1)
 
-        # if we have args then verify the args (partitions)
         if not parser.no_args():
             verify_locations(parser.args)
 
