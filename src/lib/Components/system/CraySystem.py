@@ -786,6 +786,7 @@ class CraySystem(BaseSystem):
         # proccount = spec.get('proccount', None)
         # if proccount is None:
             # nodes * 
+        spec['proccount'] = spec['nodecount']
         return spec
 
     @exposed
