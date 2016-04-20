@@ -463,7 +463,9 @@ class CraySystem(BaseSystem):
             for node_id in unavailable_nodes:
                 node_id_list.remove(node_id)
         else:
-            idle_nodecount = idle_nodes_by_queue[job['queue']] - len(forbidden)
+            idle_forbidden_count = len([nid for nid in forbidden
+                                        if self.nodes[str(nid)].status =='idle'])
+            idle_nodecount = idle_nodes_by_queue[job['queue']] - idle_forbidden_count
             node_id_list = list(set(self.nodes_by_queue[job['queue']]) - forbidden)
         if requested_locations != []:
             job_set = set([int(nid) for nid in requested_locations])
