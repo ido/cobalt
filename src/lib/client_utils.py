@@ -1280,14 +1280,29 @@ def print_node_list():
     '''fetch and print a list of node information with default headers'''
     nodes = component_call(SYSMGR, False, 'get_nodes',
             (True,))
+    reservations = component_call(SCHMGR, False, 'get_reservations', ([{'queue':'*', 'partitions':'*', 'active':True}],))
+    res_queues = {}
+    for res in reservations:
+        res_nodes = res['partitions'].split(':')
+        for node in res_nodes:
+            if res_queues.get(node, []) == []:
+                res_queues[node] = [res['queue']]
+            else:
+                res_queues[node].append(res['queue'])
+
     if len(nodes) > 0:
-        header = ['Node_id', 'Name', 'Queues', 'status']
+        header = ['Node_id', 'Name', 'Queues', 'Status']
         print_nodes = []
         for node in nodes.values():
             entry = []
             for key in header:
                 if key.lower() == 'node_id':
                     entry.append(int(node[key.lower()]))
+                elif key.lower() == 'queues':
+                    queues = node[key.lower()]
+                    if res_queues.get(str(node['node_id']), False):
+                        queues.extend(res_queues[str(node['node_id'])])
+                    entry.append(':'.join(queues))
                 else:
                     entry.append(node[key.lower()])
             print_nodes.append(entry)
@@ -1309,20 +1324,29 @@ def print_node_details(args):
 
     nodes = component_call(SYSMGR, False, 'get_nodes',
             (True, expand_node_args(args)))
+    reservations = component_call(SCHMGR, False, 'get_reservations', ([{'queue':'*', 'partitions':'*', 'active':True}],))
+    res_queues = {}
+    for res in reservations:
+        res_nodes = res['partitions'].split(':')
+        for node in res_nodes:
+            if res_queues.get(node, []) == []:
+                res_queues[node] = [res['queue']]
+            else:
+                res_queues[node].append(res['queue'])
     for node in nodes.values():
         header_list = []
         value_list = []
         header_list.append('node_id')
         value_list.append(node['node_id'])
         for key, value in node.iteritems():
-            # if isinstance(value, dict):
-                # header_list.append(key)
-                # value_list.append(gen_printable_value(value))
-            # elif isinstance(value, list):
-                # header_list.append(key)
-                # value_list.append(gen_printable_value(value))
             if key == 'node_id':
                 pass
+            elif key == 'queues':
+                header_list.append(key)
+                queues = node[key.lower()]
+                if res_queues.get(str(node['node_id']), False):
+                    queues.extend(res_queues[str(node['node_id'])])
+                value_list.append(':'.join(queues))
             else:
                 header_list.append(key)
                 value_list.append(gen_printable_value(value))
