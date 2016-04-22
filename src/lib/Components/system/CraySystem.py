@@ -424,9 +424,10 @@ class CraySystem(BaseSystem):
         #add in reservations:
         for eq_class in equiv:
             for res_name in reservation_dict:
-                for node_id in reservation_dict[res_name].split(":"):
-                    if node_id in eq_class['data']:
-                        eq_class['reservations'].add(res_name)
+                for node_hunk in reservation_dict[res_name].split(":"):
+                    for node_id in expand_num_list(node_hunk):
+                        if str(node_id) in eq_class['data']:
+                            eq_class['reservations'].add(res_name)
                         break
             #don't send what could be a large block list back in the return
             for key in eq_class:
@@ -434,6 +435,13 @@ class CraySystem(BaseSystem):
             del eq_class['data']
             self.current_equivalence_classes.append(eq_class)
         return equiv
+
+
+    def chain_loc_list(self, loc_list):
+        retlist = []
+        for locs in loc_list:
+            retlist.extend(expand_num_list(locs))
+        return retlist
 
     def _assemble_queue_data(self, job, idle_nodes_by_queue):
         '''put together data for a queue, or queue-like reservation structure.
@@ -448,8 +456,8 @@ class CraySystem(BaseSystem):
         # we also have to forbid a bunch of locations, in  this case.
         idle_nodecount = 0
         unavailable_nodes = []
-        forbidden = set(job.get('forbidden', []))
-        required = set(job.get('required', []))
+        forbidden = set(self.chain_loc_list(job.get('forbidden', [])))
+        required = set(self.chain_loc_list(job.get('required', [])))
         requested_locations = expand_num_list(job['attrs'].get('location', ''))
         if not job['queue'] in self.nodes_by_queue.keys():
             # Either a new queue with no resources, or a possible
