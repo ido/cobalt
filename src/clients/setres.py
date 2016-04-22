@@ -85,7 +85,7 @@ def verify_locations(partitions):
     check_partitions = partitions
     system_type = client_utils.component_call(SYSMGR, False, 'get_implementation', ())
     # if we have args then verify the args (partitions)
-    if system_type in ['alpssystem']:
+    if system_type in ['alps_system']:
         # nodes come in as a compact list.  expand this.
         check_partitions = []
         for num_list in partitions:
