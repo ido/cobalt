@@ -1228,7 +1228,9 @@ def expand_num_list(num_list):
     retlist = []
     elems = num_list.split(',')
     for elem in elems:
-        if len(elem.split('-')) == 1:
+        if elem == '':
+            continue
+        elif len(elem.split('-')) == 1:
             retlist.append(int(elem))
         else:
             nums = elem.split('-')
