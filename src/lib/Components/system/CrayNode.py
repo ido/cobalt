@@ -16,7 +16,7 @@ class CrayNode(ClusterNode):
     CRAY_STATE_MAP = {'UP': 'idle', 'DOWN':'down', 'UNAVAILABLE':'down',
             'ROUTING':'down', 'SUSPECT':'down', 'ADMIN':'down',
             'UNKNOWN':'down', 'UNAVAIL': 'down', 'SWDOWN': 'down',
-            'REBOOTQ':'down'}
+            'REBOOTQ':'down', 'ADMINDOWN':'down'}
 
     def __init__(self, spec):
         super(CrayNode, self).__init__(spec)
@@ -25,6 +25,7 @@ class CrayNode(ClusterNode):
         self.role = spec['role'].upper()
         self.attributes['architecture'] = spec['architecture']
         self.segment_details = spec['SocketArray']
+        self.ALPS_status = 'UNKNOWN' #Assume unknown state.
         CrayNode.RESOURCE_STATUSES.append('alps-interactive')
 
     def to_dict(self):
@@ -51,6 +52,7 @@ class CrayNode(ClusterNode):
         '''
         if new_status.upper() in self.CRAY_STATE_MAP.keys():
             self._status = self.CRAY_STATE_MAP[new_status.upper()]
+            self.ALPS_status = new_status
         elif new_status in CrayNode.RESOURCE_STATUSES:
             self._status = new_status
         else:
