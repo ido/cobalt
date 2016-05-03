@@ -611,7 +611,6 @@ class CraySystem(BaseSystem):
         on the set of nodes, and will mark nodes as allocated.
 
         '''
-        #_logger.debug('attrs: %s', job['attrs'])
         try:
             res_info = ALPSBridge.reserve(job['user'], job['jobid'],
                 int(job['nodes']), job['attrs'], node_id_list)
@@ -788,12 +787,14 @@ class CraySystem(BaseSystem):
 
         '''
 
-        process_groups = [pg for pg in
-                          self.process_manager.process_groups.q_get(specs)
-                          if pg.exit_status is not None]
-        for process_group in process_groups:
-            del self.process_manager.process_groups[process_group.id]
-        return process_groups
+        # process_groups = [pg for pg in
+                          # self.process_manager.process_groups.q_get(specs)
+                          # if pg.exit_status is not None]
+        return self.process_manager.cleanup_groups([pg for pg in
+            self.process_manager.process_groups.q_get(specs)])
+        # for process_group in process_groups:
+            # del self.process_manager.process_groups[process_group.idh
+        # return process_groups
 
     @exposed
     @query
@@ -821,6 +822,8 @@ class CraySystem(BaseSystem):
         '''
         completed_pgs = self.process_manager.update_groups()
         for pgroup in completed_pgs:
+            _logger.info('%s: process group reported as completed with status %s',
+                    pgroup.label, pgroup.exit_status)
             self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
         return
 

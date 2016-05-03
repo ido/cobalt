@@ -144,7 +144,7 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
             child_uid = (pg.forker, pg.head_pid)
             if child_uid not in children:
                 orphaned.append(pg_id)
-                _logger.warning('%s: job exited with unknown status', pg.jobid)
+                _logger.warning('%s: orphaned job exited with unknown status', pg.jobid)
                 pg.exit_status = 1234567 #FIXME: what should this sentinel be?
                 completed_pgs.append(pg)
             else:
@@ -178,12 +178,22 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
                     now >= pg.sigkill_timeout and
                     pg.exit_status is None):
                 pg.signal('SIGKILL')
+        # clear out the orphaned groups.  There is no backend data for these
+        # groups.  CQM shouldn't get anything back for these beyond tracking is
+        # lost.
+        self.cleanup_groups(orphaned)
         #return the exited process groups so we can invoke cleanup
+
         return completed_pgs
 
     def cleanup_groups(self, pgids):
         '''Clean up process group data from completed and logged process groups.
 
         '''
+        cleaned_groups = []
         for pg_id in pgids:
+            pg = self.process_groups[pg_id]
+            cleaned_groups.append(pg)
             del self.process_groups[pg_id]
+            _logger.info('%s Process Group deleted', pg.label)
+        return cleaned_groups

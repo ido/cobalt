@@ -144,7 +144,10 @@ class Resource(object):
         released = False
         if not self.reserved:
             _logger.warning('Release of already free resource %s attempted.' \
-                    ' Release ignored.', self.name)
+                    ' Resetting reserved attributes.', self.name)
+            self.reserved_until = None
+            self.reserved_by = None
+            self.reserved_jobid = None
             released = True
         elif (force or (user == self.reserved_by or
                         jobid == self.reserved_jobid)):
