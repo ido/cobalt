@@ -1234,5 +1234,7 @@ def expand_num_list(num_list):
             retlist.append(int(elem))
         else:
             nums = elem.split('-')
-            retlist.extend(xrange(int(nums[0]), int(nums[1]) + 1))
+            low = min(int(nums[0]), int(nums[1]))
+            high = max(int(nums[0]), int(nums[1])) + 1
+            retlist.extend(xrange(low, high))
     return retlist
