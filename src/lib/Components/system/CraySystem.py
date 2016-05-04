@@ -563,17 +563,18 @@ class CraySystem(BaseSystem):
                     job_locs = self._ALPS_reserve_resources(job,
                             resource_until_time, node_id_list)
                     if job_locs is not None and len(job_locs) == int(job['nodes']):
+                        compact_locs = compact_num_list(job_locs)
                         #temporary reservation until job actually starts
-                        self.reserve_resources_until(job_locs,
+                        self.reserve_resources_until(compact_locs,
                                 resource_until_time, job['jobid'])
                         #set resource reservation, adjust idle count
                         if job['queue'] in idle_nodes_by_queue.keys():
                             # will recalculate this for reservation-type queues.
                             # If a reservation, this may not even exist.
                             idle_nodes_by_queue[job['queue']] -= int(job['nodes'])
-                        best_match[job['jobid']] = job_locs
+                        best_match[job['jobid']] = [compact_locs]
                         _logger.info("%s: Job selected for running on nodes  %s",
-                                label, " ".join(job_locs))
+                                label, compact_locs)
                         # do we want to allow multiple placements in a single
                         # pass? That would likely help startup times.
                         break
@@ -624,7 +625,7 @@ class CraySystem(BaseSystem):
             self.alps_reservations[job['jobid']] = new_alps_res
         #place a resource_reservation
         if new_alps_res is not None:
-            self.reserve_resources_until(new_alps_res.node_ids, new_time,
+            self.reserve_resources_until(compact_num_list(new_alps_res.node_ids), new_time,
                                          job['jobid'])
         return new_alps_res.node_ids
 
@@ -675,17 +676,25 @@ class CraySystem(BaseSystem):
         with self._node_lock:
             succeeded_nodes = []
             failed_nodes = []
+            #assemble from locaion list:
+            exp_location = []
+            if isinstance(location, list):
+                exp_location = self.chain_loc_list(location)
+            elif isinstance(location, str):
+                exp_location = expand_num_list(location)
+            else:
+                raise TypeError("location type is %s.  Must be one of 'list' or 'str'", type(location))
             if new_time is not None:
                 #reserve the location. Unconfirmed reservations will have to
                 #be lengthened.  Maintain a list of what we have reserved, so we
                 #extend on the fly, and so that we don't accidentally get an
                 #overallocation/user
-                for loc in location:
+                for loc in exp_location:
                     # node = self.nodes[self.node_name_to_id[loc]]
-                    node = self.nodes[loc]
+                    node = self.nodes[str(loc)]
                     try:
                         node.reserve(new_time, jobid=jobid)
-                        succeeded_nodes.append(loc)
+                        succeeded_nodes.append(int(loc))
                     except Cobalt.Exceptions.ResourceReservationFailure as exc:
                         self.logger.error(exc)
                         failed_nodes.append(loc)
@@ -700,12 +709,12 @@ class CraySystem(BaseSystem):
             else:
                 #release the reservation and the underlying ALPS reservation
                 #and the reserration on blocks.
-                for loc in location:
+                for loc in exp_location:
                     # node = self.nodes[self.node_name_to_id[loc]]
-                    node = self.nodes[loc]
+                    node = self.nodes[str(loc)]
                     try:
                         node.release(user=None, jobid=jobid)
-                        succeeded_nodes.append(loc)
+                        succeeded_nodes.append(int(loc))
                     except Cobalt.Exceptions.ResourceReservationFailure as exc:
                         self.logger.error(exc)
                         failed_nodes.append(loc)
@@ -790,8 +799,9 @@ class CraySystem(BaseSystem):
         # process_groups = [pg for pg in
                           # self.process_manager.process_groups.q_get(specs)
                           # if pg.exit_status is not None]
-        return self.process_manager.cleanup_groups([pg for pg in
-            self.process_manager.process_groups.q_get(specs)])
+        return self.process_manager.cleanup_groups([pg.id for pg in
+            self.process_manager.process_groups.q_get(specs)
+            if pg.exit_status is not None])
         # for process_group in process_groups:
             # del self.process_manager.process_groups[process_group.idh
         # return process_groups
