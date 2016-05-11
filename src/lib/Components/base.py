@@ -15,6 +15,7 @@ import logging
 import time
 import threading
 import xmlrpclib
+import socket
 
 import Cobalt
 import Cobalt.Proxy
@@ -42,7 +43,7 @@ except Exception, e:
 
 def state_file_location():
 
-    '''Grab the location of the Cobalt statefiles.  
+    '''Grab the location of the Cobalt statefiles.
 
     default: /var/spool/cobalt
 
@@ -51,8 +52,9 @@ def state_file_location():
 
 def run_component (component_cls, argv=None, register=True, state_name=False,
                    cls_kwargs={}, extra_getopt='', time_out=10,
-                   single_threaded=False):
-    '''Run the Cobalt component.  
+                   single_threaded=False, seq_num=0, aug_comp_name=False,
+                   state_name_match_component=False):
+    '''Run the Cobalt component.
 
     arguments:
 
@@ -64,6 +66,8 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
     extra_getopt
     time_out
     single_threaded
+    seq_num
+    aug_comp_name
 
     This will run until a the component is terminated.
 
@@ -90,6 +94,16 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
             pidfile_name = item[1]
         elif item[0] == '-d':
             level = logging.DEBUG
+
+    # form new component name for running on multiple hosts override in
+    # component_cls passed in
+    if aug_comp_name:
+        component_cls.name = '_'.join([component_cls.name, socket.gethostname(),
+            str(seq_num)])
+    if state_name_match_component:
+        # Request that the statefile name match the augmented component name
+        if not state_name:
+            state_name = component_cls.name
 
     logging.getLogger().setLevel(level)
     Cobalt.Logging.setup_logging(component_cls.implementation, console_timestamp=True)
