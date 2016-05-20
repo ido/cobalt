@@ -27,53 +27,60 @@ The Cobalt Resource Management System
 
 %setup -q
 python2.6 setup.py build
+%define client_wrapper_dir /usr/libexec/cobalt
+%define python_wrapper_dir %{client_wrapper_dir}/bin
 
 %build
-cd src/clients && make 
+cd src/clients && make PROGPREFIX=%{client_wrapper_dir}
 
 %install
 rm -rf $RPM_BUILD_ROOT
 mkdir -p ${RPM_BUILD_ROOT}%{_sbindir}
-python2.6 setup.py install --prefix=${RPM_BUILD_ROOT}/usr --install-lib ${RPM_BUILD_ROOT}/usr/lib64/python2.6/site-packages
-install -m 755 src/clients/wrapper ${RPM_BUILD_ROOT}/usr/bin
-install -m 755 src/clients/cobalt-admin ${RPM_BUILD_ROOT}/usr/bin
-%{__mv} ${RPM_BUILD_ROOT}/usr/bin/slp.py ${RPM_BUILD_ROOT}%{_sbindir}
-%{__mv} ${RPM_BUILD_ROOT}/usr/bin/bgsched.py ${RPM_BUILD_ROOT}%{_sbindir}
-%{__mv} ${RPM_BUILD_ROOT}/usr/bin/user_script_forker.py ${RPM_BUILD_ROOT}%{_sbindir}
-%{__mv} ${RPM_BUILD_ROOT}/usr/bin/cqm.py ${RPM_BUILD_ROOT}%{_sbindir}
-%{__mv} ${RPM_BUILD_ROOT}/usr/bin/bg_mpirun_forker.py ${RPM_BUILD_ROOT}%{_sbindir}
-%{__mv} ${RPM_BUILD_ROOT}/usr/bin/bg_runjob_forker.py ${RPM_BUILD_ROOT}%{_sbindir}
-%{__mv} ${RPM_BUILD_ROOT}/usr/bin/system_script_forker.py ${RPM_BUILD_ROOT}%{_sbindir}
-%{__mv} ${RPM_BUILD_ROOT}/usr/bin/gravina.py ${RPM_BUILD_ROOT}%{_sbindir}
-%{__mv} ${RPM_BUILD_ROOT}/usr/bin/partadm.py ${RPM_BUILD_ROOT}%{_sbindir}
-%{__mv} ${RPM_BUILD_ROOT}/usr/bin/setres.py ${RPM_BUILD_ROOT}%{_sbindir}
-%{__mv} ${RPM_BUILD_ROOT}/usr/bin/releaseres.py ${RPM_BUILD_ROOT}%{_sbindir}
-%{__mv} ${RPM_BUILD_ROOT}/usr/bin/cqadm.py ${RPM_BUILD_ROOT}%{_sbindir}
-%{__mv} ${RPM_BUILD_ROOT}/usr/bin/bgsystem.py ${RPM_BUILD_ROOT}%{_sbindir}
-%{__mv} ${RPM_BUILD_ROOT}/usr/bin/bgqsystem.py ${RPM_BUILD_ROOT}%{_sbindir}
-%{__mv} ${RPM_BUILD_ROOT}/usr/bin/schedctl.py ${RPM_BUILD_ROOT}%{_sbindir}
-%{__mv} ${RPM_BUILD_ROOT}/usr/bin/cluster_system.py ${RPM_BUILD_ROOT}%{_sbindir}
-%{__mv} ${RPM_BUILD_ROOT}/usr/bin/cluster_simulator.py ${RPM_BUILD_ROOT}%{_sbindir}
-%{__mv} ${RPM_BUILD_ROOT}/usr/bin/nodeadm.py ${RPM_BUILD_ROOT}%{_sbindir}
-%{__mv} ${RPM_BUILD_ROOT}/usr/bin/perfdata.py ${RPM_BUILD_ROOT}%{_sbindir}
-%{__mv} ${RPM_BUILD_ROOT}/usr/bin/prologue_helper.py ${RPM_BUILD_ROOT}%{_sbindir}
-%{__mv} ${RPM_BUILD_ROOT}/usr/bin/cdbwriter.py ${RPM_BUILD_ROOT}%{_sbindir}
-%{__rm} -f ${RPM_BUILD_ROOT}/usr/bin/test*
-%{__rm} -f ${RPM_BUILD_ROOT}/usr/bin/brun.py
-%{__rm} -f ${RPM_BUILD_ROOT}/usr/bin/bstat.py
-%{__rm} -f ${RPM_BUILD_ROOT}/usr/bin/pmrun.py
-%{__rm} -f ${RPM_BUILD_ROOT}/usr/bin/cdump.py
+mkdir -p ${RPM_BUILD_ROOT}%{_bindir}
+mkdir -p ${RPM_BUILD_ROOT}%{client_wrapper_dir}
+
+python2.6 setup.py install --prefix=${RPM_BUILD_ROOT}%{client_wrapper_dir} --install-lib ${RPM_BUILD_ROOT}/usr/lib64/python2.6/site-packages
+install -m 755 src/clients/wrapper ${RPM_BUILD_ROOT}%{python_wrapper_dir}
+install -m 755 src/clients/cobalt-admin ${RPM_BUILD_ROOT}%{_sbindir$}
+%{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/slp.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/bgsched.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/user_script_forker.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/cqm.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/bg_mpirun_forker.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/bg_runjob_forker.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/system_script_forker.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/gravina.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/partadm.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/setres.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/releaseres.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/cqadm.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/bgsystem.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/bgqsystem.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/schedctl.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/cluster_system.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/cluster_simulator.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/nodeadm.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/perfdata.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/prologue_helper.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/cdbwriter.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__rm} -f ${RPM_BUILD_ROOT}%{python_wrapper_dir}/test*
+%{__rm} -f ${RPM_BUILD_ROOT}%{python_wrapper_dir}/brun.py
+%{__rm} -f ${RPM_BUILD_ROOT}%{python_wrapper_dir}/bstat.py
+%{__rm} -f ${RPM_BUILD_ROOT}%{python_wrapper_dir}/pmrun.py
+%{__rm} -f ${RPM_BUILD_ROOT}%{python_wrapper_dir}/cdump.py
 mkdir -p ${RPM_BUILD_ROOT}%{_initrddir}
 #install -m 644 misc/cobalt ${RPM_BUILD_ROOT}/etc/init.d
 #mkdir ${RPM_BUILD_ROOT}%{_sysconfdir}
 install -m 644 misc/cobalt.conf ${RPM_BUILD_ROOT}/etc
 cd ${RPM_BUILD_ROOT}%{_sbindir}
 #for file in `find . -name \*.py | sed -e 's/\.py//' ` ; do ln -s cobalt-admin $file ; done
-cd ${RPM_BUILD_ROOT}%{_bindir}
-for file in `find . -name \*.py | sed -e 's/\.py//' |grep -v fake` ; do ln -sf wrapper $file ; done
+cd ${RPM_BUILD_ROOT}%{python_wrapper_dir}
+for file in `find . -name \*.py | sed -e 's/\.py//' |grep -v fake` ; do ln -sf  %{python_wrapper_dir}/wrapper ${RPM_BUILD_ROOT}%{_bindir}/$file ; done
 find . -wholename "./Parser" -prune -o -name '*.py' -type f -print0 | xargs -0 grep -lE '^#! *(/usr/.*bin/(env +)?) ?python' | xargs sed -r -i -e '1s@^#![[:space:]]*(/usr/(local/)?bin/(env +)?)?python@#!/usr/bin/python@'
-cd ${RPM_BUILD_ROOT}/usr/bin ; for file in `find . -name \*.py -print` ; do ln -sf wrapper `echo $file|sed -e 's/.py//'` ; done
+#cd ${RPM_BUILD_ROOT}%{python_wrapper_dir} ; for file in `find . -name \*.py -print` ; do ln -sf wrapper `echo ${RPM_BUILD_ROOT}%{_bindir}/$file|sed -e 's/.py//'` ; done
 cd ${RPM_BUILD_ROOT}/usr/sbin ; for file in `find . -name \*.py -print` ; do ln -sf $file `echo $file|sed -e 's/.py//'` ; done
+#put manpages back in the right place
+%{__mv} ${RPM_BUILD_ROOT}%{client_wrapper_dir}/share ${RPM_BUILD_ROOT}/usr/share
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -109,8 +116,9 @@ fi
 
 
 %files -n cobalt-clients
+%{python_wrapper_dir}/*
 /usr/bin/*
-%attr(2755,root,cobalt) /usr/bin/wrapper
+%attr(2755,root,cobalt) %{python_wrapper_dir}/wrapper
 /usr/lib*/python2.6/site-packages/Cobalt/*
 /usr/lib*/python2.6/site-packages/Cobalt-*egg-info*
 /usr/share/man/man1/*.1*
