@@ -86,7 +86,8 @@ class CraySystem(BaseSystem):
             self.process_manager = ProcessGroupManager()
         else:
             self.process_manager = ProcessGroupManager().__setstate__(spec['process_manager'])
-        self.process_manager.forkers.append('alps_script_forker')
+        #self.process_manager.forkers.append('alps_script_forker')
+        self.process_manager.update_launchers()
         _logger.info('PROCESS MANAGER INTIALIZED')
         #resource management setup
         self.nodes = {} #cray node_id: CrayNode
@@ -238,9 +239,15 @@ class CraySystem(BaseSystem):
     def _run_update_state(self):
         '''automated node update functions on the update timer go here.'''
         while True:
-            self.update_node_state()
-            self._get_exit_status()
-            Cobalt.Util.sleep(UPDATE_THREAD_TIMEOUT)
+            try:
+                self.process_manager.update_launchers()
+                self.update_node_state()
+                self._get_exit_status()
+            except Exception:
+                # prevent the update thread from dying
+                _logger.critical('Error in _run_update_state', exc_info=True)
+            finally:
+                Cobalt.Util.sleep(UPDATE_THREAD_TIMEOUT)
 
     @exposed
     def update_node_state(self):
@@ -738,7 +745,7 @@ class CraySystem(BaseSystem):
         start_apg_timer = int(time.time())
 
         for spec in specs:
-            spec['forker'] = 'alps_script_forker'
+            spec['forker'] = None
             alps_res = self.alps_reservations.get(str(spec['jobid']), None)
             if alps_res is not None:
                 spec['alps_res_id'] = alps_res.alps_res_id
