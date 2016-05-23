@@ -15,8 +15,15 @@ if __name__ == "__main__":
     # state_name = 'alps_script_forker'
     # if '--name' in sys.argv:
     #     state_name = sys.argv[sys.argv.index('--name') + 1]
+    seq_num = 0
+    if '--seq' in sys.argv:
+        seq_num = sys.argv[sys.argv.index('--seq') + 1]
+        sys.argv.remove('--seq')
+        sys.argv.remove(seq_num)
+        seq_num = int(seq_num)
     try:
         run_component(ALPSScriptForker, single_threaded=True,
-                aug_comp_name=True, state_name_match_component=True)
+                aug_comp_name=True, state_name_match_component=True,
+                seq_num=seq_num)
     except KeyboardInterrupt:
         sys.exit(1)
