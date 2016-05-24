@@ -78,12 +78,14 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
 
         # modify the forker in specs to force the job to round-robbin forkers
         for spec in specs:
-            ordered_forkers = sorted(self.forker_taskcounts, key=lambda x:x[1])
+            ordered_forkers = [f[0] for f in
+                    sorted(self.forker_taskcounts.items(), key=lambda x:x[1])]
             if len(ordered_forkers) < 0:
                 raise RuntimeError("No forkers registered!")
             else:
-                spec['forker'] = ordered_forkers[0]
+                spec['forker'] = ordered_forkers[0] #this is now a tuple
                 self.forker_taskcounts[spec['forker']] += 1
+                _logger.info("Job %s using forker %s", spec['jobid'], spec['forker'])
         return self.process_groups.q_add(specs)
 
     def signal_groups(self, pgids, signame="SIGINT"):
