@@ -445,6 +445,10 @@ class CraySystem(BaseSystem):
 
 
     def chain_loc_list(self, loc_list):
+        '''Take a list of compact Cray locations,
+        expand and concatenate them.
+
+        '''
         retlist = []
         for locs in loc_list:
             retlist.extend(expand_num_list(locs))

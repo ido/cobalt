@@ -121,7 +121,7 @@ class TestSystemResource(object):
                 is_match)
         assert_match(res.reserved_jobid, None, "reserved jobid not unset.",
                 is_match)
-        assert_match(res.status, "idle", "improper status")
+        assert_match(res.status, "cleanup-pending", "improper status")
 
     def test_resource_release_force(self):
         #force-release reservation, because admin commands are a thing.
@@ -139,36 +139,52 @@ class TestSystemResource(object):
                 is_match)
         assert_match(res.reserved_jobid, None, "reserved jobid not unset.",
                 is_match)
-        assert_match(res.status, "idle", "improper status")
+        assert_match(res.status, "cleanup-pending", "improper status")
 
     def test_resource_release_unreserved(self):
         #you can't release something that hasn't been reserved yet.
+        #However, it would show up as being released anyway.
         res = self.resource_list[0]
-        assert not res.release(force=True), "cannot release unreserved."
+        assert res.release(force=True), "must not show as reserved."
 
     def test_resource_release_bad_user(self):
         #keep a user from releasing some one else's reservation
+        #need both bad user and bad joid
         res = self.resource_list[0]
         until = time.time() + 600
         user = 'foo'
         jobid = 1
         assert res.reserve(until, user, jobid), "failed to reserve"
         assert res.reserved, "reservation failed"
-        assert not res.release('bar', jobid), "release succeeded"
-        assert_match(res.reserved_until, until, 'reserve until unset')
-        assert_match(res.reserved_by, user, 'reserve by unset')
-        assert_match(res.reserved_jobid, jobid, 'reserve jobid unset')
-        assert_not_match(res.status, 'allocated', 'improper status')
+        assert res.release('bar', jobid), "release succeeded"
+        assert_match(res.reserved_until, None, 'reserve until unset')
+        assert_match(res.reserved_by, None, 'reserve by unset')
+        assert_match(res.reserved_jobid, None, 'reserve jobid unset')
+        assert_match(res.status, 'cleanup-pending', 'improper status')
 
     def test_resource_release_bad_jobid(self):
-        #what happens in a jobid stays in the jobid, even for the same user.
+        #Release if user good but jobid bad
         res = self.resource_list[0]
         until = time.time() + 600
         user = 'foo'
         jobid = 1
         assert res.reserve(until, user, jobid), "failed to reserve"
         assert res.reserved, "reservation failed"
-        assert not res.release(user, 2), "release succeeded"
+        assert res.release(user, 2), "release succeeded"
+        assert_match(res.reserved_until, None, 'reserve until unset')
+        assert_match(res.reserved_by, None, 'reserve by unset')
+        assert_match(res.reserved_jobid, None, 'reserve jobid unset')
+        assert_match(res.status, 'cleanup-pending', 'improper status')
+
+    def test_resource_release_both_bad(self):
+        #Do not release if user and job are bad
+        res = self.resource_list[0]
+        until = time.time() + 600
+        user = 'foo'
+        jobid = 1
+        assert res.reserve(until, user, jobid), "failed to reserve"
+        assert res.reserved, "reservation failed"
+        assert not res.release('bar', 2), "release succeeded"
         assert_match(res.reserved_until, until, 'reserve until unset')
         assert_match(res.reserved_by, user, 'reserve by unset')
         assert_match(res.reserved_jobid, jobid, 'reserve jobid unset')
@@ -214,7 +230,7 @@ class TestClusterNode(object):
         node = ClusterNode(spec)
         assert_match(node.name, 'node1', "wrong name")
         assert_match(node.attributes, {'ncpu': 1, 'mem':4}, "Attributes not set.")
-        assert not node.schedulable, "defaulted to schedulable"
+        assert node.schedulable, "defaulted to not schedulable"
         assert_match(node.drain_until, None, "drain_until should not be set",
                 is_match)
         assert_match(node.drain_jobid, None, "drain_jobid should not be set",
