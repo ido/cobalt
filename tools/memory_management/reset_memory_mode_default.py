@@ -7,6 +7,8 @@ node reboot commands (CAPMC or IPMI needed)
 
 The CAPMC module should be loaded on Cray systems.
 
+This version forces things back to default values.
+
 '''
 import sys
 import ast
@@ -14,7 +16,6 @@ import subprocess
 from subprocess import Popen, PIPE, STDOUT
 import time
 import json
-import logging
 
 SUCCESS = 0
 RESET_FAILURE = 3
@@ -24,7 +25,7 @@ BAD_ARGS = 5
 DEFAULT_MCDRAM = 'cache'
 DEFAULT_NUMA = 'a2a'
 
-AVAILABLE_MCDRAM = ['cache', 'split', 'equal', 'flat']
+AVAILABLE_MCDRAM = ['cache', 'hybrid', 'half', 'flat']
 AVAILABLE_NUMA = ['a2a', 'snc2', 'snc4', 'hemi', 'quad']
 
 TIMEOUT = 900 # reboot timeout in seconds
@@ -33,9 +34,6 @@ POLL_INT = 0.25
 
 CAPMC_CMD = '/opt/cray/capmc/default/bin/capmc'
 
-logging.basicConfig(format='%(asctime)s %(message)s',
-                    datefmt='%Y-%d-%m %H:%M:%S.%f')
-logger = logging.getLogger()
 
 def expand_num_list(num_list):
     '''Take a compact, comma-seperated string of integer values and ranges and
@@ -99,20 +97,17 @@ def get_current_modes(node_list):
     # The moral of this story: Do not change the memory mode unless the next
     # thing you do is reboot the node.
 
-    exp_nodelist = expand_num_list(node_list)
     node_cfgs = {}
-
     mcdram_raw_info, err = exec_fetch_output(CAPMC_CMD, ['get_mcdram_cfg',
                                             '--nids', node_list])
     numa_raw_info, err = exec_fetch_output(CAPMC_CMD, ['get_numa_cfg',
                                             '--nids', node_list])
-
     mcdram_info = json.loads(mcdram_raw_info)
     numa_info = json.loads(numa_raw_info)
 
-    for info in mcdram_info['nids']:
+    for info in mcdram_info:
         node_cfgs[info['nid']] = {'mcdram_mode': info['mcdram_cfg']}
-    for info in numa_info['nids']:
+    for info in numa_info:
         node_cfgs[info['nid']]['numa_mode'] = info['numa_cfg']
 
     return node_cfgs
@@ -127,9 +122,7 @@ def exec_fetch_output(cmd, args, timeout=None):
     timeout_trip = False
     if timeout is not None:
         endtime = int(time.time()) + int(timeout)
-    cmd_list = [cmd]
-    cmd_list.extend(args)
-    proc = Popen(cmd_list, stdout=PIPE, stderr=PIPE)
+    proc = Popen(cmd, args, stdout=PIPE, stderr=PIPE)
     while(True):
         if endtime is not None and int(time.time()) >= endtime:
             #signal and kill
@@ -163,8 +156,6 @@ def reset_modes(node_list, mcdram_mode, numa_mode):
     except RuntimeError:
         print >> sys.stderr, "Could not reset numa_mode"
         return False
-    logger.info('%s: Reset mcdram/numa mode to %s/%s on nodes %s', label, mcdram_mode,
-                numa_mode, node_list)
     return True
 
 def reboot_nodes(node_list, mcdram_mode, numa_mode):
@@ -172,20 +163,19 @@ def reboot_nodes(node_list, mcdram_mode, numa_mode):
     reboot complete.
 
     '''
-    logger.info('%s: Rebooting nodes %s', label, node_list)
     try:
         exec_fetch_output(CAPMC_CMD,
-            ['node_reinit', '--nids', node_list, '--reason',
+            ['node_reinit', '--nids', node_list, '-r',
              'Reset MCDRAM/NUMA mode to %s/%s' % (mcdram_mode, numa_mode)])
     except RuntimeError:
         print >> sys.stderr, "Unable to initiate node reboot"
         return False
     return True
 
-def reboot_complete(node_list, timeout, label):
+def reboot_complete(node_list, timeout):
     endtime = int(time.time()) + int(timeout)
     exp_nodelist = set(expand_num_list(node_list))
-    while True:
+    while(True):
         if int(time.time()) > endtime:
             print >> sys.stderr, "Reboot timed out."
             return False
@@ -193,16 +183,11 @@ def reboot_complete(node_list, timeout, label):
             stdout, stderr = exec_fetch_output(CAPMC_CMD,
                     ['node_status', '--nids', node_list, '--filter', 'show_ready'])
         except RuntimeError as exc:
-            logger.error("%s: Unable to complete reboot: %s", label, exc.message)
+            print >> sys.stderr, "Unable to complete reboot: %s" % exc.message
             return False
         node_info = json.loads(stdout)
-        if 'ready' not in node_info.keys():
-            pass
-        elif not (set(node_info['ready']) - set(exp_nodelist)):
+        if not (set(node_info['ready']) - set(exp_nodelist)):
             break
-        time.sleep(1.0)
-
-        logger.info('%s: Reboot of nodes %s complete', label, node_list)
     return True
 
 def main():
@@ -210,8 +195,6 @@ def main():
     mcdram_mode = DEFAULT_MCDRAM
     numa_mode = DEFAULT_NUMA
     node_list = ''
-    jobid = None
-    user = None
     for arg in sys.argv:
         try:
             splitarg = arg.split('=')
@@ -223,31 +206,21 @@ def main():
         if key == 'attrs':
             attr_dict = ast.literal_eval(val)
             for akey, aval in attr_dict.items():
-                if akey == 'mcdram':
-                    if not  aval.lower() in AVAILABLE_MCDRAM:
-                        print >> sys.stderr, "%s is an invalid MCDRAM mode" % aval
-                        return BAD_ARGS
-                    else:
-                        mcdram_mode = aval.lower()
-                elif akey == 'numa':
-                    if not aval.lower() in AVAILABLE_NUMA:
-                        print >> sys.stderr, "%s is an invalid NUMA mode" % aval
-                        return BAD_ARGS
-                    else:
-                        numa_mode = aval.lower()
+                # if akey == 'mcdram':
+                    # if not  aval.lower() in AVAILABLE_MCDRAM:
+                        # print >> sys.stderr, "%s is an invalid MCDRAM mode" % aval
+                        # return BAD_ARGS
+                # elif akey == 'numa':
+                    # if not aval.lower() in AVAILABLE_NUMA:
+                        # print >> sys.stderr, "%s is an invalid NUMA mode" % aval
+                        # return BAD_ARGS
+                if akey == 'location':
+                #string compact cray nodelist
+                    node_list = aval
                 else:
                     pass
-        elif key == 'location':
-            #string compact cray nodelist
-            node_list = val
-        elif key == 'user':
-            user = val
-        elif key == 'jobid':
-            jobid = val
         else:
             pass
-
-    label = "%s/%s" % (user, jobid)
 
     current_node_cfg = get_current_modes(node_list)
     nodes_to_modify = []
@@ -261,17 +234,13 @@ def main():
     # current setting inspection available.
     if len(nodes_to_modify) != 0:
         compact_nodes_to_modify = compact_num_list(nodes_to_modify)
-        if not reset_modes(compact_nodes_to_modify, mcdram_mode, numa_mode,
-                label):
+        if not reset_modes(compact_nodes_to_modify, mcdram_mode, numa_mode):
             print >> sys.stderr, "Failed to reset memory mode"
             return RESET_FAILURE
-        if not reboot_nodes(compact_nodes_to_modify, mcdram_mode, numa_mode,
-                label):
+        if not reboot_nodes(compact_nodes_to_modify, mcdram_mode, numa_mode):
             print >> sys.stderr, "Failed to initiate node reboot"
             return BOOT_FAILURE
-        time.sleep(120)
-        if not reboot_complete(compact_nodes_to_modify, TIMEOUT,
-                label):
+        if not reboot_complete(compact_nodes_to_modify, TIMEOUT):
             print >> sys.stderr, "Node reboot Failed to complete"
             return BOOT_FAILURE
 
