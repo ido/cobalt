@@ -121,13 +121,13 @@ class ALPSScriptChild (PGChild):
             params['width'] = int(self.pg.nodect) * int(DEFAULT_DEPTH)
             params['nppn'] = int(DEFAULT_DEPTH) #FIXME fix this.  Pass this in from qsub. FIXME
             params['node_id_list'] = self.pg.location[0]
-            param_attrs['depth'] = None
-            param_attrs['npps'] = None
-            param_attrs['nspn'] = None
-            param_attrs['reservation_mode'] = 'EXCLUSIVE'
-            param_attrs['nppcu'] = None
-            param_attrs['p-state'] = None
-            param_attrs['p-govenor'] = None
+            params['depth'] = None
+            params['npps'] = None
+            params['nspn'] = None
+            params['reservation_mode'] = 'EXCLUSIVE'
+            params['nppcu'] = None
+            params['p-state'] = None
+            params['p-govenor'] = None
             reserve_request = BasilRequest('RESERVE', params=params)
             basil = subprocess.Popen(BASIL_PATH, stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
