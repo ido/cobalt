@@ -220,24 +220,24 @@ def main():
         except (IndexError, ValueError, TypeError):
             print >> sys.stderr, "Missing or badly formatted args."
             return BAD_ARGS
-        if key == 'attrs':
-            attr_dict = ast.literal_eval(val)
-            for akey, aval in attr_dict.items():
-                if akey == 'mcdram':
-                    if not  aval.lower() in AVAILABLE_MCDRAM:
-                        print >> sys.stderr, "%s is an invalid MCDRAM mode" % aval
-                        return BAD_ARGS
-                    else:
-                        mcdram_mode = aval.lower()
-                elif akey == 'numa':
-                    if not aval.lower() in AVAILABLE_NUMA:
-                        print >> sys.stderr, "%s is an invalid NUMA mode" % aval
-                        return BAD_ARGS
-                    else:
-                        numa_mode = aval.lower()
-                else:
-                    pass
-        elif key == 'location':
+        # if key == 'attrs':
+            # attr_dict = ast.literal_eval(val)
+            # for akey, aval in attr_dict.items():
+                # if akey == 'mcdram':
+                    # if not  aval.lower() in AVAILABLE_MCDRAM:
+                        # print >> sys.stderr, "%s is an invalid MCDRAM mode" % aval
+                        # return BAD_ARGS
+                    # else:
+                        # mcdram_mode = aval.lower()
+                # elif akey == 'numa':
+                    # if not aval.lower() in AVAILABLE_NUMA:
+                        # print >> sys.stderr, "%s is an invalid NUMA mode" % aval
+                        # return BAD_ARGS
+                    # else:
+                        # numa_mode = aval.lower()
+                # else:
+                    # pass
+        if key == 'location':
             #string compact cray nodelist
             node_list = val
         elif key == 'user':
