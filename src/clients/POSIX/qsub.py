@@ -68,6 +68,7 @@ from Cobalt.arg_parser import ArgParse
 from Cobalt.Util import get_config_option, init_cobalt_config, sleep
 from Cobalt.Proxy import ComponentProxy
 import xmlrpclib
+import subprocess
 
 __revision__ = '$Revision: 559 $'
 __version__  = '$Version$'
@@ -83,7 +84,7 @@ def on_interrupt(sig, func=None):
     """
     Interrupt Handler to cleanup the interactive job if the user interrupts
     Will contain two static variables: count and exit.
-    'count' will keep track how many interruptions happened and 
+    'count' will keep track how many interruptions happened and
     'exit' flags whether we completely exit once the interrupt occurs.
     """
     on_interrupt.count += 1
@@ -368,6 +369,28 @@ def parse_options(parser, spec, opts, opt2spec, def_spec):
     opts['disable_preboot'] = not spec['script_preboot']
     return opt_count
 
+def fetch_pgid(user, jobid, loc):
+    '''fetch and set pgid for user shell.  Needed for cray systems'''
+    if client_utils.component_call(SYSMGR, False, 'get_implementation', ()) == 'alpssystem':
+        pgid = os.getpgid(0)
+        spec = [{'user': user, 'jobid': jobid, 'pgid': pgid, 'location':loc}]
+        if not client_utils.component_call(SYSMGR, False, 'confirm_alps_reservation', (spec)):
+            logger.error('Unable to confirm ALPS reservation.  Exiting.')
+            sys.exit(1)
+    return
+
+def exec_user_shell(user, jobid, loc):
+    '''Execute shell for user for interactive jobs.  Uses the user's defined
+    SHELL.  Will also send the pgid for cray systems so that aprun will work
+    from within the shell.
+
+    Wait until termination.
+
+    '''
+    proc = subprocess.Popen([os.environ['SHELL']], shell=True,
+            preexec_fn=(lambda: fetch_pgid(user, jobid, loc)))
+    os.waitpid(proc.pid, 0)
+
 def run_interactive_job(jobid, user, disable_preboot, nodes, procs):
     """
     This will create the shell or ssh session for user
@@ -396,11 +419,14 @@ def run_interactive_job(jobid, user, disable_preboot, nodes, procs):
         client_utils.logger.info("Opening interactive session to %s", loc)
         if deljob:
             os.system("/usr/bin/ssh -o \"SendEnv COBALT_NODEFILE COBALT_JOBID\" %s" % (loc))
+        if impl == 'alpssystem':
+            exec_user_shell(user, jobid, loc)
         else:
             os.system(os.environ['SHELL'])
 
     # Wait for job to start
-    query = [{'tag':'job', 'jobid':jobid, 'location':'*', 'state':"*", 'resid':"*"}]
+    query = [{'tag':'job', 'jobid':jobid, 'location':'*', 'state':"*",
+        'resid':"*"}]
     client_utils.logger.info("Wait for job %s to start...", str(jobid))
 
     while True:

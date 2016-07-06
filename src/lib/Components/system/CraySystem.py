@@ -997,6 +997,45 @@ class CraySystem(BaseSystem):
                 compact_num_list(mod_nodes), user)
         return mod_nodes
 
+    @exposed
+    def confirm_alps_reservation(self, specs):
+        '''confirm or rereserve if needed the ALPS reservation for an
+        interactive job.
+
+        '''
+        try:
+            pg = self.process_manager.process_groups[int(specs['jobid'])]
+            pg_id = int(specs['pg_id'])
+        except KeyError:
+            return False
+        # Try to find the alps_res_id for this job.  if we don't have it, then we
+        # need to reacquire the resource reservation.  The job locations will be
+        # critical for making this work.
+        with self._node_lock:
+            # do not want to hit this during an update.
+            alps_res = self.alps_reservations.get(pg.jobid, None)
+            # find nodes for jobid.  If we don't have sufficient nodes, job
+            # should die
+            job_nodes = [node for node in self.nodes if node.reserved_jobid == pg.jobid]
+            if len(job_nodes) == 0:
+                _logger.warning('%s: No nodes reserved for job.', pg.label)
+                return False
+            new_time = job_nodes[0].reserved_until
+            node_list = compact_num_list([node.node_id for node in job_nodes])
+        if alps_res is None:
+            self._ALPS_reserve_resources(pg.jobid, new_time, node_list)
+            alps_res = self.alps_reservations.get(pg.jobid, None)
+            if alps_res is None:
+                _logger.warning('%s: Unable to re-reserve ALPS resources.',
+                        pg.label)
+                return False
+
+        # try to confirm, if we fail at confirmation, try to reserve same
+        # resource set again
+        ALPSBridge.confirm(alps_res.alps_res_id, pg_id)
+        return True
+
+
 class ALPSReservation(object):
     '''Container for ALPS Reservation information.  Can be used to update
     reservations and also internally relases reservation.
