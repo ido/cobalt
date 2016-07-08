@@ -1,5 +1,13 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 0.99.42 ==
+ * Update to database writer to handle attrs fields that are
+   improperly formatted.
+
+== Changes to 0.99.41 ==
+ * Minor patch to clean up an issue where the user was not being properly
+   cleared from BlueGene blocks at the end of a run.
+
 == Changes to 0.99.40 ==
  * A nokillpg attribute may be added to a job to cause kill instead of killpg
    to be used for job termination so that a signal handler in a script may
