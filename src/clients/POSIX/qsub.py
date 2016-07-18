@@ -369,13 +369,13 @@ def parse_options(parser, spec, opts, opt2spec, def_spec):
     opts['disable_preboot'] = not spec['script_preboot']
     return opt_count
 
-def fetch_pgid(user, jobid, loc):
+def fetch_pgid(user, jobid, loc, pgid=None):
     '''fetch and set pgid for user shell.  Needed for cray systems'''
-    if client_utils.component_call(SYSMGR, False, 'get_implementation', ()) == 'alpssystem':
-        pgid = os.getpgid(0)
+    if client_utils.component_call(SYSMGR, False, 'get_implementation', ()) == 'alps_system':
+        #Cray is apparently using the session id for interactive jobs.
         spec = [{'user': user, 'jobid': jobid, 'pgid': pgid, 'location':loc}]
         if not client_utils.component_call(SYSMGR, False, 'confirm_alps_reservation', (spec)):
-            logger.error('Unable to confirm ALPS reservation.  Exiting.')
+            client_utils.logger.error('Unable to confirm ALPS reservation.  Exiting.')
             sys.exit(1)
     return
 
@@ -387,8 +387,9 @@ def exec_user_shell(user, jobid, loc):
     Wait until termination.
 
     '''
+    pgid = os.getppid()
     proc = subprocess.Popen([os.environ['SHELL']], shell=True,
-            preexec_fn=(lambda: fetch_pgid(user, jobid, loc)))
+            preexec_fn=(lambda: fetch_pgid(user, jobid, loc, pgid=pgid)))
     os.waitpid(proc.pid, 0)
 
 def run_interactive_job(jobid, user, disable_preboot, nodes, procs):
@@ -399,7 +400,6 @@ def run_interactive_job(jobid, user, disable_preboot, nodes, procs):
     # save whether we are running on a cluster system
     impl =  client_utils.component_call(SYSMGR, False, 'get_implementation', ())
     exit_on_interrupt()
-
     deljob = True if impl == "cluster_system" else False
 
     def start_session(loc, resid, nodes, procs):
@@ -419,7 +419,7 @@ def run_interactive_job(jobid, user, disable_preboot, nodes, procs):
         client_utils.logger.info("Opening interactive session to %s", loc)
         if deljob:
             os.system("/usr/bin/ssh -o \"SendEnv COBALT_NODEFILE COBALT_JOBID\" %s" % (loc))
-        if impl == 'alpssystem':
+        if impl == 'alps_system':
             exec_user_shell(user, jobid, loc)
         else:
             os.system(os.environ['SHELL'])

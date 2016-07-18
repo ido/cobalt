@@ -117,7 +117,7 @@ def confirm(alps_res_id, pg_id):
         None Yet.
     '''
     params = {'pagg_id': pg_id,
-              'reservation': alps_res_id}
+              'reservation_id': alps_res_id}
     retval = _call_sys_forker(BASIL_PATH, str(BasilRequest('CONFIRM',
             params=params)))
     return retval

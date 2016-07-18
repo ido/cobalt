@@ -14,6 +14,7 @@ from Cobalt.Components.system.base_system import BaseSystem
 from Cobalt.Components.system.CrayNode import CrayNode
 from Cobalt.Components.system.base_pg_manager import ProcessGroupManager
 from Cobalt.Exceptions import ComponentLookupError
+from Cobalt.Exceptions import JobNotInteractive
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
 from Cobalt.Util import compact_num_list, expand_num_list
 from Cobalt.Util import init_cobalt_config, get_config_option
@@ -39,6 +40,9 @@ class ALPSProcessGroup(ProcessGroup):
     def __init__(self, spec):
         super(ALPSProcessGroup, self).__init__(spec)
         self.alps_res_id = spec['alps_res_id']
+        self.interactive_complete = False
+
+    #inherit generic getstate and setstate methods from parent
 
 class CraySystem(BaseSystem):
     '''Cray/ALPS-specific system component.  Behaviors should go here.  Direct
@@ -86,9 +90,11 @@ class CraySystem(BaseSystem):
                 _logger.info('BRIDGE INITIALIZED')
         #process manager setup
         if spec is None:
-            self.process_manager = ProcessGroupManager()
+            self.process_manager = ProcessGroupManager(pgroup_type=ALPSProcessGroup)
         else:
-            self.process_manager = ProcessGroupManager().__setstate__(spec['process_manager'])
+            self.process_manager = ProcessGroupManager(pgroup_type=ALPSProcessGroup).__setstate__(spec['process_manager'])
+            self.logger.info('pg type %s',
+                    self.process_manager.process_groups.item_cls)
         #self.process_manager.forkers.append('alps_script_forker')
         self.process_manager.update_launchers()
         self.pending_start_timeout = 1200 #20 minutes for long reboots. 
@@ -155,8 +161,11 @@ class CraySystem(BaseSystem):
                 # much more compact representation of data.  Reservednodes gives
                 # which notes are reserved.
                 inventory = ALPSBridge.fetch_inventory()
+                _logger.info('INVENTORY FETCHED')
                 system = ALPSBridge.extract_system_node_data(ALPSBridge.system())
+                _logger.info('SYSTEM DATA FETCHED')
                 reservations = ALPSBridge.fetch_reservations()
+                _logger.info('ALPS RESERVATION DATA FETCHED')
                 # reserved_nodes = ALPSBridge.reserved_nodes()
             except Exception:
                 #don't crash out here.  That may trash a statefile.
@@ -1004,26 +1013,39 @@ class CraySystem(BaseSystem):
 
         '''
         try:
-            pg = self.process_manager.process_groups[int(specs['jobid'])]
-            pg_id = int(specs['pg_id'])
+            pg = None
+            for pgroup in self.process_manager.process_groups.values():
+                if pgroup.jobid == int(specs['jobid']):
+                    pg = pgroup
+            #pg = self.process_manager.process_groups[int(specs['pg_id'])]
+            pg_id = int(specs['pgid'])
         except KeyError:
-            return False
+            raise
+        if pg is None:
+            raise ValueError('invalid jobid specified')
         # Try to find the alps_res_id for this job.  if we don't have it, then we
-        # need to reacquire the resource reservation.  The job locations will be
+        # need to reacquire the source reservation.  The job locations will be
         # critical for making this work.
         with self._node_lock:
             # do not want to hit this during an update.
-            alps_res = self.alps_reservations.get(pg.jobid, None)
+            alps_res = self.alps_reservations.get(str(pg.jobid), None)
             # find nodes for jobid.  If we don't have sufficient nodes, job
             # should die
-            job_nodes = [node for node in self.nodes if node.reserved_jobid == pg.jobid]
-            if len(job_nodes) == 0:
+            job_nodes = [node for node in self.nodes.values()
+                            if node.reserved_jobid == pg.jobid]
+            nodecount = len(job_nodes)
+            if nodecount == 0:
                 _logger.warning('%s: No nodes reserved for job.', pg.label)
                 return False
             new_time = job_nodes[0].reserved_until
             node_list = compact_num_list([node.node_id for node in job_nodes])
         if alps_res is None:
-            self._ALPS_reserve_resources(pg.jobid, new_time, node_list)
+            job_info = {'user': specs['user'],
+                        'jobid':specs['jobid'],
+                        'nodes': nodecount,
+                        'attrs': {},
+                        }
+            self._ALPS_reserve_resources(job_info, new_time, node_list)
             alps_res = self.alps_reservations.get(pg.jobid, None)
             if alps_res is None:
                 _logger.warning('%s: Unable to re-reserve ALPS resources.',
@@ -1032,9 +1054,28 @@ class CraySystem(BaseSystem):
 
         # try to confirm, if we fail at confirmation, try to reserve same
         # resource set again
-        ALPSBridge.confirm(alps_res.alps_res_id, pg_id)
+        _logger.debug('confirming with pagg_id %s', pg_id)
+        ALPSBridge.confirm(int(alps_res.alps_res_id), pg_id)
         return True
 
+    @exposed
+    def interactive_job_complete (self, jobid):
+        """Will terminate the specified interactive job
+        """
+        job_not_found = True
+        for pg in self.process_manager.process_groups.itervalues():
+            if pg.jobid == jobid:
+                job_not_found = False
+                if pg.mode == 'interactive':
+                    pg.interactive_complete = True
+                else:
+                    msg = "Job %s not an interactive" % str(jobid)
+                    self.logger.error(msg)
+                    raise JobNotInteractive(msg)
+                break
+        if job_not_found:
+            self.logger.warning("%s: Interactive job not found", str(jobid))
+        return
 
 class ALPSReservation(object):
     '''Container for ALPS Reservation information.  Can be used to update
