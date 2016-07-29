@@ -478,7 +478,7 @@ class CraySystem(BaseSystem):
             retval = Cobalt.Proxy.ComponentProxy('system_script_forker').fork(
                     [APKILL_CMD, '-%s' % signame, '%d' % int(aprun_id)],
                     'aprun_termination', '%s cleanup:'% aprun_id)
-            _logger.info("killing backend job: %s", aprun_id)
+            _logger.info("killing backend ALPS application_id: %s", aprun_id)
         except xmlrpclib.Fault:
             _logger.warning("XMLRPC Error while killing backend job: %s, will retry.",
                     aprun_id, exc_info=True)
@@ -487,7 +487,6 @@ class CraySystem(BaseSystem):
                     aprun_id, exc_info=True)
         else:
             self.killing_jobs[aprun_id] = retval
-            _logger.info("%s", self.killing_jobs)
         return
 
     def check_killing_aprun(self):
