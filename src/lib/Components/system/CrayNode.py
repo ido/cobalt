@@ -50,6 +50,10 @@ class CrayNode(ClusterNode):
         idle.
 
         '''
+        #admin down wins.  If an admin says it's down, it's down.
+        if self.admin_down:
+            self._status = 'down'
+            return
         if new_status.upper() in self.CRAY_STATE_MAP.keys():
             self._status = self.CRAY_STATE_MAP[new_status.upper()]
             self.ALPS_status = new_status

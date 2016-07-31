@@ -31,6 +31,7 @@ class Resource(object):
         self.managed = False
         self.init_actions = []
         self.cleanup_actions = []
+        self.admin_down = False
 
     def reset_info(self, node):
         '''reset node information on restart from a stored node object'''
@@ -39,6 +40,7 @@ class Resource(object):
         self.reserved_jobid = node.reserved_jobid
         self.reserved_until = node.reserved_until
         self.managed = node.managed
+        self.admin_down = node.admin_down
 
     def __hash__(self):
         '''Hash is the hash of the string name for the resource.'''
@@ -73,7 +75,10 @@ class Resource(object):
         if value not in self.RESOURCE_STATUSES:
             raise InvalidStatusError('%s status invalid.  Must be one of %s' % \
                     (value, self.RESOURCE_STATUSES))
-        self._status = value
+        if self.admin_down:
+            self._status = 'down'
+        else:
+            self._status = value
 
     @property
     def available_attributes(self):
