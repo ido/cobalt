@@ -26,7 +26,7 @@ _logger = logging.getLogger(__name__.split('.')[-1])
 init_cobalt_config()
 BASIL_PATH = get_config_option('alps', 'basil',
                                '/home/richp/alps-simulator/apbasil.sh')
-
+DEFAULT_DEPTH = int(get_config_option('alps', 'default_depth', 72))
 
 class ALPSScriptChild (PGChild):
     def __init__(self, id = None, **kwargs):
@@ -109,21 +109,30 @@ class ALPSScriptChild (PGChild):
         '''
         rc = False
         success = self._send_confirm()
+        #success = False
         #if a failure, re-reserve.  Use child data to reassociate reservation
         #with hardware in system componient.
-        if not success:
+        if not success :
+            _logger.warning('Re-reservation required for %s', self.pg.label)
             #rereserve
             params = {}
             params['user_name'] = self.pg.user
             params['batch_id'] = self.pg.jobid
-            params['width'] = self.pg.nodect
-            params['depth'] = 1 #FIXME fix this.  Pass this in from qsub. FIXME
-            #params['node_id_list'] = self.pg.node_ids
+            params['width'] = int(self.pg.nodect) * int(DEFAULT_DEPTH)
+            params['nppn'] = int(DEFAULT_DEPTH) #FIXME fix this.  Pass this in from qsub. FIXME
+            params['node_id_list'] = self.pg.location[0]
+            params['depth'] = None
+            params['npps'] = None
+            params['nspn'] = None
+            params['reservation_mode'] = 'EXCLUSIVE'
+            params['nppcu'] = None
+            params['p-state'] = None
+            params['p-govenor'] = None
             reserve_request = BasilRequest('RESERVE', params=params)
             basil = subprocess.Popen(BASIL_PATH, stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = basil.communicate(str(reserve_request))
-            if basil.returncode != 0:
+            if basil.returncode == 0:
                 try:
                     response = parse_response(stdout)
                     #won't need the response itself beyond that we were successful.
@@ -131,6 +140,8 @@ class ALPSScriptChild (PGChild):
                     _logger.warning('%s: unable to reserve nodes in ALPS: %s',
                             self.pg.label, self.pg.location)
                 else:
+                    _logger.warning('%s: New reservation %s created.',
+                            self.pg.label, response['reservation_id'])
                     self.pg.alps_res_id = response['reservation_id']
                     success = self._send_confirm()
                     if success:
@@ -138,7 +149,8 @@ class ALPSScriptChild (PGChild):
             else:
                 #Can't re-reserve.  We're dead at this point.  Exit child
                 #process now.
-                _logger.error('%s re-resevation failed.', self.pg.label)
+                _logger.error('%s re-resevation failed.\n%s\n%s', self.pg.label,
+                        stdout, stderr)
         else:
             _logger.info('%s: ALPS reservation %s confirmed', self.pg.label,
                     self.pg.alps_res_id)
@@ -156,8 +168,6 @@ class ALPSScriptChild (PGChild):
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         #couldn't confirm, log message and let failure happen
         stdout, stderr = basil.communicate(str(confirm_request))
-        print stdout
-        print stderr
         if basil.returncode == 0:
             #if we get a nonzero, that's a failure, fall through to return no
             #success
@@ -168,6 +178,8 @@ class ALPSScriptChild (PGChild):
                 _logger.warning('%s: unable to confirm ALPS reservation %s',
                         self.pg.label, self.pg.alps_res_id)
             else:
+                _logger.info('%s: confirmed alps_reservation %s', self.pg.label,
+                        self.pg.alps_res_id)
                 success = True
         else:
             _logger.error('%s: Child exited with stderr: %s', self.pg.label,
