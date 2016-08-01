@@ -15,6 +15,7 @@ from subprocess import Popen, PIPE, STDOUT
 import time
 import json
 import logging
+import logging.handlers
 
 SUCCESS = 0
 RESET_FAILURE = 3
@@ -33,9 +34,17 @@ POLL_INT = 0.25
 
 CAPMC_CMD = '/opt/cray/capmc/default/bin/capmc'
 
-logging.basicConfig(format='%(asctime)s %(message)s',
-                    datefmt='%Y-%d-%m %H:%M:%S.%f')
-logger = logging.getLogger()
+#syslog setup
+log_datefmt = '%Y-%d-%m %H:%M:%S'
+base_fmt = '%(asctime)s %(message)s'
+syslog_fmt = '%(name)s[%(process)d]: %(asctime)s %(message)s'
+
+logging.basicConfig(format=base_fmt, datefmt=log_datefmt)
+logger = logging.getLogger('reset_memory_mode')
+logger.setLevel(logging.INFO)
+syslog = logging.handlers.SysLogHandler('/dev/log')
+syslog.setFormatter(logging.Formatter(syslog_fmt, datefmt=log_datefmt))
+logger.addHandler(syslog)
 
 def expand_num_list(num_list):
     '''Take a compact, comma-seperated string of integer values and ranges and
