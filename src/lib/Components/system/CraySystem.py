@@ -1056,8 +1056,10 @@ class CraySystem(BaseSystem):
                 node = self.nodes[str(node_id)]
                 try:
                     if updates.get('down', False):
+                        node.admin_down = True
                         node.status = 'down'
                     elif updates.get('up', False):
+                        node.admin_down = False
                         node.status = 'idle'
                     elif updates.get('queues', None):
                         node.queues = list(updates['queues'].split(':'))
