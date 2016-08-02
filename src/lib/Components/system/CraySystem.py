@@ -32,7 +32,7 @@ TEMP_RESERVATION_TIME = int(get_config_option('alpssystem',
 SAVE_ME_INTERVAL = float(get_config_option('alpsssytem', 'save_me_interval', 10.0))
 PENDING_STARTUP_TIMEOUT = float(get_config_option('alpssystem',
     'pending_startup_timeout', 1200)) #default 20 minutes to account for boot.
-APKILL_CMD = get_config_option('alps', 'apkill_cmd', '/opt/cray/usr/bin/apkill')
+APKILL_CMD = get_config_option('alps', 'apkill', '/opt/cray/alps/default/bin/apkill')
 
 class ALPSProcessGroup(ProcessGroup):
     '''ALPS-specific PocessGroup modifications.'''
