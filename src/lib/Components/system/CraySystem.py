@@ -14,6 +14,7 @@ from Cobalt.Components.system.base_system import BaseSystem
 from Cobalt.Components.system.CrayNode import CrayNode
 from Cobalt.Components.system.base_pg_manager import ProcessGroupManager
 from Cobalt.Exceptions import ComponentLookupError
+from Cobalt.Exceptions import JobNotInteractive
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
 from Cobalt.Util import compact_num_list, expand_num_list
 from Cobalt.Util import init_cobalt_config, get_config_option
@@ -31,7 +32,7 @@ TEMP_RESERVATION_TIME = int(get_config_option('alpssystem',
 SAVE_ME_INTERVAL = float(get_config_option('alpsssytem', 'save_me_interval', 10.0))
 PENDING_STARTUP_TIMEOUT = float(get_config_option('alpssystem',
     'pending_startup_timeout', 1200)) #default 20 minutes to account for boot.
-
+APKILL_CMD = get_config_option('alps', 'apkill', '/opt/cray/alps/default/bin/apkill')
 
 class ALPSProcessGroup(ProcessGroup):
     '''ALPS-specific PocessGroup modifications.'''
@@ -39,6 +40,12 @@ class ALPSProcessGroup(ProcessGroup):
     def __init__(self, spec):
         super(ALPSProcessGroup, self).__init__(spec)
         self.alps_res_id = spec['alps_res_id']
+        self.interactive_complete = False
+
+    #inherit generic getstate and setstate methods from parent
+
+
+
 
 class CraySystem(BaseSystem):
     '''Cray/ALPS-specific system component.  Behaviors should go here.  Direct
@@ -86,9 +93,11 @@ class CraySystem(BaseSystem):
                 _logger.info('BRIDGE INITIALIZED')
         #process manager setup
         if spec is None:
-            self.process_manager = ProcessGroupManager()
+            self.process_manager = ProcessGroupManager(pgroup_type=ALPSProcessGroup)
         else:
-            self.process_manager = ProcessGroupManager().__setstate__(spec['process_manager'])
+            self.process_manager = ProcessGroupManager(pgroup_type=ALPSProcessGroup).__setstate__(spec['process_manager'])
+            self.logger.info('pg type %s',
+                    self.process_manager.process_groups.item_cls)
         #self.process_manager.forkers.append('alps_script_forker')
         self.process_manager.update_launchers()
         self.pending_start_timeout = 1200 #20 minutes for long reboots. 
@@ -116,6 +125,7 @@ class CraySystem(BaseSystem):
                 tuple())
         _logger.info('UPDATE THREAD STARTED')
         self.current_equivalence_classes = []
+        self.killing_jobs = {}
 
     def __getstate__(self):
         '''Save process, alps-reservation information, along with base
@@ -155,8 +165,11 @@ class CraySystem(BaseSystem):
                 # much more compact representation of data.  Reservednodes gives
                 # which notes are reserved.
                 inventory = ALPSBridge.fetch_inventory()
+                _logger.info('INVENTORY FETCHED')
                 system = ALPSBridge.extract_system_node_data(ALPSBridge.system())
+                _logger.info('SYSTEM DATA FETCHED')
                 reservations = ALPSBridge.fetch_reservations()
+                _logger.info('ALPS RESERVATION DATA FETCHED')
                 # reserved_nodes = ALPSBridge.reserved_nodes()
             except Exception:
                 #don't crash out here.  That may trash a statefile.
@@ -274,6 +287,7 @@ class CraySystem(BaseSystem):
         for jobid in startup_time_to_clear:
             del self.pending_starts[jobid]
 
+        self.check_killing_aprun()
         with self._node_lock:
             fetch_time_start = time.time()
             try:
@@ -335,7 +349,10 @@ class CraySystem(BaseSystem):
                     if (alps_res.jobid not in released_res_jobids and
                             str(node.node_id) in alps_res.node_ids):
                         #send only one release per iteration
-                        alps_res.release()
+                        apids = alps_res.release()
+                        if apids is not None:
+                            for apid in apids:
+                                self.signal_aprun(apid)
                         released_res_jobids.append(alps_res.jobid)
 
         #find hardware status
@@ -419,7 +436,7 @@ class CraySystem(BaseSystem):
                 tracked_res = self.alps_reservations.get(new_alps_res.jobid, None)
                 if tracked_res is not None:
                     try:
-                        tracked_res.release()
+                        apids = tracked_res.release()
                     except ALPSBridge.ALPSError:
                         # backend reservation probably is gone, which is why
                         # we are here in the first place.
@@ -435,8 +452,67 @@ class CraySystem(BaseSystem):
                     new_alps_res.release()
                 else:
                     self.alps_reservations[str(alps_res['batch_id'])] = new_alps_res
-
         return
+
+    def signal_aprun(self, aprun_id, signame='SIGINT'):
+        '''Signal an aprun by aprun id (application_id).  Does not block.
+        Use check_killing_aprun to determine completion/termination.  Does not
+        depend on the host the aprun(s) was launched from.
+
+        Input:
+            aprun_id - integer application id number.
+            signame  - string name of signal to send (default: SIGINT)
+        Notes:
+            Valid signals to apkill are:
+            SIGHUP, SIGINT, SIGQUIT, SIGTERM, SIGABRT, SIGUSR1, SIGUSR2, SIGURG,
+            and SIGWINCH (from apkill(1) man page.)  Also allowing SIGKILL.
+
+        '''
+        #Expect changes with an API updte
+
+        #mark legal signals from docos
+        if (signame not in ['SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGTERM', 'SIGABRT',
+            'SIGUSR1', 'SIGUSR2', 'SIGURG','SIGWINCH', 'SIGKILL']):
+            raise ValueError('%s is not a legal value for signame.', signame)
+        try:
+            retval = Cobalt.Proxy.ComponentProxy('system_script_forker').fork(
+                    [APKILL_CMD, '-%s' % signame, '%d' % int(aprun_id)],
+                    'aprun_termination', '%s cleanup:'% aprun_id)
+            _logger.info("killing backend ALPS application_id: %s", aprun_id)
+        except xmlrpclib.Fault:
+            _logger.warning("XMLRPC Error while killing backend job: %s, will retry.",
+                    aprun_id, exc_info=True)
+        except:
+            _logger.critical("Unknown Error while killing backend job: %s, will retry.",
+                    aprun_id, exc_info=True)
+        else:
+            self.killing_jobs[aprun_id] = retval
+        return
+
+    def check_killing_aprun(self):
+        '''Check that apkill commands have completed and clean them from the
+        system_script_forker.  Allows for non-blocking cleanup initiation.
+
+        '''
+
+        try:
+            system_script_forker = Cobalt.Proxy.ComponentProxy('system_script_forker')
+        except:
+            self.logger.critical("Cannot connect to system_script_forker.",
+                    exc_info=True)
+            return
+        complete_jobs = []
+        rev_killing_jobs = dict([(v,k) for (k,v) in self.killing_jobs.iteritems()])
+        removed_jobs = []
+        current_killing_jobs = system_script_forker.get_children(None, self.killing_jobs.values())
+
+        for job in current_killing_jobs:
+            if job['complete']:
+                del self.killing_jobs[rev_killing_jobs[int(job['id'])]]
+                removed_jobs.append(job['id'])
+        system_script_forker.cleanup_children(removed_jobs)
+        return
+
     @exposed
     def find_queue_equivalence_classes(self, reservation_dict,
             active_queue_names, passthrough_blocking_res_list=[]):
@@ -999,6 +1075,77 @@ class CraySystem(BaseSystem):
                 compact_num_list(mod_nodes), user)
         return mod_nodes
 
+    @exposed
+    def confirm_alps_reservation(self, specs):
+        '''confirm or rereserve if needed the ALPS reservation for an
+        interactive job.
+
+        '''
+        try:
+            pg = None
+            for pgroup in self.process_manager.process_groups.values():
+                if pgroup.jobid == int(specs['jobid']):
+                    pg = pgroup
+            #pg = self.process_manager.process_groups[int(specs['pg_id'])]
+            pg_id = int(specs['pgid'])
+        except KeyError:
+            raise
+        if pg is None:
+            raise ValueError('invalid jobid specified')
+        # Try to find the alps_res_id for this job.  if we don't have it, then we
+        # need to reacquire the source reservation.  The job locations will be
+        # critical for making this work.
+        with self._node_lock:
+            # do not want to hit this during an update.
+            alps_res = self.alps_reservations.get(str(pg.jobid), None)
+            # find nodes for jobid.  If we don't have sufficient nodes, job
+            # should die
+            job_nodes = [node for node in self.nodes.values()
+                            if node.reserved_jobid == pg.jobid]
+            nodecount = len(job_nodes)
+            if nodecount == 0:
+                _logger.warning('%s: No nodes reserved for job.', pg.label)
+                return False
+            new_time = job_nodes[0].reserved_until
+            node_list = compact_num_list([node.node_id for node in job_nodes])
+        if alps_res is None:
+            job_info = {'user': specs['user'],
+                        'jobid':specs['jobid'],
+                        'nodes': nodecount,
+                        'attrs': {},
+                        }
+            self._ALPS_reserve_resources(job_info, new_time, node_list)
+            alps_res = self.alps_reservations.get(pg.jobid, None)
+            if alps_res is None:
+                _logger.warning('%s: Unable to re-reserve ALPS resources.',
+                        pg.label)
+                return False
+
+        # try to confirm, if we fail at confirmation, try to reserve same
+        # resource set again
+        _logger.debug('confirming with pagg_id %s', pg_id)
+        ALPSBridge.confirm(int(alps_res.alps_res_id), pg_id)
+        return True
+
+    @exposed
+    def interactive_job_complete (self, jobid):
+        """Will terminate the specified interactive job
+        """
+        job_not_found = True
+        for pg in self.process_manager.process_groups.itervalues():
+            if pg.jobid == jobid:
+                job_not_found = False
+                if pg.mode == 'interactive':
+                    pg.interactive_complete = True
+                else:
+                    msg = "Job %s not an interactive" % str(jobid)
+                    self.logger.error(msg)
+                    raise JobNotInteractive(msg)
+                break
+        if job_not_found:
+            self.logger.warning("%s: Interactive job not found", str(jobid))
+        return
+
 class ALPSReservation(object):
     '''Container for ALPS Reservation information.  Can be used to update
     reservations and also internally relases reservation.
@@ -1060,17 +1207,38 @@ class ALPSReservation(object):
         A reservation may remain if there are still active claims.  When all
         claims are gone
 
+        Returns a list of apids and child_ids for the system script forker
+        for any apids that are still cleaning.
+
         '''
         if self.dying:
             #release already issued.  Ignore
             return
+        apids = []
         status = ALPSBridge.release(self.alps_res_id)
         if int(status['claims']) != 0:
             _logger.info('ALPS reservation: %s still has %s claims.',
                     self.alps_res_id, status['claims'])
+            # fetch reservation information so that we can send kills to
+            # interactive apruns.
+            resinfo = ALPSBridge.fetch_reservations()
+            apids = _find_non_batch_apids(resinfo['reservations'])
         else:
             _logger.info('ALPS reservation: %s has no claims left.',
                 self.alps_res_id)
         self.dying = True
+        return apids
 
-
+def _find_non_batch_apids(resinfo):
+    '''Extract apids from non-batch items.'''
+    apids = []
+    for alps_res in resinfo:
+        #wow, this is ugly.
+        for applications in alps_res['ApplicationArray']:
+            for application in applications.values():
+                for app_data in application:
+                    for commands in app_data['CommandArray']:
+                        for command in commands.values():
+                            if command[0]['cmd'] != 'BASIL':
+                                apids.append(app_data['application_id'])
+    return apids
