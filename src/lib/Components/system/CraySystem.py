@@ -379,7 +379,7 @@ class CraySystem(BaseSystem):
                     # Cannot add nodes on the fly.  Or at lesat we shouldn't be
                     # able to.
                     _logger.error('UNS: ALPS reports node %s but not in our node list.',
-                                  inven_node['name'])
+                                  inven_node['node_id'])
             #should down win over running in terms of display?
             #keep node that are marked for cleanup still in cleanup
             for node in cleanup_nodes:
