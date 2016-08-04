@@ -112,7 +112,10 @@ class CraySystem(BaseSystem):
         if spec is not None:
             node_info = spec.get('node_info', {})
             for nid, node in node_info.items():
-                self.nodes[nid].reset_info(node)
+                try:
+                    self.nodes[nid].reset_info(node)
+                except: #check the exception types later.  Carry on otherwise.
+                    self.logger.warning("Node nid: %s not found in restart information.  Bringing up node in a clean configuration.", nid)
         #storage for pending job starts.  Allows us to handle slow starts vs
         #user deletes
         self.pending_starts = {} #jobid: time this should be cleared.
@@ -126,6 +129,10 @@ class CraySystem(BaseSystem):
         _logger.info('UPDATE THREAD STARTED')
         self.current_equivalence_classes = []
         self.killing_jobs = {}
+        #hold on to the initial spec in case nodes appear out of nowhere.
+        self.init_spec = None
+        if spec is not None:
+            self.init_spec = spec
 
     def __getstate__(self):
         '''Save process, alps-reservation information, along with base
@@ -269,6 +276,44 @@ class CraySystem(BaseSystem):
             finally:
                 Cobalt.Util.sleep(UPDATE_THREAD_TIMEOUT)
 
+    def _reconstruct_node(self, inven_node, inventory):
+        '''Reconstruct a node from statefile information.  Needed whenever we
+        find a new node.  If no statefile information from the orignal cobalt
+        invocation exists, bring up a node in default states and mark node
+        administratively down.
+
+        This node was disabled and invisible to ALPS at the time Cobalt was
+        initialized and so we have no current record of that node.
+
+        '''
+        nid = inven_node['node_id']
+        new_node = None
+        #construct basic node from inventory
+        for node_info in inventory['nodes']:
+            if int(node_info['node_id']) == int(nid):
+                new_node = CrayNode(node_info)
+                break
+        if new_node is None:
+            #we have a phantom node?
+            self.logger.error('Unable to find inventory information for nid: %s', nid)
+            return
+        # if we have information from the statefile we need to repopulate the
+        # node with the saved data.
+        # Perhaps this should be how I construct all node data anyway?
+        if self.init_spec is not None:
+            node_info = self.init_spec.get('node_info', {})
+            try:
+                new_node.reset_info(node_info[str(nid)])
+                self.logger.warning('Node %s reconstructed.', nid)
+            except:
+                self.logger.warning("Node nid: %s not found in restart information.  Bringing up node in a clean configuration.", nid, exc_info=True)
+                #put into admin_down
+                new_node.admin_down = True
+                new_node.status = 'down'
+                self.logger.warning('Node %s marked down.', nid)
+        self.nodes[str(nid)] = new_node
+        self.logger.warning('Node %s added to tracking.', nid)
+
     @exposed
     def update_node_state(self):
         '''update the state of cray nodes. Check reservation status and system
@@ -356,6 +401,9 @@ class CraySystem(BaseSystem):
                         released_res_jobids.append(alps_res.jobid)
 
         #find hardware status
+            #so we do this only once for nodes being added.
+            #full inventory fetch is expensive.
+            recon_inventory = None
             for inven_node in inven_nodes.values():
                 if self.nodes.has_key(str(inven_node['node_id'])):
                     node = self.nodes[str(inven_node['node_id'])]
@@ -376,10 +424,19 @@ class CraySystem(BaseSystem):
                         if node.role.upper() not in ['BATCH'] and node.status is 'idle':
                             node.status = 'alps-interactive'
                 else:
-                    # Cannot add nodes on the fly.  Or at lesat we shouldn't be
-                    # able to.
-                    _logger.error('UNS: ALPS reports node %s but not in our node list.',
-                                  inven_node['node_id'])
+                    # Apparently, we CAN add nodes on the fly.  The node would
+                    # have been disabled.  We need to add a new node and update
+                    # it's state.
+                    _logger.warning('Unknown node %s found. Starting reconstruction.', inven_node['node_id'])
+                    try:
+                        if recon_inventory is None:
+                            recon_inventory = ALPSBridge.fetch_inventory()
+                    except:
+                        _logger.error('Failed to fetch inventory.  Will retry on next pass.', exc_info=True)
+                    else:
+                        self._reconstruct_node(inven_node, recon_inventory)
+                   # _logger.error('UNS: ALPS reports node %s but not in our node list.',
+                   #               inven_node['node_id'])
             #should down win over running in terms of display?
             #keep node that are marked for cleanup still in cleanup
             for node in cleanup_nodes:
