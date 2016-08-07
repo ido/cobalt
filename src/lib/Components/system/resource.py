@@ -40,7 +40,10 @@ class Resource(object):
         self.reserved_jobid = node.reserved_jobid
         self.reserved_until = node.reserved_until
         self.managed = node.managed
-        self.admin_down = node.admin_down
+        try:
+            self.admin_down = node.admin_down
+        except:
+            self.admin_down = False
 
     def __hash__(self):
         '''Hash is the hash of the string name for the resource.'''

@@ -311,6 +311,7 @@ class CraySystem(BaseSystem):
                 new_node.admin_down = True
                 new_node.status = 'down'
                 self.logger.warning('Node %s marked down.', nid)
+        new_node.managed = True
         self.nodes[str(nid)] = new_node
         self.logger.warning('Node %s added to tracking.', nid)
 
