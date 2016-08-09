@@ -704,21 +704,32 @@ class CraySystem(BaseSystem):
                                         if self.nodes[str(nid)].status =='idle'])
             idle_nodecount = idle_nodes_by_queue[job['queue']] - idle_forbidden_count
             node_id_list = list(set(self.nodes_by_queue[job['queue']]) - forbidden)
-        if requested_locations != []:
+        if requested_locations != []: # handle attrs location= requests
             job_set = set([int(nid) for nid in requested_locations])
-            if job_set <= set([int(node_id) for node_id in
-                                self.nodes_by_queue[job['queue']]]):
-                node_id_list = requested_locations
-                if not set(node_id_list).isdisjoint(forbidden):
-                    # this job has requested locations that are a part of an
-                    # active reservation.  Remove locaitons and drop available
-                    # nodecount appropriately.
-                    node_id_list = list(set(node_id_list) - forbidden)
-                idle_nodecount = len(node_id_list)
+            if not job['queue'] in self.nodes_by_queue.keys():
+                #we're in a reservation and need to further restrict nodes.
+                if job_set <= set(node_id_list):
+                    # We are in a reservation there are no forbidden nodes.
+                    node_id_list = requested_locations
+                else:
+                    # We can't run this job.  Insufficent resources in this
+                    # reservation to do so.  Don't risk blocking anything.
+                    idle_nodecount = 0
+                    node_id_list = []
             else:
-                idle_nodecount = 0
-                node_id_list = []
-                raise ValueError
+                if job_set <= set([int(node_id) for node_id in
+                                    self.nodes_by_queue[job['queue']]]):
+                    node_id_list = requested_locations
+                    if not set(node_id_list).isdisjoint(forbidden):
+                        # this job has requested locations that are a part of an
+                        # active reservation.  Remove locaitons and drop available
+                        # nodecount appropriately.
+                        node_id_list = list(set(node_id_list) - forbidden)
+                    idle_nodecount = len(node_id_list)
+                else:
+                    idle_nodecount = 0
+                    node_id_list = []
+                    raise ValueError
         return (idle_nodecount, node_id_list)
 
     @locking
