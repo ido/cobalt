@@ -19,8 +19,6 @@ from Cobalt.DataTypes.ProcessGroup import ProcessGroup
 from Cobalt.Util import compact_num_list, expand_num_list
 from Cobalt.Util import init_cobalt_config, get_config_option
 
-
-
 _logger = logging.getLogger(__name__)
 
 init_cobalt_config()
@@ -43,9 +41,6 @@ class ALPSProcessGroup(ProcessGroup):
         self.interactive_complete = False
 
     #inherit generic getstate and setstate methods from parent
-
-
-
 
 class CraySystem(BaseSystem):
     '''Cray/ALPS-specific system component.  Behaviors should go here.  Direct
@@ -80,6 +75,8 @@ class CraySystem(BaseSystem):
         while bridge_pending:
             # purge stale children from prior run.  Also ensure the
             # system_script_forker is currently up.
+            # These attempts may fail due to system_script_forker not being up.
+            # We don't want to trash the statefile in this case.
             try:
                 ALPSBridge.init_bridge()
             except ALPSBridge.BridgeError:
@@ -96,11 +93,10 @@ class CraySystem(BaseSystem):
             self.process_manager = ProcessGroupManager(pgroup_type=ALPSProcessGroup)
         else:
             self.process_manager = ProcessGroupManager(pgroup_type=ALPSProcessGroup).__setstate__(spec['process_manager'])
-            self.logger.info('pg type %s',
-                    self.process_manager.process_groups.item_cls)
+            self.logger.debug('pg type %s', self.process_manager.process_groups.item_cls)
         #self.process_manager.forkers.append('alps_script_forker')
         self.process_manager.update_launchers()
-        self.pending_start_timeout = 1200 #20 minutes for long reboots. 
+        self.pending_start_timeout = PENDING_STARTUP_TIMEOUT
         _logger.info('PROCESS MANAGER INTIALIZED')
         #resource management setup
         self.nodes = {} #cray node_id: CrayNode
@@ -124,8 +120,7 @@ class CraySystem(BaseSystem):
         #state update thread and lock
         self._node_lock = threading.RLock()
         self._gen_node_to_queue()
-        self.node_update_thread = thread.start_new_thread(self._run_update_state,
-                tuple())
+        self.node_update_thread = thread.start_new_thread(self._run_update_state, tuple())
         _logger.info('UPDATE THREAD STARTED')
         self.current_equivalence_classes = []
         self.killing_jobs = {}
@@ -388,7 +383,7 @@ class CraySystem(BaseSystem):
             #resource reservation
             cleanup_nodes = [node for node in self.nodes.values()
                              if node.status == 'cleanup-pending']
-            #If we have a block marked for cleanup, send a relesae message.
+            #If we have a block marked for cleanup, send a release message.
             released_res_jobids = []
             for node in cleanup_nodes:
                 for alps_res in self.alps_reservations.values():

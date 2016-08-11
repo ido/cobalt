@@ -48,13 +48,10 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
             self.process_groups = ProcessGroupDict()
             self.process_groups.item_cls = self.pgroup_type
         else:
-            self.process_groups = ProcessGroupDict()
-            self.process_groups.item_cls = self.pgroup_type
-            _logger.info("%s", state['process_groups'])
-            for pgroup in state['process_groups']:
-                pg = self.process_groups.item_cls().__setstate__(pgroup)
-                self.process_groups[pg.id] = pg
-            self.process_groups.q_add(state['process_groups'])
+            self.process_groups = state.get('process_groups',
+                    ProcessGroupDict())
+            for pg in self.process_groups.values():
+                _logger.info('recovering pgroup %s, jobid %s', pg.id, pg.jobid)
             self.process_groups.id_gen.set(int(state['next_pg_id']))
         self.process_group_actions = {}
         self.forkers = [] #list of forker identifiers to use with ComponentProxy
@@ -64,8 +61,7 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
 
     def __getstate__(self):
         state = {}
-        state['process_groups'] = [pg.__getstate__ for pg in
-                self.process_groups.values()]
+        state['process_groups'] = self.process_groups
         state['next_pg_id'] = self.process_groups.id_gen.idnum + 1
         return state
 
