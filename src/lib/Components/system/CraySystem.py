@@ -1275,23 +1275,24 @@ class ALPSReservation(object):
             # fetch reservation information so that we can send kills to
             # interactive apruns.
             resinfo = ALPSBridge.fetch_reservations()
-            apids = _find_non_batch_apids(resinfo['reservations'])
+            apids = _find_non_batch_apids(resinfo['reservations'], self.alps_res_id)
         else:
             _logger.info('ALPS reservation: %s has no claims left.',
                 self.alps_res_id)
         self.dying = True
         return apids
 
-def _find_non_batch_apids(resinfo):
+def _find_non_batch_apids(resinfo, alps_res_id=None):
     '''Extract apids from non-batch items.'''
     apids = []
     for alps_res in resinfo:
-        #wow, this is ugly.
-        for applications in alps_res['ApplicationArray']:
-            for application in applications.values():
-                for app_data in application:
-                    for commands in app_data['CommandArray']:
-                        for command in commands.values():
-                            if command[0]['cmd'] != 'BASIL':
-                                apids.append(app_data['application_id'])
+        if alps_res_id is None or alps_res['reservation_id'] == str(alps_res_id):
+            #wow, this is ugly.
+            for applications in alps_res['ApplicationArray']:
+                for application in applications.values():
+                    for app_data in application:
+                        for commands in app_data['CommandArray']:
+                            for command in commands.values():
+                                if command[0]['cmd'] != 'BASIL':
+                                    apids.append(app_data['application_id'])
     return apids
