@@ -1282,17 +1282,23 @@ class ALPSReservation(object):
         self.dying = True
         return apids
 
-def _find_non_batch_apids(resinfo, alps_res_id=None):
-    '''Extract apids from non-batch items.'''
+def _find_non_batch_apids(resinfo, alps_res_id):
+    '''Extract apids from non-basil items.'''
     apids = []
     for alps_res in resinfo:
-        if alps_res_id is None or alps_res['reservation_id'] == str(alps_res_id):
-            #wow, this is ugly.
+        if str(alps_res['reservation_id']) == str(alps_res_id):
+            #wow, this is ugly. Traversing the XML from BASIL
             for applications in alps_res['ApplicationArray']:
                 for application in applications.values():
                     for app_data in application:
+                        # applicaiton id is at the app_data level.  Multiple
+                        # commands don't normally happen.  Maybe in a MPMD job?
+                        # All commands will have the same applicaiton id.
                         for commands in app_data['CommandArray']:
                             for command in commands.values():
+                                # BASIL is the indicaiton of a apbasil
+                                # reservation.  apruns with the application of
+                                # BASIL would be an error.
                                 if command[0]['cmd'] != 'BASIL':
                                     apids.append(app_data['application_id'])
     return apids
