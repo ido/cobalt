@@ -88,9 +88,18 @@ def verify_locations(partitions):
     if system_type in ['alps_system']:
         # nodes come in as a compact list.  expand this.
         check_partitions = []
+        # if we're not a compact list, convert to a compact list.  Get this,
+        # ideally, in one call
         for num_list in partitions:
             check_partitions.extend(expand_num_list(num_list))
+            test_parts = client_utils.component_call(SYSMGR, False,
+            'verify_locations', (check_partitions,))
+            # On Cray we will be a little looser to make setting reservations
+            # easier.
+            client_utils.logger.info('Got nodes: %s', compact_num_list(test_parts))
+            sys.exit(1)
     for p in check_partitions:
+        print "checking parts"
         test_parts = client_utils.component_call(SYSMGR, False,
                 'verify_locations', (check_partitions,))
         if len(test_parts) != len(check_partitions):
