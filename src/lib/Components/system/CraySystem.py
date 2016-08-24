@@ -682,7 +682,7 @@ class CraySystem(BaseSystem):
         unavailable_nodes = []
         forbidden = set([str(loc) for loc in self.chain_loc_list(job.get('forbidden', []))])
         required = set([str(loc) for loc in self.chain_loc_list(job.get('required', []))])
-        requested_locations = [str(n) for n in expand_num_list(job['attrs'].get('location', ''))]
+        requested_locations = set([str(n) for n in expand_num_list(job['attrs'].get('location', ''))])
         requested_loc_in_forbidden = False
         for loc in requested_locations:
             if loc in forbidden:
@@ -695,13 +695,13 @@ class CraySystem(BaseSystem):
             node_id_list = list(required - forbidden)
         else:
             node_id_list = list(set(self.nodes_by_queue[job['queue']]) - forbidden)
-        if requested_locations != []: # handle attrs location= requests
+        if requested_locations != set([]): # handle attrs location= requests
             job_set = set([str(nid) for nid in requested_locations])
             if not job['queue'] in self.nodes_by_queue.keys():
                 #we're in a reservation and need to further restrict nodes.
                 if job_set <= set(node_id_list):
                     # We are in a reservation there are no forbidden nodes.
-                    node_id_list = requested_locations
+                    node_id_list = list(requested_locations)
                 else:
                     # We can't run this job.  Insufficent resources in this
                     # reservation to do so.  Don't risk blocking anything.
@@ -711,7 +711,7 @@ class CraySystem(BaseSystem):
                 #normal queues.  Restrict to the non-reserved nodes.
                 if job_set <= set([str(node_id) for node_id in
                                     self.nodes_by_queue[job['queue']]]):
-                    node_id_list = requested_locations
+                    node_id_list = list(requested_locations)
                     if not set(node_id_list).isdisjoint(forbidden):
                         # this job has requested locations that are a part of an
                         # active reservation.  Remove locaitons and drop available

@@ -160,6 +160,14 @@ class TestCraySystem(object):
         assert nodecount == 1, 'Wrong nodecount'
         assert nodelist == ['3'], 'Wrong node in list %s' % nodelist
 
+    def test_assemble_queue_data_attrs_location_repeats(self):
+        '''CraySystem._assemble_queue_data: eliminate repeat location entries'''
+        self.base_job['attrs'] = {'location':'1,1,2,3'}
+        nodecount, nodelist = self.system._assemble_queue_data(self.base_job,
+                self.system._idle_nodes_by_queue())
+        assert nodecount == 3, 'Wrong nodecount got %s expected 3' % nodecount
+        assert sorted(nodelist) == ['1', '2', '3'], 'Wrong node in list %s' % nodelist
+
     @raises(ValueError)
     def test_assemble_queue_data_attrs_bad_location(self):
         '''CraySystem._assemble_queue_data: raise error for location completely outside of
