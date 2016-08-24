@@ -88,20 +88,39 @@ def verify_locations(partitions):
     if system_type in ['alps_system']:
         # nodes come in as a compact list.  expand this.
         check_partitions = []
+        # if we're not a compact list, convert to a compact list.  Get this,
+        # ideally, in one call
         for num_list in partitions:
             check_partitions.extend(expand_num_list(num_list))
-    for p in check_partitions:
-        test_parts = client_utils.component_call(SYSMGR, False,
-                'verify_locations', (check_partitions,))
-        if len(test_parts) != len(check_partitions):
-            missing = [p for p in check_partitions if p not in test_parts]
-            client_utils.logger.error("Missing partitions: %s" % (" ".join(missing)))
-            sys.exit(1)
+            test_parts = client_utils.component_call(SYSMGR, False,
+            'verify_locations', (check_partitions,))
+            # On Cray we will be a little looser to make setting reservations
+            # easier.
+            client_utils.logger.info('Found Nodes: %s', compact_num_list(test_parts))
+            missing_nodes = set(check_partitions) - set(test_parts)
+            if len(missing_nodes) != 0:
+                # TODO: relax this, we should allow for this to occur, but
+                # reservation-queue data amalgamation will need a fix to get
+                # this to work. --PMR
+                client_utils.logger.error("Missing partitions: %s" % (",".join([str(nid) for nid in missing_nodes])))
+                client_utils.logger.error("Aborting reservation setup.")
+                sys.exit(1)
+
+            #sys.exit(1)
+    else:
+        for p in check_partitions:
+            test_parts = client_utils.component_call(SYSMGR, False,
+                    'verify_locations', (check_partitions,))
+            if len(test_parts) != len(check_partitions):
+                missing = [p for p in check_partitions if p not in test_parts]
+                client_utils.logger.error("Missing partitions: %s" % (" ".join(missing)))
+                sys.exit(1)
 
 def validate_args(parser,spec,opt_count):
     """
     Validate setres arguments. Will return true if we want to continue processing options.
     """
+    system_type = client_utils.component_call(SYSMGR, False, 'get_implementation', ())
     if parser.options.partitions != None:
         parser.args += [part for part in parser.options.partitions.split(':')]
 
@@ -120,7 +139,7 @@ def validate_args(parser,spec,opt_count):
     if only_id_change:
 
         # make the ID change and we are done with setres
-        
+
         if parser.options.res_id != None:
             set_res_id(parser)
         if parser.options.cycle_id != None:
@@ -150,17 +169,26 @@ def validate_args(parser,spec,opt_count):
             client_utils.logger.error("Cannot use -D while changing start or cycle time")
             sys.exit(1)
 
-        if not parser.no_args():
-            verify_locations(parser.args)
 
         # if we have command line arguments put them in spec
-        if not parser.no_args(): spec['partitions'] = ":".join(parser.args)
+        if system_type in ['alps_system']:
+            if not parser.no_args():
+                nodes = []
+                for arg in parser.args:
+                    nodes.extend(expand_num_list(arg))
+                compact_nodes = compact_num_list(nodes)
+                verify_locations([compact_nodes])
+                spec['partitions'] = compact_nodes
+        else:
+            if not parser.no_args():
+                verify_locations(parser.args)
+            if not parser.no_args(): spec['partitions'] = ":".join(parser.args)
 
         continue_processing_options = True # continue, setres is not done.
 
     return continue_processing_options
 
-        
+
 def modify_reservation(parser):
     """
     this will handle reservation modifications
