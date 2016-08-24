@@ -721,9 +721,10 @@ class CraySystem(BaseSystem):
                     node_id_list = []
                     if not requested_loc_in_forbidden:
                         raise ValueError("forbidden locations not in queue")
-        for node_id in node_id_list: #strip non-idle nodes.
-            if not self.nodes[str(node_id)].status in ['idle']:
-                unavailable_nodes.append(node_id)
+        with self._node_lock:
+            for node_id in node_id_list: #strip non-idle nodes.
+                if not self.nodes[str(node_id)].status in ['idle']:
+                    unavailable_nodes.append(node_id)
         for node_id in set(unavailable_nodes):
             node_id_list.remove(node_id)
         idle_nodecount = len(node_id_list)
