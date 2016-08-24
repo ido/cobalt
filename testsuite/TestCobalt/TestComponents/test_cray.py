@@ -162,6 +162,16 @@ class TestCraySystem(object):
         assert nodecount == 1, 'Wrong nodecount'
         assert nodelist == ['3'], 'Wrong node in list %s' % nodelist
 
+    @raises(ValueError)
+    def test_assemble_queue_data_attrs_bad_location(self):
+        '''_assemble_queue_data: raise error for location completely outside of
+        queue'''
+        self.base_job['attrs'] = {'location':'6'}
+        nodecount, nodelist = self.system._assemble_queue_data(self.base_job,
+                self.system._idle_nodes_by_queue())
+        assert nodecount == 1, 'Wrong nodecount'
+        assert nodelist == ['3'], 'Wrong node in list %s' % nodelist
+
     def test_assemble_queue_data_attrs_location_multi(self):
         '''_assemble_queue_data: return only attr locaiton complex loc string'''
         self.base_job['attrs'] = {'location':'1-3,5'}
@@ -236,3 +246,4 @@ class TestCraySystem(object):
                 self.system._idle_nodes_by_queue())
         assert nodecount == 3, 'Wrong nodecount %s' % nodecount
         assert sorted(nodelist) == ['1','2','4'], 'Wrong nodes in list %s' % nodelist
+
