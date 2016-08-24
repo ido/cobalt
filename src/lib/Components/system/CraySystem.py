@@ -680,40 +680,54 @@ class CraySystem(BaseSystem):
         # we also have to forbid a bunch of locations, in  this case.
         idle_nodecount = 0
         unavailable_nodes = []
-        forbidden = set(self.chain_loc_list(job.get('forbidden', [])))
-        required = set(self.chain_loc_list(job.get('required', [])))
-        requested_locations = expand_num_list(job['attrs'].get('location', ''))
+        forbidden = set([str(loc) for loc in self.chain_loc_list(job.get('forbidden', []))])
+        required = set([str(loc) for loc in self.chain_loc_list(job.get('required', []))])
+        requested_locations = set([str(n) for n in expand_num_list(job['attrs'].get('location', ''))])
+        requested_loc_in_forbidden = False
+        for loc in requested_locations:
+            if loc in forbidden:
+                #don't spam the logs.
+                requested_loc_in_forbidden = True
+                break
         if not job['queue'] in self.nodes_by_queue.keys():
             # Either a new queue with no resources, or a possible
             # reservation need to do extra work for a reservation
             node_id_list = list(required - forbidden)
-            for node_id in node_id_list:
-                if self.nodes[str(node_id)].status in ['idle']:
-                    idle_nodecount += 1
-                else:
-                    unavailable_nodes.append(node_id)
-            for node_id in unavailable_nodes:
-                node_id_list.remove(node_id)
         else:
-            idle_forbidden_count = len([nid for nid in forbidden
-                                        if self.nodes[str(nid)].status =='idle'])
-            idle_nodecount = idle_nodes_by_queue[job['queue']] - idle_forbidden_count
             node_id_list = list(set(self.nodes_by_queue[job['queue']]) - forbidden)
-        if requested_locations != []:
-            job_set = set([int(nid) for nid in requested_locations])
-            if job_set <= set([int(node_id) for node_id in
-                                self.nodes_by_queue[job['queue']]]):
-                node_id_list = requested_locations
-                if not set(node_id_list).isdisjoint(forbidden):
-                    # this job has requested locations that are a part of an
-                    # active reservation.  Remove locaitons and drop available
-                    # nodecount appropriately.
-                    node_id_list = list(set(node_id_list) - forbidden)
-                idle_nodecount = len(node_id_list)
+        if requested_locations != set([]): # handle attrs location= requests
+            job_set = set([str(nid) for nid in requested_locations])
+            if not job['queue'] in self.nodes_by_queue.keys():
+                #we're in a reservation and need to further restrict nodes.
+                if job_set <= set(node_id_list):
+                    # We are in a reservation there are no forbidden nodes.
+                    node_id_list = list(requested_locations)
+                else:
+                    # We can't run this job.  Insufficent resources in this
+                    # reservation to do so.  Don't risk blocking anything.
+                    #idle_nodecount = 0
+                    node_id_list = []
             else:
-                idle_nodecount = 0
-                node_id_list = []
-                raise ValueError
+                #normal queues.  Restrict to the non-reserved nodes.
+                if job_set <= set([str(node_id) for node_id in
+                                    self.nodes_by_queue[job['queue']]]):
+                    node_id_list = list(requested_locations)
+                    if not set(node_id_list).isdisjoint(forbidden):
+                        # this job has requested locations that are a part of an
+                        # active reservation.  Remove locaitons and drop available
+                        # nodecount appropriately.
+                        node_id_list = list(set(node_id_list) - forbidden)
+                else:
+                    node_id_list = []
+                    if not requested_loc_in_forbidden:
+                        raise ValueError("forbidden locations not in queue")
+        with self._node_lock:
+            for node_id in node_id_list: #strip non-idle nodes.
+                if not self.nodes[str(node_id)].status in ['idle']:
+                    unavailable_nodes.append(node_id)
+        for node_id in set(unavailable_nodes):
+            node_id_list.remove(node_id)
+        idle_nodecount = len(node_id_list)
         return (idle_nodecount, node_id_list)
 
     @locking
