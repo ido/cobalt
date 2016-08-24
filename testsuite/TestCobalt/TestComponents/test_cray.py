@@ -27,7 +27,7 @@ class TestCrayNode(object):
         del self.base_node
 
     def test_init(self):
-        # Test initialization routine from spec
+        '''CrayNode init test'''
         spec = {'name':'test', 'state': 'UP', 'node_id': 1, 'role':'batch',
                 'architecture': 'XT', 'SocketArray':['foo', 'bar'],
                 }
@@ -44,8 +44,7 @@ class TestCrayNode(object):
         assert 'alps-interactive' in node.RESOURCE_STATUSES, 'alps-interactive not in resource statuses'
 
     def test_init_alps_states(self):
-        # Ensure all ALPS states map correctly
-
+        '''CrayNode: init alps states'''
         cray_state_list = ['UP', 'DOWN', 'UNAVAILABLE', 'ROUTING', 'SUSPECT',
                            'ADMIN', 'UNKNOWN', 'UNAVAIL', 'SWDOWN', 'REBOOTQ',
                            'ADMINDOWN']
@@ -59,8 +58,7 @@ class TestCrayNode(object):
             assert node.status == correct_alps_states[state], "%s should map to %s" % (node.status, correct_alps_states[state])
 
     def test_non_cray_statuses(self):
-        # Ensure we can set cobalt tracking statuses
-
+        '''CrayNode: can set cobalt-tracking statuses.'''
         test_statuses = ['busy', 'cleanup-pending', 'allocated',
                 'alps-interactive']
         for status in test_statuses:
@@ -94,14 +92,14 @@ class TestCraySystem(object):
         del self.base_job
 
     def test_assemble_queue_data(self):
-        '''_assemble_queue_data: base functionality'''
+        '''CraySystem._assemble_queue_data: base functionality'''
         nodecount, nodelist =  self.system._assemble_queue_data(self.base_job,
                 self.system._idle_nodes_by_queue())
         assert nodecount == 5, 'expected 5 got %s' % nodecount
         assert sorted(nodelist) == ['1','2','3','4','5'], 'expected [1, 2, 3, 4, 5] got %s' % nodelist
 
     def test_assemble_queue_data_bad_queue(self):
-        '''_assemble_queue_data: return nothing if queue for job doesn't exist'''
+        '''CraySystem._assemble_queue_data: return nothing if queue for job doesn't exist'''
         self.base_job['queue'] = 'foo'
         nodecount, nodelist = self.system._assemble_queue_data(self.base_job,
                 self.system._idle_nodes_by_queue())
@@ -109,7 +107,7 @@ class TestCraySystem(object):
         assert nodelist == [], 'nonempty nodelist'
 
     def test_assemble_queue_data_multiple_queue(self):
-        '''_assemble_queue_data: return only proper queue nodes'''
+        '''CraySystem._assemble_queue_data: return only proper queue nodes'''
         self.system.nodes['1'].queues = ['foo']
         self.system.nodes['4'].queues = ['bar']
         self.system._gen_node_to_queue()
@@ -119,7 +117,7 @@ class TestCraySystem(object):
         assert sorted(nodelist) == ['2','3','5'], 'Wrong nodelist'
 
     def test_assemble_queue_data_multiple_queue_overlap(self):
-        '''_assemble_queue_data: return only proper queue nodes in overlaping queues'''
+        '''CraySystem._assemble_queue_data: return only proper queue nodes in overlaping queues'''
         self.system.nodes['1'].queues = ['foo', 'default', 'bar']
         self.system.nodes['4'].queues = ['default','bar']
         self.system.nodes['5'].queues = ['baz']
@@ -145,7 +143,7 @@ class TestCraySystem(object):
         assert nodelist == ['5'], 'Wrong nodelist'
 
     def test_assemble_queue_data_non_idle(self):
-        '''_assemble_queue_data: return only non-idle nodes'''
+        '''CraySystem._assemble_queue_data: return only non-idle nodes'''
         self.system.nodes['1'].status = 'busy'
         self.system.nodes['4'].status = 'ADMINDOWN'
         self.system._gen_node_to_queue()
@@ -155,7 +153,7 @@ class TestCraySystem(object):
         assert sorted(nodelist) == ['2','3','5'], 'Wrong nodelist'
 
     def test_assemble_queue_data_attrs_location(self):
-        '''_assemble_queue_data: return only attr locaiton loc'''
+        '''CraySystem._assemble_queue_data: return only attr locaiton loc'''
         self.base_job['attrs'] = {'location':'3'}
         nodecount, nodelist = self.system._assemble_queue_data(self.base_job,
                 self.system._idle_nodes_by_queue())
@@ -164,7 +162,7 @@ class TestCraySystem(object):
 
     @raises(ValueError)
     def test_assemble_queue_data_attrs_bad_location(self):
-        '''_assemble_queue_data: raise error for location completely outside of
+        '''CraySystem._assemble_queue_data: raise error for location completely outside of
         queue'''
         self.base_job['attrs'] = {'location':'6'}
         nodecount, nodelist = self.system._assemble_queue_data(self.base_job,
@@ -173,7 +171,7 @@ class TestCraySystem(object):
         assert nodelist == ['3'], 'Wrong node in list %s' % nodelist
 
     def test_assemble_queue_data_attrs_location_multi(self):
-        '''_assemble_queue_data: return only attr locaiton complex loc string'''
+        '''CraySystem._assemble_queue_data: return only attr locaiton complex loc string'''
         self.base_job['attrs'] = {'location':'1-3,5'}
         nodecount, nodelist = self.system._assemble_queue_data(self.base_job,
                 self.system._idle_nodes_by_queue())
@@ -181,7 +179,7 @@ class TestCraySystem(object):
         assert sorted(nodelist) == ['1','2','3','5'], 'Wrong nodes in list %s' % nodelist
 
     def test_assemble_queue_data_forbidden_loc(self):
-        '''_assemble_queue_data: avoid reserved nodes'''
+        '''CraySystem._assemble_queue_data: avoid reserved nodes'''
         self.base_job['forbidden'] = ['1-3','5']
         nodecount, nodelist = self.system._assemble_queue_data(self.base_job,
                 self.system._idle_nodes_by_queue())
@@ -189,7 +187,7 @@ class TestCraySystem(object):
         assert sorted(nodelist) == ['4'], 'Wrong nodes in list %s' % nodelist
 
     def test_assemble_queue_data_forbidden_loc_attrs_loc(self):
-        '''_assemble_queue_data: avoid reserved nodes despite location being set'''
+        '''CraySystem._assemble_queue_data: avoid reserved nodes despite location being set'''
         self.base_job['forbidden'] = ['1-3']
         self.base_job['attrs'] = {'location':'1-4'}
         nodecount, nodelist = self.system._assemble_queue_data(self.base_job,
@@ -198,7 +196,7 @@ class TestCraySystem(object):
         assert sorted(nodelist) == ['4'], 'Wrong nodes in list %s' % nodelist
 
     def test_assemble_queue_data_forbidden_loc_attrs_loc_complete(self):
-        '''_assemble_queue_data: avoid reserved nodes block location if superset'''
+        '''CraySystem._assemble_queue_data: avoid reserved nodes block location if superset'''
         self.base_job['forbidden'] = ['1-3']
         self.base_job['attrs'] = {'location':'1-3'}
         nodecount, nodelist = self.system._assemble_queue_data(self.base_job,
@@ -207,7 +205,7 @@ class TestCraySystem(object):
         assert sorted(nodelist) == [], 'Wrong nodes in list %s' % nodelist
 
     def test_assemble_queue_data_forbidden_loc_attrs_loc_permit(self):
-        '''_assemble_queue_data: forbidden doesn't block everything'''
+        '''CraySystem._assemble_queue_data: forbidden doesn't block everything'''
         self.base_job['forbidden'] = ['1-3']
         self.base_job['attrs'] = {'location':'4-5'}
         nodecount, nodelist = self.system._assemble_queue_data(self.base_job,
@@ -216,7 +214,7 @@ class TestCraySystem(object):
         assert sorted(nodelist) == ['4','5'], 'Wrong nodes in list %s' % nodelist
 
     def test_assemble_queue_data_reserved_loc(self):
-        '''_assemble_queue_data: return reservation nodes'''
+        '''CraySystem._assemble_queue_data: return reservation nodes'''
         self.base_job['required'] = ['2-4']
         self.base_job['queue'] = 'reservation'
         nodecount, nodelist = self.system._assemble_queue_data(self.base_job,
@@ -225,7 +223,7 @@ class TestCraySystem(object):
         assert sorted(nodelist) == ['2','3','4'], 'Wrong nodes in list %s' % nodelist
 
     def test_assemble_queue_data_reserved_loc_idle_only(self):
-        '''_assemble_queue_data: return reservation nodes that are idle'''
+        '''CraySystem._assemble_queue_data: return reservation nodes that are idle'''
         self.system.nodes['1'].status = 'busy'
         self.system.nodes['2'].status = 'cleanup-pending'
         self.system.nodes['3'].status = 'allocated'
@@ -238,7 +236,7 @@ class TestCraySystem(object):
         assert sorted(nodelist) == ['5'], 'Wrong nodes in list %s' % nodelist
 
     def test_assemble_queue_data_reserved_loc_location_set(self):
-        '''_assemble_queue_data: return reservation nodes for job with location set'''
+        '''CraySystem._assemble_queue_data: return reservation nodes for job with location set'''
         self.base_job['required'] = ['1-4']
         self.base_job['attrs'] = {'location':'1,2,4'}
         self.base_job['queue'] = 'reservation'
@@ -247,3 +245,28 @@ class TestCraySystem(object):
         assert nodecount == 3, 'Wrong nodecount %s' % nodecount
         assert sorted(nodelist) == ['1','2','4'], 'Wrong nodes in list %s' % nodelist
 
+    #need testcase with loc targeting down nodes.
+    def test_assemble_queue_data_attrs_location_blocked_nodes(self):
+        '''CraySystem._assemble_queue_data: return only idle locations'''
+        self.system.nodes['1'].status = 'busy'
+        self.system.nodes['2'].status = 'cleanup-pending'
+        self.system.nodes['3'].status = 'allocated'
+        self.system.nodes['4'].status = 'ADMINDOWN'
+        self.base_job['attrs'] = {'location':'1-5'}
+        nodecount, nodelist = self.system._assemble_queue_data(self.base_job,
+                self.system._idle_nodes_by_queue())
+        assert nodecount == 1, 'Wrong nodecount'
+        assert nodelist == ['5'], 'Wrong node in list %s' % nodelist
+
+    def test_assemble_queue_data_attrs_location_all_blocked_nodes(self):
+        '''CraySystem._assemble_queue_data: return no locations if attrs location nodes are
+        all non idle'''
+        self.system.nodes['1'].status = 'busy'
+        self.system.nodes['2'].status = 'cleanup-pending'
+        self.system.nodes['3'].status = 'allocated'
+        self.system.nodes['4'].status = 'ADMINDOWN'
+        self.base_job['attrs'] = {'location':'1-4'}
+        nodecount, nodelist = self.system._assemble_queue_data(self.base_job,
+                self.system._idle_nodes_by_queue())
+        assert nodecount == 0, 'Wrong nodecount'
+        assert nodelist == [], 'Wrong node in list %s' % nodelist
