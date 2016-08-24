@@ -724,7 +724,7 @@ class CraySystem(BaseSystem):
         for node_id in node_id_list: #strip non-idle nodes.
             if not self.nodes[str(node_id)].status in ['idle']:
                 unavailable_nodes.append(node_id)
-        for node_id in unavailable_nodes:
+        for node_id in set(unavailable_nodes):
             node_id_list.remove(node_id)
         idle_nodecount = len(node_id_list)
         return (idle_nodecount, node_id_list)
