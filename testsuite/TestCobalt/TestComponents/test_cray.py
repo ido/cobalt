@@ -81,10 +81,12 @@ class TestCraySystem(object):
             node_dict=dict(self.base_spec)
             self.system.nodes[str(i)] = CrayNode(node_dict)
             self.system.node_name_to_id[node_dict['name']] = node_dict['node_id']
+        for node in self.system.nodes.values():
+            node.managed = True
         self.system._gen_node_to_queue()
 
         self.base_job = {'jobid':1, 'user':'crusher', 'attrs':{},
-                'queue':'default',
+                'queue':'default', 'nodes': 1,
                 }
 
     def teardown(self):
@@ -278,3 +280,21 @@ class TestCraySystem(object):
                 self.system._idle_nodes_by_queue())
         assert nodecount == 0, 'Wrong nodecount'
         assert nodelist == [], 'Wrong node in list %s' % nodelist
+
+    def fake_reserve(self,job, new_time, node_id_list):
+        if job['nodes'] < len(node_id_list):
+            return node_id_list[:int(job['nodes'])]
+        else:
+            return []
+
+    @patch.object(CraySystem, '_ALPS_reserve_resources', fake_reserve)
+    @patch.object(time, 'time', return_value=500.000)
+    def test_find_job_location_basic(self, *args, **kwargs):
+        '''CraySystem.find_job_locaton: Assign basic job to nodes'''
+        retval = self.system.find_job_location([self.base_job], [], [])
+        assert retval == {1: ['1']}, 'bad loc: expected %s, got %s' % ({1: ['1']}, retval)
+        assert self.system.pending_starts[1] == 1700.0, 'bad pending start: expected %s, got %s' % (1700.0, self.system.pending_starts[1])
+        assert self.system.nodes['1'].reserved_jobid == 1, 'Node not reserved'
+        assert self.system.nodes['1'].reserved_until == 800.0, 'reserved until expected 800.0, got %s' % self.system_nodes['1'].reserved_until
+
+
