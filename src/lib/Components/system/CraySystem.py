@@ -4,6 +4,7 @@ import logging
 import threading
 import thread
 import time
+import sys
 import xmlrpclib
 import json
 
@@ -32,6 +33,8 @@ SAVE_ME_INTERVAL = float(get_config_option('alpsssytem', 'save_me_interval', 10.
 PENDING_STARTUP_TIMEOUT = float(get_config_option('alpssystem',
     'pending_startup_timeout', 1200)) #default 20 minutes to account for boot.
 APKILL_CMD = get_config_option('alps', 'apkill', '/opt/cray/alps/default/bin/apkill')
+DRAIN_MODE = get_config_option('system', 'drain_mode', 'first-fit')
+DRAIN_MODES = ['first-fit', 'drain-only', 'backfill']
 
 class ALPSProcessGroup(ProcessGroup):
     '''ALPS-specific PocessGroup modifications.'''
@@ -71,6 +74,11 @@ class CraySystem(BaseSystem):
         component.
 
         '''
+        if DRAIN_MODE not in DRAIN_MODES:
+            #abort startup, we have a completely invalid config.
+            _logger.critical('ALPS SYSTEM: ABORT STARTUP: %s is not a valid drain mode.  Must be one of %s.',
+                DRAIN_MODE, ", ".join(DRAIN_MODES))
+            sys.exit(1)
         #initilaize bridge.
         bridge_pending = True
         while bridge_pending:
