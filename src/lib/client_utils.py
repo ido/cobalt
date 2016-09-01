@@ -1277,21 +1277,40 @@ def cluster_display_node_info():
 
 
 
+def _extract_res_node_ranges(res_nodes):
+    nids = []
+    for nidlist in res_nodes:
+        nids.extend(Cobalt.Util.expand_num_list(nidlist))
+    return nids
+
+def _setup_res_info():
+    '''set up the reservation-to-node info so showres shows associated
+    reservation queues when active.
+
+    '''
+    reservations = component_call(SCHMGR, False, 'get_reservations',
+            ([{'queue':'*', 'partitions':'*', 'active':True}],))
+    res_queues = {}
+    for res in reservations:
+        res_nodes = [str(nid) for nid in
+                _extract_res_node_ranges(res['partitions'].split(':'))]
+        for node in res_nodes:
+            if res_queues.get(node, []) == []:
+                res_queues[node] = [res['queue']]
+            else:
+                res_queues[node].append(res['queue'])
+    return res_queues
+
 def print_node_list():
     '''fetch and print a list of node information with default headers'''
 
     header = ['Node_id', 'Name', 'Queues', 'Status']
     nodes = json.loads(component_call(SYSMGR, False, 'get_nodes',
             (True, None, header, True)))
-    reservations = component_call(SCHMGR, False, 'get_reservations', ([{'queue':'*', 'partitions':'*', 'active':True}],))
-    res_queues = {}
-    for res in reservations:
-        res_nodes = res['partitions'].split(':')
-        for node in res_nodes:
-            if res_queues.get(node, []) == []:
-                res_queues[node] = [res['queue']]
-            else:
-                res_queues[node].append(res['queue'])
+
+    #TODO: Allow headers to be specified by the user in the future.
+    if 'queues' in [h.lower() for h in header]:
+        res_queues = _setup_res_info()
 
     if len(nodes) > 0:
         print_nodes = []
@@ -1313,7 +1332,11 @@ def print_node_list():
         logger.info('System has no nodes defined')
 
 def print_node_details(args):
-    '''fetch and print a detailed view of node information'''
+    '''fetch and print a detailed view of node information
+
+        args - list of nodes to fetch detailed information on.
+
+    '''
     def gen_printable_value(value):
         if isinstance(value, dict):
             retval = ', '.join(['%s: %s'% (k, gen_printable_value(v)) for k, v in
@@ -1326,15 +1349,7 @@ def print_node_details(args):
 
     nodes = component_call(SYSMGR, False, 'get_nodes',
             (True, expand_node_args(args)))
-    reservations = component_call(SCHMGR, False, 'get_reservations', ([{'queue':'*', 'partitions':'*', 'active':True}],))
-    res_queues = {}
-    for res in reservations:
-        res_nodes = res['partitions'].split(':')
-        for node in res_nodes:
-            if res_queues.get(node, []) == []:
-                res_queues[node] = [res['queue']]
-            else:
-                res_queues[node].append(res['queue'])
+    res_queues = _setup_res_info()
     for node in nodes.values():
         header_list = []
         value_list = []
