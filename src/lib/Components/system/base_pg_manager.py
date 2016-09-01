@@ -35,6 +35,7 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
             compatible with the ProcessGroupDict class.
 
         '''
+        self.pgroup_type = pgroup_type
         self._common_init_restart()
 
 
@@ -45,8 +46,12 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
         '''
         if state is None:
             self.process_groups = ProcessGroupDict()
+            self.process_groups.item_cls = self.pgroup_type
         else:
-            self.process_groups = state['process_groups']
+            self.process_groups = state.get('process_groups',
+                    ProcessGroupDict())
+            for pg in self.process_groups.values():
+                _logger.info('recovering pgroup %s, jobid %s', pg.id, pg.jobid)
             self.process_groups.id_gen.set(int(state['next_pg_id']))
         self.process_group_actions = {}
         self.forkers = [] #list of forker identifiers to use with ComponentProxy
@@ -97,7 +102,10 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
         '''
         signaled_pgs = []
         for pgid in pgids:
-            if self.process_groups[pgid].signal(signame):
+            if self.process_groups[pgid].mode == 'interactive':
+                self.process_groups[pgid].interactive_complete = True
+                signaled_pgs.append(self.process_groups[pgid])
+            elif self.process_groups[pgid].signal(signame):
                 signaled_pgs.append(self.process_groups[pgid])
         return signaled_pgs
 
@@ -143,8 +151,7 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
         for forker in self.forkers:
             completed[forker] = []
             try:
-                child_data = ComponentProxy(forker).get_children("process group",
-                        None)
+                child_data = ComponentProxy(forker).get_children("process group", None)
             except ComponentLookupError, e:
                 _logger.error("failed to contact the %s component to obtain a list of children", forker)
             except:
@@ -159,6 +166,14 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
             pg_id = pg.id
             child_uid = (pg.forker, pg.head_pid)
             if child_uid not in children:
+                if pg.mode == 'interactive':
+                    #interactive job, there is no child job
+                    if pg.interactive_complete:
+                        completed_pgs.append(pg)
+                        #not really orphaned, but this causes the proper cleanup
+                        #to occur
+                        orphaned.append(pg_id)
+                    continue
                 orphaned.append(pg_id)
                 _logger.warning('%s: orphaned job exited with unknown status', pg.jobid)
                 pg.exit_status = 1234567 #FIXME: what should this sentinel be?

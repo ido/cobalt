@@ -5,6 +5,7 @@ import threading
 import thread
 import time
 import xmlrpclib
+import json
 
 import Cobalt.Util
 import Cobalt.Components.system.AlpsBridge as ALPSBridge
@@ -14,11 +15,10 @@ from Cobalt.Components.system.base_system import BaseSystem
 from Cobalt.Components.system.CrayNode import CrayNode
 from Cobalt.Components.system.base_pg_manager import ProcessGroupManager
 from Cobalt.Exceptions import ComponentLookupError
+from Cobalt.Exceptions import JobNotInteractive
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
 from Cobalt.Util import compact_num_list, expand_num_list
 from Cobalt.Util import init_cobalt_config, get_config_option
-
-
 
 _logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ TEMP_RESERVATION_TIME = int(get_config_option('alpssystem',
 SAVE_ME_INTERVAL = float(get_config_option('alpsssytem', 'save_me_interval', 10.0))
 PENDING_STARTUP_TIMEOUT = float(get_config_option('alpssystem',
     'pending_startup_timeout', 1200)) #default 20 minutes to account for boot.
-
+APKILL_CMD = get_config_option('alps', 'apkill', '/opt/cray/alps/default/bin/apkill')
 
 class ALPSProcessGroup(ProcessGroup):
     '''ALPS-specific PocessGroup modifications.'''
@@ -39,6 +39,9 @@ class ALPSProcessGroup(ProcessGroup):
     def __init__(self, spec):
         super(ALPSProcessGroup, self).__init__(spec)
         self.alps_res_id = spec['alps_res_id']
+        self.interactive_complete = False
+
+    #inherit generic getstate and setstate methods from parent
 
 class CraySystem(BaseSystem):
     '''Cray/ALPS-specific system component.  Behaviors should go here.  Direct
@@ -73,6 +76,8 @@ class CraySystem(BaseSystem):
         while bridge_pending:
             # purge stale children from prior run.  Also ensure the
             # system_script_forker is currently up.
+            # These attempts may fail due to system_script_forker not being up.
+            # We don't want to trash the statefile in this case.
             try:
                 ALPSBridge.init_bridge()
             except ALPSBridge.BridgeError:
@@ -86,12 +91,13 @@ class CraySystem(BaseSystem):
                 _logger.info('BRIDGE INITIALIZED')
         #process manager setup
         if spec is None:
-            self.process_manager = ProcessGroupManager()
+            self.process_manager = ProcessGroupManager(pgroup_type=ALPSProcessGroup)
         else:
-            self.process_manager = ProcessGroupManager().__setstate__(spec['process_manager'])
+            self.process_manager = ProcessGroupManager(pgroup_type=ALPSProcessGroup).__setstate__(spec['process_manager'])
+            self.logger.debug('pg type %s', self.process_manager.process_groups.item_cls)
         #self.process_manager.forkers.append('alps_script_forker')
         self.process_manager.update_launchers()
-        self.pending_start_timeout = 1200 #20 minutes for long reboots. 
+        self.pending_start_timeout = PENDING_STARTUP_TIMEOUT
         _logger.info('PROCESS MANAGER INTIALIZED')
         #resource management setup
         self.nodes = {} #cray node_id: CrayNode
@@ -103,7 +109,10 @@ class CraySystem(BaseSystem):
         if spec is not None:
             node_info = spec.get('node_info', {})
             for nid, node in node_info.items():
-                self.nodes[nid].reset_info(node)
+                try:
+                    self.nodes[nid].reset_info(node)
+                except: #check the exception types later.  Carry on otherwise.
+                    self.logger.warning("Node nid: %s not found in restart information.  Bringing up node in a clean configuration.", nid)
         #storage for pending job starts.  Allows us to handle slow starts vs
         #user deletes
         self.pending_starts = {} #jobid: time this should be cleared.
@@ -112,10 +121,14 @@ class CraySystem(BaseSystem):
         #state update thread and lock
         self._node_lock = threading.RLock()
         self._gen_node_to_queue()
-        self.node_update_thread = thread.start_new_thread(self._run_update_state,
-                tuple())
+        self.node_update_thread = thread.start_new_thread(self._run_update_state, tuple())
         _logger.info('UPDATE THREAD STARTED')
         self.current_equivalence_classes = []
+        self.killing_jobs = {}
+        #hold on to the initial spec in case nodes appear out of nowhere.
+        self.init_spec = None
+        if spec is not None:
+            self.init_spec = spec
 
     def __getstate__(self):
         '''Save process, alps-reservation information, along with base
@@ -155,8 +168,11 @@ class CraySystem(BaseSystem):
                 # much more compact representation of data.  Reservednodes gives
                 # which notes are reserved.
                 inventory = ALPSBridge.fetch_inventory()
+                _logger.info('INVENTORY FETCHED')
                 system = ALPSBridge.extract_system_node_data(ALPSBridge.system())
+                _logger.info('SYSTEM DATA FETCHED')
                 reservations = ALPSBridge.fetch_reservations()
+                _logger.info('ALPS RESERVATION DATA FETCHED')
                 # reserved_nodes = ALPSBridge.reserved_nodes()
             except Exception:
                 #don't crash out here.  That may trash a statefile.
@@ -211,37 +227,36 @@ class CraySystem(BaseSystem):
 
 
     @exposed
-    def get_nodes(self, as_dict=False, node_ids=None):
+    def get_nodes(self, as_dict=False, node_ids=None, params=None, as_json=False):
         '''fetch the node dictionary.
 
-            node_ids - a list of node names to return, if None, return all nodes
-                       (default None)
+            as_dict  - Return node information as a dictionary keyed to string
+                        node_id value.
+            node_ids - A list of node names to return, if None, return all nodes
+                       (default None).
+            params   - If requesting a dict, only request this list of
+                       parameters of the node.
+            json     - Encode to json before sending.  Useful on large systems.
 
             returns the node dictionary.  Can reutrn underlying node data as
             dictionary for XMLRPC purposes
 
         '''
-        def cook_node_dict(node):
-            '''strip leading '_' for display purposes'''
-            raw_node = node.to_dict()
-            cooked_node = {}
-            for key, val in raw_node.items():
-                if key.startswith('_'):
-                    cooked_node[key[1:]] = val
-                else:
-                    cooked_node[key] = val
-            return cooked_node
+        def node_filter(node):
+            if node_ids is not None:
+                return (str(node[0]) in [str(nid) for nid in node_ids])
+            return True
 
-        if node_ids is None:
-            if as_dict:
-                return {k:cook_node_dict(v) for k, v in self.nodes.items()}
-            else:
-                return self.nodes
+        node_info = None
+        if as_dict:
+            retdict = {k:v.to_dict(True, params) for k, v in self.nodes.items()}
+            node_info = dict(filter(node_filter, retdict.items()))
         else:
-            if as_dict:
-                return {k:cook_node_dict(v) for k, v in self.nodes.items() if int(k) in node_ids}
-            else:
-                return {k:v for k,v in self.nodes.items() if int(k) in node_ids}
+            node_info = dict(filter(node_filter, self.nodes.items()))
+        if as_json:
+            return json.dumps(node_info)
+        return node_info
+
 
     def _run_update_state(self):
         '''automated node update functions on the update timer go here.'''
@@ -255,6 +270,45 @@ class CraySystem(BaseSystem):
                 _logger.critical('Error in _run_update_state', exc_info=True)
             finally:
                 Cobalt.Util.sleep(UPDATE_THREAD_TIMEOUT)
+
+    def _reconstruct_node(self, inven_node, inventory):
+        '''Reconstruct a node from statefile information.  Needed whenever we
+        find a new node.  If no statefile information from the orignal cobalt
+        invocation exists, bring up a node in default states and mark node
+        administratively down.
+
+        This node was disabled and invisible to ALPS at the time Cobalt was
+        initialized and so we have no current record of that node.
+
+        '''
+        nid = inven_node['node_id']
+        new_node = None
+        #construct basic node from inventory
+        for node_info in inventory['nodes']:
+            if int(node_info['node_id']) == int(nid):
+                new_node = CrayNode(node_info)
+                break
+        if new_node is None:
+            #we have a phantom node?
+            self.logger.error('Unable to find inventory information for nid: %s', nid)
+            return
+        # if we have information from the statefile we need to repopulate the
+        # node with the saved data.
+        # Perhaps this should be how I construct all node data anyway?
+        if self.init_spec is not None:
+            node_info = self.init_spec.get('node_info', {})
+            try:
+                new_node.reset_info(node_info[str(nid)])
+                self.logger.warning('Node %s reconstructed.', nid)
+            except:
+                self.logger.warning("Node nid: %s not found in restart information.  Bringing up node in a clean configuration.", nid, exc_info=True)
+                #put into admin_down
+                new_node.admin_down = True
+                new_node.status = 'down'
+                self.logger.warning('Node %s marked down.', nid)
+        new_node.managed = True
+        self.nodes[str(nid)] = new_node
+        self.logger.warning('Node %s added to tracking.', nid)
 
     @exposed
     def update_node_state(self):
@@ -274,6 +328,7 @@ class CraySystem(BaseSystem):
         for jobid in startup_time_to_clear:
             del self.pending_starts[jobid]
 
+        self.check_killing_aprun()
         with self._node_lock:
             fetch_time_start = time.time()
             try:
@@ -328,17 +383,23 @@ class CraySystem(BaseSystem):
             #resource reservation
             cleanup_nodes = [node for node in self.nodes.values()
                              if node.status == 'cleanup-pending']
-            #If we have a block marked for cleanup, send a relesae message.
+            #If we have a block marked for cleanup, send a release message.
             released_res_jobids = []
             for node in cleanup_nodes:
                 for alps_res in self.alps_reservations.values():
                     if (alps_res.jobid not in released_res_jobids and
                             str(node.node_id) in alps_res.node_ids):
                         #send only one release per iteration
-                        alps_res.release()
+                        apids = alps_res.release()
+                        if apids is not None:
+                            for apid in apids:
+                                self.signal_aprun(apid)
                         released_res_jobids.append(alps_res.jobid)
 
         #find hardware status
+            #so we do this only once for nodes being added.
+            #full inventory fetch is expensive.
+            recon_inventory = None
             for inven_node in inven_nodes.values():
                 if self.nodes.has_key(str(inven_node['node_id'])):
                     node = self.nodes[str(inven_node['node_id'])]
@@ -359,10 +420,19 @@ class CraySystem(BaseSystem):
                         if node.role.upper() not in ['BATCH'] and node.status is 'idle':
                             node.status = 'alps-interactive'
                 else:
-                    # Cannot add nodes on the fly.  Or at lesat we shouldn't be
-                    # able to.
-                    _logger.error('UNS: ALPS reports node %s but not in our node list.',
-                                  inven_node['name'])
+                    # Apparently, we CAN add nodes on the fly.  The node would
+                    # have been disabled.  We need to add a new node and update
+                    # it's state.
+                    _logger.warning('Unknown node %s found. Starting reconstruction.', inven_node['node_id'])
+                    try:
+                        if recon_inventory is None:
+                            recon_inventory = ALPSBridge.fetch_inventory()
+                    except:
+                        _logger.error('Failed to fetch inventory.  Will retry on next pass.', exc_info=True)
+                    else:
+                        self._reconstruct_node(inven_node, recon_inventory)
+                   # _logger.error('UNS: ALPS reports node %s but not in our node list.',
+                   #               inven_node['node_id'])
             #should down win over running in terms of display?
             #keep node that are marked for cleanup still in cleanup
             for node in cleanup_nodes:
@@ -419,7 +489,7 @@ class CraySystem(BaseSystem):
                 tracked_res = self.alps_reservations.get(new_alps_res.jobid, None)
                 if tracked_res is not None:
                     try:
-                        tracked_res.release()
+                        apids = tracked_res.release()
                     except ALPSBridge.ALPSError:
                         # backend reservation probably is gone, which is why
                         # we are here in the first place.
@@ -435,8 +505,67 @@ class CraySystem(BaseSystem):
                     new_alps_res.release()
                 else:
                     self.alps_reservations[str(alps_res['batch_id'])] = new_alps_res
-
         return
+
+    def signal_aprun(self, aprun_id, signame='SIGINT'):
+        '''Signal an aprun by aprun id (application_id).  Does not block.
+        Use check_killing_aprun to determine completion/termination.  Does not
+        depend on the host the aprun(s) was launched from.
+
+        Input:
+            aprun_id - integer application id number.
+            signame  - string name of signal to send (default: SIGINT)
+        Notes:
+            Valid signals to apkill are:
+            SIGHUP, SIGINT, SIGQUIT, SIGTERM, SIGABRT, SIGUSR1, SIGUSR2, SIGURG,
+            and SIGWINCH (from apkill(1) man page.)  Also allowing SIGKILL.
+
+        '''
+        #Expect changes with an API updte
+
+        #mark legal signals from docos
+        if (signame not in ['SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGTERM', 'SIGABRT',
+            'SIGUSR1', 'SIGUSR2', 'SIGURG','SIGWINCH', 'SIGKILL']):
+            raise ValueError('%s is not a legal value for signame.', signame)
+        try:
+            retval = Cobalt.Proxy.ComponentProxy('system_script_forker').fork(
+                    [APKILL_CMD, '-%s' % signame, '%d' % int(aprun_id)],
+                    'aprun_termination', '%s cleanup:'% aprun_id)
+            _logger.info("killing backend ALPS application_id: %s", aprun_id)
+        except xmlrpclib.Fault:
+            _logger.warning("XMLRPC Error while killing backend job: %s, will retry.",
+                    aprun_id, exc_info=True)
+        except:
+            _logger.critical("Unknown Error while killing backend job: %s, will retry.",
+                    aprun_id, exc_info=True)
+        else:
+            self.killing_jobs[aprun_id] = retval
+        return
+
+    def check_killing_aprun(self):
+        '''Check that apkill commands have completed and clean them from the
+        system_script_forker.  Allows for non-blocking cleanup initiation.
+
+        '''
+
+        try:
+            system_script_forker = Cobalt.Proxy.ComponentProxy('system_script_forker')
+        except:
+            self.logger.critical("Cannot connect to system_script_forker.",
+                    exc_info=True)
+            return
+        complete_jobs = []
+        rev_killing_jobs = dict([(v,k) for (k,v) in self.killing_jobs.iteritems()])
+        removed_jobs = []
+        current_killing_jobs = system_script_forker.get_children(None, self.killing_jobs.values())
+
+        for job in current_killing_jobs:
+            if job['complete']:
+                del self.killing_jobs[rev_killing_jobs[int(job['id'])]]
+                removed_jobs.append(job['id'])
+        system_script_forker.cleanup_children(removed_jobs)
+        return
+
     @exposed
     def find_queue_equivalence_classes(self, reservation_dict,
             active_queue_names, passthrough_blocking_res_list=[]):
@@ -551,40 +680,54 @@ class CraySystem(BaseSystem):
         # we also have to forbid a bunch of locations, in  this case.
         idle_nodecount = 0
         unavailable_nodes = []
-        forbidden = set(self.chain_loc_list(job.get('forbidden', [])))
-        required = set(self.chain_loc_list(job.get('required', [])))
-        requested_locations = expand_num_list(job['attrs'].get('location', ''))
+        forbidden = set([str(loc) for loc in self.chain_loc_list(job.get('forbidden', []))])
+        required = set([str(loc) for loc in self.chain_loc_list(job.get('required', []))])
+        requested_locations = set([str(n) for n in expand_num_list(job['attrs'].get('location', ''))])
+        requested_loc_in_forbidden = False
+        for loc in requested_locations:
+            if loc in forbidden:
+                #don't spam the logs.
+                requested_loc_in_forbidden = True
+                break
         if not job['queue'] in self.nodes_by_queue.keys():
             # Either a new queue with no resources, or a possible
             # reservation need to do extra work for a reservation
             node_id_list = list(required - forbidden)
-            for node_id in node_id_list:
-                if self.nodes[str(node_id)].status in ['idle']:
-                    idle_nodecount += 1
-                else:
-                    unavailable_nodes.append(node_id)
-            for node_id in unavailable_nodes:
-                node_id_list.remove(node_id)
         else:
-            idle_forbidden_count = len([nid for nid in forbidden
-                                        if self.nodes[str(nid)].status =='idle'])
-            idle_nodecount = idle_nodes_by_queue[job['queue']] - idle_forbidden_count
             node_id_list = list(set(self.nodes_by_queue[job['queue']]) - forbidden)
-        if requested_locations != []:
-            job_set = set([int(nid) for nid in requested_locations])
-            if job_set <= set([int(node_id) for node_id in
-                                self.nodes_by_queue[job['queue']]]):
-                node_id_list = requested_locations
-                if not set(node_id_list).isdisjoint(forbidden):
-                    # this job has requested locations that are a part of an
-                    # active reservation.  Remove locaitons and drop available
-                    # nodecount appropriately.
-                    node_id_list = list(set(node_id_list) - forbidden)
-                idle_nodecount = len(node_id_list)
+        if requested_locations != set([]): # handle attrs location= requests
+            job_set = set([str(nid) for nid in requested_locations])
+            if not job['queue'] in self.nodes_by_queue.keys():
+                #we're in a reservation and need to further restrict nodes.
+                if job_set <= set(node_id_list):
+                    # We are in a reservation there are no forbidden nodes.
+                    node_id_list = list(requested_locations)
+                else:
+                    # We can't run this job.  Insufficent resources in this
+                    # reservation to do so.  Don't risk blocking anything.
+                    #idle_nodecount = 0
+                    node_id_list = []
             else:
-                idle_nodecount = 0
-                node_id_list = []
-                raise ValueError
+                #normal queues.  Restrict to the non-reserved nodes.
+                if job_set <= set([str(node_id) for node_id in
+                                    self.nodes_by_queue[job['queue']]]):
+                    node_id_list = list(requested_locations)
+                    if not set(node_id_list).isdisjoint(forbidden):
+                        # this job has requested locations that are a part of an
+                        # active reservation.  Remove locaitons and drop available
+                        # nodecount appropriately.
+                        node_id_list = list(set(node_id_list) - forbidden)
+                else:
+                    node_id_list = []
+                    if not requested_loc_in_forbidden:
+                        raise ValueError("forbidden locations not in queue")
+        with self._node_lock:
+            for node_id in node_id_list: #strip non-idle nodes.
+                if not self.nodes[str(node_id)].status in ['idle']:
+                    unavailable_nodes.append(node_id)
+        for node_id in set(unavailable_nodes):
+            node_id_list.remove(node_id)
+        idle_nodecount = len(node_id_list)
         return (idle_nodecount, node_id_list)
 
     @locking
@@ -999,6 +1142,77 @@ class CraySystem(BaseSystem):
                 compact_num_list(mod_nodes), user)
         return mod_nodes
 
+    @exposed
+    def confirm_alps_reservation(self, specs):
+        '''confirm or rereserve if needed the ALPS reservation for an
+        interactive job.
+
+        '''
+        try:
+            pg = None
+            for pgroup in self.process_manager.process_groups.values():
+                if pgroup.jobid == int(specs['jobid']):
+                    pg = pgroup
+            #pg = self.process_manager.process_groups[int(specs['pg_id'])]
+            pg_id = int(specs['pgid'])
+        except KeyError:
+            raise
+        if pg is None:
+            raise ValueError('invalid jobid specified')
+        # Try to find the alps_res_id for this job.  if we don't have it, then we
+        # need to reacquire the source reservation.  The job locations will be
+        # critical for making this work.
+        with self._node_lock:
+            # do not want to hit this during an update.
+            alps_res = self.alps_reservations.get(str(pg.jobid), None)
+            # find nodes for jobid.  If we don't have sufficient nodes, job
+            # should die
+            job_nodes = [node for node in self.nodes.values()
+                            if node.reserved_jobid == pg.jobid]
+            nodecount = len(job_nodes)
+            if nodecount == 0:
+                _logger.warning('%s: No nodes reserved for job.', pg.label)
+                return False
+            new_time = job_nodes[0].reserved_until
+            node_list = compact_num_list([node.node_id for node in job_nodes])
+        if alps_res is None:
+            job_info = {'user': specs['user'],
+                        'jobid':specs['jobid'],
+                        'nodes': nodecount,
+                        'attrs': {},
+                        }
+            self._ALPS_reserve_resources(job_info, new_time, node_list)
+            alps_res = self.alps_reservations.get(pg.jobid, None)
+            if alps_res is None:
+                _logger.warning('%s: Unable to re-reserve ALPS resources.',
+                        pg.label)
+                return False
+
+        # try to confirm, if we fail at confirmation, try to reserve same
+        # resource set again
+        _logger.debug('confirming with pagg_id %s', pg_id)
+        ALPSBridge.confirm(int(alps_res.alps_res_id), pg_id)
+        return True
+
+    @exposed
+    def interactive_job_complete (self, jobid):
+        """Will terminate the specified interactive job
+        """
+        job_not_found = True
+        for pg in self.process_manager.process_groups.itervalues():
+            if pg.jobid == jobid:
+                job_not_found = False
+                if pg.mode == 'interactive':
+                    pg.interactive_complete = True
+                else:
+                    msg = "Job %s not an interactive" % str(jobid)
+                    self.logger.error(msg)
+                    raise JobNotInteractive(msg)
+                break
+        if job_not_found:
+            self.logger.warning("%s: Interactive job not found", str(jobid))
+        return
+
 class ALPSReservation(object):
     '''Container for ALPS Reservation information.  Can be used to update
     reservations and also internally relases reservation.
@@ -1060,17 +1274,45 @@ class ALPSReservation(object):
         A reservation may remain if there are still active claims.  When all
         claims are gone
 
+        Returns a list of apids and child_ids for the system script forker
+        for any apids that are still cleaning.
+
         '''
         if self.dying:
             #release already issued.  Ignore
             return
+        apids = []
         status = ALPSBridge.release(self.alps_res_id)
         if int(status['claims']) != 0:
             _logger.info('ALPS reservation: %s still has %s claims.',
                     self.alps_res_id, status['claims'])
+            # fetch reservation information so that we can send kills to
+            # interactive apruns.
+            resinfo = ALPSBridge.fetch_reservations()
+            apids = _find_non_batch_apids(resinfo['reservations'], self.alps_res_id)
         else:
             _logger.info('ALPS reservation: %s has no claims left.',
                 self.alps_res_id)
         self.dying = True
+        return apids
 
-
+def _find_non_batch_apids(resinfo, alps_res_id):
+    '''Extract apids from non-basil items.'''
+    apids = []
+    for alps_res in resinfo:
+        if str(alps_res['reservation_id']) == str(alps_res_id):
+            #wow, this is ugly. Traversing the XML from BASIL
+            for applications in alps_res['ApplicationArray']:
+                for application in applications.values():
+                    for app_data in application:
+                        # applicaiton id is at the app_data level.  Multiple
+                        # commands don't normally happen.  Maybe in a MPMD job?
+                        # All commands will have the same applicaiton id.
+                        for commands in app_data['CommandArray']:
+                            for command in commands.values():
+                                # BASIL is the indicaiton of a apbasil
+                                # reservation.  apruns with the application of
+                                # BASIL would be an error.
+                                if command[0]['cmd'] != 'BASIL':
+                                    apids.append(app_data['application_id'])
+    return apids
