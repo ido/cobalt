@@ -28,8 +28,34 @@ class CrayNode(ClusterNode):
         self.ALPS_status = 'UNKNOWN' #Assume unknown state.
         CrayNode.RESOURCE_STATUSES.append('alps-interactive')
 
-    def to_dict(self):
-        return self.__dict__
+    def to_dict(self, cooked=False, params=None):
+        '''return a dictionary representation of a node.  Used to send data to
+        clients/other components.
+
+        Input:
+            cooked - (default: False) If true, strip leading '_' characters from
+                     variables.  Useful for display applications (e.g. nodelist)
+
+        Returns:
+            Dictionary representation of CrayNode fields.
+
+        Notes:
+            The output can be sent via XMLRPC without modificaiton
+
+        '''
+        ret_node = self.__dict__
+        if cooked:
+            cooked_node = {}
+            for key, val in self.__dict__.items():
+                if key.startswith('_'):
+                    cooked_node[key[1:]] = val
+                else:
+                    cooked_node[key] = val
+            ret_node = cooked_node
+        if params is not None and cooked:
+            params = [p.lower() for p in params]
+            ret_node = {k:v for k, v in ret_node.items() if k.lower() in params}
+        return ret_node
 
     def __str__(self):
         return str(self.to_dict())

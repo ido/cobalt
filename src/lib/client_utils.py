@@ -16,6 +16,7 @@ import ConfigParser
 import re
 import logging
 import time
+import json
 
 import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
@@ -1278,8 +1279,10 @@ def cluster_display_node_info():
 
 def print_node_list():
     '''fetch and print a list of node information with default headers'''
-    nodes = component_call(SYSMGR, False, 'get_nodes',
-            (True,))
+
+    header = ['Node_id', 'Name', 'Queues', 'Status']
+    nodes = json.loads(component_call(SYSMGR, False, 'get_nodes',
+            (True, None, header, True)))
     reservations = component_call(SCHMGR, False, 'get_reservations', ([{'queue':'*', 'partitions':'*', 'active':True}],))
     res_queues = {}
     for res in reservations:
@@ -1291,7 +1294,6 @@ def print_node_list():
                 res_queues[node].append(res['queue'])
 
     if len(nodes) > 0:
-        header = ['Node_id', 'Name', 'Queues', 'Status']
         print_nodes = []
         for node in nodes.values():
             entry = []

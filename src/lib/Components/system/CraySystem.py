@@ -5,6 +5,7 @@ import threading
 import thread
 import time
 import xmlrpclib
+import json
 
 import Cobalt.Util
 import Cobalt.Components.system.AlpsBridge as ALPSBridge
@@ -226,37 +227,36 @@ class CraySystem(BaseSystem):
 
 
     @exposed
-    def get_nodes(self, as_dict=False, node_ids=None):
+    def get_nodes(self, as_dict=False, node_ids=None, params=None, as_json=False):
         '''fetch the node dictionary.
 
-            node_ids - a list of node names to return, if None, return all nodes
-                       (default None)
+            as_dict  - Return node information as a dictionary keyed to string
+                        node_id value.
+            node_ids - A list of node names to return, if None, return all nodes
+                       (default None).
+            params   - If requesting a dict, only request this list of
+                       parameters of the node.
+            json     - Encode to json before sending.  Useful on large systems.
 
             returns the node dictionary.  Can reutrn underlying node data as
             dictionary for XMLRPC purposes
 
         '''
-        def cook_node_dict(node):
-            '''strip leading '_' for display purposes'''
-            raw_node = node.to_dict()
-            cooked_node = {}
-            for key, val in raw_node.items():
-                if key.startswith('_'):
-                    cooked_node[key[1:]] = val
-                else:
-                    cooked_node[key] = val
-            return cooked_node
+        def node_filter(node):
+            if node_ids is not None:
+                return (str(node[0]) in [str(nid) for nid in node_ids])
+            return True
 
-        if node_ids is None:
-            if as_dict:
-                return {k:cook_node_dict(v) for k, v in self.nodes.items()}
-            else:
-                return self.nodes
+        node_info = None
+        if as_dict:
+            retdict = {k:v.to_dict(True, params) for k, v in self.nodes.items()}
+            node_info = dict(filter(node_filter, retdict.items()))
         else:
-            if as_dict:
-                return {k:cook_node_dict(v) for k, v in self.nodes.items() if int(k) in node_ids}
-            else:
-                return {k:v for k,v in self.nodes.items() if int(k) in node_ids}
+            node_info = dict(filter(node_filter, self.nodes.items()))
+        if as_json:
+            return json.dumps(node_info)
+        return node_info
+
 
     def _run_update_state(self):
         '''automated node update functions on the update timer go here.'''
