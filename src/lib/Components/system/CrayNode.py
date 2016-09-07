@@ -18,6 +18,8 @@ class CrayNode(ClusterNode):
             'UNKNOWN':'down', 'UNAVAIL': 'down', 'SWDOWN': 'down',
             'REBOOTQ':'down', 'ADMINDOWN':'down'}
 
+    DOWN_STATUSES = ['down', 'alps-interactive']
+
     def __init__(self, spec):
         super(CrayNode, self).__init__(spec)
         self._status = self.CRAY_STATE_MAP[spec['state'].upper()]
