@@ -70,7 +70,7 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
         return self
 
     def init_groups(self, specs):
-        '''Add a set of process groups from specs.  Generate a unique id.]
+        '''Add a set of process groups from specs.  Generate a unique id.
 
         Input:
             specs - a list of dictionaries that specify process groups for a
@@ -133,6 +133,7 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
                         self.process_groups[pg_id].label)
             else:
                 started.append(pg_id)
+                self.process_groups[pg_id].startup_timeout = 0
         return started
 
     #make automatic get final status of process group
@@ -163,6 +164,9 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
 
         #clean up orphaned process groups
         for pg in self.process_groups.values():
+            if now < pg.startup_timeout:
+                #wait for startup timeout.  We don't want any hasty kills
+                continue
             pg_id = pg.id
             child_uid = (pg.forker, pg.head_pid)
             if child_uid not in children:
@@ -176,7 +180,7 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
                     continue
                 orphaned.append(pg_id)
                 _logger.warning('%s: orphaned job exited with unknown status', pg.jobid)
-                pg.exit_status = 1234567 #FIXME: what should this sentinel be?
+                pg.exit_status = 1234567
                 completed_pgs.append(pg)
             else:
                 children[child_uid]['found'] = True

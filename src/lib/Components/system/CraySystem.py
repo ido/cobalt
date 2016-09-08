@@ -32,14 +32,19 @@ SAVE_ME_INTERVAL = float(get_config_option('alpsssytem', 'save_me_interval', 10.
 PENDING_STARTUP_TIMEOUT = float(get_config_option('alpssystem',
     'pending_startup_timeout', 1200)) #default 20 minutes to account for boot.
 APKILL_CMD = get_config_option('alps', 'apkill', '/opt/cray/alps/default/bin/apkill')
+PGROUP_STARTUP_TIMEOUT = float(get_config_option('alpssystem', 'pgroup_startup_timeout', 120.0))
+
 
 class ALPSProcessGroup(ProcessGroup):
     '''ALPS-specific PocessGroup modifications.'''
 
     def __init__(self, spec):
         super(ALPSProcessGroup, self).__init__(spec)
-        self.alps_res_id = spec['alps_res_id']
+        self.alps_res_id = spec.get('alps_res_id', None)
         self.interactive_complete = False
+        now = time.time()
+        self.startup_timeout = int(spec.get("pgroup_startup_timeout",
+            now + PGROUP_STARTUP_TIMEOUT))
 
     #inherit generic getstate and setstate methods from parent
 
@@ -983,7 +988,6 @@ class CraySystem(BaseSystem):
             if alps_res is not None:
                 spec['alps_res_id'] = alps_res.alps_res_id
             new_pgroups = self.process_manager.init_groups(specs)
-
         for pgroup in new_pgroups:
             _logger.info('%s: process group %s created to track job status',
                     pgroup.label, pgroup.id)
