@@ -4,13 +4,45 @@ setres \- Create or modify a cobalt scheduler reservation
 .SH "SYNOPSIS"
 .B setres [modify or create reservation options] partition1 [ partition2 ... partitionN ]
 
-.B setres [id changing options] 
+.B setres [id changing options]
 
 .SH "DESCRIPTION"
-.TP
-This program creates or modifies a scheduler reservation.
+Creates or modifies a scheduler reservation.  Reservation and cycle ids may also
+be reset.
 
-.SH "OPTIONS TO MODIFY OR CREATE RESERVATION (partition arguments required)"
+.SS "RESERVATION CREATION AND MODIFICATION"
+At a minimum all reservation creation requires use of the
+.B -n, -s
+and
+.B -d
+flags.  Partions and nodes must be specified as positional arguments or via the
+.B -p
+flag.
+.TP
+.B \-A \-\-project [project\ name]
+Set project name
+.TP
+.B \-\-allow_passthrough
+Allow pass through connection on systems with interconnects that allow
+passthrough communication.
+.TP
+.B \-\-block_passthrough
+Block pass through connections on systems with interconnects that allow
+passthrough communication.
+.TP
+.B \-c \-\-cycletime [time]
+Set the cycle time (in minutes or DD:HH:MM:SS).  This is the amount of
+time from reservation start until it is automatically renewed.  This
+can be used to create repeating reservations.
+.TP
+.B \-d \-\-duration [time]
+Set duration (in minutes or HH:MM:SS)
+.TP
+.B \-D \-\-defer
+Defer current (or next) iteration of recurring reservation. This must be used
+with the
+.B -m
+flag.
 .TP
 .B \-\-debug
 Turn on communication debugging.
@@ -18,59 +50,63 @@ Turn on communication debugging.
 .B \-h \-\-help
 Displays the usage and a brief descriptions of the options
 .TP
-.B \-\-version
-Displays client revision and Cobalt version
-.TP
-.B \-A \-\-project
-Set project name
-.TP
-.B \-D \-\-defer
-Defer current (or next) iteration of recurring reservation (must be
-used with -m)
-.TP
-.B \-c \-\-cycletime
-Set the cycle time (in minutes or DD:HH:MM:SS).  This is the amount of
-time from reservation start until it is automatically renewed.  This
-can be used to create repeating reservations.
-.TP
-.B \-d \-\-duration
-Set duration (in minutes or HH:MM:SS)
-.TP
 .B \-m \-\-modify
-Modify an existing reservation, specified with -n.
+Modify an existing reservation. The target reservation specified with
+.BR -n .
 .TP
 .B \-n \-\-name
-Set reservation name
+Set reservation name.  Names must be unique for all pending and active
+reservations on a system.
 .TP
 .B \-p \-\-partition
-Set use partition. Now optional
+Set use partition. Now optional. Paritions/nodes to reserve may be specified as
+postional arguments. All nodes/partitoins in a reservation must exist and must
+be managed by the system component at the time the reservation is set.
 .TP
 .B \-q \-\-queue
-Set the queue name, if something other than the standard reservation naming convention is desired.
-.TP
-.B \-s \-\-starttime
-Set start time (in format YYYY_MM_DD-HH:MM)
-.TP
-.B \-u \-\-user
-Set user for reservation. Set to "*" for all users.
-.TP
-.B \-\-allow_passthrough
-Allow pass through connection
-.TP
-.B \-\-block_passthrough
-Block pass through connections
+Set the queue name, if something other than the standard reservation naming
+convention is desired.  Queues may already exist and have jobs in them.
+Jobs currently running in a target queue will not be affected by applying a
+reservation to the queue.  Jobs that are queued in the target queue will not
+start until the reservation becomes active.  Jobs in a reservations against an
+existing queue will be permitted to run on all nodes in that queue.
 
-.SH "ID CHANGING OPTIONS (no partition arguments)"
+If a queue isn't specified, a queue R.name will be created where name is the
+reservation name specified by the
+.B -n
+argument.
+.TP
+.B \-s \-\-starttime [date]
+Set start time (supported formats include YYYY-MM-DD-HH:MM or YYYY_MM_DD-HH:MM).
+.TP
+.B \-u \-\-user [list\ of\ users]
+Set user(s) for reservation. Set to "*" for all users. User names may be
+provided as a ':'-delimited list.  User names must be valid on the node where
+.BR setres (8)
+is running.
+.TP
+.B \-\-version
+Displays client revision and Cobalt version
 
+.SS "ID MODIFICATION OPTIONS"
+These options must not be used with the other reservation control options.
 .TP
-.B \-\-cycle_id
-set cycle id
+.B \-\-cycle_id [cycleid]
+Set cycle id
 .TP
-.B \-\-force_id 
-only used with \-\-res_id or \-\-cycle_id options
+.B \-\-force_id
+Only used with \-\-res_id or \-\-cycle_id options.  Will force the id generator
+to start with the specified value.  Improper use of this option may cause
+non-unique reservation ids and cycle ids to occur.
 .TP
-.B \-\-res_id
-reservation id (int)
+.B \-\-res_id [resid]
+set the reservation id
+
+.SH "NOTES"
+On Cray systems nodes are referenced by their integer node id.  Nodes may be
+specified as a comma-delimited list.  Ranges of node id's may be compacted with a
+hyphen to an inclusive range, i.e. 1-4 will expand to 1,2,3,4.
+
 .SH "SEE ALSO"
 .BR showres (1),
 .BR releaseres (8)
