@@ -1,17 +1,23 @@
-.TH "nodesadm" 8
+.TH "nodeadm" 8
 .SH "NAME"
 
 nodeadm is the administrative interface for cluster systems.
 
 .SH "SYNOPSIS"
-.B nodeadm [-l] [--down part1 part2] [--up part1 part2]
+.B nodeadm
+.R [options] [list\ of\ nodes]
 
 .SH "DESCRIPTION"
 .TP
-Allows one to mark resource as being down, or back up if there are schedulable again and it handles queue-resource associations.
+Allows one to mark resource as being down, or back up if there are scheduleable
+again and it handles queue-resource associations.
 
 .SH "OPTIONS"
-
+.TP
+.B \-b\ [list\ of\ nodes]
+.B [Cray Only]
+Print detailed information for all nodes in the list of node ids.
+This will accept hyphenated ranges as well.  All ranges are inclusive.
 .TP
 .B \-d \-\-debug
 Turn on communication debugging.
@@ -22,17 +28,23 @@ Displays the usage and a brief descriptions of the options
 .B \-\-version
 Displays client revision and Cobalt version
 .TP
-.B \-\-down
-mark nodes as down
+.B \-\-down [list\ of\ nodes]
+Mark nodes as down
 .TP
-.B \-\-up
-mark nodes as up (even if allocated)
+.B \-\-up\ [list\ of\ nodes]
+Mark nodes as up.  If the node is not in a usuable state or is allocated,
+this may cause unexpected behavior.
 .TP
-.B \-\-queue
-set queue associations
+.B \-\-queue\ [queue1:queue2:...:queueN]\ [list\ of\ nodes]
+Set queue associations.  The list of queues to set on a node is ':'-delimited.
 .TP
 .B \-l \-\-list'
 list node states
+.SH "NOTES"
+.SS "Cray Systems"
+On Cray systems nodes are referenced by their integer node id.  Nodes may be
+specified as a comma-delimited list.  Ranges of node id's may be compacted with a
+hyphen to an inclusive range, i.e. 1-4 will expand to 1,2,3,4.
 
 .SH "SEE ALSO"
 .BR nodelist (1)

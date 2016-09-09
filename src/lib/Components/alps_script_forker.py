@@ -24,8 +24,7 @@ _logger = logging.getLogger(__name__.split('.')[-1])
 #CONFIG POINT TO ALPS
 
 init_cobalt_config()
-BASIL_PATH = get_config_option('alps', 'basil',
-                               '/home/richp/alps-simulator/apbasil.sh')
+BASIL_PATH = get_config_option('alps', 'basil', '/opt/cray/alps/default/bin/apbasil')
 DEFAULT_DEPTH = int(get_config_option('alps', 'default_depth', 72))
 
 class ALPSScriptChild (PGChild):
