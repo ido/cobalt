@@ -103,6 +103,7 @@ class ProcessGroup(Data):
         self.sigkill_timeout = None
         #TODO: extract into subclass
         self.alps_res_id = spec.get('alps_res_id', None)
+        self.startup_timeout = spec.get("pgroup_startup_timeout", 0)
 
     def __getstate__(self):
         data = {}
@@ -203,11 +204,6 @@ class ProcessGroup(Data):
                 else:
                     core_dump_str = ""
                 _logger.info("%s: terminated with signal %s%s", self.label, child["signum"], core_dump_str)
-        # else:
-            # if self.exit_status is None:
-                # # the forker has lost the child for our process group
-                # _logger.info("%s: job exited with unknown status", self.label)
-                # self.exit_status = 1234567 #FIXME: What should this sentinel be?
 
 
 
