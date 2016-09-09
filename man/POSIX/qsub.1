@@ -228,6 +228,14 @@ platforms, all jobs are run as script jobs.
 
 .SH "NOTE"
 The only thing printed to STDOUT is the jobid, any other error or informational messages are printed to STDERR.
+.SS "Cray Systems"
+On Cray systems, the "location" attribute may be specified by a comma-delimited
+list of node ids.  Runs of node ids may be compacted to a hyphenated, inclusive
+pair, i.e. 1-4 would expand to 1, 2, 3, 4.  All nodes specified in location must
+exist on the system.  This list format is compatible with the values returned by
+Cray's
+.BRcnselect (1)
+command.
 .SH "SEE ALSO"
 .BR qstat (1),
 .BR qdel (1),
