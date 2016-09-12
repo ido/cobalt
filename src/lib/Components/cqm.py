@@ -3707,7 +3707,7 @@ class QueueManager(Component):
                         if job.dep_frac is None:
                             job.dep_frac = float(get_cqm_config('dep_frac', 0.5))
                             if CQM_SCALE_DEP_FRAC:
-                                new_score = min(float(waiting_job.nodes) / job.nodes, 1.) * job.dep_frac * job.score
+                                new_score = min(float(waiting_job.nodes) / float(job.nodes), 1.) * job.dep_frac * job.score
                             else:
                                 new_score = (float(get_cqm_config('dep_frac', 0.5)) * job.score)
                             dbwriter.log_to_db(None, "dep_frac_update", "job_prog", JobProgDepFracMsg(job))
