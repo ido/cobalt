@@ -2818,6 +2818,7 @@ class Job (StateMachine):
             self.trigger_event('Release', {'type' : 'dep'})
 
     def __get_job_state(self):
+        '''Translate the statemachine state into qstat-friendly states.'''
         if self._sm_state in ('Ready', 'Preempted'):
             if self.max_running:
                 return "maxrun_hold"
@@ -2832,20 +2833,21 @@ class Job (StateMachine):
                 else:
                     return "dep_hold"
             return "admin_hold"
-        if self._sm_state in ['Job_Prologue','Job_Prologue_Retry',
+        if self._sm_state in ['Job_Prologue', 'Job_Prologue_Retry',
                 'Resource_Prologue', 'Resource_Prologue_Retry', 'Run_Retry']:
             return "starting"
         if self._sm_state == 'Running':
             return "running"
         if self._sm_state in ['Kill_Retry', 'Killing']:
             return "killing"
-        if self._sm_state in ['Preempt_Retry', 'Preempting', 
+        if self._sm_state in ['Preempt_Retry', 'Preempting',
                 'Preempt_Finalize_Retry', 'Preempt_Epilogue']:
             return 'preempting'
         if self._sm_state == 'Preempted':
             return 'preempted'
-        if self._sm_state in ['Job_Prologue_Retry_Release', 'Resource_Prologue_Retry_Release', 'Finalize_Retry',
-                'Resource_Epilogue','Resource_Epilogue_Retry', 'Job_Epilogue',
+        if self._sm_state in ['Job_Prologue_Retry_Release',
+                'Resource_Prologue_Retry_Release', 'Finalize_Retry',
+                'Resource_Epilogue', 'Resource_Epilogue_Retry', 'Job_Epilogue',
                 'Job_Epilogue_Retry']:
             return "exiting"
         if self._sm_state == 'Terminal':
@@ -2871,12 +2873,13 @@ class Job (StateMachine):
             return "R"
         if self._sm_state in ['Kill_Retry', 'Killing']:
             return "K"
-        if self._sm_state in ['Preempt_Retry', 'Preempting', 
+        if self._sm_state in ['Preempt_Retry', 'Preempting',
                 'Preempt_Finalize_Retry', 'Preempt_Epilogue', 'Preempted']:
             return 'P'
-        if self._sm_state in ['Job_Prologue_Retry_Release', 'Resource_Prologue_Retry_Release', 'Finalize_Retry',
+        if self._sm_state in ['Job_Prologue_Retry_Release',
+                'Resource_Prologue_Retry_Release', 'Finalize_Retry',
                 'Resource_Epilogue', 'Resource_Epilogue_Retry', 'Job_Epilogue',
-                'Job_Epilogue_Retry' 'Terminal']:
+                'Job_Epilogue_Retry', 'Terminal']:
             return 'E'
         raise DataStateError, "unknown state: %s" % (self._sm_state,)
 
