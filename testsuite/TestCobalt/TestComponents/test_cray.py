@@ -91,7 +91,7 @@ class TestCraySystem(object):
         self.system._gen_node_to_queue()
 
         self.base_job = {'jobid':1, 'user':'crusher', 'attrs':{},
-                'queue':'default', 'nodes': 1,
+                'queue':'default', 'nodes': 1, 'walltime': 60,
                 }
 
     def teardown(self):
@@ -387,6 +387,17 @@ class TestCraySystem(object):
                 assert not node.draining, "node %s marked as draining!" % node.node_id
             else:
                 assert node.draining, "drain should not be cleared for node %s" % node.node_id
+
+    def test_select_nodes_for_draining_single_job(self):
+        '''CraySystem._select_nodes_for_draining: drain nodes from a single job'''
+        end_times = [['1-3', 100]]
+        self.system.nodes['1'].status = 'busy'
+        self.system.nodes['2'].status = 'busy'
+        self.system.nodes['3'].status = 'busy'
+        self.base_job['nodes'] = 4
+        drain_nodes = self.system._select_nodes_for_draining(self.base_job,
+                end_times)
+        assert_match(sorted(drain_nodes), ['1', '2', '3', '4'], "Bad Selection.")
 
     @patch.object(CraySystem, '_ALPS_reserve_resources', fake_reserve)
     @patch.object(time, 'time', return_value=500.000)
