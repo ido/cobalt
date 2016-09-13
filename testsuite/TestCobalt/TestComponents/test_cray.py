@@ -295,8 +295,29 @@ class TestCraySystem(object):
         self.system.nodes['3'].status = 'allocated'
         self.system.nodes['4'].set_drain(100, 1)
         nodelist = self.system._assemble_queue_data(self.base_job,
-                no_draining=True)
+                drain_time=150)
         assert_match(sorted(nodelist), ['5'], "Bad Nodelist")
+
+    def test_assemble_queue_data_attrs_within_draining(self):
+        '''CraySystem._assemble_queue_data: return idle and draining if within
+        time'''
+        self.system.nodes['1'].status = 'busy'
+        self.system.nodes['2'].status = 'down'
+        self.system.nodes['3'].set_drain(50.0, 2)
+        self.system.nodes['4'].set_drain(100.0, 1)
+        nodelist = self.system._assemble_queue_data(self.base_job,
+                drain_time=90.0)
+        assert_match(sorted(nodelist), ['4', '5'], "Bad Nodelist")
+
+    def test_assemble_queue_data_attrs_match_draining(self):
+        '''CraySystem._assemble_queue_data: return idle and matched drain node'''
+        self.system.nodes['1'].status = 'busy'
+        self.system.nodes['2'].status = 'down'
+        self.system.nodes['3'].status = 'allocated'
+        self.system.nodes['4'].set_drain(100.0, 1)
+        nodelist = self.system._assemble_queue_data(self.base_job,
+                drain_time=100.0)
+        assert_match(sorted(nodelist), ['4', '5'], "Bad Nodelist")
 
     def test_find_queue_equivalence_classes_single(self):
         '''CraySystem.find_queue_equivalence_classes: single queue'''

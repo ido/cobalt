@@ -679,7 +679,7 @@ class CraySystem(BaseSystem):
             retlist.extend(expand_num_list(locs))
         return retlist
 
-    def _assemble_queue_data(self, job, idle_only=True, no_draining=False):
+    def _assemble_queue_data(self, job, idle_only=True, drain_time=None):
         '''put together data for a queue, or queue-like reservation structure.
 
         Input:
@@ -746,9 +746,10 @@ class CraySystem(BaseSystem):
                 unavailable_nodes = [node_id for node_id in node_id_list
                         if self.nodes[str(node_id)].status in
                         self.nodes[str(node_id)].DOWN_STATUSES]
-            if no_draining:
+            if drain_time is not None:
                 unavailable_nodes.extend([node_id for node_id in node_id_list
-                    if self.nodes[str(node_id)].draining])
+                    if (self.nodes[str(node_id)].draining and
+                        self.nodes[str(node_id)].drain_until < int(drain_time))])
         for node_id in set(unavailable_nodes):
             node_id_list.remove(node_id)
         return node_id_list
