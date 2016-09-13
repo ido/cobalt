@@ -679,7 +679,7 @@ class CraySystem(BaseSystem):
             retlist.extend(expand_num_list(locs))
         return retlist
 
-    def _assemble_queue_data(self, job, idle_only=True):
+    def _assemble_queue_data(self, job, idle_only=True, no_draining=False):
         '''put together data for a queue, or queue-like reservation structure.
 
         Input:
@@ -746,6 +746,9 @@ class CraySystem(BaseSystem):
                 unavailable_nodes = [node_id for node_id in node_id_list
                         if self.nodes[str(node_id)].status in
                         self.nodes[str(node_id)].DOWN_STATUSES]
+            if no_draining:
+                unavailable_nodes.extend([node_id for node_id in node_id_list
+                    if self.nodes[str(node_id)].draining])
         for node_id in set(unavailable_nodes):
             node_id_list.remove(node_id)
         return node_id_list
@@ -841,6 +844,7 @@ class CraySystem(BaseSystem):
         '''
         now = time.time()
         resource_until_time = now + TEMP_RESERVATION_TIME
+        end_times.sort(key=lambda x: x[1]) #sort on end time, ascending.
         with self._node_lock:
             # only valid for this scheduler iteration.
             self._clear_draining_for_queues(arg_list[0]['queue'])
@@ -851,29 +855,35 @@ class CraySystem(BaseSystem):
             try:
                 for loc_time in end_times:
                     loc_spec = loc_time[0]
-                    time = loc_time[1]
+                    end_time = loc_time[1]
                     for loc in expand_num_list(loc_spec):
-                        node_end_times[str(loc)] = time
+                        node_end_times[str(loc)] = end_time
             except KeyError:
                 _logger.error("Invalid value for end_times: %s", end_times)
                 return best_match
+            else:
+                for node, end_time  in node_end_times.iteritems():
+                    #initilaize our end times.
+                    self.nodes[str(node)].set_drain(end_time)
             for job in arg_list:
                 label = '%s/%s' % (job['jobid'], job['user'])
                 try:
                     node_id_list = self._assemble_queue_data(job)
+                    available_node_list = self._assemble_queue_data(job, idle_only=False)
                 except ValueError as exc:
                     _logger.warning('Job %s: requesting locations that are not in queue for that job.', job['jobid'])
                     continue
-                if int(job['nodes']) > len(node_id_list):
+                if int(job['nodes']) > len(available_node_list):
                     # will happen with reserved jobs.
                     continue
-
                 if len(node_id_list) == 0:
                     # There are definitely insufficient nodes to run this job
                     # trivial exclude.  Don't break out of the whole thing, may
                     # have disjoint queues.
                     continue
                 elif int(job['nodes']) <= len(node_id_list):
+                    # enough nodes are in a working state to consider the job.
+                    # enough nodes are idle that we can run this job
                     compact_locs = self._associate_and_run_immediate(job, resource_until_time,
                             node_id_list)
                     # do we want to allow multiple placements in a single
@@ -883,15 +893,17 @@ class CraySystem(BaseSystem):
                         _logger.info("%s: Job selected for running on nodes  %s",
                                 label, compact_locs)
                         break #for now only select one location
-                else:
-                    #TODO: draining goes here
+                elif DRAIN_MODE in ['backfill', 'drain-only']:
+                    # drain sufficient nodes for this job to run
                     drain_node_ids = self._select_nodes_for_draining(job,
                             node_end_times)
                     _logger.info('%s: nodes %s selected for draining.', label,
                             compact_num_list(drain_node_ids))
-            for job in arg_list:
-                 #TODO: backfill pass goes here
-                 pass
+            if DRAIN_MODE in ['backfill']:
+                for job in arg_list:
+                    # Backfill is first fit
+                    #TODO: backfill pass goes here
+                    pass
         return best_match
 
     def _ALPS_reserve_resources(self, job, new_time, node_id_list):
@@ -947,15 +959,27 @@ class CraySystem(BaseSystem):
 
         Inputs:
             job - dictionary of job information to consider
+            node_end_times - a list of nodes and their endtimes should be sorted
+                             in order of location preference
 
         Return:
-            List of node ids that have been selected for draining for this job
+            List of node ids that have been selected for draining for this job,
+            as well as the expected drain time.
 
         '''
         try:
             node_id_list = self._assemble_queue_data(job, idle_only=False)
         except ValueError:
             _logger.warning('Job %s: requesting locations that are not in queue for that job.', job['jobid'])
+        else:
+            with self._node_lock:
+                if len(node_id_list) >= int(job['nodes']):
+                    #order the node ids by id and drain-time.
+                    node_id_list.sort()
+                    node_id_list.sort(reverse=True,
+                            key=lambda nid: self.nodes[str(nid)].drain_until)
+
+
 
         return []
 

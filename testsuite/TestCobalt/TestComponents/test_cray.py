@@ -267,7 +267,6 @@ class TestCraySystem(object):
         nodelist = self.system._assemble_queue_data(self.base_job)
         assert sorted(nodelist) == ['1','2','4'], 'Wrong nodes in list %s' % nodelist
 
-    #need testcase with loc targeting down nodes.
     def test_assemble_queue_data_attrs_location_blocked_nodes(self):
         '''CraySystem._assemble_queue_data: return only idle locations'''
         self.system.nodes['1'].status = 'busy'
@@ -288,6 +287,16 @@ class TestCraySystem(object):
         self.base_job['attrs'] = {'location':'1-4'}
         nodelist = self.system._assemble_queue_data(self.base_job)
         assert nodelist == [], 'Wrong node in list %s' % nodelist
+
+    def test_assemble_queue_data_attrs_non_draining(self):
+        '''CraySystem._assemble_queue_data: return idle and non draining only'''
+        self.system.nodes['1'].status = 'busy'
+        self.system.nodes['2'].status = 'down'
+        self.system.nodes['3'].status = 'allocated'
+        self.system.nodes['4'].set_drain(100, 1)
+        nodelist = self.system._assemble_queue_data(self.base_job,
+                no_draining=True)
+        assert_match(sorted(nodelist), ['5'], "Bad Nodelist")
 
     def test_find_queue_equivalence_classes_single(self):
         '''CraySystem.find_queue_equivalence_classes: single queue'''
@@ -358,7 +367,6 @@ class TestCraySystem(object):
             else:
                 assert node.draining, "drain should not be cleared for node %s" % node.node_id
 
-
     @patch.object(CraySystem, '_ALPS_reserve_resources', fake_reserve)
     @patch.object(time, 'time', return_value=500.000)
     def test_find_job_location_allocate_first_fit(self, *args, **kwargs):
@@ -371,4 +379,5 @@ class TestCraySystem(object):
         assert self.system.nodes['1'].reserved_jobid == 1, 'Node not reserved'
         assert self.system.nodes['1'].reserved_until == 800.0, (
                 'reserved until expected 800.0, got %s' % self.system.nodes['1'].reserved_until)
+
 
