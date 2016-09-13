@@ -27,7 +27,7 @@ class TestCrayNode(object):
         del self.base_node
 
     def test_init(self):
-        '''CrayNode init test'''
+        '''CrayNode.__init__: test initilaizer'''
         spec = {'name':'test', 'state': 'UP', 'node_id': 1, 'role':'batch',
                 'architecture': 'XT', 'SocketArray':['foo', 'bar'],
                 }
@@ -41,10 +41,11 @@ class TestCrayNode(object):
                 'bad segment')
         assert_match(node.ALPS_status, 'UNKNOWN',
                 'bad default ALPS status')
-        assert 'alps-interactive' in node.RESOURCE_STATUSES, 'alps-interactive not in resource statuses'
+        assert 'alps-interactive' in node.RESOURCE_STATUSES,(
+                'alps-interactive not in resource statuses')
 
     def test_init_alps_states(self):
-        '''CrayNode: init alps states'''
+        '''CrayNode.__init__: alps states correctly set'''
         cray_state_list = ['UP', 'DOWN', 'UNAVAILABLE', 'ROUTING', 'SUSPECT',
                            'ADMIN', 'UNKNOWN', 'UNAVAIL', 'SWDOWN', 'REBOOTQ',
                            'ADMINDOWN']
@@ -55,10 +56,12 @@ class TestCrayNode(object):
         for state in cray_state_list:
             self.spec['state'] = state
             node = CrayNode(self.spec)
-            assert node.status == correct_alps_states[state], "%s should map to %s" % (node.status, correct_alps_states[state])
+            assert node.status == correct_alps_states[state],(
+                    "%s should map to %s" % (node.status,
+                        correct_alps_states[state]))
 
     def test_non_cray_statuses(self):
-        '''CrayNode: can set cobalt-tracking statuses.'''
+        '''CrayNode.status: can set cobalt-tracking statuses.'''
         test_statuses = ['busy', 'cleanup-pending', 'allocated',
                 'alps-interactive']
         for status in test_statuses:
@@ -66,6 +69,8 @@ class TestCrayNode(object):
             assert_match(self.base_node.status, status, "failed validation")
 
 class TestCraySystem(object):
+    '''Test Cray system component functionality'''
+    #SETUP AND TEARDOWN HELPERS
     @patch.object(AlpsBridge, 'init_bridge')
     @patch.object(CraySystem, '_init_nodes_and_reservations', return_value=None)
     @patch.object(CraySystem, '_run_update_state', return_value=None)
@@ -93,16 +98,27 @@ class TestCraySystem(object):
         del self.system
         del self.base_job
 
+    # HELPER MOCK FUNCTIONS
+    def fake_reserve(self, job, new_time, node_id_list):
+        '''Mimic first-fit function of ALPS placement scheme'''
+        # self gets overriden by the call within fjl to be the real system
+        # component.
+        ret_nodes = []
+        if job['nodes'] <= len(node_id_list):
+            ret_nodes = node_id_list[:int(job['nodes'])]
+        return ret_nodes
+
+    #TESTS
     def test_assemble_queue_data(self):
         '''CraySystem._assemble_queue_data: base functionality'''
         nodelist =  self.system._assemble_queue_data(self.base_job)
-        assert sorted(nodelist) == ['1','2','3','4','5'], 'expected [1, 2, 3, 4, 5] got %s' % nodelist
+        assert_match(sorted(nodelist), ['1', '2', '3', '4', '5'], 'nodelist mismatch')
 
     def test_assemble_queue_data_bad_queue(self):
         '''CraySystem._assemble_queue_data: return nothing if queue for job doesn't exist'''
         self.base_job['queue'] = 'foo'
         nodelist = self.system._assemble_queue_data(self.base_job)
-        assert nodelist == [], 'nonempty nodelist'
+        assert_match(nodelist, [], 'nonempty nodelist')
 
     def test_assemble_queue_data_multiple_queue(self):
         '''CraySystem._assemble_queue_data: return only proper queue nodes'''
@@ -110,7 +126,7 @@ class TestCraySystem(object):
         self.system.nodes['4'].queues = ['bar']
         self.system._gen_node_to_queue()
         nodelist = self.system._assemble_queue_data(self.base_job)
-        assert sorted(nodelist) == ['2','3','5'], 'Wrong nodelist'
+        assert_match(sorted(nodelist), ['2', '3', '5'], 'Wrong nodelist')
 
     def test_assemble_queue_data_multiple_queue_overlap(self):
         '''CraySystem._assemble_queue_data: return only proper queue nodes in overlaping queues'''
@@ -119,16 +135,16 @@ class TestCraySystem(object):
         self.system.nodes['5'].queues = ['baz']
         self.system._gen_node_to_queue()
         nodelist = self.system._assemble_queue_data(self.base_job)
-        assert sorted(nodelist) == ['1','2','3','4'], 'Wrong nodelist'
+        assert_match(sorted(nodelist), ['1', '2', '3', '4'], 'Wrong nodelist')
         self.base_job['queue'] = 'foo'
         nodelist = self.system._assemble_queue_data(self.base_job)
-        assert nodelist == ['1'], 'Wrong nodelist'
+        assert_match(nodelist, ['1'], 'Wrong nodelist')
         self.base_job['queue'] = 'bar'
         nodelist = self.system._assemble_queue_data(self.base_job)
-        assert sorted(nodelist) == ['1','4'], 'Wrong nodelist'
+        assert_match(sorted(nodelist), ['1', '4'], 'Wrong nodelist')
         self.base_job['queue'] = 'baz'
         nodelist = self.system._assemble_queue_data(self.base_job)
-        assert nodelist == ['5'], 'Wrong nodelist'
+        assert_match(nodelist, ['5'], 'Wrong nodelist')
 
     def test_assemble_queue_data_idle(self):
         '''CraySystem._assemble_queue_data: return only idle nodes'''
@@ -136,7 +152,7 @@ class TestCraySystem(object):
         self.system.nodes['4'].status = 'ADMINDOWN'
         self.system._gen_node_to_queue()
         nodelist = self.system._assemble_queue_data(self.base_job)
-        assert sorted(nodelist) == ['2','3','5'], 'Wrong nodelist'
+        assert_match(sorted(nodelist), ['2','3','5'], 'Wrong nodelist')
 
     def test_assemble_queue_data_non_down(self):
         '''CraySystem._assemble_queue_data: return nodes that are not down'''
@@ -152,6 +168,7 @@ class TestCraySystem(object):
         nodelist = self.system._assemble_queue_data(self.base_job,
                 idle_only=False)
         assert sorted(nodelist) == ['3','5'], 'Wrong nodes in list %s' % nodelist
+
     def test_assemble_queue_data_attrs_location(self):
         '''CraySystem._assemble_queue_data: return only attr locaiton loc'''
         self.base_job['attrs'] = {'location':'3'}
@@ -341,13 +358,6 @@ class TestCraySystem(object):
             else:
                 assert node.draining, "drain should not be cleared for node %s" % node.node_id
 
-    def fake_reserve(self, job, new_time, node_id_list):
-        # self gets overriden by the call within fjl to be the real system
-        # component.
-        ret_nodes = []
-        if job['nodes'] <= len(node_id_list):
-            ret_nodes = node_id_list[:int(job['nodes'])]
-        return ret_nodes
 
     @patch.object(CraySystem, '_ALPS_reserve_resources', fake_reserve)
     @patch.object(time, 'time', return_value=500.000)
@@ -362,7 +372,3 @@ class TestCraySystem(object):
         assert self.system.nodes['1'].reserved_until == 800.0, (
                 'reserved until expected 800.0, got %s' % self.system.nodes['1'].reserved_until)
 
-   # @patch.object(CraySystem, '_ALPS_reserve_resources', fake_reserve)
-   # @patch.object(time, 'time', return_value=500.000)
-   # def test_find_job_location_(self, *args, **kwargs):
-   #     assert False
