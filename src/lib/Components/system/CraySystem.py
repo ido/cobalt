@@ -847,27 +847,22 @@ class CraySystem(BaseSystem):
         '''
         now = time.time()
         resource_until_time = now + TEMP_RESERVATION_TIME
-        end_times.sort(key=lambda x: x[1]) #sort on end time, ascending.
         with self._node_lock:
             # only valid for this scheduler iteration.
             self._clear_draining_for_queues(arg_list[0]['queue'])
             #check if we can run immedaitely, if not drain.  Keep going until all
             #nodes are marked for draining or have a pending run.
             best_match = {} #jobid: list(locations)
-            node_end_times = {}
             try:
                 for loc_time in end_times:
                     loc_spec = loc_time[0]
                     end_time = loc_time[1]
                     for loc in expand_num_list(loc_spec):
-                        node_end_times[str(loc)] = end_time
-            except KeyError:
-                _logger.error("Invalid value for end_times: %s", end_times)
-                return best_match
-            else:
-                for node, end_time  in node_end_times.iteritems():
-                    #initilaize our end times.
-                    self.nodes[str(node)].set_drain(end_time)
+                        self.nodes[str(loc)].set_drain(end_time)
+            except (KeyError, IndexError):
+                err = "Invalid value for end_times: %s" % end_times
+                _logger.error(err)
+                raise ValueError(err)
             for job in arg_list:
                 label = '%s/%s' % (job['jobid'], job['user'])
                 try:
@@ -889,8 +884,8 @@ class CraySystem(BaseSystem):
                 elif int(job['nodes']) <= len(node_id_list):
                     # enough nodes are in a working state to consider the job.
                     # enough nodes are idle that we can run this job
-                    compact_locs = self._associate_and_run_immediate(job, resource_until_time,
-                            node_id_list)
+                    compact_locs = self._associate_and_run_immediate(job,
+                            resource_until_time, node_id_list)
                     # do we want to allow multiple placements in a single
                     # pass? That would likely help startup times.
                     if compact_locs is not None:
@@ -901,7 +896,7 @@ class CraySystem(BaseSystem):
                 elif DRAIN_MODE in ['backfill', 'drain-only']:
                     # drain sufficient nodes for this job to run
                     drain_node_ids = self._select_nodes_for_draining(job,
-                            node_end_times)
+                            end_times)
                     _logger.info('%s: nodes %s selected for draining.', label,
                             compact_num_list(drain_node_ids))
             if DRAIN_MODE in ['backfill']:
@@ -964,21 +959,25 @@ class CraySystem(BaseSystem):
 
         Inputs:
             job - dictionary of job information to consider
-            node_end_times - a list of nodes and their endtimes should be sorted
-                             in order of location preference
+            end_times - a list of nodes and their endtimes should be sorted
+                        in order of location preference
+
+        Side Effect:
+            end_times will be sorted in ascending end-time order
 
         Return:
             List of node ids that have been selected for draining for this job,
             as well as the expected drain time.
 
         '''
+        end_times.sort(key=lambda x: int(x[1]))
         print end_times
         drain_list = []
         candidate_list = []
         try:
             node_id_list = self._assemble_queue_data(job, idle_only=False)
         except ValueError:
-            _logger.warning('Job %s: requesting locations that are not in queue for that job.', job['jobid'])
+            _logger.warning('Job %s: requesting locations that are not in queue.', job['jobid'])
         else:
             with self._node_lock:
                 drain_time = None
@@ -986,7 +985,8 @@ class CraySystem(BaseSystem):
                         if (self.nodes[str(nid)].status == 'idle' and
                             not self.nodes[str(nid)].draining)]
                 for loc_time in end_times:
-                    running_nodes = [str(nid) for nid in expand_num_list(loc_time[0])]
+                    running_nodes = [str(nid) for nid in expand_num_list(loc_time[0])
+                            if job['queue'] in self.nodes[str(nid)].queues]
                     for nid in running_nodes:
                         self.nodes[str(nid)].set_drain(loc_time[1], job['jobid'])
                     candidate_list.extend(running_nodes)
