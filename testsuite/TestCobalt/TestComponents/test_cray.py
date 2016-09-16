@@ -390,7 +390,7 @@ class TestCraySystem(object):
 
     def test_select_nodes_for_draining_single_job(self):
         '''CraySystem._select_nodes_for_draining: drain nodes from a single job'''
-        end_times = [['1-3', 100]]
+        end_times = [[['1-3'], 100]]
         self.system.nodes['1'].status = 'busy'
         self.system.nodes['2'].status = 'busy'
         self.system.nodes['3'].status = 'busy'
@@ -401,7 +401,7 @@ class TestCraySystem(object):
 
     def test_select_nodes_for_draining_prefer_running(self):
         '''CraySystem._select_nodes_for_draining: prefer nodes from running job'''
-        end_times = [['4-5', 100]]
+        end_times = [[['4-5'], 100]]
         self.system.nodes['4'].status = 'busy'
         self.system.nodes['5'].status = 'busy'
         self.base_job['nodes'] = 4
@@ -411,7 +411,7 @@ class TestCraySystem(object):
 
     def test_select_nodes_for_draining_only_running(self):
         '''CraySystem._select_nodes_for_draining: fit entirely in running job if possible'''
-        end_times = [['2-5', 100]]
+        end_times = [[['2-5'], 100]]
         self.system.nodes['2'].status = 'busy'
         self.system.nodes['3'].status = 'busy'
         self.system.nodes['4'].status = 'busy'
@@ -423,7 +423,7 @@ class TestCraySystem(object):
 
     def test_select_nodes_for_draining_correct_time(self):
         '''CraySystem._select_nodes_for_draining: set correct drain times single job'''
-        end_times = [['5', 100]]
+        end_times = [[['5'], 100]]
         self.system.nodes['5'].status = 'busy'
         self.base_job['nodes'] = 5
         drain_nodes = self.system._select_nodes_for_draining(self.base_job,
@@ -436,7 +436,7 @@ class TestCraySystem(object):
 
     def test_select_nodes_for_draining_multiple_running(self):
         '''CraySystem._select_nodes_for_draining: choose from shortest job to drain'''
-        end_times = [['2-3', 100.0], ['4-5', 91.0]]
+        end_times = [[['2-3'], 100.0], [['4-5'], 91.0]]
         self.system.nodes['2'].status = 'busy'
         self.system.nodes['3'].status = 'busy'
         self.system.nodes['4'].status = 'allocated'
@@ -453,7 +453,7 @@ class TestCraySystem(object):
 
     def test_select_nodes_for_draining_select_multiple_running(self):
         '''CraySystem._select_nodes_for_draining: set time to longest if draining from multiple jobs'''
-        end_times = [['2-3', 100.0], ['4-5', 91.0]]
+        end_times = [[['2-3'], 100.0], [['4-5'], 91.0]]
         self.system.nodes['2'].status = 'busy'
         self.system.nodes['3'].status = 'busy'
         self.system.nodes['4'].status = 'allocated'
@@ -471,7 +471,7 @@ class TestCraySystem(object):
     def test_select_nodes_for_draining_select_queue(self):
         '''CraySystem._select_nodes_for_draining: confine to proper queue'''
         self.base_job['queue'] = 'bar'
-        end_times = [['5', 100.0], ['2', 50.0]]
+        end_times = [[['5'], 100.0], [['2'], 50.0]]
         self.system.nodes['1'].queues = ['default']
         self.system.nodes['2'].queues = ['default']
         self.system.nodes['3'].queues = ['bar']
@@ -491,6 +491,23 @@ class TestCraySystem(object):
             assert_match(self.system.nodes[str(i)].drain_jobid, 1, "Bad drain job")
             assert_match(self.system.nodes[str(i)].drain_until, 100, "Bad drain time")
 
+    def test_select_nodes_for_draining_select_cleaning(self):
+        '''CraySystem._select_nodes_for_draining: include cleaning nodes if marked'''
+        end_times = []
+        now = int(time.time())
+        self.system.nodes['2'].status = 'cleanup'
+        self.system.nodes['5'].status = 'cleanup-pending'
+        self.system.nodes['2'].set_drain(now + 300, -1)
+        self.system.nodes['5'].set_drain(now + 300, -1)
+        self.base_job['nodes'] = 5
+        drain_nodes = self.system._select_nodes_for_draining(self.base_job,
+                end_times)
+        assert_match(sorted(drain_nodes), ['1', '2', '3', '4', '5'], "Bad Selection")
+        for i in range(1,6):
+            assert_match(self.system.nodes[str(i)].draining, True, "Draining not set")
+            assert_match(self.system.nodes[str(i)].drain_jobid, 1, "Bad drain job")
+            assert_match(self.system.nodes[str(i)].drain_until, now + 300, "Bad drain time")
+
     @patch.object(CraySystem, '_ALPS_reserve_resources', fake_reserve)
     @patch.object(time, 'time', return_value=500.000)
     def test_find_job_location_allocate_first_fit(self, *args, **kwargs):
@@ -505,3 +522,18 @@ class TestCraySystem(object):
                 'reserved until expected 800.0, got %s' % self.system.nodes['1'].reserved_until)
 
 
+    @patch.object(CraySystem, '_ALPS_reserve_resources', fake_reserve)
+    @patch.object(time, 'time', return_value=500.000)
+    def test_find_job_location_allocate_first_fit_prior_job(self, *args, **kwargs):
+        '''CraySystem.find_job_locaton: Assign second job to nodes'''
+        self.system.nodes['2'].status = 'allocated'
+        self.system.nodes['2'].reserved_jobid = 2
+        retval = self.system.find_job_location([self.base_job],
+                [[['2'], int(time.time()) + 3600 ]], [])
+        assert retval == {1: ['1']}, 'bad loc: expected %s, got %s' % ({1: ['1']}, retval)
+        assert self.system.pending_starts[1] == 800.0, (
+                'bad pending start: expected %s, got %s' %
+                (800.0, self.system.pending_starts[1]))
+        assert self.system.nodes['1'].reserved_jobid == 1, 'Node not reserved'
+        assert self.system.nodes['1'].reserved_until == 800.0, (
+                'reserved until expected 800.0, got %s' % self.system.nodes['1'].reserved_until)
