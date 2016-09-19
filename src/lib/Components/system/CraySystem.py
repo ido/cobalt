@@ -38,7 +38,7 @@ DRAIN_MODE = get_config_option('system', 'drain_mode', 'first-fit')
 #cleanup time in seconds
 CLEANUP_DRAIN_WINDOW = get_config_option('system', 'cleanup_drain_window', 300)
 
-DRAIN_MODES = ['first-fit', 'drain-only', 'backfill']
+DRAIN_MODES = ['first-fit', 'backfill']
 CLEANING_ID = -1
 
 class ALPSProcessGroup(ProcessGroup):
