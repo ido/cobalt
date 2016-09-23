@@ -41,6 +41,16 @@ CLEANUP_DRAIN_WINDOW = get_config_option('system', 'cleanup_drain_window', 300)
 DRAIN_MODES = ['first-fit', 'backfill']
 CLEANING_ID = -1
 
+def chain_loc_list(loc_list):
+    '''Take a list of compact Cray locations,
+    expand and concatenate them.
+
+    '''
+    retlist = []
+    for locs in loc_list:
+        retlist.extend(expand_num_list(locs))
+    return retlist
+
 class ALPSProcessGroup(ProcessGroup):
     '''ALPS-specific PocessGroup modifications.'''
 
@@ -615,8 +625,7 @@ class CraySystem(BaseSystem):
         '''
         equiv = []
         node_active_queues = set([])
-        self.current_equivalence_classes = []
-        #reverse mapping of queues to nodes
+        self.current_equivalence_classes = [] #reverse mapping of queues to nodes
         for node in self.nodes.values():
             if node.managed and node.schedulable:
                 #only condiser nodes that we are scheduling.
@@ -673,15 +682,12 @@ class CraySystem(BaseSystem):
         return equiv
 
 
-    def chain_loc_list(self, loc_list):
-        '''Take a list of compact Cray locations,
-        expand and concatenate them.
-
-        '''
-        retlist = []
-        for locs in loc_list:
-            retlist.extend(expand_num_list(locs))
-        return retlist
+    @staticmethod
+    def _setup_special_locaitons(job):
+        forbidden = set([str(loc) for loc in chain_loc_list(job.get('forbidden', []))])
+        required = set([str(loc) for loc in chain_loc_list(job.get('required', []))])
+        requested_locations = set([str(n) for n in expand_num_list(job['attrs'].get('location', ''))])
+        return (forbidden, required, requested_locations)
 
     def _assemble_queue_data(self, job, idle_only=True, drain_time=None):
         '''put together data for a queue, or queue-like reservation structure.
@@ -701,9 +707,7 @@ class CraySystem(BaseSystem):
         # have to intersect required nodes with the idle and available
         # we also have to forbid a bunch of locations, in  this case.
         unavailable_nodes = []
-        forbidden = set([str(loc) for loc in self.chain_loc_list(job.get('forbidden', []))])
-        required = set([str(loc) for loc in self.chain_loc_list(job.get('required', []))])
-        requested_locations = set([str(n) for n in expand_num_list(job['attrs'].get('location', ''))])
+        forbidden, required, requested_locations = self._setup_special_locaitons(job)
         requested_loc_in_forbidden = False
         for loc in requested_locations:
             if loc in forbidden:
@@ -745,7 +749,6 @@ class CraySystem(BaseSystem):
             if idle_only:
                 unavailable_nodes = [node_id for node_id in node_id_list
                         if self.nodes[str(node_id)].status not in ['idle']]
-                        #unavailable_nodes.append(node_id)
             else:
                 unavailable_nodes = [node_id for node_id in node_id_list
                         if self.nodes[str(node_id)].status in
@@ -820,18 +823,18 @@ class CraySystem(BaseSystem):
 
         Called once per equivalence class.
 
-        Input:
-        arg_list - A list of dictionaries containning information on jobs to
+        Args::
+            arg_list: A list of dictionaries containning information on jobs to
                    cosnider.
-        end_times - list containing a mapping of locations and the times jobs
+            end_times: list containing a mapping of locations and the times jobs
                     runninng on those locations are scheduled to end.  End times
                     are in seconds from Epoch UTC.
-        pt_blocking_locations - Not used for this system.  Used in partitioned
+            pt_blocking_locations: Not used for this system.  Used in partitioned
                                 interconnect schemes. A list of locations that
                                 should not be used to prevent passthrough issues
                                 with other scheduler reservations.
 
-        Output:
+        Returns:
         A mapping of jobids to locations to run a job to run immediately.
 
         Side Effects:
@@ -847,7 +850,7 @@ class CraySystem(BaseSystem):
         pt_blocking_locations may be used later to block out nodes that are
         impacted by warmswap operations.
 
-        This function doesn't hold the component lock.
+        This function *DOES NOT* hold the component lock.
 
         '''
         now = time.time()
@@ -858,21 +861,6 @@ class CraySystem(BaseSystem):
             #check if we can run immedaitely, if not drain.  Keep going until all
             #nodes are marked for draining or have a pending run.
             best_match = {} #jobid: list(locations)
-            try:
-                for loc_time in end_times:
-                    loc_spec = ",".join(loc_time[0])
-                    end_time = loc_time[1]
-                    for loc in expand_num_list(loc_spec):
-                        if self.nodes[str(loc)].reserved_jobid is not None:
-                            # if the reserved_jobid is none, this job is already
-                            # going for cleanup.  Drain location selection
-                            # handles that.
-                            self.nodes[str(loc)].set_drain(end_time,
-                                    self.nodes[str(loc)].reserved_jobid)
-            except (KeyError, IndexError):
-                err = "Invalid value for end_times: %s" % end_times
-                _logger.error(err)
-                raise ValueError(err)
             for job in arg_list:
                 label = '%s/%s' % (job['jobid'], job['user'])
                 # walltime is in minutes.  We should really fix the storage of
@@ -886,13 +874,7 @@ class CraySystem(BaseSystem):
                             job['jobid'])
                     continue
                 if int(job['nodes']) > len(available_node_list):
-                    # will happen with reserved jobs.
-                    _logger.debug('Reserved skip?')
-                    continue
-                if len(node_id_list) == 0:
-                    # There are definitely insufficient nodes to run this job
-                    # trivial exclude.  Don't break out of the whole thing, may
-                    # have disjoint queues.
+                    # Insufficient operational nodes for this job at all
                     continue
                 elif int(job['nodes']) <= len(node_id_list):
                     # enough nodes are in a working state to consider the job.
@@ -906,7 +888,7 @@ class CraySystem(BaseSystem):
                         _logger.info("%s: Job selected for running on nodes  %s",
                                 label, compact_locs)
                         break #for now only select one location
-                elif DRAIN_MODE in ['backfill', 'drain-only']:
+                if DRAIN_MODE in ['backfill', 'drain-only']:
                     # drain sufficient nodes for this job to run
                     drain_node_ids = self._select_nodes_for_draining(job,
                             end_times)
@@ -986,6 +968,7 @@ class CraySystem(BaseSystem):
         drain_list = []
         candidate_list = []
         cleanup_statuses = ['cleanup', 'cleanup-pending']
+        forbidden, required, requested_locations = self._setup_special_locaitons(job)
         try:
             node_id_list = self._assemble_queue_data(job, idle_only=False)
         except ValueError:
@@ -993,7 +976,8 @@ class CraySystem(BaseSystem):
         else:
             with self._node_lock:
                 drain_time = None
-                # remove the following from the list:i
+                candidate_drain_time = None
+                # remove the following from the list:
                 # 1. idle nodes that are already marked for draining.
                 # 2. Nodes that are in an in-use status (busy, allocated).
                 # 3. Nodes marked for cleanup that are not allocated to a real
@@ -1002,25 +986,36 @@ class CraySystem(BaseSystem):
                 #    is the right thing to do. --PMR
                 candidate_list = []
                 candidate_list = [nid for nid in node_id_list
-                        if ((self.nodes[str(nid)].status in ['idle'] and
-                            not self.nodes[str(nid)].draining) or
-                            (self.nodes[str(nid)].status in cleanup_statuses)# and
-                            #self.nodes[str(nid)].drain_jobid == CLEANING_ID)
+                        if (not self.nodes[str(nid)].draining and
+                            (self.nodes[str(nid)].status in ['idle']) or
+                            (self.nodes[str(nid)].status in cleanup_statuses)
                             )]
                 for nid in candidate_list:
                     if self.nodes[str(nid)].status in cleanup_statuses:
-                        drain_time = now + CLEANUP_DRAIN_WINDOW
+                        candidate_drain_time = now + CLEANUP_DRAIN_WINDOW
                 for loc_time in end_times:
                     running_nodes = [str(nid) for nid in
                             expand_num_list(",".join(loc_time[0]))
-                            if job['queue'] in self.nodes[str(nid)].queues]
+                            if ((job['queue'] in self.nodes[str(nid)].queues or
+                                nid in required) and
+                                not self.nodes[str(nid)].draining)]
                     for nid in running_nodes:
                         self.nodes[str(nid)].set_drain(loc_time[1], job['jobid'])
                     candidate_list.extend(running_nodes)
+                    candidate_drain_time = int(loc_time[1])
                     if len(candidate_list) >= int(job['nodes']):
                         # Enough nodes have been found to drain for this job
-                        drain_time = int(loc_time[1])
                         break
+                candidates = set(candidate_list)
+                # We need to further restrict this list based on requested
+                # location and reservation avoidance data:
+                if forbidden != set([]):
+                    candidates = candidates.difference(forbidden)
+                if requested_locations != set([]):
+                    candidates = candidates.intersection(requested_locations)
+                candidate_list = list(candidates)
+                if len(candidate_list) >= int(job['nodes']):
+                    drain_time = candidate_drain_time
                 if drain_time is not None:
                     # order the node ids by id and drain-time. Longest drain
                     # first

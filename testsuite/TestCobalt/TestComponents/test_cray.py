@@ -93,16 +93,20 @@ class TestCraySystem(object):
         self.base_job = {'jobid':1, 'user':'crusher', 'attrs':{},
                 'queue':'default', 'nodes': 1, 'walltime': 60,
                 }
+        self.fake_reserve_called = False
 
     def teardown(self):
         del self.system
         del self.base_job
+        self.fake_reserve_called = False
+
 
     # HELPER MOCK FUNCTIONS
     def fake_reserve(self, job, new_time, node_id_list):
         '''Mimic first-fit function of ALPS placement scheme'''
         # self gets overriden by the call within fjl to be the real system
         # component.
+        self.fake_reserve_called = True
         ret_nodes = []
         if job['nodes'] <= len(node_id_list):
             ret_nodes = node_id_list[:int(job['nodes'])]
@@ -288,7 +292,33 @@ class TestCraySystem(object):
         nodelist = self.system._assemble_queue_data(self.base_job)
         assert nodelist == [], 'Wrong node in list %s' % nodelist
 
-    def test_assemble_queue_data_attrs_non_draining(self):
+    def test_assemble_queue_data_attrs_location_any_not_down(self):
+        '''CraySystem._assemble_queue_data: attrs locaiton return any not down'''
+        self.system.nodes['1'].status = 'busy'
+        self.system.nodes['2'].status = 'cleanup-pending'
+        self.system.nodes['3'].status = 'allocated'
+        self.system.nodes['4'].status = 'ADMINDOWN'
+        self.base_job['attrs'] = {'location':'1-5'}
+        self.base_job['nodes'] = 4
+        nodelist = self.system._assemble_queue_data(self.base_job, idle_only=False)
+        assert nodelist == ['1', '2', '3', '5'], 'Wrong node in list %s' % nodelist
+
+    def test_assemble_queue_data_attrs_location_any_not_down_drain_limit(self):
+        '''CraySystem._assemble_queue_data: attrs locaiton return any not down in drain window'''
+        self.system.nodes['1'].status = 'busy'
+        self.system.nodes['2'].status = 'cleanup-pending'
+        self.system.nodes['3'].status = 'allocated'
+        self.system.nodes['4'].status = 'ADMINDOWN'
+        self.system.nodes['1'].set_drain(500.0, 1)
+        self.system.nodes['2'].set_drain(600.0, 2)
+        self.system.nodes['3'].set_drain(700.0, 3)
+        self.base_job['attrs'] = {'location':'1-5'}
+        self.base_job['nodes'] = 2
+        nodelist = self.system._assemble_queue_data(self.base_job,
+                idle_only=False, drain_time=650 )
+        assert nodelist == ['3', '5'], 'Wrong node in list %s' % nodelist
+
+    def test_assemble_queue_data_non_draining(self):
         '''CraySystem._assemble_queue_data: return idle and non draining only'''
         self.system.nodes['1'].status = 'busy'
         self.system.nodes['2'].status = 'down'
@@ -298,7 +328,7 @@ class TestCraySystem(object):
                 drain_time=150)
         assert_match(sorted(nodelist), ['5'], "Bad Nodelist")
 
-    def test_assemble_queue_data_attrs_within_draining(self):
+    def test_assemble_queue_data_within_draining(self):
         '''CraySystem._assemble_queue_data: return idle and draining if within
         time'''
         self.system.nodes['1'].status = 'busy'
@@ -309,7 +339,7 @@ class TestCraySystem(object):
                 drain_time=90.0)
         assert_match(sorted(nodelist), ['4', '5'], "Bad Nodelist")
 
-    def test_assemble_queue_data_attrs_match_draining(self):
+    def test_assemble_queue_data_match_draining(self):
         '''CraySystem._assemble_queue_data: return idle and matched drain node'''
         self.system.nodes['1'].status = 'busy'
         self.system.nodes['2'].status = 'down'
@@ -398,6 +428,18 @@ class TestCraySystem(object):
         drain_nodes = self.system._select_nodes_for_draining(self.base_job,
                 end_times)
         assert_match(sorted(drain_nodes), ['1', '2', '3', '4'], "Bad Selection.")
+
+    def test_select_nodes_for_draining_user_location(self):
+        '''CraySystem._select_nodes_for_draining: drain nodes for user specified location'''
+        end_times = [[['1-3'], 100]]
+        self.system.nodes['1'].status = 'busy'
+        self.system.nodes['2'].status = 'busy'
+        self.system.nodes['3'].status = 'busy'
+        self.base_job['nodes'] = 4
+        self.base_job['attrs'] = {'location':'2-5'}
+        drain_nodes = self.system._select_nodes_for_draining(self.base_job,
+                end_times)
+        assert_match(sorted(drain_nodes), ['2', '3', '4', '5'], "Bad Selection.")
 
     def test_select_nodes_for_draining_prefer_running(self):
         '''CraySystem._select_nodes_for_draining: prefer nodes from running job'''
@@ -508,10 +550,26 @@ class TestCraySystem(object):
             assert_match(self.system.nodes[str(i)].drain_jobid, 1, "Bad drain job")
             assert_match(self.system.nodes[str(i)].drain_until, now + 300, "Bad drain time")
 
+    # common checks for find_job_location
+    def assert_draining(self, nid, until, drain_jobid):
+        assert self.system.nodes[str(nid)].draining, "Node %s should be draining" % nid
+        assert_match(self.system.nodes[str(nid)].drain_until, until,
+                "Bad drain_until: node %s" % nid)
+        assert_match(self.system.nodes[str(nid)].drain_jobid, drain_jobid,
+                "Bad drain_jobid: node %s" % nid)
+
+    def assert_not_draining(self, nid):
+        assert not self.system.nodes[str(nid)].draining, "Node %s should not be draining" % nid
+        assert_match(self.system.nodes[str(nid)].drain_until, None,
+                     "Bad drain_until: node %s" % nid, is_match)
+        assert_match(self.system.nodes[str(nid)].drain_jobid, None,
+                     "Bad drain_jobid: node %s" % nid, is_match)
+
     @patch.object(CraySystem, '_ALPS_reserve_resources', fake_reserve)
     @patch.object(time, 'time', return_value=500.000)
     def test_find_job_location_allocate_first_fit(self, *args, **kwargs):
         '''CraySystem.find_job_locaton: Assign basic job to nodes'''
+        Cobalt.Components.system.CraySystem.DRAIN_MODE = "first-fit"
         retval = self.system.find_job_location([self.base_job], [], [])
         assert retval == {1: ['1']}, 'bad loc: expected %s, got %s' % ({1: ['1']}, retval)
         assert self.system.pending_starts[1] == 800.0, (
@@ -521,11 +579,11 @@ class TestCraySystem(object):
         assert self.system.nodes['1'].reserved_until == 800.0, (
                 'reserved until expected 800.0, got %s' % self.system.nodes['1'].reserved_until)
 
-
     @patch.object(CraySystem, '_ALPS_reserve_resources', fake_reserve)
     @patch.object(time, 'time', return_value=500.000)
     def test_find_job_location_allocate_first_fit_prior_job(self, *args, **kwargs):
         '''CraySystem.find_job_locaton: Assign second job to nodes'''
+        Cobalt.Components.system.CraySystem.DRAIN_MODE = "first-fit"
         self.system.nodes['2'].status = 'allocated'
         self.system.nodes['2'].reserved_jobid = 2
         retval = self.system.find_job_location([self.base_job],
@@ -537,3 +595,207 @@ class TestCraySystem(object):
         assert self.system.nodes['1'].reserved_jobid == 1, 'Node not reserved'
         assert self.system.nodes['1'].reserved_until == 800.0, (
                 'reserved until expected 800.0, got %s' % self.system.nodes['1'].reserved_until)
+
+    @patch.object(CraySystem, '_ALPS_reserve_resources', fake_reserve)
+    @patch.object(time, 'time', return_value=500.000)
+    def test_find_job_location_allocate_drain_one_eq(self, *args, **kwargs):
+        '''CraySystem.find_job_locaton: Assign job to w/drain'''
+        Cobalt.Components.system.CraySystem.DRAIN_MODE = "backfill"
+        retval = self.system.find_job_location([self.base_job], [], [])
+        assert retval == {1: ['1']}, 'bad loc: expected %s, got %s' % ({1: ['1']}, retval)
+        assert self.system.pending_starts[1] == 800.0, (
+                'bad pending start: expected %s, got %s' %
+                (800.0, self.system.pending_starts[1]))
+        assert self.system.nodes['1'].reserved_jobid == 1, 'Node not reserved'
+        assert self.system.nodes['1'].reserved_until == 800.0, (
+                'reserved until expected 800.1, got %s' % self.system.nodes['1'].reserved_until)
+        for i in range(1,6):
+            self.assert_not_draining(i)
+
+    @patch.object(CraySystem, '_ALPS_reserve_resources', fake_reserve)
+    @patch.object(time, 'time', return_value=500.000)
+    def test_find_job_location_allocate_drain_for_large(self, *args, **kwargs):
+        '''CraySystem.find_job_locaton: Drain for large job, block other'''
+        Cobalt.Components.system.CraySystem.DRAIN_MODE = "backfill"
+        jobs = []
+        jobs.append(dict(self.base_job))
+        jobs.append(dict(self.base_job))
+        jobs[0]['jobid'] = 2
+        jobs[0]['nodes'] = 5
+        jobs[0]['walltime'] = 500
+        jobs[1]['jobid'] = 3
+        jobs[1]['nodes'] = 1
+        jobs[1]['walltime'] = 400
+        self.system.reserve_resources_until('1', 100, 1)
+        self.system.nodes['1'].status = 'busy'
+        self.system.find_queue_equivalence_classes([], ['default'], [])
+        retval = self.system.find_job_location(jobs, [[['1'], 600]], [])
+        assert_match(retval, {}, "no location should be assigned")
+        assert_match(self.system.pending_starts, {}, "no starts should be pending")
+        for i in range(1,6):
+            self.assert_draining(i, 600, 2)
+
+    @patch.object(CraySystem, '_ALPS_reserve_resources', fake_reserve)
+    @patch.object(time, 'time', return_value=500.000)
+    def test_find_job_location_allocate_first_fit_despite_larger(self, *args, **kwargs):
+        '''CraySystem.find_job_locaton: First fit smaller job ahead of large job'''
+        Cobalt.Components.system.CraySystem.DRAIN_MODE = "first-fit"
+        jobs = []
+        jobs.append(dict(self.base_job))
+        jobs.append(dict(self.base_job))
+        jobs[0]['jobid'] = 2
+        jobs[0]['nodes'] = 5
+        jobs[0]['walltime'] = 500
+        jobs[1]['jobid'] = 3
+        jobs[1]['nodes'] = 1
+        jobs[1]['walltime'] = 400
+        self.system.reserve_resources_until('1', 600, 1)
+        self.system.nodes['1'].status = 'busy'
+        self.system.find_queue_equivalence_classes([], ['default'], [])
+        retval = self.system.find_job_location(jobs, [[['1'], 600]], [])
+        assert_match(retval, {3: ['2']}, "bad location")
+        assert_match(self.system.pending_starts, {3: 800.0}, "no starts should be pending")
+        for i in range(1, 6):
+            # first fit should never set drain characteristics.
+            self.assert_not_draining(i)
+
+    @patch.object(CraySystem, '_ALPS_reserve_resources', fake_reserve)
+    @patch.object(time, 'time', return_value=500.000)
+    def test_find_job_location_allocate_drain_on_running(self, *args, **kwargs):
+        '''CraySystem.find_job_locaton: Drain: Favor running location'''
+        Cobalt.Components.system.CraySystem.DRAIN_MODE = "backfill"
+        jobs = []
+        for _ in range(0,2):
+            jobs.append(dict(self.base_job))
+        jobs[0]['jobid'] = 2
+        jobs[0]['nodes'] = 3
+        jobs[0]['walltime'] = 500
+        jobs[1]['jobid'] = 3
+        jobs[1]['nodes'] = 2
+        jobs[1]['walltime'] = 400
+        self.system.reserve_resources_until('3-5', 100, 1)
+        self.system.nodes['3'].status = 'busy'
+        self.system.nodes['4'].status = 'busy'
+        self.system.nodes['5'].status = 'busy'
+        self.system.find_queue_equivalence_classes([], ['default'], [])
+        retval = self.system.find_job_location(jobs, [[['3-5'], 600]], [])
+        assert_match(retval, {3: ['1-2']}, 'bad location')
+        assert_match(self.system.pending_starts, {3: 800.0}, "bad pending start")
+        for i in range(3,6):
+            self.assert_draining(i, 600, 2)
+        for i in range(1,3):
+            self.assert_not_draining(i)
+
+    @patch.object(CraySystem, '_ALPS_reserve_resources', fake_reserve)
+    @patch.object(time, 'time', return_value=500.000)
+    def test_find_job_location_allocate_no_drain_on_down(self, *args, **kwargs):
+        '''CraySystem.find_job_locaton: Drain: Do not drain if insufficient hardware'''
+        Cobalt.Components.system.CraySystem.DRAIN_MODE = "backfill"
+        jobs = []
+        for _ in range(0,2):
+            jobs.append(dict(self.base_job))
+        jobs[0]['jobid'] = 2
+        jobs[0]['nodes'] = 5
+        jobs[0]['walltime'] = 500
+        jobs[1]['jobid'] = 3
+        jobs[1]['nodes'] = 2
+        jobs[1]['walltime'] = 400
+        self.system.reserve_resources_until('2,5', 100, 1)
+        self.system.nodes['2'].status = 'busy'
+        self.system.nodes['3'].status = 'down'
+        self.system.nodes['5'].status = 'busy'
+        self.system.find_queue_equivalence_classes([], ['default'], [])
+        retval = self.system.find_job_location(jobs, [[['2,5'], 600]], [])
+        assert_match(retval, {3: ['1,4']}, 'bad location')
+        assert_match(self.system.pending_starts, {3: 800.0}, "bad pending start")
+        for i in range(1, 6):
+            self.assert_not_draining(i)
+
+    @patch.object(CraySystem, '_ALPS_reserve_resources', fake_reserve)
+    @patch.object(CraySystem, 'update_node_state')
+    @patch.object(time, 'time', return_value=500.000)
+    def test_find_job_location_allocate_drain_correct_queue(self, *args, **kwargs):
+        '''CraySystem.find_job_locaton: Drain correct queue'''
+        Cobalt.Components.system.CraySystem.DRAIN_MODE = "backfill"
+        jobs = []
+        for _ in range(0,2):
+            jobs.append(dict(self.base_job))
+        jobs[0]['jobid'] = 2
+        jobs[0]['nodes'] = 2
+        jobs[0]['walltime'] = 500
+        jobs[0]['queue'] = 'bar'
+        jobs[1]['jobid'] = 3
+        jobs[1]['nodes'] = 1
+        jobs[1]['walltime'] = 400
+        jobs[1]['queue'] = 'bar'
+        self.system.reserve_resources_until('2,5', 600, 1)
+        self.system.update_nodes({'queues': 'foo:default'}, ['1', '2'], None)
+        self.system.update_nodes({'queues': 'bar:default'}, ['4', '5'], None)
+        self.system.nodes['2'].status = 'busy'
+        self.system.nodes['5'].status = 'busy'
+        self.system.find_queue_equivalence_classes([], ['default', 'foo', 'bar'], [])
+        retval = self.system.find_job_location(jobs, [[['2,5'], 600]], [])
+        assert_match(retval, {}, 'bad location')
+        assert_match(self.system.pending_starts, {}, "bad pending start")
+        for i in [4, 5]:
+            self.assert_draining(i, 600, 2)
+        for i in [1, 2, 3]:
+            self.assert_not_draining(i)
+
+    @patch.object(CraySystem, '_ALPS_reserve_resources', fake_reserve)
+    @patch.object(CraySystem, 'update_node_state')
+    @patch.object(time, 'time', return_value=500.000)
+    def test_find_job_location_allocate_drain_correct_queue_run_short_job(self, *args, **kwargs):
+        '''CraySystem.find_job_locaton: Drain correct queue, run short job'''
+        Cobalt.Components.system.CraySystem.DRAIN_MODE = "backfill"
+        jobs = []
+        for _ in range(0,2):
+            jobs.append(dict(self.base_job))
+        jobs[0]['jobid'] = 2
+        jobs[0]['nodes'] = 2
+        jobs[0]['walltime'] = 500
+        jobs[0]['queue'] = 'bar'
+        jobs[1]['jobid'] = 3
+        jobs[1]['nodes'] = 1
+        jobs[1]['walltime'] = 3
+        jobs[1]['queue'] = 'bar'
+        self.system.reserve_resources_until('2,5', 1000, 1)
+        self.system.update_nodes({'queues': 'foo:default'}, ['1', '2'], None)
+        self.system.update_nodes({'queues': 'bar:default'}, ['4', '5'], None)
+        self.system.nodes['2'].status = 'busy'
+        self.system.nodes['5'].status = 'busy'
+        self.system.find_queue_equivalence_classes([], ['default', 'foo', 'bar'], [])
+        retval = self.system.find_job_location(jobs, [[['2,5'], 1000]], [])
+        assert_match(retval, {3: ['4']}, 'bad location')
+        assert_match(self.system.pending_starts, {3: 800.0}, "bad pending start")
+        for i in [4, 5]:
+            self.assert_draining(i, 1000, 2)
+        for i in [1, 2, 3]:
+            self.assert_not_draining(i)
+
+    @patch.object(CraySystem, '_ALPS_reserve_resources', fake_reserve)
+    @patch.object(time, 'time', return_value=500.000)
+    def test_find_job_location_allocate_drain_only_required(self, *args, **kwargs):
+        '''CraySystem.find_job_locaton: drain only attrs=location nodes'''
+        Cobalt.Components.system.CraySystem.DRAIN_MODE = "backfill"
+        jobs = []
+        for _ in range(0,2):
+            jobs.append(dict(self.base_job))
+        jobs[0]['jobid'] = 2
+        jobs[0]['nodes'] = 3
+        jobs[0]['walltime'] = 500
+        jobs[0]['attrs'] = {'location': '1,3,5'}
+        jobs[1]['jobid'] = 3
+        jobs[1]['nodes'] = 3
+        jobs[1]['walltime'] = 400
+        self.system.reserve_resources_until('1', 600, 1)
+        self.system.nodes['1'].status = 'busy'
+        self.system.find_queue_equivalence_classes([], ['default'], [])
+        retval = self.system.find_job_location(jobs, [[['1'], 600]], [])
+        assert_match(retval, {}, 'bad location')
+        assert_match(self.system.pending_starts, {}, "bad pending start")
+        for i in [1, 3, 5]:
+            self.assert_draining(i, 600, 2)
+        for i in [2, 4]:
+            self.assert_not_draining(i)
+
