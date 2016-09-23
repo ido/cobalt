@@ -799,3 +799,106 @@ class TestCraySystem(object):
         for i in [2, 4]:
             self.assert_not_draining(i)
 
+    @patch.object(CraySystem, '_ALPS_reserve_resources', fake_reserve)
+    @patch.object(time, 'time', return_value=500.000)
+    def test_find_job_location_allocate_drain_multiple(self, *args, **kwargs):
+        '''CraySystem.find_job_locaton: drain for multiple jobs'''
+        Cobalt.Components.system.CraySystem.DRAIN_MODE = "backfill"
+        jobs = []
+        for _ in range(0,3):
+            jobs.append(dict(self.base_job))
+        jobs[0]['jobid'] = 2
+        jobs[0]['nodes'] = 2
+        jobs[0]['walltime'] = 500
+        jobs[1]['jobid'] = 3
+        jobs[1]['nodes'] = 2
+        jobs[1]['walltime'] = 400
+        jobs[2]['jobid'] = 4
+        jobs[2]['nodes'] = 1
+        jobs[2]['walltime'] = 1500
+        self.system.reserve_resources_until('1', 600, 1)
+        self.system.reserve_resources_until('2-3', 550, 5)
+        self.system.reserve_resources_until('4', 700, 6)
+        self.system.nodes['1'].status = 'busy'
+        self.system.nodes['2'].status = 'busy'
+        self.system.nodes['3'].status = 'busy'
+        self.system.nodes['4'].status = 'busy'
+        self.system.find_queue_equivalence_classes([], ['default'], [])
+        retval = self.system.find_job_location(jobs, [[['2-3'], 550.0], [['1'],
+            600.0], [['4'], 700.0]], [])
+        assert_match(retval, {}, 'bad location')
+        assert_match(self.system.pending_starts, {}, "bad pending start")
+        for i in [1, 5]:
+            self.assert_draining(i, 600, 3)
+        for i in [2, 3]:
+            self.assert_draining(i, 550, 2)
+        for i in [4]:
+            self.assert_draining(i, 700, 4)
+
+    @patch.object(CraySystem, '_ALPS_reserve_resources', fake_reserve)
+    @patch.object(time, 'time', return_value=500.000)
+    def test_find_job_location_allocate_drain_multiple_and_run(self, *args, **kwargs):
+        '''CraySystem.find_job_locaton: drain for multiple jobs, run leftover'''
+        Cobalt.Components.system.CraySystem.DRAIN_MODE = "backfill"
+        jobs = []
+        for _ in range(0,3):
+            jobs.append(dict(self.base_job))
+        jobs[0]['jobid'] = 2
+        jobs[0]['nodes'] = 2
+        jobs[0]['walltime'] = 500
+        jobs[1]['jobid'] = 3
+        jobs[1]['nodes'] = 2
+        jobs[1]['walltime'] = 400
+        jobs[2]['jobid'] = 4
+        jobs[2]['nodes'] = 1
+        jobs[2]['walltime'] = 1500
+        self.system.reserve_resources_until('1,4', 600, 1)
+        self.system.reserve_resources_until('2-3', 550, 5)
+        self.system.nodes['1'].status = 'busy'
+        self.system.nodes['2'].status = 'busy'
+        self.system.nodes['3'].status = 'busy'
+        self.system.nodes['4'].status = 'busy'
+        self.system.find_queue_equivalence_classes([], ['default'], [])
+        retval = self.system.find_job_location(jobs, [[['2-3'], 550.0], [['1,4'],
+            600.0]], [])
+        assert_match(retval, {4: ['5']}, 'bad location')
+        assert_match(self.system.pending_starts, {4: 800.0}, "bad pending start")
+        for i in [1, 4]:
+            self.assert_draining(i, 600, 3)
+        for i in [2, 3]:
+            self.assert_draining(i, 550, 2)
+        for i in [5]:
+            self.assert_not_draining(i)
+
+    @patch.object(CraySystem, '_ALPS_reserve_resources', fake_reserve)
+    @patch.object(time, 'time', return_value=500.000)
+    def test_find_job_location_allocate_no_drain_after_run(self, *args, **kwargs):
+        '''CraySystem.find_job_locaton: no drain computation after run'''
+        Cobalt.Components.system.CraySystem.DRAIN_MODE = "backfill"
+        jobs = []
+        for _ in range(0,3):
+            jobs.append(dict(self.base_job))
+        jobs[0]['jobid'] = 2
+        jobs[0]['nodes'] = 2
+        jobs[0]['walltime'] = 500
+        jobs[1]['jobid'] = 4
+        jobs[1]['nodes'] = 1
+        jobs[1]['walltime'] = 1500
+        jobs[2]['jobid'] = 3
+        jobs[2]['nodes'] = 2
+        jobs[2]['walltime'] = 400
+        self.system.reserve_resources_until('1,4', 600, 1)
+        self.system.reserve_resources_until('2-3', 550, 5)
+        self.system.nodes['1'].status = 'busy'
+        self.system.nodes['2'].status = 'busy'
+        self.system.nodes['3'].status = 'busy'
+        self.system.nodes['4'].status = 'busy'
+        self.system.find_queue_equivalence_classes([], ['default'], [])
+        retval = self.system.find_job_location(jobs, [[['2-3'], 550.0], [['1,4'],
+            600.0]], [])
+        assert_match(retval, {4: ['5']}, 'bad location')
+        assert_match(self.system.pending_starts, {4: 800.0}, "bad pending start")
+        for i in [2, 3]:
+            self.assert_draining(i, 550, 2)
+        for i in [1, 4, 5]:
+            self.assert_not_draining(i)
