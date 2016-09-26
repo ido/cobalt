@@ -94,10 +94,14 @@ class TestCraySystem(object):
                 'queue':'default', 'nodes': 1, 'walltime': 60,
                 }
         self.fake_reserve_called = False
+        Cobalt.Components.system.CraySystem.BACKFILL_EPSILON = 120
+        Cobalt.Components.system.CraySystem.DRAIN_MODE = "first-fit"
 
     def teardown(self):
         del self.system
         del self.base_job
+        Cobalt.Components.system.CraySystem.BACKFILL_EPSILON = 120
+        Cobalt.Components.system.CraySystem.DRAIN_MODE = "first-fit"
         self.fake_reserve_called = False
 
 
@@ -315,7 +319,23 @@ class TestCraySystem(object):
         self.base_job['attrs'] = {'location':'1-5'}
         self.base_job['nodes'] = 2
         nodelist = self.system._assemble_queue_data(self.base_job,
-                idle_only=False, drain_time=650 )
+                idle_only=False, drain_time=650)
+        assert nodelist == ['5'], 'Wrong node in list %s' % nodelist
+
+    def test_assemble_queue_data_attrs_location_any_not_down_drain_limit_no_ep(self):
+        '''CraySystem._assemble_queue_data: attrs locaiton return any not down in drain window no epsilon'''
+        Cobalt.Components.system.CraySystem.BACKFILL_EPSILON = 0
+        self.system.nodes['1'].status = 'busy'
+        self.system.nodes['2'].status = 'cleanup-pending'
+        self.system.nodes['3'].status = 'allocated'
+        self.system.nodes['4'].status = 'ADMINDOWN'
+        self.system.nodes['1'].set_drain(500.0, 1)
+        self.system.nodes['2'].set_drain(600.0, 2)
+        self.system.nodes['3'].set_drain(700.0, 3)
+        self.base_job['attrs'] = {'location':'1-5'}
+        self.base_job['nodes'] = 2
+        nodelist = self.system._assemble_queue_data(self.base_job,
+                idle_only=False, drain_time=650)
         assert nodelist == ['3', '5'], 'Wrong node in list %s' % nodelist
 
     def test_assemble_queue_data_non_draining(self):
@@ -334,7 +354,7 @@ class TestCraySystem(object):
         self.system.nodes['1'].status = 'busy'
         self.system.nodes['2'].status = 'down'
         self.system.nodes['3'].set_drain(50.0, 2)
-        self.system.nodes['4'].set_drain(100.0, 1)
+        self.system.nodes['4'].set_drain(220.0, 1) #add in epsilon
         nodelist = self.system._assemble_queue_data(self.base_job,
                 drain_time=90.0)
         assert_match(sorted(nodelist), ['4', '5'], "Bad Nodelist")
@@ -344,7 +364,7 @@ class TestCraySystem(object):
         self.system.nodes['1'].status = 'busy'
         self.system.nodes['2'].status = 'down'
         self.system.nodes['3'].status = 'allocated'
-        self.system.nodes['4'].set_drain(100.0, 1)
+        self.system.nodes['4'].set_drain(220.0, 1) #add in epsilon
         nodelist = self.system._assemble_queue_data(self.base_job,
                 drain_time=100.0)
         assert_match(sorted(nodelist), ['4', '5'], "Bad Nodelist")

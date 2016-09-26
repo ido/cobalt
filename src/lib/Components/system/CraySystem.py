@@ -38,6 +38,9 @@ DRAIN_MODE = get_config_option('system', 'drain_mode', 'first-fit')
 #cleanup time in seconds
 CLEANUP_DRAIN_WINDOW = get_config_option('system', 'cleanup_drain_window', 300)
 
+#Epsilon for backfilling.  This system does not do this on a per-node basis.
+BACKFILL_EPSILON = int(get_config_option('system', 'backfill_epsilon', 120))
+
 DRAIN_MODES = ['first-fit', 'backfill']
 CLEANING_ID = -1
 
@@ -251,7 +254,6 @@ class CraySystem(BaseSystem):
                     else:
                         self.nodes_by_queue[queue] = set([node.node_id])
 
-
     @exposed
     def get_nodes(self, as_dict=False, node_ids=None, params=None, as_json=False):
         '''fetch the node dictionary.
@@ -282,7 +284,6 @@ class CraySystem(BaseSystem):
         if as_json:
             return json.dumps(node_info)
         return node_info
-
 
     def _run_update_state(self):
         '''automated node update functions on the update timer go here.'''
@@ -753,13 +754,13 @@ class CraySystem(BaseSystem):
                         if self.nodes[str(node_id)].status in
                         self.nodes[str(node_id)].DOWN_STATUSES]
             if drain_time is not None:
+                print drain_time, BACKFILL_EPSILON, drain_time - BACKFILL_EPSILON
                 unavailable_nodes.extend([node_id for node_id in node_id_list
                     if (self.nodes[str(node_id)].draining and
-                        self.nodes[str(node_id)].drain_until < int(drain_time))])
+                        (self.nodes[str(node_id)].drain_until - BACKFILL_EPSILON) < int(drain_time))])
         for node_id in set(unavailable_nodes):
             node_id_list.remove(node_id)
         return sorted(node_id_list, key=lambda nid: int(nid))
-
 
     def _select_first_nodes(self, job, node_id_list):
         '''Given a list of nids, select the first node count nodes fromt the
