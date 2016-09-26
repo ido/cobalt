@@ -384,6 +384,20 @@ class TestCraySystem(object):
         assert val == self.system.current_equivalence_classes, (
                 "val/current_equivalence_class mismatch\nReturn: %s\nInternal: %s")
 
+    def test_find_queue_equivalence_classes_disjoint_reservation(self):
+        '''CraySystem.find_queue_equivalence_classes: bind reservation all eq classes'''
+        self.system.nodes['1'].queues = ['foo']
+        self.system.nodes['2'].queues = ['foo']
+        val = self.system.find_queue_equivalence_classes({'test':'1-2,4-5'}, ['default', 'foo'], [])
+        self.system.current_equivalence_classes
+        expect = [{'reservations': ['test'], 'queues': ['foo']},
+                  {'reservations': ['test'], 'queues': ['default']}]
+        assert self.system.current_equivalence_classes == expect, (
+                'Expected %s, got %s' % (expect,
+                    self.system.current_equivalence_classes))
+        assert val == self.system.current_equivalence_classes, (
+                "val/current_equivalence_class mismatch\nReturn: %s\nInternal: %s")
+
     def test_clear_draining_for_queues_full_clear(self):
         '''CraySystem._clear_draining_for_queues: clear queue's draining times'''
         for node in self.system.nodes.values():

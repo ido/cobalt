@@ -673,14 +673,13 @@ class CraySystem(BaseSystem):
                     for node_id in expand_num_list(node_hunk):
                         if str(node_id) in eq_class['data']:
                             eq_class['reservations'].add(res_name)
-                        break
+                            break
             #don't send what could be a large block list back in the returun
             for key in eq_class:
                 eq_class[key] = list(eq_class[key])
             del eq_class['data']
             self.current_equivalence_classes.append(eq_class)
         return equiv
-
 
     @staticmethod
     def _setup_special_locaitons(job):
@@ -876,6 +875,8 @@ class CraySystem(BaseSystem):
                 if int(job['nodes']) > len(available_node_list):
                     # Insufficient operational nodes for this job at all
                     continue
+                elif len(node_id_list) == 0:
+                    pass #allow for draining pass to run.
                 elif int(job['nodes']) <= len(node_id_list):
                     # enough nodes are in a working state to consider the job.
                     # enough nodes are idle that we can run this job
@@ -1056,7 +1057,7 @@ class CraySystem(BaseSystem):
             #assemble from locaion list:
             exp_location = []
             if isinstance(location, list):
-                exp_location = self.chain_loc_list(location)
+                exp_location = chain_loc_list(location)
             elif isinstance(location, str):
                 exp_location = expand_num_list(location)
             else:
