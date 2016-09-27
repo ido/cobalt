@@ -794,9 +794,9 @@ class BaseForker (Component):
                             break
                         elif exc.errno in [errno.EBADF, errno.EINVAL, errno.EPIPE]:
                             _logger.error("%s: Error reading stdout from child pipe.",
-                                    child.label, excinfo=True)
+                                    child.label, exc_info=True)
                             break
-                        elif exc.errno in [errno.ENITR]:
+                        elif exc.errno in [errno.EINTR]:
                             #Try again
                             continue
                     else:
