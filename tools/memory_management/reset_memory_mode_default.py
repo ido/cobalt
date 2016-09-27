@@ -7,6 +7,8 @@ node reboot commands (CAPMC or IPMI needed)
 
 The CAPMC module should be loaded on Cray systems.
 
+This version forces things back to default values.
+
 '''
 import sys
 import ast

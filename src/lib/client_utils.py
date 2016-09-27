@@ -1301,24 +1301,51 @@ def _setup_res_info():
                 res_queues[node].append(res['queue'])
     return res_queues
 
+
+def sec_to_human_time(raw_time):
+    '''convert raw seconds into a D:HH:MM:SS format for pretty prinitng'''
+    if raw_time <= 0:
+        return "00:00"
+    m, s = divmod(raw_time, 60)
+    h, m = divmod(m, 60)
+    d, h = divmod(h, 24)
+    if d > 0:
+        return '%d:%02d:%02d:%02d' % (d, h, m, s)
+    elif h > 0:
+        return '%d:%02d:%02d' % (h, m, s)
+    else:
+        return '%d:%02d' % (m, s)
+
 def print_node_list():
     '''fetch and print a list of node information with default headers'''
 
-    header = ['Node_id', 'Name', 'Queues', 'Status']
+    header = ['Node_id', 'Name', 'Queues', 'Status', 'Backfill']
+    header_aliases = {'Backfill': 'drain_until'}
+    fetch_header = list(header)
+    for headding in fetch_header:
+        if headding in header_aliases.keys():
+            fetch_header[fetch_header.index(headding)] = header_aliases[headding]
+    print fetch_header
     nodes = json.loads(component_call(SYSMGR, False, 'get_nodes',
-            (True, None, header, True)))
+            (True, None, fetch_header, True)))
 
     #TODO: Allow headers to be specified by the user in the future.
     if 'queues' in [h.lower() for h in header]:
         res_queues = _setup_res_info()
 
+    now = int(time.time())
     if len(nodes) > 0:
         print_nodes = []
         for node in nodes.values():
             entry = []
-            for key in header:
+            for key in fetch_header:
                 if key.lower() == 'node_id':
                     entry.append(int(node[key.lower()]))
+                elif key.lower() in ['drain_until']:
+                    if node[key.lower()] is not None:
+                        entry.append(sec_to_human_time(node[key.lower()] - now))
+                    else:
+                        entry.append('-')
                 elif key.lower() == 'queues':
                     queues = node[key.lower()]
                     if res_queues.get(str(node['node_id']), False):

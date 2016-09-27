@@ -4,6 +4,7 @@ import logging
 import threading
 import thread
 import time
+import sys
 import xmlrpclib
 import json
 
@@ -33,7 +34,25 @@ PENDING_STARTUP_TIMEOUT = float(get_config_option('alpssystem',
     'pending_startup_timeout', 1200)) #default 20 minutes to account for boot.
 APKILL_CMD = get_config_option('alps', 'apkill', '/opt/cray/alps/default/bin/apkill')
 PGROUP_STARTUP_TIMEOUT = float(get_config_option('alpssystem', 'pgroup_startup_timeout', 120.0))
+DRAIN_MODE = get_config_option('system', 'drain_mode', 'first-fit')
+#cleanup time in seconds
+CLEANUP_DRAIN_WINDOW = get_config_option('system', 'cleanup_drain_window', 300)
 
+#Epsilon for backfilling.  This system does not do this on a per-node basis.
+BACKFILL_EPSILON = int(get_config_option('system', 'backfill_epsilon', 120))
+
+DRAIN_MODES = ['first-fit', 'backfill']
+CLEANING_ID = -1
+
+def chain_loc_list(loc_list):
+    '''Take a list of compact Cray locations,
+    expand and concatenate them.
+
+    '''
+    retlist = []
+    for locs in loc_list:
+        retlist.extend(expand_num_list(locs))
+    return retlist
 
 class ALPSProcessGroup(ProcessGroup):
     '''ALPS-specific PocessGroup modifications.'''
@@ -76,6 +95,11 @@ class CraySystem(BaseSystem):
         component.
 
         '''
+        if DRAIN_MODE not in DRAIN_MODES:
+            #abort startup, we have a completely invalid config.
+            _logger.critical('ALPS SYSTEM: ABORT STARTUP: %s is not a valid drain mode.  Must be one of %s.',
+                DRAIN_MODE, ", ".join(DRAIN_MODES))
+            sys.exit(1)
         #initilaize bridge.
         bridge_pending = True
         while bridge_pending:
@@ -230,7 +254,6 @@ class CraySystem(BaseSystem):
                     else:
                         self.nodes_by_queue[queue] = set([node.node_id])
 
-
     @exposed
     def get_nodes(self, as_dict=False, node_ids=None, params=None, as_json=False):
         '''fetch the node dictionary.
@@ -261,7 +284,6 @@ class CraySystem(BaseSystem):
         if as_json:
             return json.dumps(node_info)
         return node_info
-
 
     def _run_update_state(self):
         '''automated node update functions on the update timer go here.'''
@@ -603,17 +625,16 @@ class CraySystem(BaseSystem):
 
         '''
         equiv = []
-        node_active_queues = []
-        self.current_equivalence_classes = []
-        #reverse mapping of queues to nodes
+        node_active_queues = set([])
+        self.current_equivalence_classes = [] #reverse mapping of queues to nodes
         for node in self.nodes.values():
             if node.managed and node.schedulable:
                 #only condiser nodes that we are scheduling.
-                node_active_queues = []
+                node_active_queues = set([])
                 for queue in node.queues:
                     if queue in active_queue_names:
-                        node_active_queues.append(queue)
-                if node_active_queues == []:
+                        node_active_queues.add(queue)
+                if node_active_queues == set([]):
                     #this node has nothing active.  The next check can get
                     #expensive, so skip it.
                     continue
@@ -638,7 +659,7 @@ class CraySystem(BaseSystem):
         for eq_class in equiv:
             found_a_match = False
             for e in real_equiv:
-                if e['data'].intersection(eq_class['data']):
+                if e['queues'].intersection(eq_class['queues']):
                     e['queues'].update(eq_class['queues'])
                     e['data'].update(eq_class['data'])
                     found_a_match = True
@@ -653,29 +674,31 @@ class CraySystem(BaseSystem):
                     for node_id in expand_num_list(node_hunk):
                         if str(node_id) in eq_class['data']:
                             eq_class['reservations'].add(res_name)
-                        break
-            #don't send what could be a large block list back in the return
+                            break
+            #don't send what could be a large block list back in the returun
             for key in eq_class:
                 eq_class[key] = list(eq_class[key])
             del eq_class['data']
             self.current_equivalence_classes.append(eq_class)
         return equiv
 
+    @staticmethod
+    def _setup_special_locaitons(job):
+        forbidden = set([str(loc) for loc in chain_loc_list(job.get('forbidden', []))])
+        required = set([str(loc) for loc in chain_loc_list(job.get('required', []))])
+        requested_locations = set([str(n) for n in expand_num_list(job['attrs'].get('location', ''))])
+        return (forbidden, required, requested_locations)
 
-    def chain_loc_list(self, loc_list):
-        '''Take a list of compact Cray locations,
-        expand and concatenate them.
-
-        '''
-        retlist = []
-        for locs in loc_list:
-            retlist.extend(expand_num_list(locs))
-        return retlist
-
-    def _assemble_queue_data(self, job, idle_nodes_by_queue):
+    def _assemble_queue_data(self, job, idle_only=True, drain_time=None):
         '''put together data for a queue, or queue-like reservation structure.
 
-        return count of idle resources, and a list of valid nodes..
+        Input:
+            job - dictionary of job data.
+            idle_only - [default: True] if True, return only idle nodes.
+                        Otherwise return nodes in any non-down status.
+
+        return count of idle resources, and a list of valid nodes to run on.
+        if idle_only is set to false, returns a set of candidate draining nodes.
 
 
         '''
@@ -683,18 +706,15 @@ class CraySystem(BaseSystem):
         # not find the queue normally. In the event of a reservation we'll
         # have to intersect required nodes with the idle and available
         # we also have to forbid a bunch of locations, in  this case.
-        idle_nodecount = 0
         unavailable_nodes = []
-        forbidden = set([str(loc) for loc in self.chain_loc_list(job.get('forbidden', []))])
-        required = set([str(loc) for loc in self.chain_loc_list(job.get('required', []))])
-        requested_locations = set([str(n) for n in expand_num_list(job['attrs'].get('location', ''))])
+        forbidden, required, requested_locations = self._setup_special_locaitons(job)
         requested_loc_in_forbidden = False
         for loc in requested_locations:
             if loc in forbidden:
                 #don't spam the logs.
                 requested_loc_in_forbidden = True
                 break
-        if not job['queue'] in self.nodes_by_queue.keys():
+        if job['queue'] not in self.nodes_by_queue.keys():
             # Either a new queue with no resources, or a possible
             # reservation need to do extra work for a reservation
             node_id_list = list(required - forbidden)
@@ -702,7 +722,7 @@ class CraySystem(BaseSystem):
             node_id_list = list(set(self.nodes_by_queue[job['queue']]) - forbidden)
         if requested_locations != set([]): # handle attrs location= requests
             job_set = set([str(nid) for nid in requested_locations])
-            if not job['queue'] in self.nodes_by_queue.keys():
+            if job['queue'] not in self.nodes_by_queue.keys():
                 #we're in a reservation and need to further restrict nodes.
                 if job_set <= set(node_id_list):
                     # We are in a reservation there are no forbidden nodes.
@@ -710,7 +730,6 @@ class CraySystem(BaseSystem):
                 else:
                     # We can't run this job.  Insufficent resources in this
                     # reservation to do so.  Don't risk blocking anything.
-                    #idle_nodecount = 0
                     node_id_list = []
             else:
                 #normal queues.  Restrict to the non-reserved nodes.
@@ -727,13 +746,73 @@ class CraySystem(BaseSystem):
                     if not requested_loc_in_forbidden:
                         raise ValueError("forbidden locations not in queue")
         with self._node_lock:
-            for node_id in node_id_list: #strip non-idle nodes.
-                if not self.nodes[str(node_id)].status in ['idle']:
-                    unavailable_nodes.append(node_id)
+            if idle_only:
+                unavailable_nodes = [node_id for node_id in node_id_list
+                        if self.nodes[str(node_id)].status not in ['idle']]
+            else:
+                unavailable_nodes = [node_id for node_id in node_id_list
+                        if self.nodes[str(node_id)].status in
+                        self.nodes[str(node_id)].DOWN_STATUSES]
+            if drain_time is not None:
+                print drain_time, BACKFILL_EPSILON, drain_time - BACKFILL_EPSILON
+                unavailable_nodes.extend([node_id for node_id in node_id_list
+                    if (self.nodes[str(node_id)].draining and
+                        (self.nodes[str(node_id)].drain_until - BACKFILL_EPSILON) < int(drain_time))])
         for node_id in set(unavailable_nodes):
             node_id_list.remove(node_id)
-        idle_nodecount = len(node_id_list)
-        return (idle_nodecount, node_id_list)
+        return sorted(node_id_list, key=lambda nid: int(nid))
+
+    def _select_first_nodes(self, job, node_id_list):
+        '''Given a list of nids, select the first node count nodes fromt the
+        list.  This is the target for alternate allocator replacement.
+
+        Input:
+            job - dictionary of job data from the scheduler
+            node_id_list - a list of possible candidate nodes
+
+        Return:
+            A list of nodes.  [] if insufficient nodes for the allocation.
+
+        Note: hold the node lock while doing this.  We really don't want a
+        update to happen while doing this.
+
+        '''
+        ret_nodes = []
+        with self._node_lock:
+            if int(job['nodes']) <= len(node_id_list):
+                node_id_list.sort(key=lambda nid: int(nid))
+                ret_nodes = node_id_list[:int(job['nodes'])]
+        return ret_nodes
+
+    def _associate_and_run_immediate(self, job, resource_until_time, node_id_list):
+        '''Given a list of idle node ids, choose a set that can run a job
+        immediately, if a set exists in the node_id_list.
+
+        Inputs:
+            job - Dictionary of job data
+            node_id_list - a list of string node id values
+
+        Side Effects:
+            Will reserve resources in ALPS and will set resource reservations on
+            allocated nodes.
+
+        Return:
+            None if no match, otherwise the pairing of a jobid and set of nids
+            that have been allocated to a job.
+
+        '''
+        compact_locs = None
+        if int(job['nodes']) <= len(node_id_list):
+            #this job can be run immediately
+            to_alps_list = self._select_first_nodes(job, node_id_list)
+            job_locs = self._ALPS_reserve_resources(job, resource_until_time,
+                    to_alps_list)
+            if job_locs is not None and len(job_locs) == int(job['nodes']):
+                compact_locs = compact_num_list(job_locs)
+                #temporary reservation until job actually starts
+                self.pending_starts[job['jobid']] = resource_until_time
+                self.reserve_resources_until(compact_locs, resource_until_time, job['jobid'])
+        return compact_locs
 
     @locking
     @exposed
@@ -744,18 +823,18 @@ class CraySystem(BaseSystem):
 
         Called once per equivalence class.
 
-        Input:
-        arg_list - A list of dictionaries containning information on jobs to
+        Args::
+            arg_list: A list of dictionaries containning information on jobs to
                    cosnider.
-        end_times - list containing a mapping of locations and the times jobs
+            end_times: list containing a mapping of locations and the times jobs
                     runninng on those locations are scheduled to end.  End times
                     are in seconds from Epoch UTC.
-        pt_blocking_locations - Not used for this system.  Used in partitioned
+            pt_blocking_locations: Not used for this system.  Used in partitioned
                                 interconnect schemes. A list of locations that
                                 should not be used to prevent passthrough issues
                                 with other scheduler reservations.
 
-        Output:
+        Returns:
         A mapping of jobids to locations to run a job to run immediately.
 
         Side Effects:
@@ -768,80 +847,57 @@ class CraySystem(BaseSystem):
         this and will re-reserve as needed.  The alps reservation id may change
         in this case post job startup.
 
+        pt_blocking_locations may be used later to block out nodes that are
+        impacted by warmswap operations.
+
+        This function *DOES NOT* hold the component lock.
+
         '''
-        #TODO: make not first-fit
         now = time.time()
         resource_until_time = now + TEMP_RESERVATION_TIME
-        startup_time = now + PENDING_STARTUP_TIMEOUT
         with self._node_lock:
-            # general idle nodecount
-            idle_nodecount = len([node for node in self.nodes.values() if
-                node.managed and node.status is 'idle'])
             # only valid for this scheduler iteration.
-            idle_nodes_by_queue = self._idle_nodes_by_queue()
             self._clear_draining_for_queues(arg_list[0]['queue'])
             #check if we can run immedaitely, if not drain.  Keep going until all
             #nodes are marked for draining or have a pending run.
             best_match = {} #jobid: list(locations)
-            reservation_queue_info = {}
             for job in arg_list:
+                label = '%s/%s' % (job['jobid'], job['user'])
+                # walltime is in minutes.  We should really fix the storage of
+                # that --PMR
+                job_endtime = now + (int(job['walltime']) * 60)
                 try:
-                    idle_nodecount, node_id_list = self._assemble_queue_data(job, idle_nodes_by_queue)
-                except ValueError as exc:
-                    _logger.warning('Job %s: requesting locations that are not in queue for that job.', job['jobid'])
+                    node_id_list = self._assemble_queue_data(job, drain_time=job_endtime)
+                    available_node_list = self._assemble_queue_data(job, idle_only=False)
+                except ValueError:
+                    _logger.warning('Job %s: requesting locations that are not in requested queue.',
+                            job['jobid'])
                     continue
-                if int(job['nodes']) > len(node_id_list):
-                    # will happen with reserved jobs.
-                    #_logger.warning('Job %s: requested nodecount of %s exceeds number of nodes in queue %s',
-                           # job['jobid'], job['nodes'], len(node_id_list))
+                if int(job['nodes']) > len(available_node_list):
+                    # Insufficient operational nodes for this job at all
                     continue
-
-                if idle_nodecount == 0:
-                    continue
-                elif idle_nodecount < 0:
-                    _logger.error("FJL showing negative nodecount of %s",
-                            idle_nodecount)
-                elif int(job['nodes']) <= idle_nodecount:
-                    label = '%s/%s' % (job['jobid'], job['user'])
-                    #this can be run immediately
-                    job_locs = self._ALPS_reserve_resources(job,
+                elif len(node_id_list) == 0:
+                    pass #allow for draining pass to run.
+                elif int(job['nodes']) <= len(node_id_list):
+                    # enough nodes are in a working state to consider the job.
+                    # enough nodes are idle that we can run this job
+                    compact_locs = self._associate_and_run_immediate(job,
                             resource_until_time, node_id_list)
-                    if job_locs is not None and len(job_locs) == int(job['nodes']):
-                        compact_locs = compact_num_list(job_locs)
-                        #temporary reservation until job actually starts
-                        self.pending_starts[job['jobid']] = startup_time
-                        self.reserve_resources_until(compact_locs,
-                                resource_until_time, job['jobid'])
-                        #set resource reservation, adjust idle count
-                        if job['queue'] in idle_nodes_by_queue.keys():
-                            # will recalculate this for reservation-type queues.
-                            # If a reservation, this may not even exist.
-                            idle_nodes_by_queue[job['queue']] -= int(job['nodes'])
+                    # do we want to allow multiple placements in a single
+                    # pass? That would likely help startup times.
+                    if compact_locs is not None:
                         best_match[job['jobid']] = [compact_locs]
                         _logger.info("%s: Job selected for running on nodes  %s",
                                 label, compact_locs)
-                        # do we want to allow multiple placements in a single
-                        # pass? That would likely help startup times.
-                        break
-                else:
-                    #TODO: draining goes here
-                    pass
-            #TODO: backfill pass goes here
-            return best_match
-
-    def _idle_nodes_by_queue(self):
-        '''get the count of currently idle nodes by queue.
-
-        '''
-        # TODO: make sure this plays nice with reservations.
-        retdict = {} #queue_name: nodecount
-        for queue, nodes in self.nodes_by_queue.items():
-            retdict[queue] = 0
-            for node_id in nodes:
-                if self.nodes[node_id].status in ['idle']:
-                    retdict[queue] += 1
-        return retdict
-
+                        break #for now only select one location
+                if DRAIN_MODE in ['backfill', 'drain-only']:
+                    # drain sufficient nodes for this job to run
+                    drain_node_ids = self._select_nodes_for_draining(job,
+                            end_times)
+                    if drain_node_ids != []:
+                        _logger.info('%s: nodes %s selected for draining.', label,
+                                compact_num_list(drain_node_ids))
+        return best_match
 
     def _ALPS_reserve_resources(self, job, new_time, node_id_list):
         '''Call ALPS to reserve resrources.  Use their allocator.  We can change
@@ -861,17 +917,12 @@ class CraySystem(BaseSystem):
             res_info = ALPSBridge.reserve(job['user'], job['jobid'],
                 int(job['nodes']), job['attrs'], node_id_list)
         except ALPSBridge.ALPSError as exc:
-            _logger.warning('unable to reserve resources from ALPS: %s',
-                    exc.message)
+            _logger.warning('unable to reserve resources from ALPS: %s', exc.message)
             return None
         new_alps_res = None
         if res_info is not None:
             new_alps_res = ALPSReservation(job, res_info, self.nodes)
             self.alps_reservations[job['jobid']] = new_alps_res
-        #place a resource_reservation
-        if new_alps_res is not None:
-            self.reserve_resources_until(compact_num_list(new_alps_res.node_ids), new_time,
-                                         job['jobid'])
         return new_alps_res.node_ids
 
     def _clear_draining_for_queues(self, queue):
@@ -885,15 +936,98 @@ class CraySystem(BaseSystem):
         Note: does not acquire block lock.  Must be locked externally.
 
         '''
+        now = int(time.time())
         current_queues = []
         for equiv_class in self.current_equivalence_classes:
             if queue in equiv_class['queues']:
                 current_queues = equiv_class['queues']
         if current_queues:
-            for node in self.nodes.values():
-                for queue in node.queues:
-                    if queue in current_queues:
-                        node.clear_drain
+            with self._node_lock:
+                for node in self.nodes.values():
+                    for q in node.queues:
+                        if q in current_queues:
+                            node.clear_drain()
+
+    def _select_nodes_for_draining(self, job, end_times):
+        '''Select nodes to be drainined.  Set backfill windows on draining
+        nodes.
+
+        Inputs:
+            job - dictionary of job information to consider
+            end_times - a list of nodes and their endtimes should be sorted
+                        in order of location preference
+
+        Side Effect:
+            end_times will be sorted in ascending end-time order
+
+        Return:
+            List of node ids that have been selected for draining for this job,
+            as well as the expected drain time.
+
+        '''
+        now = int(time.time())
+        end_times.sort(key=lambda x: int(x[1]))
+        drain_list = []
+        candidate_list = []
+        cleanup_statuses = ['cleanup', 'cleanup-pending']
+        forbidden, required, requested_locations = self._setup_special_locaitons(job)
+        try:
+            node_id_list = self._assemble_queue_data(job, idle_only=False)
+        except ValueError:
+            _logger.warning('Job %s: requesting locations that are not in queue.', job['jobid'])
+        else:
+            with self._node_lock:
+                drain_time = None
+                candidate_drain_time = None
+                # remove the following from the list:
+                # 1. idle nodes that are already marked for draining.
+                # 2. Nodes that are in an in-use status (busy, allocated).
+                # 3. Nodes marked for cleanup that are not allocated to a real
+                #    jobid. CLEANING_ID is a sentiel jobid value so we can set
+                #    a drain window on cleaning nodes easiliy.  Not sure if this
+                #    is the right thing to do. --PMR
+                candidate_list = []
+                candidate_list = [nid for nid in node_id_list
+                        if (not self.nodes[str(nid)].draining and
+                            (self.nodes[str(nid)].status in ['idle']) or
+                            (self.nodes[str(nid)].status in cleanup_statuses)
+                            )]
+                for nid in candidate_list:
+                    if self.nodes[str(nid)].status in cleanup_statuses:
+                        candidate_drain_time = now + CLEANUP_DRAIN_WINDOW
+                for loc_time in end_times:
+                    running_nodes = [str(nid) for nid in
+                            expand_num_list(",".join(loc_time[0]))
+                            if ((job['queue'] in self.nodes[str(nid)].queues or
+                                nid in required) and
+                                not self.nodes[str(nid)].draining)]
+                    for nid in running_nodes:
+                        self.nodes[str(nid)].set_drain(loc_time[1], job['jobid'])
+                    candidate_list.extend(running_nodes)
+                    candidate_drain_time = int(loc_time[1])
+                    if len(candidate_list) >= int(job['nodes']):
+                        # Enough nodes have been found to drain for this job
+                        break
+                candidates = set(candidate_list)
+                # We need to further restrict this list based on requested
+                # location and reservation avoidance data:
+                if forbidden != set([]):
+                    candidates = candidates.difference(forbidden)
+                if requested_locations != set([]):
+                    candidates = candidates.intersection(requested_locations)
+                candidate_list = list(candidates)
+                if len(candidate_list) >= int(job['nodes']):
+                    drain_time = candidate_drain_time
+                if drain_time is not None:
+                    # order the node ids by id and drain-time. Longest drain
+                    # first
+                    candidate_list.sort(key=lambda nid: int(nid))
+                    candidate_list.sort(reverse=True,
+                            key=lambda nid: self.nodes[str(nid)].drain_until)
+                    drain_list = candidate_list[:int(job['nodes'])]
+                    for nid in drain_list:
+                        self.nodes[str(nid)].set_drain(drain_time, job['jobid'])
+        return drain_list
 
     @exposed
     def reserve_resources_until(self, location, new_time, jobid):
@@ -924,7 +1058,7 @@ class CraySystem(BaseSystem):
             #assemble from locaion list:
             exp_location = []
             if isinstance(location, list):
-                exp_location = self.chain_loc_list(location)
+                exp_location = chain_loc_list(location)
             elif isinstance(location, str):
                 exp_location = expand_num_list(location)
             else:
