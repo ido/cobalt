@@ -537,6 +537,27 @@ seconds.  The default is 300 seconds.
 The polling interval for state updates from ALPS in seconds.  The default is
 10 seconds.
 
+.SS [system]
+.TP
+.B backfill_epsillon
+Set the amount of time to subtract from the remaining drain window, in seconds,
+when placing backfill jobs.  This allows time for cleanup for backfill jobs to
+prior to the exit time of the job causing the drain to occur.  The default is
+120 seconds.
+.TP
+.B cleanup_drain_window
+Set the draining time to set for nodes in cleanup statuses.  The time is in
+seconds.  The default time is 300 seconds.
+.TP
+.B drain_mode
+Set the draining algorithm to use.  This may be
+.I backfill
+or
+.I first-fit.
+The default is
+.I first-fit.
+
+
 .SH "ENVIRONMENT"
 .B COBALT_CONFIG_FILES
 If set, Cobalt will use the configuration pointed to by this path.
