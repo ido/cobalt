@@ -39,6 +39,23 @@
 == Changes to 1.0.0 ==
  * Initial support of Cray systems
 
+== Changes to 0.99.42 ==
+ * Update to database writer to handle attrs fields that are
+   improperly formatted.
+
+== Changes to 0.99.41 ==
+ * Minor patch to clean up an issue where the user was not being properly
+   cleared from BlueGene blocks at the end of a run.
+
+== Changes to 0.99.40 ==
+ * A nokillpg attribute may be added to a job to cause kill instead of killpg
+   to be used for job termination so that a signal handler in a script may
+   handle signal propigation itself.
+ * Fixed a bug where a job requesting a location could cause Cobalt to drain
+   for a job that would require the use of offline hardware
+ * Added a check to the job validator where a job is rejected if the job size
+   and block geometry have a mismatch.
+
 == Changes to 0.99.39 ==
  * Session information added to job submission information.  This also includes
    submitting host information (Cobalt Ticket #4315)
