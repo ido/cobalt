@@ -1,0 +1,60 @@
+------------------------------------------------
+-- DDL Statements for table "##COBALT_SCHEMA##"."JOB_EVENTS"
+------------------------------------------------
+
+insert into "##COBALT_SCHEMA##"."JOB_EVENTS" values
+    (default,'system_failure','F'),
+    (default,'terminal_action_start','T');
+
+------------------------------------------------
+-- DDL Statements for table "##COBALT_SCHEMA##"."JOB_EVENT_CLASSES"
+------------------------------------------------
+
+-- Adding:
+-- U: User (Site-user inserted event)
+
+insert into "##COBALT_SCHEMA##"."JOB_EVENT_CLASSES" values
+    ('U', 'User');
+
+
+------------------------------------------------
+-- DDL Statements for table "##COBALT_SCHEMA##"."JOB_DATA"
+------------------------------------------------
+
+alter table "##COBALT_SCHEMA##"."JOB_DATA"
+      add CWD CLOB(4096)
+      add ION_KERNEL CLOB(4096)
+      add ION_KERNELOPTIONS CLOB(4096)
+      add GEOMETRY VARCHAR(16);
+
+-- Changes to support interactive jobs
+
+ALTER TABLE "##COBALT_SCHEMA##"."JOB_DATA" ALTER COLUMN MODE
+    SET DATA TYPE VARCHAR(16);
+ALTER TABLE "##COBALT_SCHEMA##"."JOB_DATA" ALTER COLUMN COMMAND
+    DROP NOT NULL;
+
+insert into "##COBALT_SCHEMA##"."JOB_COBALT_STATES" values
+    (default,'System_Failure');
+
+------------------------------------------------
+-- DDL Statements for table "##COBALT_SCHEMA##"."RESERVATION_DATA"
+------------------------------------------------
+
+alter table  "##COBALT_SCHEMA##"."RESERVATION_DATA"
+      add PROJECT VARCHAR(32)
+      add BLOCK_PASSTHROUGH INTEGER;
+
+------------------------------------------------
+-- DDL Statements for table "##COBALT_SCHEMA##"."RESERVATION_DATA"
+------------------------------------------------
+
+update table "##COBALT_SCHEMA##"."RESERVATION_EVENTS"
+    SET NAME = "terminating"
+    where NAME = "ending";
+
+insert into "##COBALT_SCHEMA##"."RESERVATION_EVENTS" values
+  (default, "deferred"),
+  (default, "deactivating"),
+  (default, "released"),
+  (default, "instance_end");

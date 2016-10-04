@@ -257,15 +257,17 @@ class BGSystem (BGBaseSystem):
         logger.debug('__setstate__ config()')
         self.configure(config_file=sim_xml_file)
 
+        self.available_block_geometries = set([])
         if 'block_flags' in state:
             for bname, flags in state['block_flags'].items():
                 if bname in self._blocks:
                     self._blocks[bname].scheduled = flags[0]
                     self._blocks[bname].functional = flags[1]
                     self._blocks[bname].queue = flags[2]
+                    if self._blocks[bname].scheduled and self._blocks[bname].functional:
+                        self.available_block_geometries.add(self._blocks[bname].geometry_string)
                 else:
                     self.logger.info("Block %s is no longer defined" % bname)
-
         self.update_relatives()
 
         if state.has_key('managed_io_blocks'):
@@ -2344,6 +2346,8 @@ class BGSystem (BGBaseSystem):
                     if pgroup == None:
                         self.logger.error("Boot %s for location %s has no active pgroup.  Run Aborted.",
                                 boot.boot_id, boot.context.block_id)
+                        self._fetch_block_remove_user(boot.context.block_id,
+                                boot.context.user)
                     else:
                         self._start_process_group(pgroup)
                 self.booter.reap(boot.context.block_id)
@@ -2361,6 +2365,8 @@ class BGSystem (BGBaseSystem):
                 float(pgroup.starttime) + 60*float(pgroup.walltime), pgroup.jobid):
             self.logger.warning("%s: the internal reservation on %s expired; job has been terminated",
                     pgroup.label, pgroup.location)
+            for location in pgroup.location:
+                self._fetch_block_remove_user(location, pgroup.user)
             return
 
         cobalt_block = self._blocks[pgroup.location[0]]
@@ -2376,6 +2382,8 @@ class BGSystem (BGBaseSystem):
             if pgroup.head_pid == None:
                 self.logger.error("%s: process group failed to start using the %s component; releasing resources",
                         pgroup.label, pgroup.forker)
+                for location in pgroup.location:
+                    self._fetch_block_remove_user(location, pgroup.user)
                 self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
                 self._mark_block_for_cleaning(block_loc, pgroup.jobid)
                 pgroup.exit_status = 255
@@ -2389,16 +2397,25 @@ class BGSystem (BGBaseSystem):
             # do not release the resources; instead re-raise the exception and allow cqm to the opportunity to retry
             # until the job has exhausted its maximum alloted time
             pgroup.exit_status = 255
+            for location in pgroup.location:
+                self._fetch_block_remove_user(location, pgroup.user)
             self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
             self._mark_block_for_cleaning(block_loc, pgroup.jobid)
         except:
             self.logger.error("%s: an unexpected exception occurred while attempting to start the process group "
                     "using the %s component; releasing resources", pgroup.label, pgroup.forker, exc_info=True)
+            for location in pgroup.location:
+                self._fetch_block_remove_user(location, pgroup.user)
             self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
             self._mark_block_for_cleaning(block_loc, pgroup.jobid)
             pgroup.exit_status = 255
 
         return
+
+    def _fetch_block_remove_user(self, block_name, user_name):
+        #logger.debug("BLOCK: %s USER: %s", block_name, user_name)
+        #block = get_compute_block(block_name)
+        pybgsched.Block.removeUser(block_name, user_name)
 
     def get_process_groups (self, specs):
         '''Fetch the dictionary of the current process groups indexed by the process group id.'''
@@ -2444,6 +2461,14 @@ class BGSystem (BGBaseSystem):
                 if pg.interactive_complete:
                     clean_block = True
                     pg.exit_status = 0 
+                    for location in pg.location:
+                        self._fetch_block_remove_user(location, pg.user)
+                    # strip user from child blocks that may have been improperly
+                    # cleaned
+                    with self._blocks_lock:
+                        for location in pg.location:
+                            for child in self._blocks[location].children:
+                                self._fetch_block_remove_user(child, pg.user)
                     self.reserve_resources_until(pg.location, None, pg.jobid)
             if pg.forker in cleanup:
                 clean_block = False
@@ -2476,6 +2501,11 @@ class BGSystem (BGBaseSystem):
                         pg.exit_status = 1234567
                         clean_block = True
                 if clean_block:
+                    with self._blocks_lock:
+                        for location in pg.location:
+                            self._fetch_block_remove_user(location, pg.user)
+                            for child in self._blocks[location].children:
+                                self._fetch_block_remove_user(child, pg.user)
                     self.reserve_resources_until(pg.location, None, pg.jobid)
 
         # check for children that no longer have a process group associated with them and add them to the cleanup list.  this
