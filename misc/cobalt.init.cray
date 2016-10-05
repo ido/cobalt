@@ -1,0 +1,215 @@
+#!/bin/sh
+#
+# Cobalt
+#
+# chkconfig: 2345 18 09
+# description: Cobalt resource manager/scheduler
+# modified for use on Cray systems
+
+prefix=/usr
+exec_prefix=/usr/bin
+CONFIGPATH=/etc
+CONFIGFILE="${CONFIGPATH}/cobalt.conf"
+DAEMONDIR=/usr/sbin
+PIDPATH=/var/run/
+HOSTNAME=`hostname`
+
+# Configure DB2 environment
+# . /discovery/db.src
+
+umask 022
+
+COMPONENT_LIST="slp system_script_forker alps_script_forker cqm bgsched alpssystem"
+if [ -e '/etc/sysconfig/cobalt']
+then
+  source /etc/sysconfig/cobalt
+fi
+
+
+# ANL Local:
+#MPIRUN_VERBOSE=1
+#export MPIRUN_VERBOSE
+#LD_LIBRARY_PATH=/bgsys/drivers/ppcfloor/lib64:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH
+
+# Starts the component specified as the first argument.
+# Optional second argument used for extra arguments to 
+# pass to the component.
+start_component () {
+    component=$1
+    if [ -n $2 ] ; then
+	component_args=$2
+    else
+	component_args=''
+    fi
+
+    pid=`pgrep -f ${component}.py`
+    echo -n "Starting ${component}: "
+    if [ -z "$pid" ]
+    then
+        (
+         date=`/bin/date`
+         if [ "$component" == "alps_script_forker" ]
+	 then
+           echo "--- $date: START ${component} ---" >>/var/log/cobalt/${component}_${HOSTNAME}.out
+           nohup "${DAEMONDIR}/${component}.py" $component_args --config-files "${CONFIGFILE}" >>/var/log/cobalt/${component}_${HOSTNAME}.out 2>&1 &
+         else
+           echo "--- $date: START ${component} ---" >>/var/log/cobalt/${component}.out
+           nohup "${DAEMONDIR}/${component}.py" $component_args --config-files "${CONFIGFILE}" >>/var/log/cobalt/${component}.out 2>&1 &
+         fi
+        )
+        echo "done"
+        return 0
+    else
+        echo "failed -- $component already running (pid $pid)"
+        return 1
+    fi
+}
+
+# Stops the component specified as the first argument.
+stop_component () {
+    component=$1
+#   if [ -f "${PIDPATH}/${component}.pid" ] ; then
+       echo -n "Stopping ${component}: "
+#       kill -INT `cat ${PIDPATH}/${component}.pid`
+	pkill -f ${DAEMONDIR}/${component}.py
+        echo "done"
+#       rm -f "${PIDPATH}/${component}.pid"
+#   else
+#       echo "${component} not running"
+#   fi
+    return 0
+}
+
+stat_component () {
+    component=$1
+    pid=`pgrep -f ${component}.py`
+    echo -n "Component: $component: "
+    if [ -z "$pid" ]
+    then
+      echo STOPPED
+      return 3
+    else
+      echo RUNNING
+      return 0
+    fi
+    return 0
+}
+
+case "$1" in
+  start)
+    # ANL Localization: No scriptm on surveyor
+    if [ -e /var/lock/subsys/cobalt ]
+    then
+      echo Cobalt already started
+      exit 0
+    fi
+    for component in $COMPONENT_LIST; do
+        #if [ "$component" == "bgqsystem" ] ; then
+        #        source ~bgqsysdb/sqllib/db2profile
+        #else
+        #        source ~db2cat/sqllib/db2profile
+        #fi
+	start_component $component
+    done
+    touch /var/lock/subsys/cobalt
+    ;;
+  start-component )
+    for component in $*
+    do
+      if [ $component != "start-component" ]
+      then
+        start_component $component
+      fi
+    done
+    touch /var/lock/subsys/cobalt
+    ;;
+  stop-component )
+    for component in $*
+    do
+      if [ $component != "stop-component" ]
+      then
+        stop_component $component
+      fi
+    done
+    ;;
+  start-debug)
+    # ANL Localization: No scriptm on surveyor
+    # for component in slp brooklyn cqm bgsched bgforker bgsystem scriptm cdbwriter; do
+    for component in $COMPONENT_LIST; do
+	start_component $component
+    done
+    touch /var/lock/subsys/cobalt
+    ;;
+  stop)
+    # ANL Localization: No scriptm on surveyor
+    # for component in slp cqm bgsched bgforker bgsystem scriptm cdbwriter; do
+    for component in $COMPONENT_LIST; do
+	stop_component $component
+    done
+    rm -f /var/lock/subsys/cobalt
+    ;;
+  stop-debug) 
+    # ANL Localization: No scriptm on surveyor
+    # for component in slp brooklyn cqm bgsched bgforker bgsystem scriptm cdbwriter; do
+    for component in $COMPONENT_LIST; do
+	stop_component $component
+    done
+    rm -f /var/lock/subsys/cobalt
+    ;;
+  restart)
+    if [ $# -gt 1 ] ; then  #specific components to be restarted
+	shift
+	for component in $@; do 
+	    case "$component" in 
+	      cqm|bgsched|alpssystem)
+		stop_component $component
+		start_component $component
+		;;
+	      slp|bg_runjob_forker|user_script_forker|system_script_forker|alps_script_forker)
+		echo "${component} cannot be restarted with jobs running"
+		;;
+	    esac
+	done
+    else  #restart all components
+	$0 stop
+	$0 start
+    fi
+    ;;
+  status)
+    count=0
+    running=0
+    failed=0
+    for component in $COMPONENT_LIST; do
+        count=$(($count + 1))
+        stat_component $component
+        if [ 0 -ne $? ]
+        then
+            failed=$(($failed + 1))
+        else
+            running=$(($running + 1))
+        fi
+    done
+    if [ $running -eq $count ]
+    then
+        echo All Components Running
+        exit 0
+    elif [ $failed -eq $count ]
+    then 
+        echo All Components Stopped
+        exit 3
+    else
+        exit 4
+    fi
+    ;;
+  force-reload)
+    $0 stop
+    $0 start
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart|force-reload|start-component <component>|stop-component <component>}"
+    echo "Default daemons are: $COMPONENT_LIST"
+    exit 1
+esac
+
+exit 0
