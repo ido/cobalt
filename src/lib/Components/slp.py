@@ -46,9 +46,9 @@ __all__ = [
 
 
 class Service (Data):
-    
+
     fields = Data.fields + ["tag", "name", "location"]
-    
+
     def __init__ (self, spec):
         Data.__init__(self, spec)
         spec = spec.copy()
@@ -63,50 +63,50 @@ class Service (Data):
 
 
 class ServiceDict (DataDict):
-    
+
     item_cls = Service
     key = "name"
 
 
 class ServiceLocator (Component):
-    
+
     """Generic implementation of the service-location component.
-    
+
     Methods:
     register -- register a service (exposed)
     unregister -- remove a service from the registry (exposed)
     locate -- retrieve the location of a service (exposed)
     get_services -- part of the query interface from DataSet (exposed)
     """
-    
+
     name = "service-location"
-    
+
     # A default logger for the class is placed here.
     # Assigning an instance-level logger is supported,
     # and expected in the case of multiple instances.
     logger = logging.getLogger("Cobalt.Components.ServiceLocator")
-    
+
     def __init__ (self, *args, **kwargs):
         """Initialize a new ServiceLocator.
-        
+
         All arguments are passed to the component constructor.
         """
         Component.__init__(self, *args, **kwargs)
         self.services = ServiceDict()
-    
+
     def __getstate__(self):
         state = {}
         state.update(Component.__getstate__(self))
         state.update({
                 'slp_version': 1})
         return state
-   
+
     def __setstate__(self, state):
         Component.__setstate__(self, state)
 
     def register (self, service_name, location):
         """Register the availability of a service.
-        
+
         Arguments:
         service_name -- name of the service to register
         location -- location of the service
@@ -121,10 +121,10 @@ class ServiceLocator (Component):
             service.location = location
             service.touch()
     register = exposed(register)
-    
+
     def unregister (self, service_name):
         """Remove a service from the registry.
-        
+
         Arguments:
         service_name -- name of the service to remove
         """
@@ -135,10 +135,10 @@ class ServiceLocator (Component):
         else:
             self.logger.info("unregister(%r)" % (service_name))
     unregister = exposed(unregister)
-    
+
     def locate (self, service_name):
         """Retrieve the location for a service.
-        
+
         Arguments:
         service_name -- name of the service to look up
         """
@@ -149,7 +149,7 @@ class ServiceLocator (Component):
             return ""
         return service.location
     locate = exposed(locate)
-    
+
     def get_services (self, specs):
         """Query interface "Get" method."""
         return self.services.q_get(specs)
@@ -157,20 +157,20 @@ class ServiceLocator (Component):
 
 
 class PollingServiceLocator (ServiceLocator):
-    
+
     """ServiceLocator with active expiration.
-    
+
     Methods:
     check_services -- ping services (automatic)
     """
-    
+
     implementation = "polling"
-    
+
     logger = logging.getLogger("Cobalt.Components.PollingServiceLocator")
-    
+
     def check_services (self):
         """Ping each service to check its availability.
-        
+
         Unregister unresponsive services.
         """
         for service in self.services.values():
@@ -186,34 +186,34 @@ class PollingServiceLocator (ServiceLocator):
 
 
 class TimingServiceLocator (ServiceLocator):
-    
+
     """ServiceLocator with passive expiration.
-    
+
     Attributes:
     expire -- number of seconds to expire a service
-    
+
     Methods:
     expire_services -- check service timestamps (automatic)
     """
-    
+
     implementation = "slp"
-    
+
     logger = logging.getLogger("Cobalt.Components.TimingServiceLocator")
-    
+
     def __init__ (self, expire=180, *args, **kwargs):
         """Initialize a TimingServiceLocator.
-        
+
         Keyword arguments:
         expire -- Number of seconds when services expire.
-        
+
         Additional arguments are passed to ServiceLocator.
         """
         ServiceLocator.__init__(self, *args, **kwargs)
         self.expire = expire
-    
+
     def expire_services (self):
         """Check each service timestamp.
-        
+
         Unregister expired services.
         """
         now = time.time()
