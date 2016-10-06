@@ -20,7 +20,7 @@ HOSTNAME=`hostname`
 umask 022
 
 COMPONENT_LIST="slp system_script_forker alps_script_forker cqm bgsched alpssystem"
-if [ -e '/etc/sysconfig/cobalt']
+if [ -e '/etc/sysconfig/cobalt' ]
 then
   source /etc/sysconfig/cobalt
 fi
