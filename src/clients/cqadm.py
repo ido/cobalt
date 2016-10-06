@@ -156,12 +156,12 @@ def getq(info):
         if que['mintime'] is not None:
             que['mintime'] = "%02d:%02d:00" % (divmod(int(que.get('mintime')), 60))
     header = [('Queue', 'Users', 'Groups', 'MinTime', 'MaxTime', 'MaxRunning',
-               'MaxQueued', 'MaxUserNodes', 'MaxNodeHours', 'TotalNodes',
-               'AdminEmail', 'State', 'Cron', 'Policy', 'Priority')]
+                'MaxTotalJobs', 'MaxQueued', 'MaxUserNodes', 'MaxNodeHours',
+                'TotalNodes', 'AdminEmail', 'State', 'Cron', 'Policy', 'Priority')]
     datatoprint = [(que['name'], que['users'], que['groups'],
                     que['mintime'], que['maxtime'],
-                    que['maxrunning'], que['maxqueued'],
-                    que['maxusernodes'], que['maxnodehours'], 
+                    que['maxrunning'],  que['maxtotaljobs'], que['maxqueued'],
+                    que['maxusernodes'], que['maxnodehours'],
                     que['totalnodes'],
                     que['adminemail'], que['state'],
                     que['cron'], que['policy'], que['priority'])
@@ -192,7 +192,7 @@ def process_cqadm_options(jobs, parser, spec, user):
     force = parser.options.force # force flag. 
 
     info = [{'tag':'queue', 'name':'*', 'state':'*', 'users':'*', 'groups':'*', 'maxtime':'*', 'mintime':'*', 'maxuserjobs':'*',
-             'maxusernodes':'*', 'maxqueued':'*', 'maxrunning':'*', 'maxnodehours':'*', 'adminemail':'*', 
+             'maxusernodes':'*', 'maxqueued':'*', 'maxrunning':'*','maxtotaljobs':'*', 'maxnodehours':'*', 'adminemail':'*', 
              'totalnodes':'*', 'cron':'*', 'policy':'*', 'priority':'*'}]
 
     response = []
