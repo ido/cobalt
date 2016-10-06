@@ -4,11 +4,17 @@ __revision__ = "$Revision$"
 
 
 import logging
+import signal
 from Cobalt.Data import Data, DataDict, IncrID
-from Cobalt.Exceptions import DataCreationError
+from Cobalt.Exceptions import DataCreationError, ProcessGroupStartupError
+from Cobalt.Exceptions import ComponentLookupError
 from Cobalt.Proxy import ComponentProxy
 
 _logger = logging.getLogger()
+
+#Get a list of valid signal strings
+SIGNALS = [ s for s in signal.__dict__.keys()
+        if (s.startswith("SIG") and not s.startswith("SIG_"))]
 
 class ProcessGroup(Data):
     """A job that runs on the system
@@ -36,6 +42,7 @@ class ProcessGroup(Data):
     stdout -- file to use for stdout of script
     umask -- permissions to set
     user -- the user the process group is running under
+    sigkill_time -- time at which to send a sigkill (seconds since epoch)
 
     Only used by BlueGene/Q systems:
     ion_kernel -- alternatve ION kernel to boot
@@ -50,7 +57,7 @@ class ProcessGroup(Data):
                             "stdin", "stdout", "umask", "user", "starttime",
                             "walltime", "resid", "runid", "forker",
                             "subblock", "subblock_parent", "corner", "extents",
-                            "attrs"]
+                            "attrs", "alps_res_id"]
 
     required = Data.required + ["args", "cwd", "executable", "jobid",
                                 "location", "size", "user"]
@@ -92,6 +99,11 @@ class ProcessGroup(Data):
         self.corner = spec.get("corner", None)
         self.extents = spec.get("extents", None)
         self.attrs = spec.get("attrs", {})
+        self.label = "%s/%s/%s" % (self.jobid, self.user, self.id)
+        self.sigkill_timeout = None
+        #TODO: extract into subclass
+        self.alps_res_id = spec.get('alps_res_id', None)
+        self.startup_timeout = spec.get("pgroup_startup_timeout", 0)
 
     def __getstate__(self):
         data = {}
@@ -121,13 +133,44 @@ class ProcessGroup(Data):
                 self.head_pid = ComponentProxy(self.forker, retry=False).fork([self.executable] + self.args, self.tag,
                     "Job %s/%s/%s" %(self.jobid, self.user, self.id), self.env, data, self.runid)
             except:
-                _logger.error("Job %s/%s/%s: problem forking; %s did not return a child id", self.jobid, self.user, self.id,
-                    self.forker)
-                raise
+                err = "Job %s/%s/%s: problem forking; %s did not return a child id" % (self.jobid,
+                        self.user, self.id, self.forker)
+                _logger.error(err)
+                raise ProcessGroupStartupError(err)
+
+    def signal(self, signame="SIGINT"):
+        '''Validate and send signal to ProcessGroup.  Consult your system and
+        python documentation for valid signals to send.
+
+        Input:
+            signame - the string name of a signal to send.  This must be a
+                      signal supported by python's 'signal' library.
+
+        Returns:
+            True if signal successfully sent.  False otherwise
+
+        Exceptions:
+            ValueError - The signame was set to an invalid value.
+
+        '''
+        success = False
+        if signame not in SIGNALS:
+            raise ValueError("%s is not a valid signal on this system." % signame)
+        try:
+            ComponentProxy(self.forker).signal(self.head_pid, signame)
+        except ComponentLookupError:
+            _logger.error("pg %s: Unable to reach forker to send signal %s",
+                    self.id, signame)
+        except Exception:
+            _logger.error("Unexpected exception in ProcessGroup.signal:",
+                    exc_info=True)
+        else:
+            success = True
+        return success
 
     def prefork (self):
-        """This method is called before the fork, while it's still safe to 
-        call object methods.  It returns a dictionary, which can be passed to 
+        """This method is called before the fork, while it's still safe to
+        call object methods.  It returns a dictionary, which can be passed to
         a totally static function which handles the exec from inside the child
         process.
 
@@ -137,6 +180,31 @@ class ProcessGroup(Data):
             if key not in ['logger', 'state']:
                 data[key] = value
         return data
+
+    def update_data(self, child):
+        '''incorprate child termination data into the process group.
+
+        Input:
+            child - child data from a forker component.
+
+        '''
+
+        if child['complete']:
+            if self.exit_status is None:
+                self.exit_status = child['exit_status']
+            if child['lost_child']:
+                self.exit_status = 256
+                _logger.warning('%s: child process reported lost from %s',
+                        self.label, self.forker)
+            if child['signum'] == 0:
+                _logger.info("%s: job exited with status %s", self.label, self.exit_status)
+            else:
+                if child["core_dump"]:
+                    core_dump_str = ", core dumped"
+                else:
+                    core_dump_str = ""
+                _logger.info("%s: terminated with signal %s%s", self.label, child["signum"], core_dump_str)
+
 
 
 class ProcessGroupDict(DataDict):

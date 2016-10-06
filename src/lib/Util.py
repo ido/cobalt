@@ -85,7 +85,7 @@ def check_required_options(secopt_list):
 def get_config_option(section, option, *args):
     '''Get an option from the cobalt config file.  Must be called after
        Cobalt.Util.init_cobalt_config.
-       
+
        A default value may be specified as the third argument.  If the option
        is not found and a default is specified, then the default will be
        returned.  If a default value is not specified, then a message will be
@@ -279,6 +279,12 @@ def merge_nodelist(locations):
     prefix_min_digits = {}
     prefix_max_digits = {}
     prefix_format_str = {}
+
+    #if this doesn't have a prefix, like a Cray nidlist, short circut
+    if len(locations) >= 1:
+        if reg.match(locations[0]) is None:
+            #this is cray-style
+            return compact_num_list(locations)
 
     for name in locations:
         prefix = reg.match(name).group(1)
@@ -1181,3 +1187,54 @@ def validate_geometry(geometry_str, nodecount):
             raise JobValidationError("Geometry requires more nodes than specified for job.")
 
     return True
+
+def compact_num_list(num_list):
+    '''Given a list of integers return a compact string representation.
+    The entries are comma-separated.  If a contiguous sequence of integers
+    exist, they are compacted into the form "a-b" where the range is a to b,
+    inclusive.
+
+    '''
+    begin = None
+    end = begin
+    retcompact = []
+    working_list = [int(num) for num in num_list]
+    def append_run(begin, end):
+        '''convenience function for appending a value to the return list'''
+        if begin == end:
+            retcompact.append(str(begin))
+        else:
+            retcompact.append("%s-%s" % (begin, end))
+    for num in sorted(working_list):
+        if begin is None:
+            begin = num
+            end = num
+        elif end + 1 == num:
+            end = num
+        else: #run just ended.  Set up for a new run and store current one.
+            append_run(begin, end)
+            begin = num
+            end = num
+    append_run(begin, end)
+    return ','.join(retcompact)
+
+def expand_num_list(num_list):
+    '''Take a compact, comma-seperated string of integer values and ranges and
+    expand to a list of integers that is represented by that string.  Ranges of
+    the form "a-b" will be expanded to the full sequience of integers from a to
+    b, inclusive.
+
+    '''
+    retlist = []
+    elems = num_list.split(',')
+    for elem in elems:
+        if elem == '':
+            continue
+        elif len(elem.split('-')) == 1:
+            retlist.append(int(elem))
+        else:
+            nums = elem.split('-')
+            low = min(int(nums[0]), int(nums[1]))
+            high = max(int(nums[0]), int(nums[1])) + 1
+            retlist.extend(xrange(low, high))
+    return retlist
