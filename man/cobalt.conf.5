@@ -503,6 +503,59 @@ command.  The default is 300 seconds.
 .B bgtype
 The type of BlueGene being run on.  For BlueGene/Q this should be set to 'bgq'.
 
+.SS "CRAY SECTIONS"
+.SS "[alps]"
+.TP
+.B basil
+The path to Cray's apbasil command.  The default path is
+/opt/cray/default/alps/bin/apbasil
+.TP
+.B apkill
+The path to Cray's apkill command.  The default path is
+/opt/cray/alps/default/bin/apkill
+.TP
+.B default_depth
+The default processors per node.  This should be set to the number of KNL cores
+on each node for XC40 systems. The default value is 72.
+
+.SS [alpssystem]
+.TP
+.B pgroup_startup_timeout
+The time to allow for process group startup in seconds. The default is 120
+seconds.
+.TP
+.B save_me_interval
+The minimum interval that Cobalt will wait between saving statefiles for this
+component, in seconds. By default the interval is 10.0 seconds.  Under periods
+of high load on the component, the interval between statefiles may be longer.
+.TP
+.B temp_reservation_time
+The default time for the temporary allocation reservation for starting jobs in
+seconds.  The default is 300 seconds.
+.TP
+.B update_thread_timeout
+The polling interval for state updates from ALPS in seconds.  The default is
+10 seconds.
+
+.SS [system]
+.TP
+.B backfill_epsillon
+Set the amount of time to subtract from the remaining drain window, in seconds,
+when placing backfill jobs.  This allows time for cleanup for backfill jobs to
+prior to the exit time of the job causing the drain to occur.  The default is
+120 seconds.
+.TP
+.B cleanup_drain_window
+Set the draining time to set for nodes in cleanup statuses.  The time is in
+seconds.  The default time is 300 seconds.
+.TP
+.B drain_mode
+Set the draining algorithm to use.  This may be
+.I backfill
+or
+.I first-fit.
+The default is
+.I first-fit.
 
 
 .SH "ENVIRONMENT"

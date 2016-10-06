@@ -11,7 +11,11 @@ nodelist
 List resources on the cluster system.
 
 .SH "OPTIONS"
-
+.TP
+.B \-b <list of node ids>
+.B [Cray Only]
+Print detailed information for all nodes in the list of node ids.
+This will accept hyphenated ranges as well.  All ranges are inclusive.
 .TP
 .B \-d \-\-debug
 Turn on communication debugging.
