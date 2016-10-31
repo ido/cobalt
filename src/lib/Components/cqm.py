@@ -3838,13 +3838,20 @@ class QueueManager(Component):
         if updates.has_key("queue"):
             new_q_name = updates["queue"]
             if new_q_name not in self.Queues:
-                logger.error("attempted to move a job to non-existent queue '%s'" % new_q_name)
-                raise QueueError, "Error: queue '%s' does not exist" % new_q_name
+                logger.error("attempted to move a job to non-existent queue '%s'",
+                        new_q_name)
+                raise QueueError("Error: queue '%s' does not exist" % new_q_name)
 
             for job in joblist:
                 if job.is_active or job.has_completed:
-                    raise QueueError, "job %d is running; it cannot be moved" % job.jobid   
-
+                    raise QueueError("job %d is running; it cannot be moved" % job.jobid)
+        if updates.has_key("score"):
+            try:
+                updates['score'] = float(updates['score'])
+            except ValueError:
+                logger.error('new score of %s cannot be converted to a floating point value',
+                        updates['score'])
+                raise QueueError("Bad new score value.")
 
         for job in joblist:
 
