@@ -29,6 +29,7 @@ config_fp.close()
 
 import ConfigParser
 from nose.tools import timed, TimeExpired
+from nose.tools import raises
 import os
 import os.path
 import pwd
@@ -332,7 +333,8 @@ class TestCQMJobManagement (TestCQMComponent):
         group_name = grp.getgrgid(os.getegid()).gr_name #group we're running under for verification check.
         self.cqm.add_queues([{'name':"default"}])
         self.cqm.add_queues([{'name':"restricted-group"}])
-        self.cqm.set_queues([{'name':"restricted-group"}], {'groups':'bar'})
+        self.cqm.set_queues([{'name':"restricted-group"}],
+                {'groups':'ThisGroupDefinitelyDoesntExist'})
 
         self.cqm.add_jobs([{'queue':"default", 'jobname':"hello", 'user':pwd.getpwuid(os.getuid()).pw_name}])
         try:
@@ -348,6 +350,37 @@ class TestCQMJobManagement (TestCQMComponent):
         #r = self.cqm.get_jobs([{'jobname':"hello", 'queue':"*"}])
         #assert len(r) == 1
         #assert r[0].queue == "restricted-group"
+
+    def test_set_job_score_type_from_float(self):
+        # Ensure that job scores are set to a float and are appropriately cast
+        self.cqm.add_queues([{'tag':"queue", 'name':"default"}])
+        self.cqm.add_jobs([{'tag':"job", 'queue':"default"}])
+        self.cqm.set_jobs([{'tag':"job", 'queue':"*"}], {'score':0.1})
+        job = self.cqm.get_jobs([{'tag':"job", 'queue':"default"}])[0]
+        assert type(job.score) == type(0.0), "Job score not float type when set from float"
+
+    def test_set_job_score_type_from_int(self):
+        # Ensure that job scores are set to a float and are appropriately cast
+        self.cqm.add_queues([{'tag':"queue", 'name':"default"}])
+        self.cqm.add_jobs([{'tag':"job", 'queue':"default"}])
+        self.cqm.set_jobs([{'tag':"job", 'queue':"*"}], {'score':1})
+        job = self.cqm.get_jobs([{'tag':"job", 'queue':"default"}])[0]
+        assert type(job.score) == type(0.0), "Job score not float type when set from int"
+
+    def test_set_job_score_type_from_string(self):
+        # Ensure that job scores are set to a float and are appropriately cast
+        self.cqm.add_queues([{'tag':"queue", 'name':"default"}])
+        self.cqm.add_jobs([{'tag':"job", 'queue':"default"}])
+        self.cqm.set_jobs([{'tag':"job", 'queue':"*"}], {'score': "0.1"})
+        job = self.cqm.get_jobs([{'tag':"job", 'queue':"default"}])[0]
+        assert type(job.score) == type(0.0), "Job score not float type when set from string"
+
+    @raises(Cobalt.Exceptions.QueueError)
+    def test_set_job_score_bad_string(self):
+        # Refuse to queue if score cannot be cast to a float.
+        self.cqm.add_queues([{'tag':"queue", 'name':"default"}])
+        self.cqm.add_jobs([{'tag':"job", 'queue':"default"}])
+        self.cqm.set_jobs([{'tag':"job", 'queue':"*"}], {'score': "NotANumber"})
 
 class Task (Data):
     required_fields = ['jobid', 'location', 'user', 'cwd', 'executable', 'args', ]
