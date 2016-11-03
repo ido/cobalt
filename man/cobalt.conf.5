@@ -76,6 +76,12 @@ any non-root simulation mode.  If this is set and the forker components are not
 running as root, this will cause any job ran to be run as the user to run as the
 user that the forker component is running as.
 .TP
+.B pipe_bufsize
+The size in bytes of the buffer to use for reading from a pipe connected to a
+child process standard out.  Increase this if you are getting particularly
+large messages from standard out.  This is most likely to occur with large Cray
+systems using the BASIL interface to ALPS.  Default 16777216 bytes.
+.TP
 .B save_me_interval
 The minimum interval that Cobalt will wait between saving statefiles for this
 component, in seconds. By default the interval is 10.0 seconds.  Under periods
