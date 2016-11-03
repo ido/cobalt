@@ -6,6 +6,7 @@
 
 import logging
 import xml.etree
+import xmlrpclib
 from cray_messaging import InvalidBasilMethodError, BasilRequest
 from cray_messaging import parse_response, ALPSError
 from Cobalt.Proxy import ComponentProxy
@@ -203,7 +204,15 @@ def _call_sys_forker(basil_path, in_str):
 
     while True:
         #Is a timeout needed here?
-        children = ComponentProxy(FORKER).get_children('apbridge', [runid])
+        try:
+            children = ComponentProxy(FORKER).get_children('apbridge', [runid])
+        except xmlrpclib.Fault as fault:
+            _logger.error('XMLRPC Fault recieved while fetching child %s status:', runid)
+            _logger.error('Child %s: Fault code: %s', runid, fault.faultCode)
+            _logger.error('Child %s: Fault string: %s', runid,
+                    fault.faultString)
+            _logger.debug('Traceback information: for runid %s',runid,
+                   exc_info=True)
         complete = False
         for child in children:
             if child['complete']:
@@ -211,7 +220,15 @@ def _call_sys_forker(basil_path, in_str):
                     _logger.error("BASIL returned a status of %s",
                             child['exit_status'])
                 resp = child['stdout_string']
-                ComponentProxy(FORKER).cleanup_children([runid])
+                try:
+                    ComponentProxy(FORKER).cleanup_children([runid])
+                except xmlrpclib.Fault as fault:
+                    _logger.error('XMLRPC Fault recieved while fetching child %s status:', runid)
+                    _logger.error('Child %s: Fault code: %s', runid, fault.faultCode)
+                    _logger.error('Child %s: Fault string: %s', runid,
+                            fault.faultString)
+                    _logger.debug('Traceback information: for runid %s',runid,
+                            exc_info=True)
                 complete = True
         if complete:
             break
