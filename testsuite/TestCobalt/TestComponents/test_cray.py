@@ -584,6 +584,24 @@ class TestCraySystem(object):
             assert_match(self.system.nodes[str(i)].drain_jobid, 1, "Bad drain job")
             assert_match(self.system.nodes[str(i)].drain_until, now + 300, "Bad drain time")
 
+    def test_select_nodes_for_draining_running_but_down(self):
+        '''CraySystem._select_nodes_for_draining: do not drain down node if job still "running"'''
+        # If a node dies while a job is running, it will still show up in the
+        # end-times range until termination of that job is complete.
+        end_times = [[['1-4'], 100.0]]
+        self.system.nodes['2'].status = 'down'
+        self.base_job['nodes'] = 4
+        drain_nodes = self.system._select_nodes_for_draining(self.base_job,
+                end_times)
+        assert_match(sorted(drain_nodes), ['1', '3', '4', '5'], "Bad Selection")
+        assert_match(self.system.nodes['2'].draining, False, "Draining set")
+        assert_match(self.system.nodes['2'].drain_jobid, None, "Should not have drain_jobid", is_match)
+        assert_match(self.system.nodes['2'].drain_until, None, "Should not have drain_until", is_match)
+        for i in ['1', '3', '4', '5']:
+            assert_match(self.system.nodes[str(i)].draining, True, "Draining not set")
+            assert_match(self.system.nodes[str(i)].drain_jobid, 1, "Bad drain job")
+            assert_match(self.system.nodes[str(i)].drain_until, 100.0, "Bad drain time")
+
     # common checks for find_job_location
     def assert_draining(self, nid, until, drain_jobid):
         assert self.system.nodes[str(nid)].draining, "Node %s should be draining" % nid
