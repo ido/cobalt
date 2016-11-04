@@ -1,6 +1,6 @@
 = Changes from previous Cobalt Versions =
 
-== Changes to 1.0.7 ==
+== Changes to 1.0.8 ==
  * Fixed a bug where a node going down during a running job could allow that
    node to be selected for draining.
  * Expanded a buffer used by the forkers that should significantly improve the
