@@ -227,3 +227,33 @@ class TestBGQSystem(object):
         assert pg.corner is None, 'corner should not be set %s' % pg.corner
         assert pg.subblock_parent is None, 'subblock_parent should not be set %s' % pg.subblock_parent
         assert pg.extents is None, 'extents should not be set %s' % pg.extents
+
+
+    def test_drain_if_location_set(self):
+        #if attrs location is set, make sure that we chose that location for
+        #draining on a job.
+        job = {'jobid': 1,
+                'attrs': {'location': 'FOO',},
+                'nodes': 512,
+                'queue': 'default',
+                }
+        self.bgqsystem.offline_blocks = set([])
+        self.bgqsystem.cached_blocks = {'FOO': {'name':'FOO'}, 'BAR': {'name':'BAR'}}
+        drain_block = self.bgqsystem._find_drain_block(job)
+        assert drain_block['name'] == 'FOO', \
+                "Expected %s for drain_block.  Got %s" % ('FOO', drain_block)
+
+    @patch.object(BGSystem, 'possible_locations', return_value=[])
+    def test_drain_location_set_block_down(self, patch):
+        #Do not set a drain location if we have a attrs location set but the
+        #hardware's down.
+        job = {'jobid': 1,
+                'attrs': {'location': 'FOO',},
+                'nodes': 512,
+                'queue': 'default',
+                }
+        self.bgqsystem.offline_blocks = set(['FOO'])
+        self.bgqsystem.cached_blocks = {'FOO': {'name':'FOO'}, 'BAR': {'name':'BAR'}}
+        drain_block = self.bgqsystem._find_drain_block(job)
+        assert drain_block is None, 'drain_block not None'
+

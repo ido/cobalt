@@ -550,6 +550,12 @@ class Block (Data):
             mp.add('-'.join(nc.name.split('-')[:2]))
         return list(mp)
 
+    @property
+    def geometry_string(self):
+        '''return the string version of the node geometry.  Used for
+        validation'''
+        return "x".join([str(g) for g in self.node_geometry])
+
     def _get_node_names (self):
         return [n.name for n in self.nodes]
     node_names = property(_get_node_names)
@@ -737,6 +743,7 @@ class BGBaseSystem (Component):
 
         self.cached_blocks = None
         self.offline_blocks = []
+        self.available_block_geometries = set([])
 
     def _get_blocks (self):
         '''return a BlockDcit of Blocks if the blocks are in the managed blocks list
@@ -773,6 +780,8 @@ class BGBaseSystem (Component):
         managed_set.update([
             block.name for block in blocks
         ])
+        for block in blocks:
+            self.available_block_geometries.add(block.geometry_string)
         self._blocks_lock.release()
         self.logger.debug("%s", [block.name for block in blocks])
         self.logger.debug("%s", [b.name for b in block_dict.values()])
@@ -840,6 +849,10 @@ class BGBaseSystem (Component):
             self.logger.error("error in del_blocks", exc_info=True)
 
         managed_list -= set( [block.name for block in blocks] )
+        new_geometries = set([])
+        for block_name in managed_list:
+            new_geometries.add(block_dict[block_name].geometry_string)
+        self.available_block_geometries = new_geometries
         self._blocks_lock.release()
 
         self.update_relatives()
@@ -1007,6 +1020,9 @@ class BGBaseSystem (Component):
         # Should put a way to note that the geometry and nodecounts disagree
         if isinstance(spec['geometry'], basestring):
             Cobalt.Util.validate_geometry(spec['geometry'], int(spec['nodecount']))
+            #make sure that the geometry actually exists on the system.
+            if spec['geometry'] not in self.available_block_geometries:
+                raise JobValidationError("Block Geometry %s is not an available geometry." % spec['geometry'])
 
         # need to handle kernel
         minimum_alt_ion_size = int(get_config_option('bgsystem', 'minimum_allowed_ion_kernel_size', 0))
@@ -1174,8 +1190,14 @@ class BGBaseSystem (Component):
         geometry = job.get('geometry', None)
         # if the user requested a particular block, we only try to drain that one
         if job['attrs'].has_key("location"):
-            target_name = job['attrs']['location']
-            return self.cached_blocks.get(target_name, None)
+            #don't drain a dead block
+            if job['attrs']['location'] not in self.offline_blocks:
+                target_name = job['attrs']['location']
+                return self.cached_blocks.get(target_name, None)
+            else:
+                #return this drain location or not at all for this job
+                return None
+
 
         drain_block = None
         locations = self.possible_locations(job['nodes'], job['queue'])

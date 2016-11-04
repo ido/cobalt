@@ -121,7 +121,6 @@ class MessageQueue(Component):
       pwd =  get_cdbwriter_config('pwd', None)
       database =  get_cdbwriter_config('database', None)
       schema =  get_cdbwriter_config('schema', None)
-      
       try:
          self.database_writer = DatabaseWriter(database, user, pwd, schema)
       except:
@@ -477,7 +476,6 @@ class DatabaseWriter(object):
             updateDummy  = True
 
       specialObjects = {}
-      
       if updateDummy: print "Update Dummy."
 
       for key in logMsg.item.__dict__:
@@ -498,12 +496,15 @@ class DatabaseWriter(object):
           job_data_id = self.daos['JOB_DATA'].insert(job_data_record)
       
       #populate job_attrs, if needed.
-      for key in specialObjects['attrs'].keys():
-          job_attr_record = self.daos['JOB_ATTR'].table.getRecord({
-                  'JOB_DATA_ID' : job_data_id,
-                  'KEY' : key,
-                  'VALUE' : str(specialObjects['attrs'][key])})
-          self.daos['JOB_ATTR'].insert(job_attr_record)
+      try:
+          for key in specialObjects['attrs'].keys():
+              job_attr_record = self.daos['JOB_ATTR'].table.getRecord({
+                      'JOB_DATA_ID' : job_data_id,
+                      'KEY' : key,
+                      'VALUE' : str(specialObjects['attrs'][key])})
+              self.daos['JOB_ATTR'].insert(job_attr_record)
+      except AttributeError:
+          logger.error('Bad formatting on attrs.  Add these later. Got %s', specialObjects['attrs'])
       
 
       #populate job_deps

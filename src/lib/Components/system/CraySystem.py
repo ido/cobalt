@@ -754,7 +754,6 @@ class CraySystem(BaseSystem):
                         if self.nodes[str(node_id)].status in
                         self.nodes[str(node_id)].DOWN_STATUSES]
             if drain_time is not None:
-                print drain_time, BACKFILL_EPSILON, drain_time - BACKFILL_EPSILON
                 unavailable_nodes.extend([node_id for node_id in node_id_list
                     if (self.nodes[str(node_id)].draining and
                         (self.nodes[str(node_id)].drain_until - BACKFILL_EPSILON) < int(drain_time))])
@@ -1002,8 +1001,14 @@ class CraySystem(BaseSystem):
                                 nid in required) and
                                 not self.nodes[str(nid)].draining)]
                     for nid in running_nodes:
-                        self.nodes[str(nid)].set_drain(loc_time[1], job['jobid'])
-                    candidate_list.extend(running_nodes)
+                        # We set a drain on all running nodes for use in a later
+                        # so that we can "favor" draining on the longest
+                        # running set of nodes.
+                        if (self.nodes[str(nid)].status != 'down' and
+                                self.nodes[str(nid)].managed):
+                            self.nodes[str(nid)].set_drain(loc_time[1], job['jobid'])
+                    candidate_list.extend([nid for nid in running_nodes if
+                        self.nodes[str(nid)].draining])
                     candidate_drain_time = int(loc_time[1])
                     if len(candidate_list) >= int(job['nodes']):
                         # Enough nodes have been found to drain for this job

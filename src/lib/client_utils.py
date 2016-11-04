@@ -1325,7 +1325,6 @@ def print_node_list():
     for headding in fetch_header:
         if headding in header_aliases.keys():
             fetch_header[fetch_header.index(headding)] = header_aliases[headding]
-    print fetch_header
     nodes = json.loads(component_call(SYSMGR, False, 'get_nodes',
             (True, None, fetch_header, True)))
 

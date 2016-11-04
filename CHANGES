@@ -1,5 +1,17 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 1.0.7 ==
+ * Fixed a bug where a node going down during a running job could allow that
+   node to be selected for draining.
+ * Expanded a buffer used by the forkers that should significantly improve the
+   speed of reading large ALPS responses and no longer interfere with node
+   reacquisition
+ * Cleaned up stray print statements in node information
+ * Fixed an error where score could be set to a string rather than a float via
+   the filter scripts
+ * Fixed an error where the queue-manager statefile could be lost if Cobalt was
+   brought down with a job in the "Terminal" state.
+
 == Changes to 1.0.6 ==
  * Backfill now supported on Cray systems.
  * Major performance improvement to nodelist and nodeadm -l.
@@ -38,6 +50,23 @@
 
 == Changes to 1.0.0 ==
  * Initial support of Cray systems
+
+== Changes to 0.99.42 ==
+ * Update to database writer to handle attrs fields that are
+   improperly formatted.
+
+== Changes to 0.99.41 ==
+ * Minor patch to clean up an issue where the user was not being properly
+   cleared from BlueGene blocks at the end of a run.
+
+== Changes to 0.99.40 ==
+ * A nokillpg attribute may be added to a job to cause kill instead of killpg
+   to be used for job termination so that a signal handler in a script may
+   handle signal propigation itself.
+ * Fixed a bug where a job requesting a location could cause Cobalt to drain
+   for a job that would require the use of offline hardware
+ * Added a check to the job validator where a job is rejected if the job size
+   and block geometry have a mismatch.
 
 == Changes to 0.99.39 ==
  * Session information added to job submission information.  This also includes

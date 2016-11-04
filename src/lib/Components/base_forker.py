@@ -18,8 +18,6 @@ import signal
 import sys
 import ConfigParser
 import time
-import errno
-import select
 
 
 import Cobalt
@@ -35,6 +33,8 @@ import Cobalt.Util
 sleep = Cobalt.Util.sleep
 Timer = Cobalt.Util.Timer
 
+from Cobalt.Util import init_cobalt_config, get_config_option
+
 __all__ = [
     "BaseForker",
     "BaseChild"
@@ -44,9 +44,11 @@ _logger = logging.getLogger(__name__.split('.')[-1])
 
 config = ConfigParser.ConfigParser()
 config.read(Cobalt.CONFIG_FILES)
+init_cobalt_config()
 
-
-PIPE_BUFSIZE = 4096
+# Number of bytes to attempt to read at once from stdout.  Excpect some large
+# values due to large Cray system states/statuses.
+PIPE_BUFSIZE = int(get_config_option('forker', ' pipe_buffsize', 16777216))
 
 def get_forker_config(option, default):
     try:
@@ -120,6 +122,7 @@ class BaseChild (object):
         self.stdin_string = kwargs.get('stdin_string', None) #string to send
         self.use_stdout_string = kwargs.get('stdout_string', False)
         self.stdout_string = ''
+        self.stdout_fd_gone = False
 
         self.complete = False
         self.lost_child = False
@@ -616,6 +619,8 @@ class BaseForker (Component):
             self.marked_for_death = state['marked_for_death']
         else:
             self.marked_for_death = {}
+        for child in self.children.values():
+            _logger.debug("Child found: %s", child.id)
 
     def __save_me(self):
         '''Periodically save off a statefile.'''
@@ -779,18 +784,13 @@ class BaseForker (Component):
         """
         #read any connected stdout to string pipes.
         for child in self.children.itervalues():
-            if child.use_stdout_string:
+            if child.use_stdout_string and child.exit_status is None:
                 while True:
-                    #(rd_list, wr_list, exc_list) =  select.select([child.pipe_read],[],[],0)
-                    #if len(rd_list) == 0:
-                    #    break
                     try:
                         child_str = os.read(child.pipe_read, PIPE_BUFSIZE)
                     except (OSError, IOError) as exc:
                         if exc.errno in [errno.EAGAIN, errno.EWOULDBLOCK]:
                             #read would block.  Don't block and continue.
-                            _logger.debug("%s: Read from child would block.",
-                                    child.label)
                             break
                         elif exc.errno in [errno.EBADF, errno.EINVAL, errno.EPIPE]:
                             _logger.error("%s: Error reading stdout from child pipe.",
@@ -898,7 +898,7 @@ class BaseForker (Component):
                 else:
                     child.death_timer.max_time = child.death_timer.elapsed_time + self.DEATH_TIMEOUT
 
-    _wait = automatic(_wait, float(get_forker_config('wait_interval', 10)))
+    _wait = automatic(_wait, float(get_forker_config('wait_interval', 10.0)))
 
 
 if __name__ == "__main__":
