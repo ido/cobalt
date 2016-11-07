@@ -40,6 +40,8 @@ import types
 import unittest
 import xmlrpclib
 
+from mock import patch
+
 import Cobalt.Components.cqm
 from Cobalt.Components.base import Component, exposed, automatic, query
 from Cobalt.Components.cqm import QueueManager, Signal_Map
@@ -3593,4 +3595,46 @@ class TestCQMIntegration (CQMIntegrationTestBase):
     def teardown(self):
         del self.taskman
         CQMIntegrationTestBase.teardown(self)
+
+class TestJobStatuses(object):
+
+    states = {'Ready': ('queued', 'Q'),
+              'Preempted': ('preempted', 'P'),
+              'Job_Prologue': ('starting', 'R'),
+              'Job_Prologue_Retry': ('starting', 'R'),
+              'Resource_Prologue':('starting', 'R'),
+              'Resource_Prologue_Retry': ('starting', 'R'),
+              'Run_Retry': ('starting', 'R'),
+              'Running': ('running', 'R'),
+              'Kill_Retry': ('killing', 'K'),
+              'Killing': ('killing', 'K'),
+              'Preempt_Retry': ('preempting', 'P'),
+              'Preempting': ('preempting', 'P'),
+              'Preempt_Finalize_Retry': ('preempting', 'P'),
+              'Preempt_Epilogue': ('preempting', 'P'),
+              'Job_Prologue_Retry_Release': ('exiting', 'E'),
+              'Resource_Prologue_Retry_Release': ('exiting', 'E'),
+              'Finalize_Retry': ('exiting', 'E'),
+              'Resource_Epilogue': ('exiting', 'E'),
+              'Resource_Epilogue_Retry': ('exiting', 'E'),
+              'Job_Epilogue': ('exiting', 'E'),
+              'Job_Epilogue_Retry': ('exiting', 'E'),
+              'Terminal': ('done', 'E')
+              }
+
+
+    def setup(self):
+        spec = {}
+        self.job = Cobalt.Components.cqm.Job(spec)
+
+    def teardown(self):
+        del self.job
+
+    def test_display_states(self):
+        for state, printable_status in self.states.items():
+            with patch.object(Cobalt.Components.cqm.Job, '_sm_state', state):
+                assert self.job.state == printable_status[0], ("Bad State %s: Expected %s, got %s" %
+                        (state, printable_status[0], self.job.state))
+                assert self.job.short_state == printable_status[1], ("Bad State %s: Expected %s, got %s" %
+                        (state, printable_status[1], self.job.short_state))
 
