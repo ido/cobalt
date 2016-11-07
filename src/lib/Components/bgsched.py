@@ -16,9 +16,10 @@ from Cobalt.Components.base import Component, exposed, automatic, query, locking
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ReservationError, DataCreationError, ComponentLookupError
 
+from Cobalt.Util import expand_num_list
 import Cobalt.SchedulerPolicies
 import traceback
-
+import itertools
 
 logger = logging.getLogger("Cobalt.Components.scheduler")
 config = ConfigParser.ConfigParser()
@@ -747,6 +748,7 @@ class BGSched (Component):
         overlap, since dueling reservation behavior is undefined.
 
         '''
+        implementation =  ComponentProxy("system").get_implementation()
         ret = ""
         reservations = self.reservations.values()
         for i in range(len(reservations)):
@@ -765,13 +767,25 @@ class BGSched (Component):
                 # reservation starts at the same time another ends
                 if res1.overlaps(res2.start, res2.duration - 0.00001):
                     # now we need to check for overlap in space
-                    results = ComponentProxy("system").get_partitions(
-                        [ {'name': p, 'children': '*', 'parents': '*'} for p in res2.partitions.split(":") ]
-                    )
-                    for p in res1.partitions.split(":"):
-                        for r in results:
-                            if p==r['name'] or p in r['children'] or p in r['parents']:
-                                ret += "Warning: reservation '%s' overlaps reservation '%s'\n" % (res1.name, res2.name)
+                    if implementation in ['alps_system']:
+                        # no parent or children overlaps can happen in this mode.
+                        # This test is now entirely local
+                        res1_locs = set(itertools.chain.from_iterable(
+                            [expand_num_list(hunk) for hunk in res1.partitions.split(':')]))
+                        res2_locs = set(itertools.chain.from_iterable(
+                            [expand_num_list(hunk) for hunk in res2.partitions.split(':')]))
+                        intersect = res1_locs & res2_locs
+                        if len(intersect) != 0:
+                            ret += "Warning: reservation '%s' overlaps reservation '%s'\n" % (res1.name, res2.name)
+
+                    else:
+                        results = ComponentProxy("system").get_partitions(
+                            [ {'name': p, 'children': '*', 'parents': '*'} for p in res2.partitions.split(":") ]
+                        )
+                        for p in res1.partitions.split(":"):
+                            for r in results:
+                                if p==r['name'] or p in r['children'] or p in r['parents']:
+                                    ret += "Warning: reservation '%s' overlaps reservation '%s'\n" % (res1.name, res2.name)
 
         return ret
     check_reservations = exposed(check_reservations)
@@ -827,7 +841,6 @@ class BGSched (Component):
             # best_partition_dict.  There is no draining, backfill windows are
             # meaningless within reservations.
             try:
-                self.logger.debug("calling from reservation")
                 best_partition_dict = ComponentProxy("system").find_job_location(job_location_args, [])
             except:
                 self.logger.error("failed to connect to system component")
@@ -1030,7 +1043,6 @@ class BGSched (Component):
                 job_location_args.append(job_info)
 
             try:
-                self.logger.debug("calling from main sched %s", eq_class)
                 best_partition_dict = ComponentProxy("system").find_job_location(job_location_args, end_times)
             except:
                 self.logger.error("failed to connect to system component")
