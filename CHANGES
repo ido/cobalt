@@ -1,5 +1,44 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 1.0.6 ==
+ * Backfill now supported on Cray systems.
+ * Major performance improvement to nodelist and nodeadm -l.
+ * Fix for an error that can cause loss of job tracking during job startup
+   resulting in a reported exit status of "1234567".
+ * Fix for an error in system_script_forker that can cause an error loop
+   if using stdout to string functionality.
+ * Fix for an error that caused jobs with a "terminating" status to cause
+   qstat to fail.
+
+== Changes to 1.0.5 ==
+ * Fix for an issue that would cause jobs with their location set to not
+   run if they were submitted to a reservation.
+ * Performance of setres improved significantly.
+ * Fixed an issue where reservations and soft-down status on nodes may not
+   be respected by job placement.
+ * An enhanced_apkill script is now available to improve job cleanup and
+   ensure that jobs that ignore signals are otherwise properly terminated.
+
+== Changes to 1.0.4 ==
+ * Fix for apid not being properly checked when apkill was being invoked.
+
+== Changes to 1.0.3 ==
+ * Fix for an issue for nodes coming out of disabled state and suddenly
+   appearing in ALPS.
+ * Interactive job support
+ * Support for CAPMC memory management scripts added.  Cobalt now gracefully
+   handles long startup times if these are being used.
+ * Improved job cleanup using apkill.
+
+== Changes to 1.0.2 ==
+ * Singleton job filter (maxtotaljobs) now supported
+ * Multiple alps_script_forkers running simultaneously is now supported. Forkers
+   are chosen for execution based on which forker has the lowest number of jobs
+   currently assigned to it.
+
+== Changes to 1.0.0 ==
+ * Initial support of Cray systems
+
 == Changes to 0.99.42 ==
  * Update to database writer to handle attrs fields that are
    improperly formatted.
