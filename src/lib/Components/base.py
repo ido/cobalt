@@ -15,6 +15,7 @@ import logging
 import time
 import threading
 import xmlrpclib
+import socket
 
 import Cobalt
 import Cobalt.Proxy
@@ -42,7 +43,7 @@ except Exception, e:
 
 def state_file_location():
 
-    '''Grab the location of the Cobalt statefiles.  
+    '''Grab the location of the Cobalt statefiles.
 
     default: /var/spool/cobalt
 
@@ -51,21 +52,38 @@ def state_file_location():
 
 def run_component (component_cls, argv=None, register=True, state_name=False,
                    cls_kwargs={}, extra_getopt='', time_out=10,
-                   single_threaded=False):
-    '''Run the Cobalt component.  
+                   single_threaded=False, seq_num=0, aug_comp_name=False,
+                   state_name_match_component=False):
+    '''Run the specified Cobalt component until recieving signal to terminate.
 
-    arguments:
+    Args::
 
-    component_cls
-    argv
-    register
-    state_name
-    cls_kwargs
-    extra_getopt
-    time_out
-    single_threaded
+        component_cls: underlying component library class to use for execution
+        argv: component-specific arguments [Default: None]
+        register: If true, register the component with the service-locator [Default: True]
+        state_name: Name of statefile to use for a component.  If false, do not
+                    generate a statefile [Default: False]
+        cls_kwargs: keyword arguments to pass to the underlying component class
+                    [Default: {}]
+        extra_getopt: extra options to getopt [Default: '']
+        time_out: timeout for default task iteration in seconds. [Default: 10]
+        single_threaded: If true, run as a single-threaded componenent.
+                         [Default: False]
+        seq_num: Sequence number of the componenent.  This should be incremented
+                 for multiple components on one host. [Default: 0]
+        aug_comp_name: Add the hostname and a sequence number to the component
+                       name registered with the service-loactor if True.
+                       [Default: False]
+        state_name_match_component: Make the statefile name match the component
+                                    name in the service-locator if using the
+                                    augmented name. [Default: False]
 
-    This will run until a the component is terminated.
+    Returns:
+        Exit status of the component
+
+    Notes:
+        Components that make use of the fork system call must use
+        single-threaded mode.
 
     '''
 
@@ -90,6 +108,18 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
             pidfile_name = item[1]
         elif item[0] == '-d':
             level = logging.DEBUG
+
+    # form new component name for running on multiple hosts.
+    # This includes a hostname and the sequence number to allow for multiple
+    # copies of the same component to be run.  This is primarily used with
+    # forkers at this time.
+    if aug_comp_name:
+        component_cls.name = '_'.join([component_cls.name, socket.gethostname(),
+            str(seq_num)])
+    if state_name_match_component:
+        # Request that the statefile name match the augmented component name
+        if not state_name:
+            state_name = component_cls.name
 
     logging.getLogger().setLevel(level)
     Cobalt.Logging.setup_logging(component_cls.implementation, console_timestamp=True)
