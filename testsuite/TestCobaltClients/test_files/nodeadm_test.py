@@ -10,7 +10,7 @@ def test_nodeadm_args_1():
     args      = ''
 
     cmdout    = \
-"""Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]"
+"""Usage: nodeadm.py [flags] [part1 part2...]"
 
 """
 
@@ -51,7 +51,7 @@ def test_nodeadm_args_2():
     args      = """p1"""
 
     cmdout    = \
-"""Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]"
+"""Usage: nodeadm.py [flags] [part1 part2...]"
 
 """
 
@@ -171,7 +171,7 @@ def test_nodeadm_combo_3():
 
     """
 
-    args      = """--list --queue q1 p1"""
+    args      = """--list_nstates --queue q1 p1"""
 
     cmdout    = ''
 
@@ -253,7 +253,7 @@ def test_nodeadm_combo_5():
 
     """
 
-    args      = """--down --list p1"""
+    args      = """--down --list_nstates p1"""
 
     cmdout    = ''
 
@@ -317,6 +317,9 @@ nodes that weren't in the down list:
 GET_IMPLEMENTATION
 
 
+GET_IMPLEMENTATION
+
+
 NODES_UP
 
 whoami: gooduser
@@ -368,6 +371,9 @@ nodes that weren't in the down list:
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 GET_IMPLEMENTATION
 
 
@@ -424,6 +430,9 @@ unknown nodes:
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 GET_IMPLEMENTATION
 
 
@@ -487,6 +496,11 @@ component: "system.get_implementation", defer: False
      )
 
 
+component: "system.get_implementation", defer: False
+  get_implementation(
+     )
+
+
 component: "system.nodes_down", defer: False
   nodes_down(
      ['p1', 'p2', 'p3'],
@@ -498,6 +512,9 @@ component: "system.nodes_down", defer: False
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 GET_IMPLEMENTATION
 
 
@@ -557,6 +574,9 @@ unknown nodes:
 GET_IMPLEMENTATION
 
 
+GET_IMPLEMENTATION
+
+
 NODES_DOWN
 
 whoami: gooduser
@@ -610,6 +630,9 @@ U3    QU3    three  -
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 GET_IMPLEMENTATION
 
 
@@ -679,6 +702,9 @@ U3    QU3    three  -
 GET_IMPLEMENTATION
 
 
+GET_IMPLEMENTATION
+
+
 GET_NODES_STATUS
 
 
@@ -719,6 +745,89 @@ queue type: <type 'str'>
 
 
 # ---------------------------------------------------------------------------------
+def test_nodeadm_list_details_1():
+    """
+    nodeadm test run: list_details_1
+
+    """
+
+    args      = """-b"""
+
+    cmdout    = \
+"""Usage: nodeadm.py [flags] [part1 part2...]"
+
+"""
+
+    cmderr    = \
+"""No arguments or options provided
+
+"""
+
+    stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('nodeadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_nodeadm_list_details_2():
+    """
+    nodeadm test run: list_details_2
+
+    """
+
+    args      = """-b D1"""
+
+    cmdout    = ''
+
+    cmderr    = ''
+
+    stubout   = \
+"""
+GET_IMPLEMENTATION
+
+
+GET_IMPLEMENTATION
+
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout, # Expected stub functions output
+                       cmderr, # Expected command error output 
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('nodeadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
 def test_nodeadm_queue_1():
     """
     nodeadm test run: queue_1
@@ -728,7 +837,7 @@ def test_nodeadm_queue_1():
     args      = """--queue QU1"""
 
     cmdout    = \
-"""Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]"
+"""Usage: nodeadm.py [flags] [part1 part2...]"
 
 """
 
@@ -776,6 +885,9 @@ def test_nodeadm_queue_2():
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 GET_IMPLEMENTATION
 
 
