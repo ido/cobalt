@@ -17,6 +17,9 @@ def test_setres_id_change_1():
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 SET_RES_ID
 
 id: 8, type: <type 'int'>
@@ -59,6 +62,9 @@ def test_setres_id_change_2():
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 SET_CYCLE_ID
 
 id: 8, type: <type 'int'>
@@ -102,6 +108,9 @@ Setting cycle_id to 8
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 SET_RES_ID
 
 id: 8, type: <type 'int'>
@@ -146,7 +155,11 @@ def test_setres_id_change_4():
 """No partition arguments or other options allowed with id change options
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+GET_IMPLEMENTATION
+
+"""
 
     stubout_file = "stub.out"
 
@@ -183,7 +196,11 @@ def test_setres_id_change_5():
 """No partition arguments or other options allowed with id change options
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+GET_IMPLEMENTATION
+
+"""
 
     stubout_file = "stub.out"
 
@@ -220,7 +237,11 @@ def test_setres_id_change_6():
 """No partition arguments or other options allowed with id change options
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+GET_IMPLEMENTATION
+
+"""
 
     stubout_file = "stub.out"
 
@@ -257,7 +278,11 @@ def test_setres_id_change_7():
 """No partition arguments or other options allowed with id change options
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+GET_IMPLEMENTATION
+
+"""
 
     stubout_file = "stub.out"
 
@@ -296,6 +321,11 @@ def test_setres_id_change_8():
 """
 setres.py --debug --res_id 8
 
+component: "system.get_implementation", defer: False
+  get_implementation(
+     )
+
+
 component: "scheduler.set_res_id", defer: False
   set_res_id(
      8,
@@ -306,6 +336,9 @@ component: "scheduler.set_res_id", defer: False
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 SET_RES_ID
 
 id: 8, type: <type 'int'>
@@ -349,6 +382,9 @@ WARNING: Forcing cycle id to 8
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 FORCE_RES_ID
 
 id: 8, type: <type 'int'>
@@ -393,7 +429,11 @@ def test_setres_force_2():
 """--force_id can only be used with --cycle_id and/or --res_id.
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+GET_IMPLEMENTATION
+
+"""
 
     stubout_file = "stub.out"
 
@@ -432,7 +472,11 @@ def test_setres_force_3():
 """--force_id can only be used with --cycle_id and/or --res_id.
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+GET_IMPLEMENTATION
+
+"""
 
     stubout_file = "stub.out"
 
@@ -469,7 +513,11 @@ def test_setres_force_4():
 """--force_id can only be used with --cycle_id and/or --res_id.
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+GET_IMPLEMENTATION
+
+"""
 
     stubout_file = "stub.out"
 
@@ -511,7 +559,11 @@ Usage: setres.py [options] <partition1> ... <partitionN>
 
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+GET_IMPLEMENTATION
+
+"""
 
     stubout_file = "stub.out"
 
@@ -551,6 +603,9 @@ True
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 GET_RESERVATIONS
 
 cycle:*
@@ -628,7 +683,11 @@ def test_setres_modify_3():
 """Cannot use -D while changing start or cycle time
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+GET_IMPLEMENTATION
+
+"""
 
     stubout_file = "stub.out"
 
@@ -705,7 +764,11 @@ def test_setres_modify_5():
 """Cannot use -D while changing start or cycle time
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+GET_IMPLEMENTATION
+
+"""
 
     stubout_file = "stub.out"
 
@@ -746,6 +809,9 @@ True
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 GET_RESERVATIONS
 
 cycle:*
@@ -831,6 +897,9 @@ True
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 GET_RESERVATIONS
 
 cycle:*
@@ -918,6 +987,9 @@ True
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 GET_RESERVATIONS
 
 cycle:*
@@ -1007,6 +1079,9 @@ True
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 GET_RESERVATIONS
 
 cycle:*
@@ -1096,6 +1171,9 @@ True
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 GET_RESERVATIONS
 
 cycle:*
@@ -1187,6 +1265,9 @@ True
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 GET_RESERVATIONS
 
 cycle:*
@@ -1278,6 +1359,9 @@ True
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 GET_RESERVATIONS
 
 cycle:*
@@ -1405,6 +1489,12 @@ True
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
+GET_IMPLEMENTATION
+
+
 VERIFY_LOCATIONS
 
 location list: ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
@@ -1503,6 +1593,9 @@ True
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 GET_RESERVATIONS
 
 cycle:*
@@ -1583,6 +1676,16 @@ True
 """
 setres.py -m -n resname -A myproj --block_passthrough --debug ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024
 
+component: "system.get_implementation", defer: False
+  get_implementation(
+     )
+
+
+component: "system.get_implementation", defer: False
+  get_implementation(
+     )
+
+
 component: "system.verify_locations", defer: False
   verify_locations(
      ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024'],
@@ -1630,6 +1733,12 @@ component: "scheduler.check_reservations", defer: False
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
+GET_IMPLEMENTATION
+
+
 VERIFY_LOCATIONS
 
 location list: ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
@@ -1729,6 +1838,9 @@ True
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 GET_RESERVATIONS
 
 cycle:*
@@ -1812,6 +1924,9 @@ True
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 GET_RESERVATIONS
 
 cycle:*
@@ -1891,7 +2006,11 @@ def test_setres_add_res_1():
 """Must supply either -p with value or partitions as arguments
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+GET_IMPLEMENTATION
+
+"""
 
     stubout_file = "stub.out"
 
@@ -1928,7 +2047,11 @@ def test_setres_add_res_2():
 """Must supply a start time for the reservation with -s
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+GET_IMPLEMENTATION
+
+"""
 
     stubout_file = "stub.out"
 
@@ -1967,7 +2090,11 @@ def test_setres_add_res_3():
 """Must supply a duration time for the reservation with -d
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+GET_IMPLEMENTATION
+
+"""
 
     stubout_file = "stub.out"
 
@@ -2008,6 +2135,12 @@ True
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
+GET_IMPLEMENTATION
+
+
 VERIFY_LOCATIONS
 
 location list: ['ANL-R00-R01-2048', 'ANL-R00-1024']
@@ -2079,6 +2212,12 @@ True
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
+GET_IMPLEMENTATION
+
+
 VERIFY_LOCATIONS
 
 location list: ['ANL-R00-R01-2048', 'ANL-R00-1024']
@@ -2150,6 +2289,12 @@ True
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
+GET_IMPLEMENTATION
+
+
 VERIFY_LOCATIONS
 
 location list: ['ANL-R00-R01-2048', 'ANL-R00-1024']
@@ -2221,6 +2366,12 @@ True
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
+GET_IMPLEMENTATION
+
+
 VERIFY_LOCATIONS
 
 location list: ['ANL-R00-R01-2048']
@@ -2288,6 +2439,12 @@ True
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
+GET_IMPLEMENTATION
+
+
 VERIFY_LOCATIONS
 
 location list: ['ANL-R00-R01-2048']
@@ -2357,6 +2514,16 @@ True
 """
 setres.py -s 2020_12_31-11:59 -n resname -d 10:10:10 -p ANL-R00-R01-2048 --block_passthrough -q myq -A myproj --debug
 
+component: "system.get_implementation", defer: False
+  get_implementation(
+     )
+
+
+component: "system.get_implementation", defer: False
+  get_implementation(
+     )
+
+
 component: "system.verify_locations", defer: False
   verify_locations(
      ['ANL-R00-R01-2048'],
@@ -2379,6 +2546,12 @@ component: "scheduler.check_reservations", defer: False
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
+GET_IMPLEMENTATION
+
+
 VERIFY_LOCATIONS
 
 location list: ['ANL-R00-R01-2048']
@@ -2449,11 +2622,20 @@ Usage: setres.py [options] <partition1> ... <partitionN>
 """
 setres.py -s 2020_12_31-11:59 -d 10:10:10 -p ANL-R00-R01-2048 --block_passthrough -q myq -A myproj --debug
 
+component: "system.get_implementation", defer: False
+  get_implementation(
+     )
+
+
 No arguments or options provided
 
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+GET_IMPLEMENTATION
+
+"""
 
     stubout_file = "stub.out"
 
@@ -2494,6 +2676,12 @@ True
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
+GET_IMPLEMENTATION
+
+
 VERIFY_LOCATIONS
 
 location list: ['ANL-R00-R01-2048', 'ANL-R00-1024']
@@ -2565,6 +2753,12 @@ True
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
+GET_IMPLEMENTATION
+
+
 VERIFY_LOCATIONS
 
 location list: ['ANL-R00-R01-2048', 'ANL-R00-1024']
@@ -2636,6 +2830,12 @@ True
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
+GET_IMPLEMENTATION
+
+
 VERIFY_LOCATIONS
 
 location list: ['p4', 'p1', 'p2', 'p3']
@@ -2715,6 +2915,12 @@ True
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
+GET_IMPLEMENTATION
+
+
 VERIFY_LOCATIONS
 
 location list: ['p4', 'p1', 'p2', 'p3']
@@ -2794,6 +3000,12 @@ True
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
+GET_IMPLEMENTATION
+
+
 VERIFY_LOCATIONS
 
 location list: ['p4', 'p1', 'p2', 'p3']

@@ -484,6 +484,7 @@ class CqmStub(object):
                      'name'         : QUEUES[i],
                      'users'        : USERS[i],
                      'groups'       : GROUPS[i],
+                     'maxtotaljobs' : 1,
                      'maxrunning'   : 20,
                      'maxqueued'    : 20,
                      'maxusernodes' : 20,

@@ -10,18 +10,18 @@ def test_cqadm_getq_option_1():
     args      = """--getq"""
 
     cmdout    = \
-"""Queue  Users  Groups  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  AdminEmail         State    Cron      Policy    Priority  
-=================================================================================================================================================================
-aaa    dog    None    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-bbb    cat    foo     None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-bello  house  None    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-dito   king   wheel   None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-hhh    henry  bar     None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-jello  land   None    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-kebra  james  None    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-myq    queen  None    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-yours  girl   None    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-zq     boy    None    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+"""Queue  Users  Groups  MinTime  MaxTime  MaxRunning  MaxTotalJobs  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  AdminEmail         State    Cron      Policy    Priority  
+===============================================================================================================================================================================
+aaa    dog    None    None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+bbb    cat    foo     None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+bello  house  None    None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+dito   king   wheel   None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+hhh    henry  bar     None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+jello  land   None    None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+kebra  james  None    None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+myq    queen  None    None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+yours  girl   None    None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+zq     boy    None    None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
 """
 
     cmderr    = ''
@@ -44,6 +44,8 @@ maxrunning:*
 maxrunning type: <type 'str'>
 maxtime:*
 maxtime type: <type 'str'>
+maxtotaljobs:*
+maxtotaljobs type: <type 'str'>
 maxuserjobs:*
 maxuserjobs type: <type 'str'>
 maxusernodes:*
@@ -96,18 +98,18 @@ def test_cqadm_getq_option_2():
     args      = """-d --getq"""
 
     cmdout    = \
-"""Queue  Users  Groups  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  AdminEmail         State    Cron      Policy    Priority  
-=================================================================================================================================================================
-aaa    dog    None    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-bbb    cat    foo     None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-bello  house  None    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-dito   king   wheel   None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-hhh    henry  bar     None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-jello  land   None    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-kebra  james  None    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-myq    queen  None    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-yours  girl   None    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-zq     boy    None    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+"""Queue  Users  Groups  MinTime  MaxTime  MaxRunning  MaxTotalJobs  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  AdminEmail         State    Cron      Policy    Priority  
+===============================================================================================================================================================================
+aaa    dog    None    None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+bbb    cat    foo     None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+bello  house  None    None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+dito   king   wheel   None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+hhh    henry  bar     None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+jello  land   None    None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+kebra  james  None    None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+myq    queen  None    None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+yours  girl   None    None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+zq     boy    None    None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
 """
 
     cmderr    = \
@@ -116,11 +118,11 @@ cqadm.py -d --getq
 
 component: "queue-manager.get_queues", defer: True
   get_queues(
-     [{'maxuserjobs': '*', 'priority': '*', 'name': '*', 'mintime': '*', 'maxusernodes': '*', 'totalnodes': '*', 'cron': '*', 'state': '*', 'tag': 'queue', 'maxqueued': '*', 'maxrunning': '*', 'groups': '*', 'maxnodehours': '*', 'policy': '*', 'maxtime': '*', 'adminemail': '*', 'users': '*'}],
+     [{'maxuserjobs': '*', 'priority': '*', 'name': '*', 'mintime': '*', 'maxusernodes': '*', 'totalnodes': '*', 'cron': '*', 'state': '*', 'tag': 'queue', 'maxqueued': '*', 'maxrunning': '*', 'groups': '*', 'maxnodehours': '*', 'policy': '*', 'maxtime': '*', 'maxtotaljobs': '*', 'adminemail': '*', 'users': '*'}],
      )
 
 
-[{'maxusernodes': 20, 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'groups': None, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'users': 'james', 'name': 'kebra', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'maxusernodes': 20, 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'groups': None, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'users': 'land', 'name': 'jello', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'maxusernodes': 20, 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'groups': None, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'users': 'house', 'name': 'bello', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'maxusernodes': 20, 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'groups': None, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'users': 'dog', 'name': 'aaa', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'maxusernodes': 20, 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'groups': 'foo', 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'users': 'cat', 'name': 'bbb', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'maxusernodes': 20, 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'groups': 'bar', 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'users': 'henry', 'name': 'hhh', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'maxusernodes': 20, 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'groups': 'wheel', 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'users': 'king', 'name': 'dito', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'maxusernodes': 20, 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'groups': None, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'users': 'queen', 'name': 'myq', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'maxusernodes': 20, 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'groups': None, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'users': 'girl', 'name': 'yours', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'maxusernodes': 20, 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'groups': None, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'users': 'boy', 'name': 'zq', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}]
+[{'priority': 'urgent', 'name': 'kebra', 'mintime': None, 'maxusernodes': 20, 'totalnodes': 100, 'cron': 'whocares', 'state': 'running', 'maxqueued': 20, 'maxrunning': 20, 'groups': None, 'maxnodehours': 20, 'policy': 'mypolicy', 'maxtime': None, 'maxtotaljobs': 1, 'adminemail': 'myemail@gmail.com', 'users': 'james'}, {'priority': 'urgent', 'name': 'jello', 'mintime': None, 'maxusernodes': 20, 'totalnodes': 100, 'cron': 'whocares', 'state': 'running', 'maxqueued': 20, 'maxrunning': 20, 'groups': None, 'maxnodehours': 20, 'policy': 'mypolicy', 'maxtime': None, 'maxtotaljobs': 1, 'adminemail': 'myemail@gmail.com', 'users': 'land'}, {'priority': 'urgent', 'name': 'bello', 'mintime': None, 'maxusernodes': 20, 'totalnodes': 100, 'cron': 'whocares', 'state': 'running', 'maxqueued': 20, 'maxrunning': 20, 'groups': None, 'maxnodehours': 20, 'policy': 'mypolicy', 'maxtime': None, 'maxtotaljobs': 1, 'adminemail': 'myemail@gmail.com', 'users': 'house'}, {'priority': 'urgent', 'name': 'aaa', 'mintime': None, 'maxusernodes': 20, 'totalnodes': 100, 'cron': 'whocares', 'state': 'running', 'maxqueued': 20, 'maxrunning': 20, 'groups': None, 'maxnodehours': 20, 'policy': 'mypolicy', 'maxtime': None, 'maxtotaljobs': 1, 'adminemail': 'myemail@gmail.com', 'users': 'dog'}, {'priority': 'urgent', 'name': 'bbb', 'mintime': None, 'maxusernodes': 20, 'totalnodes': 100, 'cron': 'whocares', 'state': 'running', 'maxqueued': 20, 'maxrunning': 20, 'groups': 'foo', 'maxnodehours': 20, 'policy': 'mypolicy', 'maxtime': None, 'maxtotaljobs': 1, 'adminemail': 'myemail@gmail.com', 'users': 'cat'}, {'priority': 'urgent', 'name': 'hhh', 'mintime': None, 'maxusernodes': 20, 'totalnodes': 100, 'cron': 'whocares', 'state': 'running', 'maxqueued': 20, 'maxrunning': 20, 'groups': 'bar', 'maxnodehours': 20, 'policy': 'mypolicy', 'maxtime': None, 'maxtotaljobs': 1, 'adminemail': 'myemail@gmail.com', 'users': 'henry'}, {'priority': 'urgent', 'name': 'dito', 'mintime': None, 'maxusernodes': 20, 'totalnodes': 100, 'cron': 'whocares', 'state': 'running', 'maxqueued': 20, 'maxrunning': 20, 'groups': 'wheel', 'maxnodehours': 20, 'policy': 'mypolicy', 'maxtime': None, 'maxtotaljobs': 1, 'adminemail': 'myemail@gmail.com', 'users': 'king'}, {'priority': 'urgent', 'name': 'myq', 'mintime': None, 'maxusernodes': 20, 'totalnodes': 100, 'cron': 'whocares', 'state': 'running', 'maxqueued': 20, 'maxrunning': 20, 'groups': None, 'maxnodehours': 20, 'policy': 'mypolicy', 'maxtime': None, 'maxtotaljobs': 1, 'adminemail': 'myemail@gmail.com', 'users': 'queen'}, {'priority': 'urgent', 'name': 'yours', 'mintime': None, 'maxusernodes': 20, 'totalnodes': 100, 'cron': 'whocares', 'state': 'running', 'maxqueued': 20, 'maxrunning': 20, 'groups': None, 'maxnodehours': 20, 'policy': 'mypolicy', 'maxtime': None, 'maxtotaljobs': 1, 'adminemail': 'myemail@gmail.com', 'users': 'girl'}, {'priority': 'urgent', 'name': 'zq', 'mintime': None, 'maxusernodes': 20, 'totalnodes': 100, 'cron': 'whocares', 'state': 'running', 'maxqueued': 20, 'maxrunning': 20, 'groups': None, 'maxnodehours': 20, 'policy': 'mypolicy', 'maxtime': None, 'maxtotaljobs': 1, 'adminemail': 'myemail@gmail.com', 'users': 'boy'}]
 """
 
     stubout   = \
@@ -141,6 +143,8 @@ maxrunning:*
 maxrunning type: <type 'str'>
 maxtime:*
 maxtime type: <type 'str'>
+maxtotaljobs:*
+maxtotaljobs type: <type 'str'>
 maxuserjobs:*
 maxuserjobs type: <type 'str'>
 maxusernodes:*
@@ -193,18 +197,18 @@ def test_cqadm_getq_option_3():
     args      = """-f --getq"""
 
     cmdout    = \
-"""Queue  Users  Groups  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  AdminEmail         State    Cron      Policy    Priority  
-=================================================================================================================================================================
-aaa    dog    None    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-bbb    cat    foo     None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-bello  house  None    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-dito   king   wheel   None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-hhh    henry  bar     None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-jello  land   None    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-kebra  james  None    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-myq    queen  None    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-yours  girl   None    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-zq     boy    None    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+"""Queue  Users  Groups  MinTime  MaxTime  MaxRunning  MaxTotalJobs  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  AdminEmail         State    Cron      Policy    Priority  
+===============================================================================================================================================================================
+aaa    dog    None    None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+bbb    cat    foo     None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+bello  house  None    None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+dito   king   wheel   None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+hhh    henry  bar     None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+jello  land   None    None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+kebra  james  None    None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+myq    queen  None    None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+yours  girl   None    None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+zq     boy    None    None     None     20          1             20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
 """
 
     cmderr    = ''
@@ -227,6 +231,8 @@ maxrunning:*
 maxrunning type: <type 'str'>
 maxtime:*
 maxtime type: <type 'str'>
+maxtotaljobs:*
+maxtotaljobs type: <type 'str'>
 maxuserjobs:*
 maxuserjobs type: <type 'str'>
 maxusernodes:*
@@ -777,6 +783,8 @@ maxrunning:*
 maxrunning type: <type 'str'>
 maxtime:*
 maxtime type: <type 'str'>
+maxtotaljobs:*
+maxtotaljobs type: <type 'str'>
 maxuserjobs:*
 maxuserjobs type: <type 'str'>
 maxusernodes:*

@@ -86,9 +86,7 @@ U2    QU2    two    -
 U3    QU3    three  -       
 """
 
-    cmderr    = \
-"""No arguments needed
-"""
+    cmderr    = ''
 
     stubout   = \
 """
@@ -282,10 +280,11 @@ def test_nodelist_options_2():
 """Usage: nodelist.py
 
 Options:
-  --version    show program's version number and exit
-  -h, --help   show this help message and exit
-  -d, --debug  turn on communication debugging
-  --noheader   disable display of header information
+  --version           show program's version number and exit
+  -h, --help          show this help message and exit
+  -d, --debug         turn on communication debugging
+  -b, --list_details  list detalied information for specified nodes
+  --noheader          disable display of header information
 """
 
     cmderr    = ''
@@ -325,10 +324,11 @@ def test_nodelist_options_3():
 """Usage: nodelist.py
 
 Options:
-  --version    show program's version number and exit
-  -h, --help   show this help message and exit
-  -d, --debug  turn on communication debugging
-  --noheader   disable display of header information
+  --version           show program's version number and exit
+  -h, --help          show this help message and exit
+  -d, --debug         turn on communication debugging
+  -b, --list_details  list detalied information for specified nodes
+  --noheader          disable display of header information
 """
 
     cmderr    = ''

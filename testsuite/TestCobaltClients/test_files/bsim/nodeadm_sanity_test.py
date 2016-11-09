@@ -7,7 +7,7 @@ def test_nodeadm_args_1():
     nodeadm test run: args_1
 
         Command Output:
-        Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]"
+        Usage: nodeadm.py [flags] [part1 part2...]"
         
         
         Command Error/Debug:No arguments or options provided
@@ -47,7 +47,7 @@ def test_nodeadm_args_2():
     nodeadm test run: args_2
 
         Command Output:
-        Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]"
+        Usage: nodeadm.py [flags] [part1 part2...]"
         
         
         Command Error/Debug:No arguments or options provided
@@ -167,7 +167,7 @@ def test_nodeadm_combo_3():
         
     """
 
-    args      = """--list --queue q1 p1"""
+    args      = """--list_nstates --queue q1 p1"""
     exp_rs    = 0
 
     user    = pwd.getpwuid(os.getuid())[0] 
@@ -241,7 +241,7 @@ def test_nodeadm_combo_5():
         
     """
 
-    args      = """--down --list p1"""
+    args      = """--down --list_nstates p1"""
     exp_rs    = 0
 
     user    = pwd.getpwuid(os.getuid())[0] 
@@ -534,12 +534,89 @@ def test_nodeadm_list_2():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
+def test_nodeadm_list_details_1():
+    """
+    nodeadm test run: list_details_1
+
+        Command Output:
+        Usage: nodeadm.py [flags] [part1 part2...]"
+        
+        
+        Command Error/Debug:No arguments or options provided
+        
+        
+        
+    """
+
+    args      = """-b"""
+    exp_rs    = 256
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('nodeadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_nodeadm_list_details_2():
+    """
+    nodeadm test run: list_details_2
+
+        Command Output:
+        
+        Command Error/Debug:nodeadm is only supported on cluster systems.  Try partlist instead.
+        
+        
+    """
+
+    args      = """-b D1"""
+    exp_rs    = 0
+
+    user    = pwd.getpwuid(os.getuid())[0] 
+    _args   = args.replace('<USER>',user)
+
+    results = testutils.run_cmd('nodeadm.py',_args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+    cmd_err = results[3]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Command Error:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), _args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
 def test_nodeadm_queue_1():
     """
     nodeadm test run: queue_1
 
         Command Output:
-        Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]"
+        Usage: nodeadm.py [flags] [part1 part2...]"
         
         
         Command Error/Debug:No arguments or options provided

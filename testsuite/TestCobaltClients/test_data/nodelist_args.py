@@ -9,11 +9,11 @@ test_argslist - is a list of dictionaries, each dictionary has all the necessary
 """
 
 test_argslist = [
-    { "tc_name" : "arg_1", "args" : "", },
-    { "tc_name" : "arg_2", "args" : """arg1""", },
-    { "tc_name" : "debug", "args" : """-d""", },
-    { "tc_name" : "options_1", "args" : """-l""",},
-    { "tc_name" : "options_2", "args" : """--help""",},
-    { "tc_name" : "options_3", "args" : """-h""",},
-    { "tc_name" : "options_4", "args" : """--version""",},
+    { "tc_name" : "arg_1", "args" : "", "new_only": True},
+    { "tc_name" : "arg_2", "args" : """arg1""",  "new_only": True},
+    { "tc_name" : "debug", "args" : """-d""",  "new_only": True},
+    { "tc_name" : "options_1", "args" : """-l""", "new_only": True},
+    { "tc_name" : "options_2", "args" : """--help""", "new_only": True},
+    { "tc_name" : "options_3", "args" : """-h""", "new_only": True},
+    { "tc_name" : "options_4", "args" : """--version""", "new_only": True},
     ]
