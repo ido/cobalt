@@ -1,5 +1,17 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 1.0.8 ==
+ * Fixed a bug where a node going down during a running job could allow that
+   node to be selected for draining.
+ * Expanded a buffer used by the forkers that should significantly improve the
+   speed of reading large ALPS responses and no longer interfere with node
+   reacquisition
+ * Cleaned up stray print statements in node information
+ * Fixed an error where score could be set to a string rather than a float via
+   the filter scripts
+ * Fixed an error where the queue-manager statefile could be lost if Cobalt was
+   brought down with a job in the "Terminal" state.
+
 == Changes to 1.0.6 ==
  * Backfill now supported on Cray systems.
  * Major performance improvement to nodelist and nodeadm -l.

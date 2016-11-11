@@ -2,7 +2,6 @@
 # $Id$
 
 '''Cobalt Queue Manager'''
-__revision__ = '$Revision$'
 
 #
 # TODO:
@@ -68,7 +67,6 @@ __revision__ = '$Revision$'
 #   to be non-zero and thus would be a valid exit status if the task was terminated.
 #
 
-DEFAULT_FORCE_KILL_DELAY = 5  # (in minutes)
 
 import errno
 import logging
@@ -103,8 +101,10 @@ from Cobalt import accounting
 from Cobalt.Statistics import Statistics
 from Cobalt.Util import get_config_option, init_cobalt_config
 
+__revision__ = '$Revision$'
 init_cobalt_config()
 
+DEFAULT_FORCE_KILL_DELAY = 5  # (in minutes)
 CLOB_SIZE = 4096
 
 logger = logging.getLogger(__name__.split('.')[-1])
@@ -788,7 +788,6 @@ class Job (StateMachine):
         self.runid = state.get("runid", None)
         #for old statefiles, make sure to update the dependency state on restart:
         self.__dep_hold = False
-        self.update_dep_state()
         self.initializing = False
 
     def __task_signal(self, retry = True):
@@ -3584,6 +3583,18 @@ class QueueManager(Component):
         Component.__setstate__(self, state)
 
         self.Queues = state['Queues']
+        # jobs are reloaded after queues.  Update dependencies on jobs now.  In
+        # the event of a non-terminal job, don't try and transition it
+        # FIXME: migrate change here.
+        for queue in self.Queues.values():
+            for job in queue.jobs:
+                try:
+                    job.update_dep_state()
+                except StateMachineIllegalEventError:
+                    if job.state == 'done':
+                        logger.warning('Job %s/%s: Job in Terminal state found.', job.jobid, job.user)
+                    else:
+                        raise
         use_db_jobid_generator = get_cqm_config("use_db_jobid_generator", "False").lower() in Cobalt.Util.config_true_values
         self.id_gen = IncrID(use_database = use_db_jobid_generator)
         self.id_gen.set(state['next_job_id'], override = True)
@@ -3624,7 +3635,6 @@ class QueueManager(Component):
             dbwriter.msg_queue = state["msg_queue"]
         if state.has_key('overflow') and (dbwriter.max_queued != None):
             dbwriter.overflow = state['overflow']
-
 
     def __save_me(self):
         Component.save(self)
@@ -3807,7 +3817,7 @@ class QueueManager(Component):
                             failure_msg = 'No Max Walltime default or for queue "%s" defined. Please contact system administrator' % spec['queue']
                             logger.error(failure_msg)
                             raise QueueError, failure_msg
-                    
+
                 spec.update({'adminemail':self.Queues[spec['queue']].adminemail})
                 if walltime_prediction_enabled:
                     spec['walltime_p'] = self.get_walltime_p(spec)        #*AdjEst*
@@ -3838,13 +3848,20 @@ class QueueManager(Component):
         if updates.has_key("queue"):
             new_q_name = updates["queue"]
             if new_q_name not in self.Queues:
-                logger.error("attempted to move a job to non-existent queue '%s'" % new_q_name)
-                raise QueueError, "Error: queue '%s' does not exist" % new_q_name
+                logger.error("attempted to move a job to non-existent queue '%s'",
+                        new_q_name)
+                raise QueueError("Error: queue '%s' does not exist" % new_q_name)
 
             for job in joblist:
                 if job.is_active or job.has_completed:
-                    raise QueueError, "job %d is running; it cannot be moved" % job.jobid   
-
+                    raise QueueError("job %d is running; it cannot be moved" % job.jobid)
+        if updates.has_key("score"):
+            try:
+                updates['score'] = float(updates['score'])
+            except ValueError:
+                logger.error('new score of %s cannot be converted to a floating point value',
+                        updates['score'])
+                raise QueueError("Bad new score value.")
 
         for job in joblist:
 
