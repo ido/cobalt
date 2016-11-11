@@ -17,7 +17,7 @@ from Cobalt.Components.system.CrayNode import CrayNode
 from Cobalt.Components.system.base_pg_manager import ProcessGroupManager
 from Cobalt.Exceptions import ComponentLookupError
 from Cobalt.Exceptions import JobNotInteractive
-from Cobalt.DataTypes.ProcessGroup import ProcessGroup
+from Cobalt.Components.system.ALPSProcessGroup import ALPSProcessGroup
 from Cobalt.Util import compact_num_list, expand_num_list
 from Cobalt.Util import init_cobalt_config, get_config_option
 
@@ -33,7 +33,6 @@ SAVE_ME_INTERVAL = float(get_config_option('alpsssytem', 'save_me_interval', 10.
 PENDING_STARTUP_TIMEOUT = float(get_config_option('alpssystem',
     'pending_startup_timeout', 1200)) #default 20 minutes to account for boot.
 APKILL_CMD = get_config_option('alps', 'apkill', '/opt/cray/alps/default/bin/apkill')
-PGROUP_STARTUP_TIMEOUT = float(get_config_option('alpssystem', 'pgroup_startup_timeout', 120.0))
 DRAIN_MODE = get_config_option('system', 'drain_mode', 'first-fit')
 #cleanup time in seconds
 CLEANUP_DRAIN_WINDOW = get_config_option('system', 'cleanup_drain_window', 300)
@@ -54,18 +53,6 @@ def chain_loc_list(loc_list):
         retlist.extend(expand_num_list(locs))
     return retlist
 
-class ALPSProcessGroup(ProcessGroup):
-    '''ALPS-specific PocessGroup modifications.'''
-
-    def __init__(self, spec):
-        super(ALPSProcessGroup, self).__init__(spec)
-        self.alps_res_id = spec.get('alps_res_id', None)
-        self.interactive_complete = False
-        now = time.time()
-        self.startup_timeout = int(spec.get("pgroup_startup_timeout",
-            now + PGROUP_STARTUP_TIMEOUT))
-
-    #inherit generic getstate and setstate methods from parent
 
 class CraySystem(BaseSystem):
     '''Cray/ALPS-specific system component.  Behaviors should go here.  Direct
@@ -1117,6 +1104,18 @@ class CraySystem(BaseSystem):
     def add_process_groups(self, specs):
         '''Add process groups and start their runs.  Adjust the resource
         reservation time to full run time at this point.
+
+        Args:
+            specs: A list of dictionaries that contain information on the Cobalt
+                   job required to start the backend process.
+
+        Returns:
+            A created process group object.  This is wrapped and sent via XMLRPC
+            to the caller.
+
+        Side Effects:
+            Invokes a forker component to run a user script.  In the event of a
+            fatal startup error, will release resource reservations.
 
         '''
         start_apg_timer = int(time.time())
