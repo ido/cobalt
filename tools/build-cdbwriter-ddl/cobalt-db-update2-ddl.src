@@ -46,15 +46,15 @@ alter table  "##COBALT_SCHEMA##"."RESERVATION_DATA"
       add BLOCK_PASSTHROUGH INTEGER;
 
 ------------------------------------------------
--- DDL Statements for table "##COBALT_SCHEMA##"."RESERVATION_DATA"
+-- DDL Statements for table "##COBALT_SCHEMA##"."RESERVATION_EVENTS"
 ------------------------------------------------
 
-update table "##COBALT_SCHEMA##"."RESERVATION_EVENTS"
-    SET NAME = "terminating"
-    where NAME = "ending";
+update "##COBALT_SCHEMA##"."RESERVATION_EVENTS"
+    SET NAME = 'terminating'
+    where NAME = 'ending';
 
 insert into "##COBALT_SCHEMA##"."RESERVATION_EVENTS" values
-  (default, "deferred"),
-  (default, "deactivating"),
-  (default, "released"),
-  (default, "instance_end");
+  (default, 'deferred'),
+  (default, 'deactivating'),
+  (default, 'released'),
+  (default, 'instance_end');
