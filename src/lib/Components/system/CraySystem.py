@@ -17,6 +17,7 @@ from Cobalt.Components.system.CrayNode import CrayNode
 from Cobalt.Components.system.base_pg_manager import ProcessGroupManager
 from Cobalt.Exceptions import ComponentLookupError
 from Cobalt.Exceptions import JobNotInteractive
+from Cobalt.Exceptions import JobValidationError
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
 from Cobalt.Util import compact_num_list, expand_num_list
 from Cobalt.Util import init_cobalt_config, get_config_option
@@ -1229,9 +1230,16 @@ class CraySystem(BaseSystem):
         '''
         #Right now this does nothing.  Still figuring out what a valid
         #specification looks like.
+        # mode on this system defaults to script.
+        mode = spec.get('mode', None)
+        if ((mode is None) or (mode == False)):
+            spec['mode'] = 'script'
+        if spec['mode'] not in ['script', 'interactive']:
+            raise JobValidationError("Mode %s is not supported on Cray systems." % mode)
+
         # FIXME: Pull this out of the system configuration from ALPS ultimately.
         # For now, set this from config for the PE count per node
-        # nodes = int(spec['nodes'])
+        spec['nodecount'] = int(spec['nodecount'])
         # proccount = spec.get('proccount', None)
         # if proccount is None:
             # nodes * 
