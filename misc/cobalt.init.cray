@@ -49,14 +49,8 @@ start_component () {
     then
         (
          date=`/bin/date`
-         if [ "$component" == "alps_script_forker" ]
-	 then
-           echo "--- $date: START ${component} ---" >>/var/log/cobalt/${component}_${HOSTNAME}.out
-           nohup "${DAEMONDIR}/${component}.py" $component_args --config-files "${CONFIGFILE}" >>/var/log/cobalt/${component}_${HOSTNAME}.out 2>&1 &
-         else
-           echo "--- $date: START ${component} ---" >>/var/log/cobalt/${component}.out
-           nohup "${DAEMONDIR}/${component}.py" $component_args --config-files "${CONFIGFILE}" >>/var/log/cobalt/${component}.out 2>&1 &
-         fi
+         echo "--- $date: START ${component} ---" >>/var/log/cobalt/${component}_${HOSTNAME}.out
+         nohup "${DAEMONDIR}/${component}.py" $component_args --config-files "${CONFIGFILE}" >>/var/log/cobalt/${component}_${HOSTNAME}.out 2>&1 &
         )
         echo "done"
         return 0
