@@ -55,6 +55,5 @@ class ALPSProcessGroup(ProcessGroup):
         '''
         if self.mode == 'interactive':
             if len(USER_SESSION_HOSTS):
-
-
+                pass
         return super(ALPSProcessGroup, self).start()

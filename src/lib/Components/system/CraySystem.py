@@ -15,9 +15,16 @@ from Cobalt.Components.base import Component, exposed, automatic, query, locking
 from Cobalt.Components.system.base_system import BaseSystem
 from Cobalt.Components.system.CrayNode import CrayNode
 from Cobalt.Components.system.base_pg_manager import ProcessGroupManager
+from Cobalt.Components.system.ALPSProcessGroup import ALPSProcessGroup
 from Cobalt.Exceptions import ComponentLookupError
 from Cobalt.Exceptions import JobNotInteractive
+<<<<<<< Updated upstream
 from Cobalt.Components.system.ALPSProcessGroup import ALPSProcessGroup
+from Cobalt.Exceptions import JobValidationError
+from Cobalt.DataTypes.ProcessGroup import ProcessGroup
+=======
+from Cobalt.Exceptions import JobValidationError
+>>>>>>> Stashed changes
 from Cobalt.Util import compact_num_list, expand_num_list
 from Cobalt.Util import init_cobalt_config, get_config_option
 
@@ -25,6 +32,7 @@ _logger = logging.getLogger(__name__)
 
 init_cobalt_config()
 
+SYSTEM_SIZE = int(get_config_option('system', 'size'))
 UPDATE_THREAD_TIMEOUT = int(get_config_option('alpssystem',
     'update_thread_timeout', 10))
 TEMP_RESERVATION_TIME = int(get_config_option('alpssystem',
@@ -39,9 +47,12 @@ CLEANUP_DRAIN_WINDOW = get_config_option('system', 'cleanup_drain_window', 300)
 
 #Epsilon for backfilling.  This system does not do this on a per-node basis.
 BACKFILL_EPSILON = int(get_config_option('system', 'backfill_epsilon', 120))
+ELOGIN_HOSTS = [host for host in ":".split(get_config_option('alpssystem', 'elogin_hosts', ''))]
 
 DRAIN_MODES = ['first-fit', 'backfill']
 CLEANING_ID = -1
+
+
 
 def chain_loc_list(loc_list):
     '''Take a list of compact Cray locations,
@@ -1228,14 +1239,35 @@ class CraySystem(BaseSystem):
         '''
         #Right now this does nothing.  Still figuring out what a valid
         #specification looks like.
+        # mode on this system defaults to script.
+        mode = spec.get('mode', None)
+        if ((mode is None) or (mode == False)):
+            spec['mode'] = 'script'
+        if spec['mode'] not in ['script', 'interactive']:
+            raise JobValidationError("Mode %s is not supported on Cray systems." % mode)
+
         # FIXME: Pull this out of the system configuration from ALPS ultimately.
         # For now, set this from config for the PE count per node
-        # nodes = int(spec['nodes'])
+        spec['nodecount'] = int(spec['nodecount'])
         # proccount = spec.get('proccount', None)
         # if proccount is None:
             # nodes * 
-        spec['proccount'] = spec['nodecount']
+        if spec['proccount'] > SYSTEM_SIZE:
+            raise JobValidationError('Job requested %s nodes.  Maximum permitted size is %s' %
+                    (spec['proccount'], SYSTEM_SIZE))
+        spec['proccount'] = spec['nodecount'] #set multiplier for default depth
+        mode = spec.get('mode', 'script')
+        spec['mode'] = mode
+        if mode == 'interactive':
+            # Handle which script host should handle their job if they're on a
+            # login.
+            if spec.get('qsub_host', None) in ELOGIN_HOSTS:
+                spec['ssh_host'] = self._get_ssh_host()
+
         return spec
+
+    def _get_ssh_host(self):
+        return None
 
     @exposed
     def verify_locations(self, nodes):

@@ -278,6 +278,8 @@ class Component (object):
         self._component_lock = threading.Lock()
         self._component_lock_acquired_time = None
         self.statistics = Statistics()
+        self.logger.info("%s:%s component executing on %s", self.name,
+                self.implementation, socket.gethostname())
 
     def __getstate__(self):
         state = {}
@@ -296,6 +298,8 @@ class Component (object):
         self._component_lock = threading.Lock()
         self._component_lock_acquired_time = None
         self.statistics = Statistics()
+        self.logger.info("%s:%s component executing on %s", self.name,
+                self.implementation, socket.gethostname())
 
     def component_lock_acquire(self):
         entry_time = time.time()
