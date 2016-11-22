@@ -18,13 +18,9 @@ from Cobalt.Components.system.base_pg_manager import ProcessGroupManager
 from Cobalt.Components.system.ALPSProcessGroup import ALPSProcessGroup
 from Cobalt.Exceptions import ComponentLookupError
 from Cobalt.Exceptions import JobNotInteractive
-<<<<<<< Updated upstream
 from Cobalt.Components.system.ALPSProcessGroup import ALPSProcessGroup
 from Cobalt.Exceptions import JobValidationError
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
-=======
-from Cobalt.Exceptions import JobValidationError
->>>>>>> Stashed changes
 from Cobalt.Util import compact_num_list, expand_num_list
 from Cobalt.Util import init_cobalt_config, get_config_option
 
@@ -47,8 +43,9 @@ CLEANUP_DRAIN_WINDOW = get_config_option('system', 'cleanup_drain_window', 300)
 
 #Epsilon for backfilling.  This system does not do this on a per-node basis.
 BACKFILL_EPSILON = int(get_config_option('system', 'backfill_epsilon', 120))
-ELOGIN_HOSTS = [host for host in ":".split(get_config_option('alpssystem', 'elogin_hosts', ''))]
-
+ELOGIN_HOSTS = [host for host in get_config_option('alpssystem', 'elogin_hosts', '').split(':')]
+if ELOGIN_HOSTS == ['']:
+    ELOGIN_HOSTS = []
 DRAIN_MODES = ['first-fit', 'backfill']
 CLEANING_ID = -1
 
@@ -1245,7 +1242,6 @@ class CraySystem(BaseSystem):
             spec['mode'] = 'script'
         if spec['mode'] not in ['script', 'interactive']:
             raise JobValidationError("Mode %s is not supported on Cray systems." % mode)
-
         # FIXME: Pull this out of the system configuration from ALPS ultimately.
         # For now, set this from config for the PE count per node
         spec['nodecount'] = int(spec['nodecount'])
@@ -1262,12 +1258,13 @@ class CraySystem(BaseSystem):
             # Handle which script host should handle their job if they're on a
             # login.
             if spec.get('qsub_host', None) in ELOGIN_HOSTS:
-                spec['ssh_host'] = self._get_ssh_host()
-
+                try:
+                    spec['ssh_host'] = self.process_manager.select_ssh_host()
+                except RuntimeError:
+                    spec['ssh_host'] = None
+                if spec['ssh_host'] is None:
+                    raise JobValidationError('No valid SSH host could be found for interactive job.')
         return spec
-
-    def _get_ssh_host(self):
-        return None
 
     @exposed
     def verify_locations(self, nodes):
