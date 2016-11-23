@@ -7,16 +7,17 @@ import time
 import sys
 import xmlrpclib
 import json
-
+import ConfigParser
 import Cobalt.Util
 import Cobalt.Components.system.AlpsBridge as ALPSBridge
-
 from Cobalt.Components.base import Component, exposed, automatic, query, locking
 from Cobalt.Components.system.base_system import BaseSystem
 from Cobalt.Components.system.CrayNode import CrayNode
 from Cobalt.Components.system.base_pg_manager import ProcessGroupManager
+from Cobalt.Components.system.ALPSProcessGroup import ALPSProcessGroup
 from Cobalt.Exceptions import ComponentLookupError
 from Cobalt.Exceptions import JobNotInteractive
+from Cobalt.Components.system.ALPSProcessGroup import ALPSProcessGroup
 from Cobalt.Exceptions import JobValidationError
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
 from Cobalt.Util import compact_num_list, expand_num_list
@@ -34,16 +35,19 @@ SAVE_ME_INTERVAL = float(get_config_option('alpsssytem', 'save_me_interval', 10.
 PENDING_STARTUP_TIMEOUT = float(get_config_option('alpssystem',
     'pending_startup_timeout', 1200)) #default 20 minutes to account for boot.
 APKILL_CMD = get_config_option('alps', 'apkill', '/opt/cray/alps/default/bin/apkill')
-PGROUP_STARTUP_TIMEOUT = float(get_config_option('alpssystem', 'pgroup_startup_timeout', 120.0))
 DRAIN_MODE = get_config_option('system', 'drain_mode', 'first-fit')
 #cleanup time in seconds
 CLEANUP_DRAIN_WINDOW = get_config_option('system', 'cleanup_drain_window', 300)
 
 #Epsilon for backfilling.  This system does not do this on a per-node basis.
 BACKFILL_EPSILON = int(get_config_option('system', 'backfill_epsilon', 120))
-
+ELOGIN_HOSTS = [host for host in get_config_option('system', 'elogin_hosts', '').split(':')]
+if ELOGIN_HOSTS == ['']:
+    ELOGIN_HOSTS = []
 DRAIN_MODES = ['first-fit', 'backfill']
 CLEANING_ID = -1
+
+
 
 def chain_loc_list(loc_list):
     '''Take a list of compact Cray locations,
@@ -55,18 +59,6 @@ def chain_loc_list(loc_list):
         retlist.extend(expand_num_list(locs))
     return retlist
 
-class ALPSProcessGroup(ProcessGroup):
-    '''ALPS-specific PocessGroup modifications.'''
-
-    def __init__(self, spec):
-        super(ALPSProcessGroup, self).__init__(spec)
-        self.alps_res_id = spec.get('alps_res_id', None)
-        self.interactive_complete = False
-        now = time.time()
-        self.startup_timeout = int(spec.get("pgroup_startup_timeout",
-            now + PGROUP_STARTUP_TIMEOUT))
-
-    #inherit generic getstate and setstate methods from parent
 
 class CraySystem(BaseSystem):
     '''Cray/ALPS-specific system component.  Behaviors should go here.  Direct
@@ -96,6 +88,11 @@ class CraySystem(BaseSystem):
         component.
 
         '''
+        try:
+            self.system_size = int(get_config_option('system', 'size'))
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+            _logger.critical('ALPS SYSTEM: ABORT STARTUP: System size must be specified in the [system] section of the cobalt configuration file.')
+            sys.exit(1)
         if DRAIN_MODE not in DRAIN_MODES:
             #abort startup, we have a completely invalid config.
             _logger.critical('ALPS SYSTEM: ABORT STARTUP: %s is not a valid drain mode.  Must be one of %s.',
@@ -1119,6 +1116,18 @@ class CraySystem(BaseSystem):
         '''Add process groups and start their runs.  Adjust the resource
         reservation time to full run time at this point.
 
+        Args:
+            specs: A list of dictionaries that contain information on the Cobalt
+                   job required to start the backend process.
+
+        Returns:
+            A created process group object.  This is wrapped and sent via XMLRPC
+            to the caller.
+
+        Side Effects:
+            Invokes a forker component to run a user script.  In the event of a
+            fatal startup error, will release resource reservations.
+
         '''
         start_apg_timer = int(time.time())
 
@@ -1236,14 +1245,28 @@ class CraySystem(BaseSystem):
             spec['mode'] = 'script'
         if spec['mode'] not in ['script', 'interactive']:
             raise JobValidationError("Mode %s is not supported on Cray systems." % mode)
-
         # FIXME: Pull this out of the system configuration from ALPS ultimately.
         # For now, set this from config for the PE count per node
         spec['nodecount'] = int(spec['nodecount'])
         # proccount = spec.get('proccount', None)
         # if proccount is None:
-            # nodes * 
-        spec['proccount'] = spec['nodecount']
+            # nodes *
+        if spec['nodecount'] > self.system_size:
+            raise JobValidationError('Job requested %s nodes.  Maximum permitted size is %s' %
+                    (spec['nodecount'], self.system_size))
+        spec['proccount'] = spec['nodecount'] #set multiplier for default depth
+        mode = spec.get('mode', 'script')
+        spec['mode'] = mode
+        if mode == 'interactive':
+            # Handle which script host should handle their job if they're on a
+            # login.
+            if spec.get('qsub_host', None) in ELOGIN_HOSTS:
+                try:
+                    spec['ssh_host'] = self.process_manager.select_ssh_host()
+                except RuntimeError:
+                    spec['ssh_host'] = None
+                if spec['ssh_host'] is None:
+                    raise JobValidationError('No valid SSH host could be found for interactive job.')
         return spec
 
     @exposed
@@ -1341,7 +1364,8 @@ class CraySystem(BaseSystem):
 
         # try to confirm, if we fail at confirmation, try to reserve same
         # resource set again
-        _logger.debug('confirming with pagg_id %s', pg_id)
+        _logger.info('%s/%s: confirming with pagg_id %s', specs['jobid'],
+                specs['user'], pg_id)
         ALPSBridge.confirm(int(alps_res.alps_res_id), pg_id)
         return True
 

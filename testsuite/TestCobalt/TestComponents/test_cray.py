@@ -1,4 +1,16 @@
 # Test Cray-specific utilities/calls.
+SYSTEM_CONFIG_ENTRY = """
+[system]
+size: 10
+elogin_hosts: foo:bar
+"""
+import Cobalt
+import TestCobalt
+config_file = Cobalt.CONFIG_FILES[0]
+config_fp = open(config_file, "w")
+config_fp.write(SYSTEM_CONFIG_ENTRY)
+config_fp.close()
+
 from nose.tools import raises
 from testsuite.TestCobalt.Utilities.assert_functions import assert_match, assert_not_match
 from Cobalt.Components.system.CrayNode import CrayNode
@@ -9,7 +21,6 @@ from Cobalt.Components.system.base_pg_manager import ProcessGroupManager
 import Cobalt.Components.system.AlpsBridge as AlpsBridge
 
 from mock import MagicMock, Mock, patch
-
 
 def is_match(a, b):
     return a is b
@@ -954,3 +965,22 @@ class TestCraySystem(object):
             self.assert_draining(i, 550, 2)
         for i in [1, 4, 5]:
             self.assert_not_draining(i)
+
+    def test_validate_job_normal(self):
+        '''CraySystem.validate_job: valid job submission'''
+        expected = {'mode':'script', 'nodecount': 1, 'proccount': 1}
+        spec  = {'mode':'script', 'nodecount': 1}
+        ret_spec = self.system.validate_job(spec)
+        assert expected == ret_spec, "Invalid spec returned"
+
+    @raises(Cobalt.Exceptions.JobValidationError)
+    def test_validate_job_reject_too_large(self):
+        '''CraySystem.validate_job: reject too big job'''
+        spec  = {'mode':'script', 'nodecount': 9999}
+        ret_spec = self.system.validate_job(spec)
+
+    @raises(Cobalt.Exceptions.JobValidationError)
+    def test_validate_job_reject_no_host(self):
+        '''CraySystem.validate_job: reject missing ssh host'''
+        spec  = {'mode':'interactive', 'nodecount': 1, 'qsub_host':'foo'}
+        ret_spec = self.system.validate_job(spec)

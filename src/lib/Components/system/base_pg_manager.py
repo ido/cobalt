@@ -16,16 +16,9 @@ from Cobalt.Data import IncrID
 
 _logger = logging.getLogger()
 
-init_cobalt_config()
-
-FORKER_RE = re.compile('forker')
-
 class ProcessGroupManager(object): #degenerate with ProcessMonitor.
     '''Manager for process groups.  These are tasks that Cobalt run on behalf of
     the user.  Typically these are scripts submitted via qsub.'''
-
-
-    SIGKILL_TIMEOUT = int(get_config_option('system', 'sigkill_timeout', 300))
 
     def __init__(self, pgroup_type=ProcessGroup):
         '''Initialize process group manager.
@@ -35,9 +28,9 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
             compatible with the ProcessGroupDict class.
 
         '''
+        self._init_config_vars()
         self.pgroup_type = pgroup_type
         self._common_init_restart()
-
 
     def _common_init_restart(self, state=None):
         '''common intitialization code for both cold initilaization and
@@ -50,14 +43,28 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
         else:
             self.process_groups = state.get('process_groups',
                     ProcessGroupDict())
-            for pg in self.process_groups.values():
-                _logger.info('recovering pgroup %s, jobid %s', pg.id, pg.jobid)
+            for pgroup in self.process_groups.values():
+                _logger.info('recovering pgroup %s, jobid %s', pgroup.id, pgroup.jobid)
             self.process_groups.id_gen.set(int(state['next_pg_id']))
         self.process_group_actions = {}
         self.forkers = [] #list of forker identifiers to use with ComponentProxy
         self.forker_taskcounts = {} # dict of forkers and counts of pgs attached
+        self.forker_locations = {}   # dict of forkers a tuple (host, port)
+        self.remote_qsub_hosts = [] # list of hosts that qsub -I requires
+                                    # ssh-ing to a forker host
         self.process_groups_lock = RLock()
         self.update_launchers()
+
+    def _init_config_vars(self):
+        '''Initialize variables from Cobalt's configuration files.'''
+        init_cobalt_config()
+        self.forker_re = re.compile('forker')
+        self.sigkill_timeout = int(get_config_option('system', 'sigkill_timeout',
+                300))
+        self.remote_qsub_hosts = get_config_option('system',
+                'elogin_hosts', '').split(":")
+        _logger.info('REMOTE QSUB HOSTS: %s',
+                ", ".join(self.remote_qsub_hosts))
 
     def __getstate__(self):
         state = {}
@@ -66,6 +73,7 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
         return state
 
     def __setstate__(self, state):
+        self._init_config_vars()
         self._common_init_restart(state)
         return self
 
@@ -118,7 +126,8 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
         now = int(time.time())
         self.signal_groups(pgids)
         for pg_id in pgids:
-            self.process_groups[pg_id].sigkill_timeout = int(now + self.SIGKILL_TIMEOUT)
+            self.process_groups[pg_id].sigkill_timeout = int(now +
+                    self.sigkill_timeout)
 
     def start_groups(self, pgids):
         '''Start process groups. Return groups that succeeded startup.
@@ -234,6 +243,33 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
             _logger.info('%s Process Group deleted', pg.label)
         return cleaned_groups
 
+    def select_ssh_host(self):
+        '''select a host to ssh to for interactive jobs.  Choose the most
+        lightly loaded host at this time.
+
+        Returns:
+            A string hostname for SSH use to set up an interactive shell
+            If no locaiton is specified, None is returneddddd
+
+        Exceptions:
+            RuntimeError if no forkers are currently set up.
+
+        '''
+        ordered_forkers = [f[0] for f in
+                sorted(self.forker_taskcounts.items(), key=lambda x:x[1])]
+        if len(ordered_forkers) < 0:
+            raise RuntimeError("No forkers registered!")
+        else:
+            if len(ordered_forkers) > 0:
+                forker = ordered_forkers[0] #this is now a tuple
+            else:
+                return None
+        try:
+            return self.forker_locations[forker]
+        except KeyError:
+            pass
+        return None
+
     def update_launchers(self):
         '''Update the list of task launchers.  This right now works for
         alps_forkers.  Drop entries that slp doesn't know about and add in ones
@@ -246,21 +282,27 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
         resets the internal forker list to an updated list based on SLP registry
 
         return is void
-        '''
-        # TODO: Move this to something Cray-specific later
 
+        '''
         updated_forker_list = []
+        new_forker_locations = {}
         try:
-            services = ComponentProxy('service-location').get_services([{'name':'*'}])
+            services = ComponentProxy('service-location').get_services([{'name': '*',
+                                                              'location': '*'}])
         except Exception:
             _logger.critical('Unable to reach service-location', exc_info=True)
             return
         for service in services:
             asf_re = re.compile('alps_script_forker')
+            host_re = re.compile(r'https://(?P<host>.*):[0-9]*')
             if re.match(asf_re, service['name']):
+                loc = re.match(host_re, service['location']).group('host')
+                if loc:
+                    new_forker_locations[service['name']] = loc
                 updated_forker_list.append(service['name'])
                 if service['name'] not in self.forker_taskcounts.keys():
                     self.forker_taskcounts[service['name']] = 0
         # Get currently running tasks from forkers.  Different loop?
         self.forkers = updated_forker_list
+        self.forker_locations = new_forker_locations
         return

@@ -387,7 +387,7 @@ def exec_user_shell(user, jobid, loc):
     Wait until termination.
 
     '''
-    pgid = os.getppid()
+    pgid = os.getsid(0)
     proc = subprocess.Popen([os.environ['SHELL']], shell=True,
             preexec_fn=(lambda: fetch_pgid(user, jobid, loc, pgid=pgid)))
     os.waitpid(proc.pid, 0)
@@ -420,6 +420,8 @@ def run_interactive_job(jobid, user, disable_preboot, nodes, procs):
         if deljob:
             os.system("/usr/bin/ssh -o \"SendEnv COBALT_NODEFILE COBALT_JOBID\" %s" % (loc))
         if impl == 'alps_system':
+            # We may need to use a remote host depending on whether or not we
+            # are on an eLogin.
             exec_user_shell(user, jobid, loc)
         else:
             os.system(os.environ['SHELL'])
@@ -454,6 +456,19 @@ def run_interactive_job(jobid, user, disable_preboot, nodes, procs):
 
     return deljob
 
+def qsub_remote_host(host):
+    '''On ALPS eLogins, we need to remote interactive mode qusubs to a host that
+    actually can run aprun.  If you don't do this, authentication to the batch
+    reservation fails due to the session id being used to authenticate and the
+    eLogin aprun being a ssh wrapper.
+
+    '''
+    SSH_CMD = '/usr/bin/ssh'
+    # And yes, that behavior is inherently broken.
+    ssh_cmd =  [SSH_CMD, '-t', host]
+    ssh_cmd.extend(sys.argv)
+    return subprocess.call(ssh_cmd)
+
 def run_job(parser, user, spec, opts):
     """
     run the job
@@ -461,6 +476,8 @@ def run_job(parser, user, spec, opts):
     jobid        = None
     deljob       = True
     exc_occurred = False
+    interactive_remote_host = opts.get('ssh_host', None)
+
     try:
         not_exit_on_interrupt()
         jobs  =  client_utils.component_call(QUEMGR, False, 'add_jobs',([spec],), False)
@@ -491,6 +508,8 @@ def main():
     """
     # setup logging for client. The clients should call this before doing anything else.
     client_utils.setup_logging(logging.INFO)
+
+
 
     spec     = {} # map of destination option strings and parsed values
     opts     = {} # old map
@@ -555,8 +574,21 @@ def main():
     check_inputfile(parser, spec)
 
     not_exit_on_interrupt()
+    opts['qsub_host'] = socket.gethostname()
+    print opts['qsub_host']
     opts = client_utils.component_call(SYSMGR, False, 'validate_job',(opts,))
+    impl = client_utils.component_call(SYSMGR, False, 'get_implementation',())
     exit_on_interrupt()
+
+    if impl in ['alps_system']:
+        # If we're interactive, remote and go.
+        if opts['mode'] == 'interactive':
+            if opts.get('ssh_host', None) is not None:
+                print opts['qsub_host'], opts.get('ssh_host', None)
+                if opts['qsub_host'] != opts['ssh_host']:
+                    #remote execute qsub on the ssh_host
+                    client_utils.logger.info('Connecting to %s for interactive qsub...', opts['ssh_host'])
+                    sys.exit(qsub_remote_host(opts['ssh_host'])) # return status from qsub-ssh
 
     filters = client_utils.get_filters()
     client_utils.process_filters(filters, spec)

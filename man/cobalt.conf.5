@@ -63,6 +63,13 @@ Path to where the statefiles are stored.
 .SS "[system]"
 Common system configuration settings.  These apply to all types of systems.
 .TP
+.B elogin_hosts
+A ':'-delimited list of hostnames of hosts that users can qsub interactive jobs
+on that then have to be run on another node.  This is ususally due to
+restrictions in the authentication and authorization mechanisms for the mpirun
+equivalent on a given system.  This is most commonly required for Cray systems
+using eLogin nodes.
+.TP
 .B size
 Maximum size of a given system in nodes.
 .PP
