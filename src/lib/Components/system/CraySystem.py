@@ -43,7 +43,7 @@ CLEANUP_DRAIN_WINDOW = get_config_option('system', 'cleanup_drain_window', 300)
 
 #Epsilon for backfilling.  This system does not do this on a per-node basis.
 BACKFILL_EPSILON = int(get_config_option('system', 'backfill_epsilon', 120))
-ELOGIN_HOSTS = [host for host in get_config_option('alpssystem', 'elogin_hosts', '').split(':')]
+ELOGIN_HOSTS = [host for host in get_config_option('system', 'elogin_hosts', '').split(':')]
 if ELOGIN_HOSTS == ['']:
     ELOGIN_HOSTS = []
 DRAIN_MODES = ['first-fit', 'backfill']
@@ -1361,7 +1361,8 @@ class CraySystem(BaseSystem):
 
         # try to confirm, if we fail at confirmation, try to reserve same
         # resource set again
-        _logger.debug('confirming with pagg_id %s', pg_id)
+        _logger.info('%s/%s: confirming with pagg_id %s', specs['jobid'],
+                specs['user'], pg_id)
         ALPSBridge.confirm(int(alps_res.alps_res_id), pg_id)
         return True
 

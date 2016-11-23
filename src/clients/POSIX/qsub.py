@@ -387,7 +387,7 @@ def exec_user_shell(user, jobid, loc):
     Wait until termination.
 
     '''
-    pgid = os.getppid()
+    pgid = os.getsid(0)
     proc = subprocess.Popen([os.environ['SHELL']], shell=True,
             preexec_fn=(lambda: fetch_pgid(user, jobid, loc, pgid=pgid)))
     os.waitpid(proc.pid, 0)

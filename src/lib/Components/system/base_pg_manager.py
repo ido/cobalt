@@ -49,7 +49,7 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
         self.process_group_actions = {}
         self.forkers = [] #list of forker identifiers to use with ComponentProxy
         self.forker_taskcounts = {} # dict of forkers and counts of pgs attached
-        self.forker_loctions = {}   # dict of forkers a tuple (host, port)
+        self.forker_locations = {}   # dict of forkers a tuple (host, port)
         self.remote_qsub_hosts = [] # list of hosts that qsub -I requires
                                     # ssh-ing to a forker host
         self.process_groups_lock = RLock()
@@ -62,7 +62,7 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
         self.sigkill_timeout = int(get_config_option('system', 'sigkill_timeout',
                 300))
         self.remote_qsub_hosts = get_config_option('system',
-                'remote_qsub_hosts', '').split(":")
+                'elogin_hosts', '').split(":")
         _logger.info('REMOTE QSUB HOSTS: %s',
                 ", ".join(self.remote_qsub_hosts))
 
@@ -262,7 +262,7 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
         else:
             forker = ordered_forkers[0] #this is now a tuple
         try:
-            return self.forker_loctions[forker]
+            return self.forker_locations[forker]
         except KeyError:
             pass
         return None
@@ -293,7 +293,7 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
             asf_re = re.compile('alps_script_forker')
             host_re = re.compile(r'https://(?P<host>.*):[0-9]*')
             if re.match(asf_re, service['name']):
-                loc = re.match(host_re, service['location'])
+                loc = re.match(host_re, service['location']).group('host')
                 if loc:
                     new_forker_locations[service['name']] = loc
                 updated_forker_list.append(service['name'])
@@ -301,5 +301,5 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
                     self.forker_taskcounts[service['name']] = 0
         # Get currently running tasks from forkers.  Different loop?
         self.forkers = updated_forker_list
-        self.forker_loctions = new_forker_locations
+        self.forker_locations = new_forker_locations
         return
