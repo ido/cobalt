@@ -1,5 +1,15 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 1.0.9 ==
+ * Cobalt database writer now working properly with Cray Systems.
+ * Updates to the Cobalt Database DDL build scripts
+ * Interactive jobs enhanded to work in Cray's eLogin environment.  Users will
+   now be sent to a node that can run a real aprun prior to their shell being
+   launched.
+ * The Cray init script will now tag all redirected console output files with
+   the originating node.
+ * Components now log what host they are launched on at startup
+
 == Changes to 1.0.8 ==
  * Fixed a bug where a node going down during a running job could allow that
    node to be selected for draining.
@@ -11,6 +21,9 @@
    the filter scripts
  * Fixed an error where the queue-manager statefile could be lost if Cobalt was
    brought down with a job in the "Terminal" state.
+
+== Changes to 1.0.7 ==
+ * Updated a new Cray-system specific init script.
 
 == Changes to 1.0.6 ==
  * Backfill now supported on Cray systems.
