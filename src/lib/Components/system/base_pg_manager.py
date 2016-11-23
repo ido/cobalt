@@ -260,7 +260,10 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
         if len(ordered_forkers) < 0:
             raise RuntimeError("No forkers registered!")
         else:
-            forker = ordered_forkers[0] #this is now a tuple
+            if len(ordered_forkers) > 0:
+                forker = ordered_forkers[0] #this is now a tuple
+            else:
+                return None
         try:
             return self.forker_locations[forker]
         except KeyError:

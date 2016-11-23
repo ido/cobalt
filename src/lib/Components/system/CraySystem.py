@@ -7,10 +7,9 @@ import time
 import sys
 import xmlrpclib
 import json
-
+import ConfigParser
 import Cobalt.Util
 import Cobalt.Components.system.AlpsBridge as ALPSBridge
-
 from Cobalt.Components.base import Component, exposed, automatic, query, locking
 from Cobalt.Components.system.base_system import BaseSystem
 from Cobalt.Components.system.CrayNode import CrayNode
@@ -28,7 +27,6 @@ _logger = logging.getLogger(__name__)
 
 init_cobalt_config()
 
-SYSTEM_SIZE = int(get_config_option('system', 'size'))
 UPDATE_THREAD_TIMEOUT = int(get_config_option('alpssystem',
     'update_thread_timeout', 10))
 TEMP_RESERVATION_TIME = int(get_config_option('alpssystem',
@@ -90,6 +88,11 @@ class CraySystem(BaseSystem):
         component.
 
         '''
+        try:
+            self.system_size = int(get_config_option('system', 'size'))
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+            _logger.critical('ALPS SYSTEM: ABORT STARTUP: System size must be specified in the [system] section of the cobalt configuration file.')
+            sys.exit(1)
         if DRAIN_MODE not in DRAIN_MODES:
             #abort startup, we have a completely invalid config.
             _logger.critical('ALPS SYSTEM: ABORT STARTUP: %s is not a valid drain mode.  Must be one of %s.',
@@ -1247,10 +1250,10 @@ class CraySystem(BaseSystem):
         spec['nodecount'] = int(spec['nodecount'])
         # proccount = spec.get('proccount', None)
         # if proccount is None:
-            # nodes * 
-        if spec['proccount'] > SYSTEM_SIZE:
+            # nodes *
+        if spec['nodecount'] > self.system_size:
             raise JobValidationError('Job requested %s nodes.  Maximum permitted size is %s' %
-                    (spec['proccount'], SYSTEM_SIZE))
+                    (spec['nodecount'], self.system_size))
         spec['proccount'] = spec['nodecount'] #set multiplier for default depth
         mode = spec.get('mode', 'script')
         spec['mode'] = mode
