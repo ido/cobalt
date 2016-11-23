@@ -575,7 +575,6 @@ def main():
 
     not_exit_on_interrupt()
     opts['qsub_host'] = socket.gethostname()
-    print opts['qsub_host']
     opts = client_utils.component_call(SYSMGR, False, 'validate_job',(opts,))
     impl = client_utils.component_call(SYSMGR, False, 'get_implementation',())
     exit_on_interrupt()
@@ -584,7 +583,6 @@ def main():
         # If we're interactive, remote and go.
         if opts['mode'] == 'interactive':
             if opts.get('ssh_host', None) is not None:
-                print opts['qsub_host'], opts.get('ssh_host', None)
                 if opts['qsub_host'] != opts['ssh_host']:
                     #remote execute qsub on the ssh_host
                     client_utils.logger.info('Connecting to %s for interactive qsub...', opts['ssh_host'])

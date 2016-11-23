@@ -10,7 +10,8 @@ def test_qsub_all_options_1():
     args      = """-v -A myproj --attrs=a=1:b=2 --cwd /tmp -d --debuglog=/tmp/d --dependencies=1:2:3 -e /tmp/e --env v1=1:v2=2 --geometry 198x198x198x198 -h -i /bin/ls -M myemal@gmail.com -n10 -o /tmp/o -O tmp --proccount 10 -qqueue --run_users user1:user2:user3 --run_project -t 10 --mode script --kernel kernel -K kopts /bin/ls"""
 
     cmdout    = \
-"""1
+"""foo.bar
+1
 """
 
     cmderr    = \
@@ -25,7 +26,12 @@ component: "queue-manager.get_jobs", defer: True
 
 component: "system.validate_job", defer: False
   validate_job(
-     {'kernel': 'kernel', 'verbose': True, 'held': True, 'notify': 'myemal@gmail.com', 'ion_kerneloptions': False, 'project': 'myproj', 'preemptable': False, 'forcenoval': False, 'umask': False, 'version': False, 'env': 'v1=1:v2=2', 'cwd': '/tmp', 'run_project': True, 'outputprefix': 'tmp', 'kerneloptions': 'kopts', 'time': '10', 'jobname': False, 'debug': True, 'dependencies': '1:2:3', 'debuglog': '/tmp/d', 'ion_kernel': 'default', 'proccount': '10', 'disable_preboot': False, 'geometry': '198x198x198x198', 'queue': 'queue', 'mode': 'script', 'error': '/tmp/e', 'nodecount': '10', 'output': '/tmp/o', 'inputfile': '/bin/ls', 'attrs': {'a': '1', 'b': '2'}, 'user_list': 'user1:user2:user3', 'interactive': False},
+     {'kernel': 'kernel', 'verbose': True, 'held': True, 'notify': 'myemal@gmail.com', 'ion_kerneloptions': False, 'project': 'myproj', 'preemptable': False, 'forcenoval': False, 'umask': False, 'version': False, 'env': 'v1=1:v2=2', 'cwd': '/tmp', 'run_project': True, 'outputprefix': 'tmp', 'kerneloptions': 'kopts', 'time': '10', 'jobname': False, 'debug': True, 'dependencies': '1:2:3', 'debuglog': '/tmp/d', 'qsub_host': 'foo.bar', 'ion_kernel': 'default', 'proccount': '10', 'disable_preboot': False, 'geometry': '198x198x198x198', 'queue': 'queue', 'mode': 'script', 'error': '/tmp/e', 'nodecount': '10', 'output': '/tmp/o', 'inputfile': '/bin/ls', 'attrs': {'a': '1', 'b': '2'}, 'user_list': 'user1:user2:user3', 'interactive': False},
+     )
+
+
+component: "system.get_implementation", defer: False
+  get_implementation(
      )
 
 
@@ -49,6 +55,9 @@ jobid:3
 jobid type: <type 'int'>
 jobid:2
 jobid type: <type 'int'>
+
+GET_IMPLEMENTATION
+
 
 ADD_JOBS
 
@@ -173,6 +182,8 @@ proccount:10
 proccount type: <type 'str'>
 project:myproj
 project type: <type 'str'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:queue
 queue type: <type 'str'>
 run_project:True
@@ -220,13 +231,17 @@ def test_qsub_misc_1():
     args      = """--mode script -n 512 --env BG_COREDUMPDISABLED=1 --proccount 512 -t 30 -q testing /bin/ls"""
 
     cmdout    = \
-"""1
+"""foo.bar
+1
 """
 
     cmderr    = ''
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 args:[]
@@ -328,6 +343,8 @@ proccount:512
 proccount type: <type 'str'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:testing
 queue type: <type 'str'>
 run_project:False
@@ -723,13 +740,17 @@ def test_qsub_invalid_geometry_2():
     args      = """--mode script -t50 -n10 --geometry 1x2x3x4 /bin/ls"""
 
     cmdout    = \
-"""1
+"""foo.bar
+1
 """
 
     cmderr    = ''
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 args:[]
@@ -831,6 +852,8 @@ proccount:False
 proccount type: <type 'bool'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
@@ -878,13 +901,17 @@ def test_qsub_invalid_geometry_3():
     args      = """--mode script -t50 -n10 --geometry 1x2x3x4 /bin/ls"""
 
     cmdout    = \
-"""1
+"""foo.bar
+1
 """
 
     cmderr    = ''
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 args:[]
@@ -986,6 +1013,8 @@ proccount:False
 proccount type: <type 'bool'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
@@ -1033,13 +1062,17 @@ def test_qsub_invalid_geometry_4():
     args      = """--mode script -t50 -n10 --geometry 48x48x48x48x2  /bin/ls"""
 
     cmdout    = \
-"""1
+"""foo.bar
+1
 """
 
     cmderr    = ''
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 args:[]
@@ -1141,6 +1174,8 @@ proccount:False
 proccount type: <type 'bool'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
@@ -1225,13 +1260,17 @@ def test_qsub_invalid_geometry_6():
     args      = """--mode script -t50 -n10 --geometry 128x64x32x4    /bin/ls"""
 
     cmdout    = \
-"""1
+"""foo.bar
+1
 """
 
     cmderr    = ''
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 args:[]
@@ -1333,6 +1372,8 @@ proccount:False
 proccount type: <type 'bool'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
@@ -1371,9 +1412,9 @@ version type: <type 'bool'>
 
 
 # ---------------------------------------------------------------------------------
-def test_qsub_no_roject_specified():
+def test_qsub_no_project_specified():
     """
-    qsub test run: no_roject_specified
+    qsub test run: no_project_specified
 
     """
 
@@ -1417,13 +1458,17 @@ def test_qsub_project_specified():
     args      = """-A who -t50 -n10 /bin/ls"""
 
     cmdout    = \
-"""1
+"""foo.bar
+1
 """
 
     cmderr    = ''
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 args:[]
@@ -1525,6 +1570,8 @@ proccount:False
 proccount type: <type 'bool'>
 project:who
 project type: <type 'str'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
@@ -1572,13 +1619,17 @@ def test_qsub_Check_attrs_1():
     args      = """--attrs xxxx -t50 -n10 /bin/ls"""
 
     cmdout    = \
-"""1
+"""foo.bar
+1
 """
 
     cmderr    = ''
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 args:[]
@@ -1680,6 +1731,8 @@ proccount:False
 proccount type: <type 'bool'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
@@ -1727,13 +1780,17 @@ def test_qsub_Check_attrs_2():
     args      = """--attrs 1111 -t50 -n10 /bin/ls"""
 
     cmdout    = \
-"""1
+"""foo.bar
+1
 """
 
     cmderr    = ''
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 args:[]
@@ -1835,6 +1892,8 @@ proccount:False
 proccount type: <type 'bool'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
@@ -1882,13 +1941,17 @@ def test_qsub_Check_attrs_3():
     args      = """--attrs xx=:yy -t50 -n10 /bin/ls"""
 
     cmdout    = \
-"""1
+"""foo.bar
+1
 """
 
     cmderr    = ''
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 args:[]
@@ -1990,6 +2053,8 @@ proccount:False
 proccount type: <type 'bool'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
@@ -2037,13 +2102,17 @@ def test_qsub_Check_attrs_4():
     args      = """--attrs xx=one:yy=1:zz=1one -t50 -n10 /bin/ls"""
 
     cmdout    = \
-"""1
+"""foo.bar
+1
 """
 
     cmderr    = ''
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 args:[]
@@ -2145,6 +2214,8 @@ proccount:False
 proccount type: <type 'bool'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
@@ -2192,13 +2263,17 @@ def test_qsub_cwd_option_1():
     args      = """--cwd /tmp/ -t10 -n 10 -e p /bin/ls"""
 
     cmdout    = \
-"""1
+"""foo.bar
+1
 """
 
     cmderr    = ''
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 args:[]
@@ -2300,6 +2375,8 @@ proccount:False
 proccount type: <type 'bool'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
@@ -2347,13 +2424,17 @@ def test_qsub_cwd_option_2():
     args      = """--cwd /tmp -t10 -n 10 -e p /bin/ls"""
 
     cmdout    = \
-"""1
+"""foo.bar
+1
 """
 
     cmderr    = ''
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 args:[]
@@ -2455,6 +2536,8 @@ proccount:False
 proccount type: <type 'bool'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
@@ -2539,13 +2622,17 @@ def test_qsub_cwd_option_4():
     args      = """--cwd /tmp/ -t10 -n 10 -e p -o x /bin/ls"""
 
     cmdout    = \
-"""1
+"""foo.bar
+1
 """
 
     cmderr    = ''
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 args:[]
@@ -2649,6 +2736,8 @@ proccount:False
 proccount type: <type 'bool'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
@@ -2696,13 +2785,17 @@ def test_qsub_cwd_option_5():
     args      = """--cwd /tmp -t10 -n 10 -e p -o x /bin/ls"""
 
     cmdout    = \
-"""1
+"""foo.bar
+1
 """
 
     cmderr    = ''
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 args:[]
@@ -2806,6 +2899,8 @@ proccount:False
 proccount type: <type 'bool'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
@@ -2853,13 +2948,17 @@ def test_qsub_debuglog_option():
     args      = """-t10 -n 10 -e p -o x --debuglog y /bin/ls"""
 
     cmdout    = \
-"""1
+"""foo.bar
+1
 """
 
     cmderr    = ''
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 args:[]
@@ -2965,6 +3064,8 @@ proccount:False
 proccount type: <type 'bool'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
@@ -3049,13 +3150,17 @@ def test_qsub_inputfile_option_2():
     args      = """-i y -t10 -n 10 /bin/ls"""
 
     cmdout    = \
-"""1
+"""foo.bar
+1
 """
 
     cmderr    = ''
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 args:[]
@@ -3157,6 +3262,8 @@ proccount:False
 proccount type: <type 'bool'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
@@ -3204,13 +3311,17 @@ def test_qsub_email_option():
     args      = """-M g -t10 -n10 /bin/ls"""
 
     cmdout    = \
-"""1
+"""foo.bar
+1
 """
 
     cmderr    = ''
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 args:[]
@@ -3312,6 +3423,8 @@ proccount:False
 proccount type: <type 'bool'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
@@ -3359,13 +3472,17 @@ def test_qsub_outputprefix():
     args      = """-O tmp -t10 -n10 /bin/ls"""
 
     cmdout    = \
-"""1
+"""foo.bar
+1
 """
 
     cmderr    = ''
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 args:[]
@@ -3471,6 +3588,8 @@ proccount:False
 proccount type: <type 'bool'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
@@ -3555,13 +3674,17 @@ def test_qsub_mode_option_1():
     args      = """-t10 -n512 --proccount 1023 --mode vn /bin/ls"""
 
     cmdout    = \
-"""1
+"""foo.bar
+1
 """
 
     cmderr    = ''
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 args:[]
@@ -3661,6 +3784,8 @@ proccount:1023
 proccount type: <type 'str'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
@@ -3708,13 +3833,17 @@ def test_qsub_mode_option_2():
     args      = """-t10 -n512 --proccount 1023 --mode vn /bin/ls"""
 
     cmdout    = \
-"""1
+"""foo.bar
+1
 """
 
     cmderr    = ''
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 args:[]
@@ -3814,6 +3943,8 @@ proccount:1023
 proccount type: <type 'str'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
@@ -3861,13 +3992,17 @@ def test_qsub_mode_option_3():
     args      = """--mode script -t50 -n10 --geometry 40x40x50x50 /bin/ls"""
 
     cmdout    = \
-"""1
+"""foo.bar
+1
 """
 
     cmderr    = ''
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 args:[]
@@ -3969,6 +4104,8 @@ proccount:False
 proccount type: <type 'bool'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
@@ -4053,13 +4190,17 @@ def test_qsub_preboot_option():
     args      = """--disable_preboot -t10 -n512 --proccount 1023 --mode vn /bin/ls"""
 
     cmdout    = \
-"""1
+"""foo.bar
+1
 """
 
     cmderr    = ''
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 args:[]
@@ -4159,6 +4300,8 @@ proccount:1023
 proccount type: <type 'str'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
@@ -4206,13 +4349,17 @@ def test_qsub_env_option_1():
     args      = """--env var1=val1,var2=val2 -t50 -n10 /bin/ls"""
 
     cmdout    = \
-"""1
+"""foo.bar
+1
 """
 
     cmderr    = ''
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 args:[]
@@ -4314,6 +4461,8 @@ proccount:False
 proccount type: <type 'bool'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
@@ -4361,13 +4510,17 @@ def test_qsub_env_option_2():
     args      = """--env var1=val1:var2=val2 -t50 -n10 /bin/ls"""
 
     cmdout    = \
-"""1
+"""foo.bar
+1
 """
 
     cmderr    = ''
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 args:[]
@@ -4469,6 +4622,8 @@ proccount:False
 proccount type: <type 'bool'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
@@ -4516,7 +4671,8 @@ def test_qsub_env_option_3():
     args      = """--env "var1=val1:var2=svar1\=sval1\:svar2\=sval2:var3=val3" -t50 -n10 -d /bin/ls"""
 
     cmdout    = \
-"""1
+"""foo.bar
+1
 """
 
     cmderr    = \
@@ -4525,7 +4681,12 @@ qsub.py --env var1=val1:var2=svar1\=sval1\:svar2\=sval2:var3=val3 -t50 -n10 -d /
 
 component: "system.validate_job", defer: False
   validate_job(
-     {'kernel': 'default', 'verbose': False, 'held': False, 'notify': False, 'ion_kerneloptions': False, 'project': False, 'preemptable': False, 'outputprefix': False, 'umask': False, 'version': False, 'env': 'var1=val1:var2=svar1\\=sval1\\:svar2\\=sval2:var3=val3', 'cwd': '/tmp', 'run_project': False, 'forcenoval': False, 'kerneloptions': False, 'time': '50', 'jobname': False, 'debug': True, 'dependencies': False, 'debuglog': False, 'ion_kernel': 'default', 'proccount': False, 'disable_preboot': False, 'geometry': False, 'queue': 'default', 'mode': False, 'error': False, 'nodecount': '10', 'output': False, 'inputfile': False, 'attrs': {}, 'user_list': False, 'interactive': False},
+     {'kernel': 'default', 'verbose': False, 'held': False, 'notify': False, 'ion_kerneloptions': False, 'project': False, 'preemptable': False, 'outputprefix': False, 'umask': False, 'version': False, 'env': 'var1=val1:var2=svar1\\=sval1\\:svar2\\=sval2:var3=val3', 'cwd': '/tmp', 'run_project': False, 'forcenoval': False, 'kerneloptions': False, 'time': '50', 'jobname': False, 'debug': True, 'dependencies': False, 'debuglog': False, 'qsub_host': 'foo.bar', 'ion_kernel': 'default', 'proccount': False, 'disable_preboot': False, 'geometry': False, 'queue': 'default', 'mode': False, 'error': False, 'nodecount': '10', 'output': False, 'inputfile': False, 'attrs': {}, 'user_list': False, 'interactive': False},
+     )
+
+
+component: "system.get_implementation", defer: False
+  get_implementation(
      )
 
 
@@ -4541,6 +4702,9 @@ Environment Vars: {'var1': 'val1', 'var3': 'val3', 'var2': 'svar1=sval1:svar2=sv
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 args:[]
@@ -4642,6 +4806,8 @@ proccount:False
 proccount type: <type 'bool'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
@@ -4689,13 +4855,17 @@ def test_qsub_env_option_4():
     args      = """--env var1=val1 --env "var2=svar1\=sval1\:svar2\=sval2" --env var3=val3 -t50 -n10 /bin/ls"""
 
     cmdout    = \
-"""1
+"""foo.bar
+1
 """
 
     cmderr    = ''
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 args:[]
@@ -4797,6 +4967,8 @@ proccount:False
 proccount type: <type 'bool'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
@@ -4843,136 +5015,18 @@ def test_qsub_script_1():
 
     args      = """cobalt_script1.sh"""
 
-    cmdout    = \
-"""1
+    cmdout    = ''
+
+    cmderr    = \
+"""command /tmp/cobalt_script1.sh not found, or is not a file
 """
 
-    cmderr    = ''
-
-    stubout   = \
-"""
-ADD_JOBS
-
-args:[]
-args type: <type 'list'>
-command:/tmp/cobalt_script1.sh
-command type: <type 'str'>
-cwd:/tmp
-cwd type: <type 'str'>
-envs:{'a': '1', 'c': '3', 'b': '2'}
-envs type: <type 'dict'>
-ion_kernel:default
-ion_kernel type: <type 'str'>
-jobid:*
-jobid type: <type 'str'>
-kernel:default
-kernel type: <type 'str'>
-mode:script
-mode type: <type 'str'>
-nodes:100
-nodes type: <type 'int'>
-outputdir:/tmp
-outputdir type: <type 'str'>
-path:/tmp
-path type: <type 'str'>
-procs:512
-procs type: <type 'str'>
-queue:default
-queue type: <type 'str'>
-run_project:False
-run_project type: <type 'bool'>
-script_preboot:True
-script_preboot type: <type 'bool'>
-submithost:foo.bar
-submithost type: <type 'str'>
-tag:job
-tag type: <type 'str'>
-ttysession:None
-ttysession type: <type 'NoneType'>
-umask:18
-umask type: <type 'int'>
-user:gooduser
-user type: <type 'str'>
-user_list:['gooduser']
-user_list type: <type 'list'>
-walltime:75
-walltime type: <type 'str'>
-
-VALIDATE_JOB
-
-attrs:{}
-attrs type: <type 'dict'>
-cwd:/tmp
-cwd type: <type 'str'>
-debug:False
-debug type: <type 'bool'>
-debuglog:False
-debuglog type: <type 'bool'>
-dependencies:False
-dependencies type: <type 'bool'>
-disable_preboot:False
-disable_preboot type: <type 'bool'>
-env:a=1:c=3:b=2
-env type: <type 'str'>
-error:False
-error type: <type 'bool'>
-forcenoval:False
-forcenoval type: <type 'bool'>
-geometry:False
-geometry type: <type 'bool'>
-held:False
-held type: <type 'bool'>
-inputfile:False
-inputfile type: <type 'bool'>
-interactive:False
-interactive type: <type 'bool'>
-ion_kernel:default
-ion_kernel type: <type 'str'>
-ion_kerneloptions:False
-ion_kerneloptions type: <type 'bool'>
-jobname:False
-jobname type: <type 'bool'>
-kernel:default
-kernel type: <type 'str'>
-kerneloptions:False
-kerneloptions type: <type 'bool'>
-mode:script
-mode type: <type 'str'>
-nodecount:100
-nodecount type: <type 'str'>
-notify:False
-notify type: <type 'bool'>
-output:False
-output type: <type 'bool'>
-outputprefix:False
-outputprefix type: <type 'bool'>
-preemptable:False
-preemptable type: <type 'bool'>
-proccount:False
-proccount type: <type 'bool'>
-project:False
-project type: <type 'bool'>
-queue:default
-queue type: <type 'str'>
-run_project:False
-run_project type: <type 'bool'>
-time:75
-time type: <type 'str'>
-umask:False
-umask type: <type 'bool'>
-user_list:False
-user_list type: <type 'bool'>
-verbose:False
-verbose type: <type 'bool'>
-version:False
-version type: <type 'bool'>
-
-"""
+    stubout   = ''
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       0, # Expected return status 
+                       256, # Expected return status 
                        cmdout, # Expected command output
                        stubout, # Expected stub functions output
                        cmderr, # Expected command error output 
@@ -4998,136 +5052,18 @@ def test_qsub_script_2():
 
     args      = """-t 50 cobalt_script1.sh"""
 
-    cmdout    = \
-"""1
+    cmdout    = ''
+
+    cmderr    = \
+"""command /tmp/cobalt_script1.sh not found, or is not a file
 """
 
-    cmderr    = ''
-
-    stubout   = \
-"""
-ADD_JOBS
-
-args:[]
-args type: <type 'list'>
-command:/tmp/cobalt_script1.sh
-command type: <type 'str'>
-cwd:/tmp
-cwd type: <type 'str'>
-envs:{'a': '1', 'c': '3', 'b': '2'}
-envs type: <type 'dict'>
-ion_kernel:default
-ion_kernel type: <type 'str'>
-jobid:*
-jobid type: <type 'str'>
-kernel:default
-kernel type: <type 'str'>
-mode:script
-mode type: <type 'str'>
-nodes:100
-nodes type: <type 'int'>
-outputdir:/tmp
-outputdir type: <type 'str'>
-path:/tmp
-path type: <type 'str'>
-procs:512
-procs type: <type 'str'>
-queue:default
-queue type: <type 'str'>
-run_project:False
-run_project type: <type 'bool'>
-script_preboot:True
-script_preboot type: <type 'bool'>
-submithost:foo.bar
-submithost type: <type 'str'>
-tag:job
-tag type: <type 'str'>
-ttysession:None
-ttysession type: <type 'NoneType'>
-umask:18
-umask type: <type 'int'>
-user:gooduser
-user type: <type 'str'>
-user_list:['gooduser']
-user_list type: <type 'list'>
-walltime:50
-walltime type: <type 'str'>
-
-VALIDATE_JOB
-
-attrs:{}
-attrs type: <type 'dict'>
-cwd:/tmp
-cwd type: <type 'str'>
-debug:False
-debug type: <type 'bool'>
-debuglog:False
-debuglog type: <type 'bool'>
-dependencies:False
-dependencies type: <type 'bool'>
-disable_preboot:False
-disable_preboot type: <type 'bool'>
-env:a=1:c=3:b=2
-env type: <type 'str'>
-error:False
-error type: <type 'bool'>
-forcenoval:False
-forcenoval type: <type 'bool'>
-geometry:False
-geometry type: <type 'bool'>
-held:False
-held type: <type 'bool'>
-inputfile:False
-inputfile type: <type 'bool'>
-interactive:False
-interactive type: <type 'bool'>
-ion_kernel:default
-ion_kernel type: <type 'str'>
-ion_kerneloptions:False
-ion_kerneloptions type: <type 'bool'>
-jobname:False
-jobname type: <type 'bool'>
-kernel:default
-kernel type: <type 'str'>
-kerneloptions:False
-kerneloptions type: <type 'bool'>
-mode:script
-mode type: <type 'str'>
-nodecount:100
-nodecount type: <type 'str'>
-notify:False
-notify type: <type 'bool'>
-output:False
-output type: <type 'bool'>
-outputprefix:False
-outputprefix type: <type 'bool'>
-preemptable:False
-preemptable type: <type 'bool'>
-proccount:False
-proccount type: <type 'bool'>
-project:False
-project type: <type 'bool'>
-queue:default
-queue type: <type 'str'>
-run_project:False
-run_project type: <type 'bool'>
-time:50
-time type: <type 'str'>
-umask:False
-umask type: <type 'bool'>
-user_list:False
-user_list type: <type 'bool'>
-verbose:False
-verbose type: <type 'bool'>
-version:False
-version type: <type 'bool'>
-
-"""
+    stubout   = ''
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       0, # Expected return status 
+                       256, # Expected return status 
                        cmdout, # Expected command output
                        stubout, # Expected stub functions output
                        cmderr, # Expected command error output 
@@ -5156,7 +5092,7 @@ def test_qsub_script_3():
     cmdout    = ''
 
     cmderr    = \
-"""Mode already set to 'script' and trying to set it again to 'vn'
+"""command /tmp/cobalt_script1.sh not found, or is not a file
 """
 
     stubout   = ''
@@ -5196,7 +5132,7 @@ def test_qsub_script_4():
 """
 qsub.py -d cobalt_script2.sh
 
-Mode already set to 'script' and trying to set it again to 'vn'
+command /tmp/cobalt_script2.sh not found, or is not a file
 """
 
     stubout   = ''
@@ -5231,13 +5167,17 @@ def test_qsub_walltime_0():
     args      = """-t0 -n 10 /bin/ls"""
 
     cmdout    = \
-"""1
+"""foo.bar
+1
 """
 
     cmderr    = ''
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 args:[]
@@ -5337,6 +5277,8 @@ proccount:False
 proccount type: <type 'bool'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
@@ -5495,7 +5437,8 @@ def test_qsub_interactive_5():
     args      = """-I -t50 -n 1"""
 
     cmdout    = \
-"""Wait for job 1 to start...
+"""foo.bar
+Wait for job 1 to start...
 Opening interactive session to /
 Deleting interactive job 1
 """
@@ -5504,6 +5447,9 @@ Deleting interactive job 1
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 cwd:/tmp
@@ -5599,6 +5545,8 @@ proccount:False
 proccount type: <type 'bool'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
@@ -5673,7 +5621,8 @@ def test_qsub_interactive_6():
     args      = """--interactive -t50 -n 1"""
 
     cmdout    = \
-"""Wait for job 1 to start...
+"""foo.bar
+Wait for job 1 to start...
 Opening interactive session to /
 Deleting interactive job 1
 """
@@ -5682,6 +5631,9 @@ Deleting interactive job 1
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 cwd:/tmp
@@ -5777,6 +5729,8 @@ proccount:False
 proccount type: <type 'bool'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
@@ -5851,7 +5805,8 @@ def test_qsub_interactive_7():
     args      = """--mode interactive -t50 -n 1"""
 
     cmdout    = \
-"""Wait for job 1 to start...
+"""foo.bar
+Wait for job 1 to start...
 Opening interactive session to /
 Deleting interactive job 1
 """
@@ -5860,6 +5815,9 @@ Deleting interactive job 1
 
     stubout   = \
 """
+GET_IMPLEMENTATION
+
+
 ADD_JOBS
 
 cwd:/tmp
@@ -5955,6 +5913,8 @@ proccount:False
 proccount type: <type 'bool'>
 project:False
 project type: <type 'bool'>
+qsub_host:foo.bar
+qsub_host type: <type 'str'>
 queue:default
 queue type: <type 'str'>
 run_project:False
