@@ -818,8 +818,9 @@ class BaseForker (Component):
                             #Try again
                             continue
                         else:
-                            _logger.error("%s: Error reading stdout from child pipe. Error: %s",
-                                    child.label, os.strerror(exc.errno), exc_info=True)
+                            _logger.error("%s: Error reading stdout from child pipe: [%s] %s",
+                                    child.label, errno.errorcode[exc.errno],
+                                    exc.strerror, exc_info=True)
                     else:
                         if child_str == '':
                             break #we're done
