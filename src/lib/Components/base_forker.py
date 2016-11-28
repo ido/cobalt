@@ -864,6 +864,11 @@ class BaseForker (Component):
 
                 if child.pid == pid:
                     _logger.info("task %s: dead pid %s matches child %s", child.label, pid, child.id)
+                    if child.use_stdout_string:
+                        # need to do a final read for anything remaining
+                        # post-exit, then close the fd.
+                        self._read_stdout_pipe([child.pid])
+                        child.close_read_pipe()
                     child.exit_status = exit_status
                     child.core_dump = core_dump
                     child.signum = signum
@@ -871,11 +876,6 @@ class BaseForker (Component):
                     child.complete = True
                     if self.marked_for_death.has_key(child.id):
                         del self.marked_for_death[child.id]
-                    if child.use_stdout_string:
-                        # need to do a final read for anything remaining
-                        # post-exit, then close the fd.
-                        self._read_stdout_pipe([child.pid])
-                        child.close_read_pipe()
                     if child.return_output:
                         try:
                             if child.stdout_file:
