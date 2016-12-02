@@ -46,6 +46,7 @@ CP = ConfigParser.ConfigParser()
 CP.read(Cobalt.CONFIG_FILES)
 
 MAX_DRAIN_HOURS = float(get_config_option('bgsystem', 'max_drain_hours', float(sys.maxint)))
+BACKFILL_MODE = get_config_option('bgsystem', 'backfill_mode', 'OPTIMISTIC').upper()
 
 #you'd think that this would be in the control system database somewhere, but it's not.
 #this generates the node locations for N00 in a midplane.  So far as I know (and I can 
@@ -731,6 +732,10 @@ class BGBaseSystem (Component):
 
     def __init__ (self, *args, **kwargs):
         Component.__init__(self, *args, **kwargs)
+        valid_backfill_modes = ['OPTIMISTIC', 'PESSIMISTIC']
+        if BACKFILL_MODE not in valid_backfill_modes:
+            self.logger.critical('[bgsystem] backfill_mode: %s invalid.  Must be one of: %s.  Terminating',
+                    BACKFILL_MODE, ", ".join(valid_backfill_modes))
         self._blocks = BlockDict()
         self._managed_blocks = set()
         self._io_blocks = IOBlockDict()
@@ -1298,37 +1303,49 @@ class BGBaseSystem (Component):
         #Initialize block to immediately available or ready 5 min from now.
         #the backfill time is in sec from Epoch.
         #initialize everything that isn't idle as being ready 5 min from now.
-        for p in blocks.itervalues():
-            if p.state == 'idle':
-                p.backfill_time = now
+        for block in blocks.itervalues():
+            if block.state == 'idle':
+                block.backfill_time = now
             else:
-                p.backfill_time = now + minimum_not_idle
-            p.draining = False
+                block.backfill_time = now + minimum_not_idle
+            block.draining = False
 
-        for p in blocks.itervalues():
-            if p.name in job_end_times.keys():
-                #Keep at least minimum_not_idle open for cleanup.  Also, job may be over time.
-                if job_end_times[p.name] > p.backfill_time:
-                    p.backfill_time = job_end_times[p.name]
+        for block in blocks.itervalues():
+            if block.name in job_end_times.keys():
+                #Keep at least minimum_not_idle open for cleanup.  Also, job may be runing over time.
+                if job_end_times[block.name] > block.backfill_time:
+                    block.backfill_time = job_end_times[block.name]
 
                 #iterate over current jobs.  Blocks with running jobs are set to the job's end time (startime + walltime)
                 #Iterate over parents and set their time to the backfill window as well.
                 # only set the parent block's time if it is earlier than the block's time
-                for parent_block in p._parents:
-                    if p.backfill_time > parent_block.backfill_time:
-                        parent_block.backfill_time = p.backfill_time
+                if BACKFILL_MODE == 'PESSIMISTIC':
+                    for parent_block in block._parents:
+                        if block.backfill_time > parent_block.backfill_time:
+                            parent_block.backfill_time = block.backfill_time
+                elif BACKFILL_MODE == 'OPTIMISTIC':
+                    for parent_block in block._parents:
+                        if parent_block.backfill_time == now or block.backfill_time > parent_block.backfill_time:
+                            parent_block.backfill_time = block.backfill_time
 
         #Over all blocks, ignore if the time has not been changed, otherwise push
         # the backfill time to children.  Do so if the child is either immediately available
         # or if the child has a longer backfill time that the block does.
         # is this backwards?
-        for p in blocks.itervalues():
-            if p.backfill_time == now:
+        for block in blocks.itervalues():
+            if block.backfill_time == now:
+                # Block not impacted by a running job
                 continue
-            for child in p._children:
-                child_block = child
-                if child_block.backfill_time == now  or child_block.backfill_time > p.backfill_time:
-                    child_block.backfill_time = p.backfill_time
+            if BACKFILL_MODE == 'PESSIMISTIC':
+                for child in block._children:
+                    child_block = child
+                    if child_block.backfill_time == now  or child_block.backfill_time > block.backfill_time:
+                        child_block.backfill_time = block.backfill_time
+            elif BACKFILL_MODE == 'OPTIMISTIC':
+                for child in block._children:
+                    child_block = child
+                    if child_block.backfill_time < block.backfill_time:
+                        child_block.backfill_time = block.backfill_time
 
         #Go back through, if we're actually running a job on a block, all of it's children should have timese set to the greater of their current time or the parent block's time
         for name in job_end_times.iterkeys():
