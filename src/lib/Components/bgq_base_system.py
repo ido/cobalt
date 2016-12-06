@@ -732,10 +732,6 @@ class BGBaseSystem (Component):
 
     def __init__ (self, *args, **kwargs):
         Component.__init__(self, *args, **kwargs)
-        valid_backfill_modes = ['OPTIMISTIC', 'PESSIMISTIC']
-        if BACKFILL_MODE not in valid_backfill_modes:
-            self.logger.critical('[bgsystem] backfill_mode: %s invalid.  Must be one of: %s.  Terminating',
-                    BACKFILL_MODE, ", ".join(valid_backfill_modes))
         self._blocks = BlockDict()
         self._managed_blocks = set()
         self._io_blocks = IOBlockDict()
@@ -1312,21 +1308,15 @@ class BGBaseSystem (Component):
 
         for block in blocks.itervalues():
             if block.name in job_end_times.keys():
-                #Keep at least minimum_not_idle open for cleanup.  Also, job may be runing over time.
+                # Keep at least minimum_not_idle open for cleanup.  Also, job may be runing over time.
                 if job_end_times[block.name] > block.backfill_time:
                     block.backfill_time = job_end_times[block.name]
-
                 #iterate over current jobs.  Blocks with running jobs are set to the job's end time (startime + walltime)
                 #Iterate over parents and set their time to the backfill window as well.
                 # only set the parent block's time if it is earlier than the block's time
-                if BACKFILL_MODE == 'PESSIMISTIC':
-                    for parent_block in block._parents:
-                        if block.backfill_time > parent_block.backfill_time:
-                            parent_block.backfill_time = block.backfill_time
-                elif BACKFILL_MODE == 'OPTIMISTIC':
-                    for parent_block in block._parents:
-                        if parent_block.backfill_time == now or block.backfill_time > parent_block.backfill_time:
-                            parent_block.backfill_time = block.backfill_time
+                for parent_block in block._parents:
+                    if parent_block.backfill_time < block.backfill_time:
+                        parent_block.backfill_time = block.backfill_time
 
         #Over all blocks, ignore if the time has not been changed, otherwise push
         # the backfill time to children.  Do so if the child is either immediately available

@@ -3,6 +3,7 @@
 '''
 
 from nose import *
+import Cobalt.Components.bgq_base_system
 from Cobalt.Components.bgq_base_system import BGBaseSystem
 
 class BackfillMockBlock(object):
@@ -148,6 +149,7 @@ class TestBackfillTime(object):
         job_done_1= 600.0
         job_done_2= 500.0
         job_end_times = {'MIR-04000-7BFF1-32768':job_done_1, 'MIR-00000-33331-512':job_done_2}
+        Cobalt.Components.bgq_base_system.BACKFILL_MODE = 'PESSIMISTIC'
         BGBaseSystem.set_backfill_times(self.blocks, job_end_times, now)
         assert self.blocks['MIR-00000-73FF1-16384'].backfill_time == job_done_2, "MIR-00000-73FF1-16384 has backfill_time"\
                 " of %s should be %s" % (self.blocks['MIR-00000-73FF1-16384'].backfill_time, job_done_2)
@@ -169,6 +171,7 @@ class TestBackfillTime(object):
         jobdone = 500.0
         job_end_times = {'8k-1':jobdone}
         self.set_blocking_states('8k-1', 'allocated')
+        Cobalt.Components.bgq_base_system.BACKFILL_MODE = 'PESSIMISTIC'
         BGBaseSystem.set_backfill_times(self.blocks, job_end_times, now)
         assert self.blocks['512-1'].backfill_time == jobdone, "Child did not recieve correct time"
 
@@ -179,6 +182,7 @@ class TestBackfillTime(object):
         jobdone = 300.0
         job_end_times = {'8k-1':jobdone}
         self.set_blocking_states('8k-1', 'allocated')
+        Cobalt.Components.bgq_base_system.BACKFILL_MODE = 'PESSIMISTIC'
         BGBaseSystem.set_backfill_times(self.blocks, job_end_times, now)
         assert self.blocks['8k-1'].backfill_time == now_delta, "Minimum backfill window not set."
 
@@ -191,6 +195,7 @@ class TestBackfillTime(object):
         job_end_times = {'8k-2':job_done_2, 'vert-16k-1':job_done_1}
         for key in job_end_times.keys():
             self.set_blocking_states(key, 'allocated')
+        Cobalt.Components.bgq_base_system.BACKFILL_MODE = 'PESSIMISTIC'
         BGBaseSystem.set_backfill_times(self.blocks, job_end_times, now)
         assert self.blocks['vert-16k-1'].backfill_time == job_done_1, 'vert-16k-1 has time %s should be %s' % (self.blocks['vert-16k-1'].backfill_time, job_done_1)
         assert self.blocks['horiz-16k-1'].backfill_time == job_done_1, 'horiz-16k-1 has time %s should be %s' % (self.blocks['horiz-16k-1'].backfill_time, job_done_1)
@@ -209,6 +214,7 @@ class TestBackfillTime(object):
         job_end_times = {'8k-2':job_done_1, 'vert-16k-1':job_done_2}
         for key in job_end_times.keys():
             self.set_blocking_states(key, 'allocated')
+        Cobalt.Components.bgq_base_system.BACKFILL_MODE = 'PESSIMISTIC'
         BGBaseSystem.set_backfill_times(self.blocks, job_end_times, now)
         assert self.blocks['vert-16k-1'].backfill_time == job_done_2, 'vert-16k-1 has time %s should be %s' % (self.blocks['vert-16k-1'].backfill_time, job_done_1)
         assert self.blocks['vert-16k-2'].backfill_time == job_done_1, 'vert-16k-2 has time %s should be %s' % (self.blocks['vert-16k-2'].backfill_time, job_done_1)
@@ -229,6 +235,7 @@ class TestBackfillTime(object):
         job_end_times = {'8k-2':job_done_2, 'vert-16k-1':job_done_1}
         for key in job_end_times.keys():
             self.set_blocking_states(key, 'allocated')
+        Cobalt.Components.bgq_base_system.BACKFILL_MODE = 'PESSIMISTIC'
         BGBaseSystem.set_backfill_times(self.blocks, job_end_times, now)
         assert job_done_2 not in [val.backfill_time  for val in self.blocks.values()], "Minimum backfill shadow not honored."
         assert self.blocks['vert-16k-1'].backfill_time == job_done_1, 'vert-16k-1 has time %s should be %s' % (self.blocks['vert-16k-1'].backfill_time, job_done_1)
