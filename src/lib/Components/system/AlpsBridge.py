@@ -248,6 +248,10 @@ def _call_sys_forker(basil_path, in_str):
         complete = False
         for child in children:
             if child['complete']:
+                if child['lost_child'] and resp is None:
+                    continue # Use the original response.  This child object is
+                             # invalid.  If we never got one, then let the
+                             # caller handle the error.
                 if child['exit_status'] != 0:
                     _logger.error("BASIL returned a status of %s",
                             child['exit_status'])
