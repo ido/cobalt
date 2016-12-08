@@ -187,10 +187,47 @@ def extract_system_node_data(node_data):
         del node_info['role']
     return ret_nodeinfo
 
+def _log_xmlrpc_error(runid, fault):
+    '''Log an xmlrpc error.
+
+    Args:
+        runid: integer id of the current run in system_script_forker
+        fault: xmlrpclib.Fault object raised by a component call
+
+    Returns:
+        None
+
+    '''
+    _logger.error('XMLRPC Fault recieved while fetching child %s status:', runid)
+    _logger.error('Child %s: Fault code: %s', runid, fault.faultCode)
+    _logger.error('Child %s: Fault string: %s', runid,
+            fault.faultString)
+    _logger.debug('Traceback information: for runid %s', runid,
+           exc_info=True)
+
+
 
 def _call_sys_forker(basil_path, in_str):
-    '''take a parameter dictionary and make appropriate call through to BASIL
-    wait until we get output and clean up child info.'''
+    '''Make a  call through to BASIL wait until we get output and clean up
+    child info.
+
+    Args:
+        basil_path: path to the BAISL executable. May be overriden for
+                    test environments.
+        in_str: A string of XML to send to 'apbasil'
+
+    Returns:
+        The XML response parsed into a Python dictionary.
+
+    Exceptions:
+        Will raise a xmlrpclib.Fault if communication with the bridge
+        and/or system component fails completely at startup.
+
+    Notes:
+        This will block until 'apbasil' completion.  'apbasil' messages can
+        be failrly large for things sent to stdout.
+
+    '''
 
     runid = None #_RUNID_GEN.next()i
     resp = None
@@ -207,15 +244,14 @@ def _call_sys_forker(basil_path, in_str):
         try:
             children = ComponentProxy(FORKER).get_children('apbridge', [runid])
         except xmlrpclib.Fault as fault:
-            _logger.error('XMLRPC Fault recieved while fetching child %s status:', runid)
-            _logger.error('Child %s: Fault code: %s', runid, fault.faultCode)
-            _logger.error('Child %s: Fault string: %s', runid,
-                    fault.faultString)
-            _logger.debug('Traceback information: for runid %s',runid,
-                   exc_info=True)
+            _log_xmlrpc_error(runid, fault)
         complete = False
         for child in children:
             if child['complete']:
+                if child['lost_child'] and resp is None:
+                    continue # Use the original response.  This child object is
+                             # invalid.  If we never got one, then let the
+                             # caller handle the error.
                 if child['exit_status'] != 0:
                     _logger.error("BASIL returned a status of %s",
                             child['exit_status'])
@@ -223,13 +259,9 @@ def _call_sys_forker(basil_path, in_str):
                 try:
                     ComponentProxy(FORKER).cleanup_children([runid])
                 except xmlrpclib.Fault as fault:
-                    _logger.error('XMLRPC Fault recieved while fetching child %s status:', runid)
-                    _logger.error('Child %s: Fault code: %s', runid, fault.faultCode)
-                    _logger.error('Child %s: Fault string: %s', runid,
-                            fault.faultString)
-                    _logger.debug('Traceback information: for runid %s',runid,
-                            exc_info=True)
-                complete = True
+                    _log_xmlrpc_error(runid, fault)
+                else:
+                    complete = True
         if complete:
             break
         sleep(CHILD_SLEEP_TIMEOUT)
