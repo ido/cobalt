@@ -1299,24 +1299,42 @@ class BGBaseSystem (Component):
         #Initialize block to immediately available or ready 5 min from now.
         #the backfill time is in sec from Epoch.
         #initialize everything that isn't idle as being ready 5 min from now.
+        print BACKFILL_MODE
         for block in blocks.itervalues():
-            if block.state == 'idle':
+            if block.name in job_end_times.keys():
+                block.backfill_time = max(now + minimum_not_idle,
+                                          job_end_times[block.name])
+                for child in block._children:
+                    child.backfill_time = block.backfill_time
+            elif block.state == 'idle':
                 block.backfill_time = now
             else:
+                # Not idle, but not job running according to the queue manager.
+                # Usually this is cleanup.
                 block.backfill_time = now + minimum_not_idle
             block.draining = False
 
         for block in blocks.itervalues():
             if block.name in job_end_times.keys():
-                # Keep at least minimum_not_idle open for cleanup.  Also, job may be runing over time.
-                if job_end_times[block.name] > block.backfill_time:
-                    block.backfill_time = job_end_times[block.name]
+                #job actively running
                 #iterate over current jobs.  Blocks with running jobs are set to the job's end time (startime + walltime)
                 #Iterate over parents and set their time to the backfill window as well.
                 # only set the parent block's time if it is earlier than the block's time
-                for parent_block in block._parents:
-                    if parent_block.backfill_time < block.backfill_time:
-                        parent_block.backfill_time = block.backfill_time
+                if BACKFILL_MODE == 'PESSIMISTIC':
+                    if job_end_times[block.name] > block.backfill_time:
+                        block.backfill_time = job_end_times[block.name]
+                    for parent_block in block._parents:
+                        if parent_block.backfill_time < block.backfill_time:
+                            parent_block.backfill_time = block.backfill_time
+                elif BACKFILL_MODE == 'OPTIMISTIC':
+                    for parent_block in block._parents:
+                        # push times to top-level.  These will get pushed
+                        # back down to children later.  This keeps times
+                        # reasonalble for child-blocks ultimately, and
+                        # should allow for looser backfilling
+                        if (parent_block.backfill_time > block.backfill_time or
+                            block.backfill_time == now):
+                            parent_block.backfill_time = block.backfill_time
 
         #Over all blocks, ignore if the time has not been changed, otherwise push
         # the backfill time to children.  Do so if the child is either immediately available
@@ -1324,19 +1342,21 @@ class BGBaseSystem (Component):
         # is this backwards?
         for block in blocks.itervalues():
             if block.backfill_time == now:
-                # Block not impacted by a running job
+            # Block not impacted by a running job
                 continue
             if BACKFILL_MODE == 'PESSIMISTIC':
                 for child in block._children:
-                    child_block = child
-                    if child_block.backfill_time == now  or child_block.backfill_time > block.backfill_time:
-                        child_block.backfill_time = block.backfill_time
+                    if child.backfill_time == now  or child.backfill_time > block.backfill_time:
+                        child.backfill_time = block.backfill_time
             elif BACKFILL_MODE == 'OPTIMISTIC':
+                # blocks should be at least their children's time.
+                print "tagging children", block.name
                 for child in block._children:
-                    child_block = child
-                    if child_block.backfill_time < block.backfill_time:
-                        child_block.backfill_time = block.backfill_time
-
+                    print child.name, child.backfill_time, block.backfill_time
+                    if child.backfill_time < block.backfill_time:
+                       print "tagging from child", child.name, child.backfill_time
+                       child.backfill_time = block.backfill_time
+                       print "tagging from child", child.name, child.backfill_time
         #Go back through, if we're actually running a job on a block, all of it's children should have timese set to the greater of their current time or the parent block's time
         for name in job_end_times.iterkeys():
             job_block = blocks[name]
