@@ -1,5 +1,16 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 1.0.10 ==
+ * Sites can now specify the qsub comamnd for mom nodes on Cray systems in case
+   it is in a non-default location.  This also fixes a permission issue for
+   eLogin interactive jobs.
+ * Preemptive fix for a possible process leak from AlpsBridge.
+ * Preemptive fix for a possible loss of some output when using string_stdout
+   in the forkers.
+ * Adding in DDL for a summary view for reservations for CDB.
+ * Fix for a failure in loading very old statefiles into system_script_forker
+   if there are prior runs left to clean up on restart.
+
 == Changes to 1.0.9 ==
  * Cobalt database writer now working properly with Cray Systems.
  * Updates to the Cobalt Database DDL build scripts
