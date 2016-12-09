@@ -527,6 +527,11 @@ The path to Cray's apbasil command.  The default path is
 The path to Cray's apkill command.  The default path is
 /opt/cray/alps/default/bin/apkill
 .TP
+.B cray_mom_qsub
+The path to qsub on the mom (or other alps_script_forker) nodes to use when
+using interactive qsub from the eLogin hosts on Cray systems.  This must be a
+fully qualified path.  The default is /usr/bin/qsub
+.TP
 .B default_depth
 The default processors per node.  This should be set to the number of KNL cores
 on each node for XC40 systems. The default value is 72.
