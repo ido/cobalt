@@ -1,0 +1,42 @@
+-- This CLP file was created using DB2LOOK Version "9.7" 
+-- Timestamp: Fri 04 Mar 2016 06:17:03 PM UTC
+-- Database Name: COBALT_M       
+-- Database Manager Version: DB2/LINUXX8664 Version 1.4    
+-- Database Codepage: 1208
+-- Database Collating Sequence is: SYSTEM_819
+-- Generate the reservation_summary view
+
+CONNECT TO ##DATABASE## USER "##DB_ADMIN##";
+
+----------------------------
+
+-- DDL Statements for Views
+
+----------------------------
+SET CURRENT SCHEMA = "##COBALT_SCHEMA##";
+SET CURRENT PATH = "SYSIBM","SYSFUN","SYSPROC","SYSIBMADM","##COBALT_SCHEMA##";
+CREATE  view ##COBALT_SCHEMA##.reservation_summary as select r.id, r.res_data_id, r.resid,
+r.name, r.project, r.event_time, r.event, r.exec_user, r.start, r.duration,
+r.queue, r.cycleid, r.cycle, substr(u.user_list,1,60) as user_list, r.partition_list
+from ( select p.id, p.res_data_id, d.resid, substr(d.name,1,32) as name,
+d.project, p.entry_time as event_time, e.name as event, p.exec_user, d.start,
+d.duration, substr(d.queue,1,32) as queue, d.cycleid, d.cycle, substr(parts.partition_list,1,120)
+as partition_list from ##COBALT_SCHEMA##.reservation_data as d, ##COBALT_SCHEMA##.reservation_prog
+as p, ##COBALT_SCHEMA##.reservation_events as e, ( select res_data_id, replace(replace(replace(xmlserialize(xmlagg(xmlelement(NAME
+X, NAME) order by NAME) as varchar(1024)),'</X><X>', ':'), '<X>', ''),
+'</X>', '') as partition_list from ##COBALT_SCHEMA##.reservation_parts group by res_data_id
+) as parts where p.res_data_id = d.id and p.event_type = e.id and p.res_data_id
+= parts.res_data_id ) as r left join ( select res_data_id, replace(replace(replace(xmlserialize(xmlagg(xmlelement(NAME
+X, NAME) order by NAME) as varchar(1024)),'</X><X>', ':'), '<X>', ''),
+'</X>', '') as user_list from ##COBALT_SCHEMA##.reservation_users group by res_data_id
+) as u on r.res_data_id = u.res_data_id;
+
+
+GRANT SELECT ON TABLE "##COBALT_SCHEMA##"."JOB_SUMMARY" TO  PUBLIC;
+
+COMMIT WORK;
+
+CONNECT RESET;
+
+TERMINATE;
+
