@@ -32,6 +32,8 @@ X, NAME) order by NAME) as varchar(1024)),'</X><X>', ':'), '<X>', ''),
 ) as u on r.res_data_id = u.res_data_id;
 
 
+GRANT SELECT ON TABLE "##COBALT_SCHEMA##"."JOB_SUMMARY" TO  PUBLIC;
+
 COMMIT WORK;
 
 CONNECT RESET;
