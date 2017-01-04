@@ -385,7 +385,8 @@ class CraySystem(BaseSystem):
                 # if we have nodes in cleanup-pending but no alps reservations,
                 # then the nodes in cleanup pending are considered idle (or
                 # at least not in cleanup).  Hardware check can catch these
-                # later.
+                # later. This catches leftover reservations from hard-shutdowns
+                # while running.
                 for node in self.nodes.values():
                     if node.status in ['cleanup', 'cleanup-pending']:
                         node.status = 'idle'
@@ -407,19 +408,32 @@ class CraySystem(BaseSystem):
             #process group should already be on the way down since cqm released the
             #resource reservation
             cleanup_nodes = [node for node in self.nodes.values()
-                             if node.status == 'cleanup-pending']
+                             if node.status in ['cleanup-pending', 'cleanup']]
             #If we have a block marked for cleanup, send a release message.
             released_res_jobids = []
+            cleaned_nodes = []
             for node in cleanup_nodes:
+                found = False
                 for alps_res in self.alps_reservations.values():
-                    if (alps_res.jobid not in released_res_jobids and
-                            str(node.node_id) in alps_res.node_ids):
-                        #send only one release per iteration
-                        apids = alps_res.release()
-                        if apids is not None:
-                            for apid in apids:
-                                self.signal_aprun(apid)
-                        released_res_jobids.append(alps_res.jobid)
+                    if str(node.node_id) in alps_res.node_ids:
+                        found = True
+                        if alps_res.jobid not in released_res_jobids:
+                            #send only one release per iteration
+                            apids = alps_res.release()
+                            if apids is not None:
+                                for apid in apids:
+                                    self.signal_aprun(apid)
+                            released_res_jobids.append(alps_res.jobid)
+                if not found:
+                    # There is no alps reservation to release, cleanup is
+                    # already done.  This happens with very poorly timed
+                    # qdel requests. Status will be set properly with the
+                    # subsequent hardware status check.
+                    _logger.info('Node %s cleanup complete.', node.node_id)
+                    node.status = 'idle'
+                    cleaned_nodes.append(node)
+            for node in cleaned_nodes:
+                cleanup_nodes.remove(node)
 
         #find hardware status
             #so we do this only once for nodes being added.
