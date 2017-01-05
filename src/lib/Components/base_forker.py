@@ -167,6 +167,9 @@ class BaseChild (object):
         self.stderr_file = None
         self._cobalt_log_file = None
         self._cobalt_log_failed = False
+        self.use_stdout_string = state.get('stdout_string', False)
+        self.stdin_string = state.get('stdin_string', None)
+        self.stdout_string = state.get('stdout_string', '')
         if not self.complete:
             self.lost_child = True
             self.return_output = False

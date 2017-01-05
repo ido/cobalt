@@ -79,6 +79,7 @@ SYSMGR           = client_utils.SYSMGR
 QUEMGR           = client_utils.QUEMGR
 CN_DEFAULT_KERNEL  = get_config_option('bgsystem', 'cn_default_kernel', 'default')
 ION_DEFAULT_KERNEL = get_config_option('bgsystem', 'ion_default_kernel', 'default')
+CRAY_MOM_QSUB      = get_config_option('alps', 'cray_mom_qsub', '/usr/bin/qsub')
 
 def on_interrupt(sig, func=None):
     """
@@ -465,8 +466,8 @@ def qsub_remote_host(host):
     '''
     SSH_CMD = '/usr/bin/ssh'
     # And yes, that behavior is inherently broken.
-    ssh_cmd =  [SSH_CMD, '-t', host]
-    ssh_cmd.extend(sys.argv)
+    ssh_cmd =  [SSH_CMD, '-t', host, CRAY_MOM_QSUB]
+    ssh_cmd.extend(sys.argv[1:])
     return subprocess.call(ssh_cmd)
 
 def run_job(parser, user, spec, opts):
