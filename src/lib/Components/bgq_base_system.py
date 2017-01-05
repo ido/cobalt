@@ -1366,7 +1366,38 @@ class BGBaseSystem (Component):
 
 
     def find_job_location(self, arg_list, end_times, pt_blocking_locations=[]):
-        ''' get the best location for a job.
+        '''Given a list of job parameters, expected termination times, and
+        locations blocked by reservation passthrough, find the best available
+        location for a job to run and/or drain the best location for pending
+        top-of-queue jobs on the system.
+
+           Args:
+               arg_list: A list of job data dictionaries.  Job dicts will have
+                   jobid, user, queue, utility_score, attrs, and walltime.  Job dicts may
+                   have a list of required locations, forbidden locations,
+                   pt_forbidden locations, and geometry.  It is assumed that
+                   this list has been sorted in order of job execution
+                   preference, usally utility score order.
+               end_times: A dictionary of blocks with running jobs and their
+                   expected termination time in seconds from epoch.
+                   Termination time is from the queue-manager equal to job
+                   start time + walltime.  This is empty when finding locations
+                   for reservations, and ensures first-fit behavior in
+                   reservations.
+               pt_blocking_locations: A list of blocks that are blocked due to
+                   passthrough considerations due to Cobalt reservation
+                   placement in the scheduler.
+
+           Returns:
+               A list of dictionaries mapping jobid to block name to run on.
+
+           Exceptions:
+               None.  This is typically invoked via XML-RPC mechanisms,
+               however.
+
+           Side Effects:
+               Will ultimately reset the backfill times/drain status of blocks.
+               Sets resource resrvations on blocks selected for job start.
 
         '''
 
