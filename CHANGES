@@ -1,5 +1,9 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 1.0.11 ==
+ * Fix for a race condition on Cray systems where a correctly timed qdel can
+   cause the nodes for a job to get stuck in cleanup.
+
 == Changes to 1.0.10 ==
  * Sites can now specify the qsub comamnd for mom nodes on Cray systems in case
    it is in a non-default location.  This also fixes a permission issue for
