@@ -1185,14 +1185,24 @@ class BGBaseSystem (Component):
 
 
     def _find_drain_block(self, job, drain_blocks):
+        '''find a block to drain.  If there is a specified location for a job,
+        drain only on that location, otherwise, choose the block where we want
+        the job to eventually run.
+
+        '''
         geometry = job.get('geometry', None)
         # if the user requested a particular block, we only try to drain that one
         if job['attrs'].has_key("location"):
             #don't drain a dead block
             if (job['attrs']['location'] not in self.offline_blocks and
-                    set(job['attrs']['location']).isdisjoint(drain_blocks)):
+                    set(job['attrs']['location']).isdisjoint(set([name for name
+                        in drain_blocks]))):
                 target_name = job['attrs']['location']
-                return self.cached_blocks.get(target_name, None)
+                target_block =  self.cached_blocks.get(target_name, None)
+                if target_block is not None:
+                    if target_block.draining:
+                        return None
+                return target_block
             else:
                 #return this drain location or not at all for this job
                 return None
