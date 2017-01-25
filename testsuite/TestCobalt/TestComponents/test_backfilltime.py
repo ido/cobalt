@@ -3,6 +3,7 @@
 '''
 
 from nose import *
+import Cobalt.Components.bgq_base_system
 from Cobalt.Components.bgq_base_system import BGBaseSystem
 
 class BackfillMockBlock(object):
@@ -30,7 +31,13 @@ class BackfillMockBlock(object):
         self._children.update(set(child_blocks))
         self._relatives.update(set(child_blocks))
 
+    @property
+    def parents(self):
+        return [block.name for block in self._parents]
 
+    @property
+    def children(self):
+        return [block.name for block in self._children]
 
 class TestBackfillTime(object):
 
@@ -138,39 +145,69 @@ class TestBackfillTime(object):
             self.blocks['MIR-00000-7BFF1-0100-32768'], self.blocks['MIR-00000-73FF1-16384']])
 
 
-    def test_mira_32_16_512_backfill(self):
-        #This came from a situation that occurred during acceptance testing
-        #You have a 32k running long, and a short 512, the backfill time (and therefore
-        #the drain preference) should be set such that you drain over the 512, not the 32k
-        self.setup_mira_32k_test_blocks()
-        now = 100.0
-        now_delta = 400.0
-        job_done_1= 600.0
-        job_done_2= 500.0
-        job_end_times = {'MIR-04000-7BFF1-32768':job_done_1, 'MIR-00000-33331-512':job_done_2}
-        BGBaseSystem.set_backfill_times(self.blocks, job_end_times, now)
-        assert self.blocks['MIR-00000-73FF1-16384'].backfill_time == job_done_2, "MIR-00000-73FF1-16384 has backfill_time"\
-                " of %s should be %s" % (self.blocks['MIR-00000-73FF1-16384'].backfill_time, job_done_2)
-        assert self.blocks['MIR-04000-77FF1-16384'].backfill_time == job_done_1, "MIR-00000-73FF1-16384 has backfill_time"\
-                " of %s should be %s" % (self.blocks['MIR-04000-77FF1-16384'].backfill_time, job_done_1)
+#    def test_mira_32_16_512_backfill(self):
+#        #This came from a situation that occurred during acceptance testing
+#        #You have a 32k running long, and a short 512, the backfill time (and therefore
+#        #the drain preference) should be set such that you drain over the 512, not the 32k
+#        # This is a defunct test as this code is no longer handling this part of
+#        # drain selection.
+#        self.setup_mira_32k_test_blocks()
+#        now = 100.0
+#        now_delta = 400.0
+#        job_done_1= 600.0
+#        job_done_2= 500.0
+#        job_end_times = {'MIR-04000-7BFF1-32768':job_done_1, 'MIR-00000-33331-512':job_done_2}
+#        for key in job_end_times.keys():
+#            self.set_blocking_states(key, 'allocated')
+#        Cobalt.Components.bgq_base_system.BACKFILL_MODE = 'PESSIMISTIC'
+#        BGBaseSystem.set_backfill_times(self.blocks, job_end_times, now)
+#        assert self.blocks['MIR-00000-73FF1-16384'].backfill_time == job_done_2, "MIR-00000-73FF1-16384 has backfill_time"\
+#                " of %s should be %s" % (self.blocks['MIR-00000-73FF1-16384'].backfill_time, job_done_2)
+#        assert self.blocks['MIR-04000-77FF1-16384'].backfill_time == job_done_1, "MIR-04000-73FF1-16384 has backfill_time"\
+#                " of %s should be %s" % (self.blocks['MIR-04000-77FF1-16384'].backfill_time, job_done_1)
 
-    def test_parent_inherit(self):
+    def test_parent_inherit_blocked(self):
+        self.setup_standard_blocks()
+        now = 100.0
+        jobdone = 500.0
+        end_time = 400.0
+        job_end_times = {'512-1':jobdone}
+        self.set_blocking_states('512-1', 'allocated')
+        BGBaseSystem.set_backfill_times(self.blocks, job_end_times, now)
+        assert self.blocks['8k-1'].backfill_time == end_time, "Parent did not recieve correct time"
+
+    def test_parent_inherit_idle(self):
         self.setup_standard_blocks()
         now = 100.0
         jobdone = 500.0
         job_end_times = {'512-1':jobdone}
         self.set_blocking_states('512-1', 'allocated')
         BGBaseSystem.set_backfill_times(self.blocks, job_end_times, now)
-        assert self.blocks['8k-1'].backfill_time == jobdone, "Parent did not recieve correct time"
+        assert self.blocks['8k-3'].backfill_time == now, "Parent did not recieve correct time"
 
-    def test_child_inherit(self):
+    def test_child_inherit_blocked(self):
+        # Children used to inherit backfill times from parents at this stage.
+        # That now happens later during drain location selection.
+        self.setup_standard_blocks()
+        now = 100.0
+        jobdone = 500.0
+        end_time = 100.0 + 300.0
+        job_end_times = {'8k-1':jobdone}
+        self.set_blocking_states('8k-1', 'allocated')
+        BGBaseSystem.set_backfill_times(self.blocks, job_end_times, now)
+        assert self.blocks['512-1'].backfill_time == end_time, "Child got %s should have %s" % (self.blocks['512-1'].backfill_time, jobdone)
+
+    def test_child_inherit_idle(self):
+        # Children used to inherit backfill times from parents at this stage.
+        # That now happens later during drain location selection.
+        # should get the current time (now)
         self.setup_standard_blocks()
         now = 100.0
         jobdone = 500.0
         job_end_times = {'8k-1':jobdone}
         self.set_blocking_states('8k-1', 'allocated')
         BGBaseSystem.set_backfill_times(self.blocks, job_end_times, now)
-        assert self.blocks['512-1'].backfill_time == jobdone, "Child did not recieve correct time"
+        assert self.blocks['512-3'].backfill_time == now, "Child got %s should have %s" % (self.blocks['512-1'].backfill_time, jobdone)
 
     def test_minimum_window(self):
         self.setup_standard_blocks()
@@ -182,61 +219,62 @@ class TestBackfillTime(object):
         BGBaseSystem.set_backfill_times(self.blocks, job_end_times, now)
         assert self.blocks['8k-1'].backfill_time == now_delta, "Minimum backfill window not set."
 
-
     def test_overlap_v16blocking_8k_secondary(self):
         self.setup_standard_blocks()
         now = 100.0
         job_done_1 = 600.0
         job_done_2 = 500.0
+        blocked_idle = 400.0
         job_end_times = {'8k-2':job_done_2, 'vert-16k-1':job_done_1}
         for key in job_end_times.keys():
             self.set_blocking_states(key, 'allocated')
+        Cobalt.Components.bgq_base_system.BACKFILL_MODE = 'PESSIMISTIC'
         BGBaseSystem.set_backfill_times(self.blocks, job_end_times, now)
         assert self.blocks['vert-16k-1'].backfill_time == job_done_1, 'vert-16k-1 has time %s should be %s' % (self.blocks['vert-16k-1'].backfill_time, job_done_1)
-        assert self.blocks['horiz-16k-1'].backfill_time == job_done_1, 'horiz-16k-1 has time %s should be %s' % (self.blocks['horiz-16k-1'].backfill_time, job_done_1)
+        assert self.blocks['horiz-16k-1'].backfill_time == blocked_idle, 'horiz-16k-1 has time %s should be %s' % (self.blocks['horiz-16k-1'].backfill_time, blocked_idle)
         assert self.blocks['8k-2'].backfill_time == job_done_2, '8k-2 has time %s should be %s' % (self.blocks['8k-2'].backfill_time, job_done_2)
-        assert self.blocks['8k-3'].backfill_time == job_done_1, '8k-2 has time %s should be %s' % (self.blocks['8k-3'].backfill_time, job_done_1)
-        assert self.blocks['512-2'].backfill_time == job_done_2, '512-2 has time %s should be %s' % (self.blocks['512-2'].backfill_time, job_done_2)
-        assert self.blocks['512-1'].backfill_time == job_done_1, '512-1 has time %s should be %s' % (self.blocks['512-1'].backfill_time, job_done_1)
-        assert self.blocks['512-4'].backfill_time == job_done_2, '512-4 has time %s should be %s' % (self.blocks['512-4'].backfill_time, job_done_2)
-
+        assert self.blocks['8k-3'].backfill_time == blocked_idle, '8k-2 has time %s should be %s' % (self.blocks['8k-3'].backfill_time,blocked_idle)
+        assert self.blocks['512-2'].backfill_time == blocked_idle, '512-2 has time %s should be %s' % (self.blocks['512-2'].backfill_time, blocked_idle)
+        assert self.blocks['512-1'].backfill_time == blocked_idle, '512-1 has time %s should be %s' % (self.blocks['512-1'].backfill_time, blocked_idle)
+        assert self.blocks['512-4'].backfill_time == now, '512-4 has time %s should be %s' % (self.blocks['512-4'].backfill_time, now)
 
     def test_overlap_8kblocking_v16_secondary(self):
         self.setup_standard_blocks()
         now = 100.0
         job_done_1 = 600.0
         job_done_2 = 500.0
+        blocked_idle = 400.0
         job_end_times = {'8k-2':job_done_1, 'vert-16k-1':job_done_2}
         for key in job_end_times.keys():
             self.set_blocking_states(key, 'allocated')
+        Cobalt.Components.bgq_base_system.BACKFILL_MODE = 'PESSIMISTIC'
         BGBaseSystem.set_backfill_times(self.blocks, job_end_times, now)
-        assert self.blocks['vert-16k-1'].backfill_time == job_done_2, 'vert-16k-1 has time %s should be %s' % (self.blocks['vert-16k-1'].backfill_time, job_done_1)
-        assert self.blocks['vert-16k-2'].backfill_time == job_done_1, 'vert-16k-2 has time %s should be %s' % (self.blocks['vert-16k-2'].backfill_time, job_done_1)
-        assert self.blocks['horiz-16k-1'].backfill_time == job_done_1, 'horiz-16k-1 has time %s should be %s' % (self.blocks['horiz-16k-1'].backfill_time, job_done_1)
+        assert self.blocks['vert-16k-1'].backfill_time == job_done_2, 'vert-16k-1 has time %s should be %s' % (self.blocks['vert-16k-1'].backfill_time, job_done_2)
+        assert self.blocks['vert-16k-2'].backfill_time == blocked_idle, 'vert-16k-2 has time %s should be %s' % (self.blocks['vert-16k-2'].backfill_time, blocked_idle)
+        assert self.blocks['horiz-16k-1'].backfill_time == blocked_idle, 'horiz-16k-1 has time %s should be %s' % (self.blocks['horiz-16k-1'].backfill_time, blocked_idle)
         assert self.blocks['8k-2'].backfill_time == job_done_1, '8k-2 has time %s should be %s' % (self.blocks['8k-2'].backfill_time, job_done_1)
-        assert self.blocks['8k-3'].backfill_time == job_done_2, '8k-2 has time %s should be %s' % (self.blocks['8k-3'].backfill_time, job_done_2)
-        assert self.blocks['512-2'].backfill_time == job_done_1, '512-2 has time %s should be %s' % (self.blocks['512-2'].backfill_time, job_done_1)
-        assert self.blocks['512-1'].backfill_time == job_done_2, '512-1 has time %s should be %s' % (self.blocks['512-1'].backfill_time, job_done_2)
-        assert self.blocks['512-4'].backfill_time == job_done_2, '512-4 has time %s should be %s' % (self.blocks['512-4'].backfill_time, job_done_2)
-
+        assert self.blocks['8k-3'].backfill_time == blocked_idle, '8k-2 has time %s should be %s' % (self.blocks['8k-3'].backfill_time, blocked_idle)
+        assert self.blocks['512-2'].backfill_time == blocked_idle, '512-2 has time %s should be %s' % (self.blocks['512-2'].backfill_time, blocked_idle)
+        assert self.blocks['512-1'].backfill_time == blocked_idle, '512-1 has time %s should be %s' % (self.blocks['512-1'].backfill_time, blocked_idle)
+        assert self.blocks['512-4'].backfill_time == now, '512-4 has time %s should be %s' % (self.blocks['512-4'].backfill_time, now)
 
     def test_overlap_v16blocking_8k_secondary_short_time(self):
         self.setup_standard_blocks()
         now = 250.0
-        now_delta = 550.0
+        blocked_idle = 550.0
         job_done_1 = 600.0
         job_done_2 = 500.0
         job_end_times = {'8k-2':job_done_2, 'vert-16k-1':job_done_1}
         for key in job_end_times.keys():
             self.set_blocking_states(key, 'allocated')
+        Cobalt.Components.bgq_base_system.BACKFILL_MODE = 'PESSIMISTIC'
         BGBaseSystem.set_backfill_times(self.blocks, job_end_times, now)
         assert job_done_2 not in [val.backfill_time  for val in self.blocks.values()], "Minimum backfill shadow not honored."
         assert self.blocks['vert-16k-1'].backfill_time == job_done_1, 'vert-16k-1 has time %s should be %s' % (self.blocks['vert-16k-1'].backfill_time, job_done_1)
-        assert self.blocks['vert-16k-2'].backfill_time == now_delta, 'vert-16k-2 has time %s should be %s' % (self.blocks['vert-16k-2'].backfill_time, now_delta)
-        assert self.blocks['horiz-16k-1'].backfill_time == job_done_1, 'horiz-16k-1 has time %s should be %s' % (self.blocks['horiz-16k-1'].backfill_time, job_done_1)
-        assert self.blocks['8k-2'].backfill_time == now_delta, '8k-2 has time %s should be %s' % (self.blocks['8k-2'].backfill_time, now_delta)
-        assert self.blocks['8k-3'].backfill_time == job_done_1, '8k-2 has time %s should be %s' % (self.blocks['8k-3'].backfill_time, job_done_1)
-        assert self.blocks['512-2'].backfill_time == now_delta, '512-2 has time %s should be %s' % (self.blocks['512-2'].backfill_time, now_delta)
-        assert self.blocks['512-1'].backfill_time == job_done_1, '512-1 has time %s should be %s' % (self.blocks['512-1'].backfill_time, job_done_1)
-        assert self.blocks['512-4'].backfill_time == now_delta, '512-4 has time %s should be %s' % (self.blocks['512-4'].backfill_time, now_delta)
-
+        assert self.blocks['vert-16k-2'].backfill_time == blocked_idle, 'vert-16k-2 has time %s should be %s' % (self.blocks['vert-16k-2'].backfill_time, blocked_idle)
+        assert self.blocks['horiz-16k-1'].backfill_time == blocked_idle, 'horiz-16k-1 has time %s should be %s' % (self.blocks['horiz-16k-1'].backfill_time, blocked_idle)
+        assert self.blocks['8k-2'].backfill_time == blocked_idle, '8k-2 has time %s should be %s' % (self.blocks['8k-2'].backfill_time, blocked_idle)
+        assert self.blocks['8k-3'].backfill_time == blocked_idle, '8k-2 has time %s should be %s' % (self.blocks['8k-3'].backfill_time, blocked_idle)
+        assert self.blocks['512-2'].backfill_time == blocked_idle, '512-2 has time %s should be %s' % (self.blocks['512-2'].backfill_time, blocked_idle)
+        assert self.blocks['512-1'].backfill_time == blocked_idle, '512-1 has time %s should be %s' % (self.blocks['512-1'].backfill_time, blocked_idle)
+        assert self.blocks['512-4'].backfill_time == now, '512-4 has time %s should be %s' % (self.blocks['512-4'].backfill_time, now)

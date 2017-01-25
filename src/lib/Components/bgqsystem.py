@@ -41,7 +41,7 @@ from Cobalt.Components.bgq_base_system import A_DIM, B_DIM, C_DIM, D_DIM, E_DIM
 from Cobalt.Components.bgq_base_system import get_extents_from_size
 from Cobalt.Components.bgq_base_system import Wire
 from Cobalt.Components.bgq_base_system import NodeCard, BlockDict, BGProcessGroupDict, BGBaseSystem
-
+from Cobalt.Components.bgq_base_system import BACKFILL_MODE
 #try:
     ##compatibiilty for older pythons, Check to see if this even matters for >= 2.6
     #from elementtree import ElementTree
@@ -168,6 +168,12 @@ class BGSystem (BGBaseSystem):
         self.kernel = 'default'
 
         BGBaseSystem.__init__(self, *args, **kwargs)
+        valid_backfill_modes = ['OPTIMISTIC', 'PESSIMISTIC']
+        if BACKFILL_MODE not in valid_backfill_modes:
+            self.logger.critical('[bgsystem] backfill_mode: %s invalid.  Must be one of: %s.  Terminating',
+                    BACKFILL_MODE, ", ".join(valid_backfill_modes))
+        else:
+            self.logger.info("Backfill mode set to: %s", BACKFILL_MODE)
         sys.setrecursionlimit(5000)
         self.process_groups.item_cls = BGProcessGroup
         self.node_card_cache = dict()
@@ -222,6 +228,12 @@ class BGSystem (BGBaseSystem):
     def __setstate__(self, state):
 
         Component.__setstate__(self, state) 
+        valid_backfill_modes = ['OPTIMISTIC', 'PESSIMISTIC']
+        if BACKFILL_MODE not in valid_backfill_modes:
+            self.logger.critical('[bgsystem] backfill_mode: %s invalid.  Must be one of: %s.  Terminating',
+                    BACKFILL_MODE, ", ".join(valid_backfill_modes))
+        else:
+            self.logger.info("Backfill mode set to: %s", BACKFILL_MODE)
         sys.setrecursionlimit(5000)
         Cobalt.Util.fix_set(state)
         self._managed_blocks = state['managed_blocks']
