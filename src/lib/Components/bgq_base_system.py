@@ -46,9 +46,10 @@ CP = ConfigParser.ConfigParser()
 CP.read(Cobalt.CONFIG_FILES)
 
 MAX_DRAIN_HOURS = float(get_config_option('bgsystem', 'max_drain_hours', float(sys.maxint)))
+BACKFILL_MODE = get_config_option('bgsystem', 'backfill_mode', 'OPTIMISTIC').upper()
 
 #you'd think that this would be in the control system database somewhere, but it's not.
-#this generates the node locations for N00 in a midplane.  So far as I know (and I can 
+#this generates the node locations for N00 in a midplane.  So far as I know (and I can
 #be proven wrong here) these are consistient between midplanes.
 
 #Also, when moving between nodes, the B and E dimensions seem to like to reverse together.
@@ -59,11 +60,11 @@ def generate_base_node_map():
     ret_map = [[0,0,0,0,0]]
 
     __transform_subcube(ret_map)
-    ret_map.append(__transform_dim(('b','d'), ret_map[len(ret_map)-1])) 
+    ret_map.append(__transform_dim(('b','d'), ret_map[len(ret_map)-1]))
     __transform_subcube(ret_map)
     ret_map.append(__transform_dim(('a','b','c'), ret_map[len(ret_map)-1]))
     __transform_subcube(ret_map)
-    ret_map.append(__transform_dim(('b','d'), ret_map[len(ret_map)-1]))  
+    ret_map.append(__transform_dim(('b','d'), ret_map[len(ret_map)-1]))
     __transform_subcube(ret_map)
 
     return ret_map
@@ -81,20 +82,20 @@ def __transform_subcube(coord_map):
     return
 
 def __transform_dim(dims, dim_tuple):
-   
+
     ret = [i for i in dim_tuple]
-    
+
     if 'a' in dims:
-        ret[0] = ret[0] ^ 1 
+        ret[0] = ret[0] ^ 1
     if 'b' in dims:
-        ret[1] = ret[1] ^ 1 
+        ret[1] = ret[1] ^ 1
     if 'c' in dims:
-        ret[2] = ret[2] ^ 1 
+        ret[2] = ret[2] ^ 1
     if 'd' in dims:
-        ret[3] = ret[3] ^ 1 
+        ret[3] = ret[3] ^ 1
     if 'e' in dims:
-        ret[4] = ret[4] ^ 1 
-    
+        ret[4] = ret[4] ^ 1
+
     return ret
 
 #these allow us to translate from NXX positons in the midplane
@@ -769,8 +770,6 @@ class BGBaseSystem (Component):
         self.logger.info("%s called add_to_managed_blocks(%r)", user_name, specs)
         self.logger.log(1, "managed_blocks: %s", managed_set)
         specs = [{'name':spec.get("name")} for spec in specs]
-        self.logger.debug("%s", specs)
-        self.logger.debug("%s", block_dict.q_get([{'name':'Q0G-I0-384'},]))
         self._blocks_lock.acquire()
         try:
             blocks = [block for block in block_dict.q_get(specs) if block.name not in managed_set]
@@ -783,9 +782,6 @@ class BGBaseSystem (Component):
         for block in blocks:
             self.available_block_geometries.add(block.geometry_string)
         self._blocks_lock.release()
-        self.logger.debug("%s", [block.name for block in blocks])
-        self.logger.debug("%s", [b.name for b in block_dict.values()])
-        self.logger.debug("%s", managed_set)
         self.update_relatives()
         return [block.name for block in blocks]
 
@@ -937,9 +933,6 @@ class BGBaseSystem (Component):
             # only a child if the node-level resources are a proper subset of it's parent block.
             b._parents.update([block for block in b._relatives if b.is_parent(block)])
             b._children.update([block for block in b._relatives if b.is_child(block)])
-            #self.logger.debug('Block: %s:\nRelatives: %s', b.name, [block.name for block in b._relatives])
-
-
 
     def validate_job(self, spec):
         """validate a job for submission
@@ -1085,7 +1078,7 @@ class BGBaseSystem (Component):
         queue = args['queue']
         utility_score = args['utility_score']
         walltime = args['walltime']
-        #walltime_p = args.get('walltime_p', walltime)  #*AdjEst* 
+        #walltime_p = args.get('walltime_p', walltime)  #*AdjEst*
         forbidden = set(args.get("forbidden", []))
         pt_forbidden = set(args.get("pt_forbidden", []))
         required = args.get("required", [])
@@ -1106,7 +1099,7 @@ class BGBaseSystem (Component):
             requested_location = args['attrs']['location']
         if required:
             # whittle down the list of required blocks to the ones of the proper size
-            # this is a lot like the stuff in _build_locations_cache, but unfortunately, 
+            # this is a lot like the stuff in _build_locations_cache, but unfortunately,
             # reservation queues aren't assigned like real queues, so that code doesn't find
             # these
             for p_name in required:
@@ -1126,6 +1119,8 @@ class BGBaseSystem (Component):
             for p in available_blocks.copy():
                 if p.size != desired_size:
                     available_blocks.remove(p)
+                elif not backfilling and p.draining:
+                    available_blocks.remove(p)
                 elif geometry != None and geometry != p.node_geometry:
                     available_blocks.remove(p)
                 elif p.name in self._not_functional_set:
@@ -1137,6 +1132,8 @@ class BGBaseSystem (Component):
             for p in self.possible_locations(nodes, queue):
                 skip = False
                 if geometry != None and geometry != p.node_geometry:
+                    skip = True
+                if not backfilling and p.draining:
                     skip = True
                 if not skip:
                     for bad_name in forbidden:
@@ -1165,7 +1162,8 @@ class BGBaseSystem (Component):
 
          #       if 60 * runtime_estimate > (block.backfill_time - now):      # *Adj_Est*
          #           continue
-
+                if block.backfill_time is None:
+                    logger.debug("block: %s %s", block.name, block.backfill_time)
                 if 60*float(walltime) > (block.backfill_time - now):
                     continue
 
@@ -1186,21 +1184,32 @@ class BGBaseSystem (Component):
             return {jobid: [best_block.name]}
 
 
-    def _find_drain_block(self, job):
+    def _find_drain_block(self, job, drain_blocks):
+        '''find a block to drain.  If there is a specified location for a job,
+        drain only on that location, otherwise, choose the block where we want
+        the job to eventually run.
+
+        '''
         geometry = job.get('geometry', None)
         # if the user requested a particular block, we only try to drain that one
         if job['attrs'].has_key("location"):
             #don't drain a dead block
-            if job['attrs']['location'] not in self.offline_blocks:
+            if (job['attrs']['location'] not in self.offline_blocks and
+                    set(job['attrs']['location']).isdisjoint(set([name for name
+                        in drain_blocks]))):
                 target_name = job['attrs']['location']
-                return self.cached_blocks.get(target_name, None)
+                target_block =  self.cached_blocks.get(target_name, None)
+                if target_block is not None:
+                    if target_block.draining:
+                        return None
+                return target_block
             else:
                 #return this drain location or not at all for this job
                 return None
 
-
         drain_block = None
         locations = self.possible_locations(job['nodes'], job['queue'])
+        locations -= drain_blocks # Only you can prevent drain spam.
 
         for p in locations:
             if geometry != None and geometry != p.node_geometry:
@@ -1211,8 +1220,8 @@ class BGBaseSystem (Component):
                 if p.backfill_time < drain_block.backfill_time:
                     drain_block = p
 
-        if drain_block:
-            # don't try to drain for an entire weekend 
+        if drain_block is not None:
+            # don't try to drain for an entire weekend
             hours = (drain_block.backfill_time - time.time()) / 3600.0
             if hours > MAX_DRAIN_HOURS:
                 drain_block = None
@@ -1230,9 +1239,9 @@ class BGBaseSystem (Component):
                     break
 
         if self._locations_cache.has_key(q_name):
-            return self._locations_cache[q_name].get(desired_size, [])
+            return set(self._locations_cache[q_name].get(desired_size, []))
         else:
-            return []
+            return set([])
 
     def _build_locations_cache(self):
         '''Build three things: a pair of dictionaries keyed by queue names,
@@ -1254,6 +1263,8 @@ class BGBaseSystem (Component):
         not_functional_set = set()
         for target_block in self.cached_blocks.itervalues():
             usable = True
+            if not target_block.scheduled:
+                usable = False
             if (target_block.name in self.offline_blocks or
                     NOT_OFFLINE_RE.search(target_block.state) is None):
                 usable = False
@@ -1265,6 +1276,7 @@ class BGBaseSystem (Component):
                             usable = False
                             not_functional_set.add(target_block.name)
                             break
+
 
             for queue_name in target_block.queue.split(":"):
                 if not per_queue.has_key(queue_name):
@@ -1294,52 +1306,56 @@ class BGBaseSystem (Component):
         now is the time to use as the starting point of this drain window
         minimum_not_idle is a minimum delta in seconds to add to now for non-idle non-job blocks
         job_end_times is a dict of block_location:job_end_time.  All times for this function are in seconds from epoch.
+
         '''
         #Initialize block to immediately available or ready 5 min from now.
         #the backfill time is in sec from Epoch.
         #initialize everything that isn't idle as being ready 5 min from now.
-        for p in blocks.itervalues():
-            if p.state == 'idle':
-                p.backfill_time = now
+        for block in blocks.itervalues():
+            if block.name in job_end_times.keys():
+                block.backfill_time = max(now + minimum_not_idle,
+                                          job_end_times[block.name])
+            elif block.state == 'idle':
+                block.backfill_time = now
             else:
-                p.backfill_time = now + minimum_not_idle
-            p.draining = False
-
-        for p in blocks.itervalues():
-            if p.name in job_end_times.keys():
-                #Keep at least minimum_not_idle open for cleanup.  Also, job may be over time.
-                if job_end_times[p.name] > p.backfill_time:
-                    p.backfill_time = job_end_times[p.name]
-
-                #iterate over current jobs.  Blocks with running jobs are set to the job's end time (startime + walltime)
-                #Iterate over parents and set their time to the backfill window as well.
-                # only set the parent block's time if it is earlier than the block's time
-                for parent_block in p._parents:
-                    if p.backfill_time > parent_block.backfill_time:
-                        parent_block.backfill_time = p.backfill_time
-
-        #Over all blocks, ignore if the time has not been changed, otherwise push
-        # the backfill time to children.  Do so if the child is either immediately available
-        # or if the child has a longer backfill time that the block does.
-        # is this backwards?
-        for p in blocks.itervalues():
-            if p.backfill_time == now:
-                continue
-            for child in p._children:
-                child_block = child
-                if child_block.backfill_time == now  or child_block.backfill_time > p.backfill_time:
-                    child_block.backfill_time = p.backfill_time
-
-        #Go back through, if we're actually running a job on a block, all of it's children should have timese set to the greater of their current time or the parent block's time
-        for name in job_end_times.iterkeys():
-            job_block = blocks[name]
-            for child in job_block._children:
-                if child.backfill_time < job_end_times[name]:
-                    child.backfill_time = job_block.backfill_time
-
+                # Not idle, but not running a job according to the queue manager.
+                # Usually this is cleanup.
+                block.backfill_time = now + minimum_not_idle
+            block.draining = False
 
     def find_job_location(self, arg_list, end_times, pt_blocking_locations=[]):
-        ''' get the best location for a job.
+        '''Given a list of job parameters, expected termination times, and
+        locations blocked by reservation passthrough, find the best available
+        location for a job to run and/or drain the best location for pending
+        top-of-queue jobs on the system.
+
+           Args:
+               arg_list: A list of job data dictionaries.  Job dicts will have
+                   jobid, user, queue, utility_score, attrs, and walltime.  Job dicts may
+                   have a list of required locations, forbidden locations,
+                   pt_forbidden locations, and geometry.  It is assumed that
+                   this list has been sorted in order of job execution
+                   preference, usally utility score order.
+               end_times: A dictionary of blocks with running jobs and their
+                   expected termination time in seconds from epoch.
+                   Termination time is from the queue-manager equal to job
+                   start time + walltime.  This is empty when finding locations
+                   for reservations, and ensures first-fit behavior in
+                   reservations.
+               pt_blocking_locations: A list of blocks that are blocked due to
+                   passthrough considerations due to Cobalt reservation
+                   placement in the scheduler.
+
+           Returns:
+               A list of dictionaries mapping jobid to block name to run on.
+
+           Exceptions:
+               None.  This is typically invoked via XML-RPC mechanisms,
+               however.
+
+           Side Effects:
+               Will ultimately reset the backfill times/drain status of blocks.
+               Sets resource resrvations on blocks selected for job start.
 
         '''
 
@@ -1377,11 +1393,13 @@ class BGBaseSystem (Component):
             jobs[job['jobid']] = job
             block_name = self._find_job_location(job, drain_blocks)
             if block_name:
+                # we can run immediately and need to tell the rest of Cobalt to
+                # start a job.
                 best_block_dict.update(block_name)
                 break
 
             #Keep pending reservations from collapsing the backfill window
-            location = self._find_drain_block(job)
+            location = self._find_drain_block(job, drain_blocks)
             forbidden_locs = []
             if job.has_key('forbidden'):
                 forbidden_locs = job['forbidden']
@@ -1402,15 +1420,34 @@ class BGBaseSystem (Component):
 
             if location is not None:
                 if ((location.name not in forbidden_location_blocks)):
-                    for p_name in location.parents:
-                        drain_blocks.add(self.cached_blocks[p_name])
-                    for p_name in location.children:
-                        drain_blocks.add(self.cached_blocks[p_name])
-                        self.cached_blocks[p_name].draining = True
+                    # We are now officially draining this block
+                    blocking_time = None
+                    # Get the time we're applying to all relatives of this block
+                    for busy_block_name in [blk for blk in job_end_times.keys() if blk in location.relatives]:
+                        busy_block = self.cached_blocks[busy_block_name]
+                        if blocking_time is None:
+                            blocking_time = busy_block.backfill_time
+                            # minimum non-idle backfill time.  If everything was
+                            # idle we'd be running
+                        elif BACKFILL_MODE == 'PESSIMISTIC':
+                            blocking_time = min(blocking_time,
+                                    busy_block.backfill_time)
+                        else:
+                            blocking_time = max(blocking_time,
+                                    busy_block.backfill_time)
+                    if blocking_time is None:
+                        blocking_time = now + 300
+                    #propigate time to impacted blocks
+                    for p_name in location.relatives:
+                        rel_block = self.cached_blocks[p_name]
+                        drain_blocks.add(rel_block)
+                        rel_block.draining = True
+                        self._mark_child_draining(p_name, blocking_time, now,
+                                drain_blocks)
                     drain_blocks.add(location)
-                    self.logger.debug("job %s is draining %s state %s backfill ends at %s" % (job['jobid'], location.name,
-                        location.state, \
-                        time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(location.backfill_time))))
+                    self.logger.debug("job %s is draining %s state %s backfill ends at %s",
+                            job['jobid'], location.name, location.state,
+                            time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(location.backfill_time)))
                     location.draining = True
 
         # the next time through, try to backfill, but only if we couldn't find anything to start
@@ -1451,6 +1488,17 @@ class BGBaseSystem (Component):
 
         return best_block_dict
     find_job_location = locking(exposed(find_job_location))
+
+    def _mark_child_draining(self, block_name, backfill_time, now, drain_blocks):
+        block = self.cached_blocks[block_name]
+        # Propigate backfill times to relatives, choose largest
+        if block.backfill_time == now:
+            block.backfill_time = backfill_time
+        elif BACKFILL_MODE == 'PESSIMISTIC':
+            block.backfill_time = max(block.backfill_time, backfill_time)
+        else:
+            block.backfill_time = min(block.backfill_time, backfill_time)
+
 
     def _walltimecmp(self, dict1, dict2):
         return -cmp(float(dict1['walltime']), float(dict2['walltime']))

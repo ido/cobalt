@@ -238,9 +238,11 @@ class TestBGQSystem(object):
                 'queue': 'default',
                 }
         self.bgqsystem.offline_blocks = set([])
-        self.bgqsystem.cached_blocks = {'FOO': {'name':'FOO'}, 'BAR': {'name':'BAR'}}
-        drain_block = self.bgqsystem._find_drain_block(job)
-        assert drain_block['name'] == 'FOO', \
+        self.bgqsystem.cached_blocks = {'FOO': FakeBlock({'name':'FOO'}),
+                                        'BAR': FakeBlock({'name':'BAR'})}
+        drain_blocks = []
+        drain_block = self.bgqsystem._find_drain_block(job, drain_blocks)
+        assert drain_block.name == 'FOO', \
                 "Expected %s for drain_block.  Got %s" % ('FOO', drain_block)
 
     @patch.object(BGSystem, 'possible_locations', return_value=[])
@@ -252,8 +254,16 @@ class TestBGQSystem(object):
                 'nodes': 512,
                 'queue': 'default',
                 }
+        drain_blocks = []
         self.bgqsystem.offline_blocks = set(['FOO'])
-        self.bgqsystem.cached_blocks = {'FOO': {'name':'FOO'}, 'BAR': {'name':'BAR'}}
-        drain_block = self.bgqsystem._find_drain_block(job)
+        self.bgqsystem.cached_blocks = {'FOO': FakeBlock({'name':'FOO'}),
+                                        'BAR': FakeBlock({'name':'BAR'})}
+        drain_block = self.bgqsystem._find_drain_block(job, drain_blocks)
         assert drain_block is None, 'drain_block not None'
 
+class FakeBlock(object):
+    def __init__(self, spec):
+        self.name = spec['name']
+        self.draining = False
+    def __hash__(self):
+        return self.name.__hash__()
