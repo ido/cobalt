@@ -1,5 +1,9 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 1.0.12 ==
+ * The BlueGene/Q now has a more optimistic backfilling algorithm that also
+   properly accounts for exactly which jobs are currently draining.
+
 == Changes to 1.0.11 ==
  * Fix for a race condition on Cray systems where a correctly timed qdel can
    cause the nodes for a job to get stuck in cleanup.
