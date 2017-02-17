@@ -80,7 +80,8 @@ fi
 
 echo "Setting the version in the client programs and installation scripts"
 ( cd ${tmpdir}/${relname} && perl -p -i -e "s/\\\$Version\\\$/${version}/" \
-    src/clients/*.py src/clients/POSIX/*.py setup.py misc/cobalt.spec )
+    src/clients/*.py src/clients/POSIX/*.py setup.py misc/cobalt.spec \
+    misc/cobalt.rhel.spec misc/cobalt.sles.spec )
 if test $? -ne 0 ; then
     error "Version substitution failed."
 fi

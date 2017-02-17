@@ -9,10 +9,7 @@ URL: http://www.mcs.anl.gov/cobalt
 Prefix: /usr
 Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
-BuildRequires: systemd-rpm-macros
-Requires: python >= 2.7
-Requires: python-lockfile
-Requires: python-python-daemon
+Requires: python >= 2.6
 
 %package -n cobalt-clients
 Version: %{version}
@@ -21,7 +18,7 @@ Group: Applications/System
 Requires: %{requires}
 
 %description -n cobalt-clients
-Cobalt Resource Management clients.
+Cobalt Resource Management clients. 
 
 %description
 The Cobalt Resource Management System
@@ -29,22 +26,20 @@ The Cobalt Resource Management System
 %prep
 
 %setup -q
-%define python python2.7
-%{python} setup.py build
+python2.6 setup.py build
 %define client_wrapper_dir /usr/libexec/cobalt
 %define python_wrapper_dir %{client_wrapper_dir}/bin
-%define python_site_packages %{_libdir}%{python}/site-packages
 
 %build
 cd src/clients && make PROGPREFIX=%{client_wrapper_dir}
 
 %install
-rm -rf ${RPM_BUILD_ROOT}
+rm -rf $RPM_BUILD_ROOT
 mkdir -p ${RPM_BUILD_ROOT}%{_sbindir}
 mkdir -p ${RPM_BUILD_ROOT}%{_bindir}
 mkdir -p ${RPM_BUILD_ROOT}%{client_wrapper_dir}
 
-%{python} setup.py install --prefix=${RPM_BUILD_ROOT}%{client_wrapper_dir} --install-lib ${RPM_BUILD_ROOT}%{python_site_packages}
+python2.6 setup.py install --prefix=${RPM_BUILD_ROOT}%{client_wrapper_dir} --install-lib ${RPM_BUILD_ROOT}/usr/lib64/python2.6/site-packages
 install -m 755 src/clients/wrapper ${RPM_BUILD_ROOT}%{python_wrapper_dir}
 install -m 755 src/clients/cobalt-admin ${RPM_BUILD_ROOT}%{_sbindir$}
 %{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/slp.py ${RPM_BUILD_ROOT}%{_sbindir}
@@ -74,26 +69,26 @@ install -m 755 src/clients/cobalt-admin ${RPM_BUILD_ROOT}%{_sbindir$}
 %{__rm} -f ${RPM_BUILD_ROOT}%{python_wrapper_dir}/bstat.py
 %{__rm} -f ${RPM_BUILD_ROOT}%{python_wrapper_dir}/pmrun.py
 %{__rm} -f ${RPM_BUILD_ROOT}%{python_wrapper_dir}/cdump.py
-
 mkdir -p ${RPM_BUILD_ROOT}%{_initrddir}
-%{__mv} misc/cobalt.init.cray ${RPM_BUILD_ROOT}/etc/init.d/cobalt
+mkdir -p ${RPM_BUILD_ROOT}/etc/init.d
+mkdir -p ${RPM_BUILD_ROOT}/etc/sysconfig
+%{__mv} ${RPM_BUILD_ROOT}/misc/cweb.init ${RPM_BUILD_ROOT}/etc/init.d/cweb
+%{__mv} ${RPM_BUILD_ROOT}/misc/cweb.sysconfig ${RPM_BUILD_ROOT}%/etc/sysconfig/cweb
+#install -m 644 misc/cobalt ${RPM_BUILD_ROOT}/etc/init.d
+#mkdir ${RPM_BUILD_ROOT}%{_sysconfdir}
 install -m 644 misc/cobalt.conf ${RPM_BUILD_ROOT}/etc
-
-mkdir -p ${RPM_BUILD_ROOT}/%{_unitdir}
-install -m 640 misc/cweb.service ${RPM_BUILD_ROOT}%{_unitdir}
-
 cd ${RPM_BUILD_ROOT}%{_sbindir}
 #for file in `find . -name \*.py | sed -e 's/\.py//' ` ; do ln -s cobalt-admin $file ; done
 cd ${RPM_BUILD_ROOT}%{python_wrapper_dir}
 for file in `find . -name \*.py | sed -e 's/\.py//' |grep -v fake` ; do ln -sf  %{python_wrapper_dir}/wrapper ${RPM_BUILD_ROOT}%{_bindir}/$file ; done
 find . -wholename "./Parser" -prune -o -name '*.py' -type f -print0 | xargs -0 grep -lE '^#! *(/usr/.*bin/(env +)?) ?python' | xargs sed -r -i -e '1s@^#![[:space:]]*(/usr/(local/)?bin/(env +)?)?python@#!/usr/bin/python@'
 #cd ${RPM_BUILD_ROOT}%{python_wrapper_dir} ; for file in `find . -name \*.py -print` ; do ln -sf wrapper `echo ${RPM_BUILD_ROOT}%{_bindir}/$file|sed -e 's/.py//'` ; done
-cd ${RPM_BUILD_ROOT}%{_sbindir} ; for file in `find . -name \*.py -print` ; do ln -sf $file `echo $file|sed -e 's/.py//'` ; done
+cd ${RPM_BUILD_ROOT}/usr/sbin ; for file in `find . -name \*.py -print` ; do ln -sf $file `echo $file|sed -e 's/.py//'` ; done
 #put manpages back in the right place
 %{__mv} ${RPM_BUILD_ROOT}%{client_wrapper_dir}/share ${RPM_BUILD_ROOT}/usr/share
 
 %clean
-rm -rf ${RPM_BUILD_ROOT}
+rm -rf $RPM_BUILD_ROOT
 
 %pre
 if ! /usr/bin/getent group cobalt &>/dev/null
@@ -118,23 +113,22 @@ if [ ! -d /var/log/cobalt ]; then
 fi
 
 %files -n cobalt
-%{_sbindir}/*
+/usr/sbin/*
+/etc/init.d/cweb
+/etc/syscofig/cweb
 %config (noreplace) %attr(640,root,cobalt) /etc/cobalt.conf
-%config (noreplace) /etc/init.d/cobalt
-# On SLES systems we're running this through systemd
-%config (noreplace) %attr(640,root,cobalt) 
-%{_unitdir}/cweb.service
-%{_mandir}/man5/*.5*
-%{_mandir}/man8/*.8*
+#%config(noreplace) /etc/init.d/cobalt
+/usr/share/man/man5/*
+/usr/share/man/man8/*
 
 
 %files -n cobalt-clients
 %{python_wrapper_dir}/*
-%{_bindir}/*
+/usr/bin/*
 %attr(2755,root,cobalt) %{python_wrapper_dir}/wrapper
-%{python_site_packages}/Cobalt/*
-%{python_site_packages}/Cobalt-*egg-info*
-%{_mandir}/man1/*.1*
+/usr/lib*/python2.6/site-packages/Cobalt/*
+/usr/lib*/python2.6/site-packages/Cobalt-*egg-info*
+/usr/share/man/man1/*.1*
 
 %defattr(-,root,root,-)
 
@@ -142,10 +136,6 @@ fi
 
 
 %changelog
-* Fri Feb 17 2017 Paul Rich <richp@alcf.anl.gov>
-- SLES-Cray specfile updates.
-
 * Tue Oct  4 2005 Narayan Desai <desai@mcs.anl.gov> - 
 - Initial build.
-
 
