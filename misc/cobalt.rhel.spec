@@ -72,8 +72,8 @@ install -m 755 src/clients/cobalt-admin ${RPM_BUILD_ROOT}%{_sbindir$}
 mkdir -p ${RPM_BUILD_ROOT}%{_initrddir}
 mkdir -p ${RPM_BUILD_ROOT}/etc/init.d
 mkdir -p ${RPM_BUILD_ROOT}/etc/sysconfig
-%{__mv} ${RPM_BUILD_ROOT}/misc/cweb.init ${RPM_BUILD_ROOT}/etc/init.d/cweb
-%{__mv} ${RPM_BUILD_ROOT}/misc/cweb.sysconfig ${RPM_BUILD_ROOT}%/etc/sysconfig/cweb
+%{__mv} misc/cweb.init ${RPM_BUILD_ROOT}/etc/init.d/cweb
+%{__mv} misc/cweb.sysconfig ${RPM_BUILD_ROOT}/etc/sysconfig/cweb
 #install -m 644 misc/cobalt ${RPM_BUILD_ROOT}/etc/init.d
 #mkdir ${RPM_BUILD_ROOT}%{_sysconfdir}
 install -m 644 misc/cobalt.conf ${RPM_BUILD_ROOT}/etc
@@ -115,7 +115,7 @@ fi
 %files -n cobalt
 /usr/sbin/*
 /etc/init.d/cweb
-/etc/syscofig/cweb
+/etc/sysconfig/cweb
 %config (noreplace) %attr(640,root,cobalt) /etc/cobalt.conf
 #%config(noreplace) /etc/init.d/cobalt
 /usr/share/man/man5/*
