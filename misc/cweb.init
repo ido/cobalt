@@ -1,0 +1,95 @@
+#!/bin/sh
+#
+# cweb 
+#
+# chkconfig:   345 90 60
+# description: provides cobalt information to the gronkulator web application
+
+### BEGIN INIT INFO
+# Provides: cweb
+# Required-Start: $network
+# Required-Stop: $network
+# Default-Start: 345
+# Default-Stop: 90
+# Short-Description:
+# Description:
+### END INIT INFO
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+prog="cweb"
+config="/etc/sysconfig/${prog}"
+python="$(which python2.6)"
+
+CWEB_USER='root'
+CWEB_PORT=5050
+CWEB_ARGS=''
+
+[ -e /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
+
+exec=/usr/sbin/cweb
+pidfile=/var/run/${prog}.pid
+lockfile=${pidfile}.lock
+args="-d -p $CWEB_PORT -f $pidfile $CWEB_ARGS"
+
+start() {
+    [ -f $exec ] || exit 5
+    [ -f $config ] || exit 6
+    echo -n $"Starting $prog: "
+    # if not running, start it up here, usually something like "daemon $exec"
+    daemon --user $CWEB_USER --pidfile $pidfile "$python $exec $args"
+    retval=$?
+    echo
+    return $retval
+}
+
+stop() {
+    echo -n $"Stopping $prog: "
+    # stop it here, often "killproc $prog"
+    killproc -p $pidfile -TERM $python
+    retval=$?
+    echo
+    [ $retval -eq 0 ] && rm -f $lockfile
+    return $retval
+}
+
+restart() {
+    stop
+    start
+}
+
+reload() {
+    killproc -p $pidfile $prog -HUP
+}
+
+rh_status() {
+    # run checks to determine if the service is running or use generic status
+    status $prog
+}
+
+rh_status_q() {
+    rh_status >/dev/null 2>&1
+}
+
+
+case "$1" in
+    start)
+        rh_status_q && exit 0
+        $1
+        ;;
+    stop)
+        rh_status_q || exit 0
+        $1
+        ;;
+    restart)
+        $1
+        ;;
+    status)
+        rh_status
+        ;;
+    *)
+        echo $"Usage: $0 {start|stop|status|restart}"
+        exit 2
+esac
+exit $?

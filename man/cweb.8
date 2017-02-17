@@ -1,0 +1,56 @@
+.TH "cweb" 8
+.SH NAME
+cweb \- Cobalt realtime job data agent
+.SH SYNOPSIS
+.B cweb
+[\fB\-id\fR]
+[\fB\-p\fR \fIPORT\fR]
+[\fB\-\-job\-fields\fR \fIfield1:field2:...:fieldN\fR]
+[\fB\-\-reservation\-fields\fR \fIfield1:field2:...:fieldN\fR]
+.SH DESCRIPTION
+.B cweb
+Queries the cobalt queue-manager, scheduler, and active system component for
+job, reservation, and node/partition data for a running Cobalt instance.  This
+data is presented as a JSON-encoded string.  If run interactively, \fBcweb\fR
+will query once, write results to \fIstdout\fR and exit.  If run as a daemon,
+then this data will be presented via a web-interface at the specified port to a
+HTTP get request.  Data will be returned once per request.  By default, cweb
+will run a webserver, and will direct all status and error messages to
+stdout/stderr.
+.SH OPTIONS
+.TP
+.B \-d
+Run as a daemon.  This will expect a pidfile to be set and will be expected to
+run as a service.
+.TP
+.B \-g \-\-debug
+Run a debugging ping-pong server, as opposed to serving JSON data.
+.TP
+.B \-h
+Print help and exit.
+.TP
+.B \-i \-\-immediage
+Run interacively.  Fetch current job/reservation/resource status, print JSON and
+exit.
+.TP
+.B \-p PORT \-\-port PORT
+Port to respond to.  This is ignored with the \fI\-i\fR flag.
+.TP
+.B \-\-job\-fields field1:field2:...:fieldN
+Fetch additional data fields for job data.  See
+.BR cqm(8)
+for additional fields. Additional fields are ':'-delimited
+.TP
+.B \-\-reservation\-fields field1:field2:...:fieldN
+Fetch additional data fields for job data.  See
+.BR bgsched (8)
+for additional fields. Additional fields are ':'-delimited
+
+.SH NOTES
+
+.SH SEE ALSO
+.BR cqm (8)
+.BR bgsched (8)
+.BR bgqsystem (8)
+.BR alpssystem (8)
+.BR cluster_system (8)
