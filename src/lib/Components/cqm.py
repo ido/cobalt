@@ -825,7 +825,7 @@ class Job (StateMachine):
     def __task_run(self):
         global run_id_gen
         walltime = self.walltime
-        if self.runid == None: #allow us to unset this for preemption
+        if self.runid is None: #allow us to unset this for preemption
             self.runid = run_id_gen.next() #Don't try and run this twice.
 
         if self.preemptable and self.maxtasktime < walltime:
@@ -878,7 +878,16 @@ class Job (StateMachine):
             self._sm_raise_exception("unexpected error returned from the system component when attempting to add task",
                 cobalt_log = True)
             return Job.__rc_unknown
-
+        finally:
+            # Start task timer.  This corresponds to the compute time
+            if self.walltime > 0:
+                self.__max_job_timer = Timer(self.walltime * 60)
+            else:
+                self.__max_job_timer = Timer()
+            self.__max_job_timer.start()
+            task_start = accounting.task_start(self.jobid, self.runid)
+            accounting_logger.info(task_start)
+            logger.info(task_start)
         return Job.__rc_success
 
     def __task_finalize(self):
@@ -900,6 +909,11 @@ class Job (StateMachine):
         except:
             self._sm_raise_exception("unexpected error returned from the system component while finalizing task")
             return Job.__rc_unknown
+        finally:
+            self.__max_job_timer.stop()
+            task_end = accounting.task_end(self.jobid, self.runid, self.__max_job_timer.elapsed_times[-1])
+            accounting_logger.info(task_end)
+            logger.info(task_end)
 
         self.taskid = None
         return Job.__rc_success
@@ -1355,11 +1369,7 @@ class Job (StateMachine):
 
             # start job and resource timers
             self.__timers['user'].start()
-            if self.walltime > 0:
-                self.__max_job_timer = Timer(self.walltime * 60)
-            else:
-                self.__max_job_timer = Timer()
-            self.__max_job_timer.start()
+            #max job timer moved to __task_run/__task_finalize
             if self.preemptable:
                 self.__mintasktimer = Timer(max((self.mintasktime - self.maxcptime) * 60, 0))
                 self.__mintasktimer.start()
@@ -2389,7 +2399,6 @@ class Job (StateMachine):
 
         # stop the execution timer, clear the location where the job is being run, and output accounting log entry
         self.__timers['user'].stop()
-        self.__max_job_timer.stop()
         self.location = None
         if self.__max_job_timer.has_expired:
             # if the job execution time has exceeded the wallclock time, then proceed to cleanup and remove the job
@@ -2434,7 +2443,6 @@ class Job (StateMachine):
 
         # start job and resource timers
         self.__timers['user'].start()
-        self.__max_job_timer.start()
         if self.preemptable:
             self.__mintasktimer = Timer(max((self.mintasktime - self.maxcptime) * 60, 0))
             self.__mintasktimer.start()

@@ -6,7 +6,7 @@ import os
 
 __all__ = ["abort", "begin", "checkpoint", "delete", "end", "finish",
     "system_remove", "remove", "queue", "rerun", "start", "unconfirmed",
-    "confirmed", "DatetimeFileHandler"]
+    "confirmed", "task_start", "task_end",  "DatetimeFileHandler"]
 
 
 def abort (job_id):
@@ -255,6 +255,26 @@ def confirmed (reservation_id, requester):
 
     return entry("Y", reservation_id, {'requester':requester})
 
+def task_start(job_id, task_id):
+    '''Indicate a task has started.  Typically this would indicate that add_process_groups has been called successfully.
+
+    Args:
+        job_id - id of job that this task belongs to
+        task_id - id of the task launched
+
+    '''
+    return entry("TS", job_id, {'task_id': task_id})
+
+def task_end(job_id, task_id, task_runtime):
+    '''Indicate a task has started.  Typically this would indicate that add_process_groups has been called successfully.
+
+    Args:
+        job_id - id of job that this task belongs to
+        task_id - id of the task launched
+        task_runtime - The running time of the task in seconds.  Start time for this is the task_start record timestamp.
+
+    '''
+    return entry("TE", job_id, {'task_id': task_id, 'task_runtime': task_runtime})
 
 class DatetimeFileHandler (BaseRotatingHandler):
 
@@ -321,7 +341,7 @@ def entry_ (datetime_, record_type, id_string, message):
     """
 
     assert record_type in ("A", "B", "C", "D", "E", "F", "K", "k", "Q", "R",
-        "S", "T", "U", "Y"), "invalid record_type %r" % record_type
+        "S", "T", "U", "Y", "TS", "TE"), "invalid record_type %r" % record_type
     datetime_s = datetime_.strftime("%m/%d/%Y %H:%M:%S")
     message_text = serialize_message(message)
     return "%s;%s;%s;%s" % (datetime_s, record_type, id_string, message_text)
@@ -382,69 +402,3 @@ def serialize_td (timedelta_):
         raise ValueError(ex)
 
 
-def demo ():
-    from datetime import timedelta
-    import logging
-
-    class FakeDatetime (object):
-
-        datetime = datetime
-
-        def __init__ (self, now):
-            self.start = self.datetime.now()
-            self.epoch = now
-
-        def now (self):
-            return self.epoch + (self.datetime.now() - self.start)
-
-    global datetime
-    datetime_ = datetime
-    datetime = FakeDatetime(datetime_(2000, 1, 1))
-
-    logger = logging.getLogger("accounting")
-    logger.setLevel(logging.INFO)
-    logger.addHandler(logging.StreamHandler())
-    logger.addHandler(DatetimeFileHandler("%Y%m%d"))
-
-    logger.info(abort(1))
-
-    logger.info(begin(1, owner="janderso", queue="default",
-        ctime=datetime.now(), start=datetime.now(),
-        end=datetime.now()+timedelta(hours=1),
-        duration=timedelta(hours=1), exec_host="ANL-R00-M0-512",
-        authorized_users=["janderso", "acherry"],
-        resource_list={'nodes':512}))
-
-    logger.info(checkpoint(1))
-
-    logger.info(delete(1, "janderso@login1.surveyor.alcf.anl.gov"))
-
-    logger.info(end(1, "janderso", "users", "foojob", "default",
-        datetime.now(), datetime.now(), datetime.now(), datetime.now(),
-        "ANL-R00-M0-512", {'nodes':512}, 123,
-        datetime.now()+timedelta(hours=1), 0,
-        {'nodes':512, 'time':timedelta(hours=1)}, account="myproject"))
-
-    logger.info(finish(1))
-
-    datetime = FakeDatetime(datetime_(2000, 1, 2))
-
-    logger.info(system_remove(1, "root@sn1"))
-
-    logger.info(remove(1, "janderso@login1"))
-
-    logger.info(queue(1, "default"))
-
-    logger.info(rerun(1))
-
-    logger.info(start(1, "janderso", "users", "foojob", "default",
-        datetime.now(), datetime.now(), datetime.now(), datetime.now(),
-        "ANL-R00-M0-512", {'nodes':512}, 123))
-
-    logger.info(unconfirmed(1, "janderso@alcf.anl.gov"))
-
-    logger.info(confirmed(1, "janderso@alcf.anl.gov"))
-
-
-if __name__ == "__main__":
-    demo()
