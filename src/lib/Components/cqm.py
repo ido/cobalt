@@ -878,7 +878,7 @@ class Job (StateMachine):
             self._sm_raise_exception("unexpected error returned from the system component when attempting to add task",
                 cobalt_log = True)
             return Job.__rc_unknown
-        finally:
+        else:
             # Start task timer.  This corresponds to the compute time
             if self.walltime > 0:
                 self.__max_job_timer = Timer(self.walltime * 60)
@@ -909,7 +909,7 @@ class Job (StateMachine):
         except:
             self._sm_raise_exception("unexpected error returned from the system component while finalizing task")
             return Job.__rc_unknown
-        finally:
+        else:
             self.__max_job_timer.stop()
             task_end = accounting.task_end(self.jobid, self.runid, self.__max_job_timer.elapsed_times[-1])
             accounting_logger.info(task_end)
