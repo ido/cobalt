@@ -443,6 +443,7 @@ class CraySystem(BaseSystem):
                 if self.nodes.has_key(str(inven_node['node_id'])):
                     node = self.nodes[str(inven_node['node_id'])]
                     node.role = inven_node['role'].upper()
+                    node.attributes.update(inven_node['attrs'])
                     if node.reserved:
                         #node marked as reserved.
                         if self.alps_reservations.has_key(str(node.reserved_jobid)):
