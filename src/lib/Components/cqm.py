@@ -892,29 +892,30 @@ class Job (StateMachine):
 
     def __task_finalize(self):
         '''get exit code from system component'''
+        def end_time_and_log():
+            self.__max_job_timer.stop()
+            task_end = accounting.task_end(self.jobid, self.runid, self.__max_job_timer.elapsed_times[-1])
+            accounting_logger.info(task_end)
+            logger.info(task_end)
         try:
             result = ComponentProxy("system").wait_process_groups([{'id':self.taskid, 'exit_status':'*'}])
             if result:
                 self.exit_status = result[0].get('exit_status')
-                dbwriter.log_to_db(None, "exit_status_update", "job_prog", 
+                dbwriter.log_to_db(None, "exit_status_update", "job_prog",
                     JobProgExitStatusMsg(self))
-
-
-
             else:
                 self._sm_log_warn("system component was unable to locate the task; exit status not obtained")
         except (ComponentLookupError, xmlrpclib.Fault), e:
             self._sm_log_warn("failed to communicate with the system component (%s); retry pending" % (e,))
             return Job.__rc_retry
         except:
+            # We aren't going into a retry and anything that doesn't return a retry "ends" the task and progresses towards
+            # preemption/the job terminal action.  We need the log here.
+            end_time_and_log()
             self._sm_raise_exception("unexpected error returned from the system component while finalizing task")
             return Job.__rc_unknown
         else:
-            self.__max_job_timer.stop()
-            task_end = accounting.task_end(self.jobid, self.runid, self.__max_job_timer.elapsed_times[-1])
-            accounting_logger.info(task_end)
-            logger.info(task_end)
-
+            end_time_and_log()
         self.taskid = None
         return Job.__rc_success
 
