@@ -275,7 +275,7 @@ def update_spec(parser, opts, spec, opt2spec):
     This function will update the appropriate spec values with the opts values
     """
     # Get the key validated values into spec dictionary
-    for opt in ['mode', 'proccount', 'nodecount']:
+    for opt in ['mode', 'proccount', 'nodecount', 'attrs']:
         spec[opt2spec[opt]] = opts[opt]
 
     # Hack until the Cluster Systems get re-written.
