@@ -828,6 +828,8 @@ class CraySystem(BaseSystem):
                 for nid in node_id_list:
                     if nid not in ret_nids:
                         ret_nids.append(nid)
+                        if len(ret_nids) >= int(job['nodes']):
+                            break
         return ret_nids[:int(job['nodes'])]
 
     def _associate_and_run_immediate(self, job, resource_until_time, node_id_list):
