@@ -45,7 +45,7 @@ DRAIN_MODES = ['first-fit', 'backfill']
 CLEANING_ID = -1
 DEFAULT_MCDRAM_MODE = get_config_option('alpssystem', 'default_mcdram_mode', 'cache')
 DEFAULT_NUMA_MODE = get_config_option('alpssystem', 'default_numa_mode', 'quad')
-MCDRAM_TO_CACHEPCT = {'flat':'0', 'cache':'100', 'split':'25', 'equal':'50', '0':'0', '25':'25', '50':'50', '100':'100'}
+MCDRAM_TO_HBMCACHEPCT = {'flat':'0', 'cache':'100', 'split':'25', 'equal':'50', '0':'0', '25':'25', '50':'50', '100':'100'}
 VALID_MCDRAM_MODES = ['flat', 'cache', 'split', 'equal', '0', '25', '50', '100']
 VALID_NUMA_MODES = ['a2a', 'hemi', 'quad', 'snc2', 'snc4']
 
@@ -816,19 +816,18 @@ class CraySystem(BaseSystem):
         if job.get('attrs', {}).get('mcdram', None) is None or job.get('attrs', {}).get('numa', None) is None:
             # insufficient information to include a mode match
             return self._select_first_nodes(job, node_id_list)
-        ret_nodes = []
+        ret_nids = []
         with self._node_lock:
             considered_nodes = [node for node in self.nodes.values() if node.node_id in node_id_list]
             for node in considered_nodes:
-                if (node.attributes['hbm_cache_pct'] == MCDRAM_TO_CACHEPCT[job['attrs']['mcdram']] and
+                if (node.attributes['hbm_cache_pct'] == MCDRAM_TO_HBMCACHEPCT[job['attrs']['mcdram']] and
                         node.attributes['numa_cfg'] == job['attrs']['numa']):
-                    ret_nodes.append(node)
-            if len(ret_nodes) < int(job['nodes']):
+                    ret_nids.append(int(node.node_id))
+            if len(ret_nids) < int(job['nodes']):
                 node_id_list.sort(key=lambda nid: int(nid))
                 for nid in node_id_list:
-                    if self.nodes[nid] not in ret_nodes:
-                        ret_nodes.append(self.nodes[nid])
-        ret_nids = [node.node_id for node in ret_nodes]
+                    if nid not in ret_nids:
+                        ret_nids.append(nid)
         return ret_nids[:int(job['nodes'])]
 
     def _associate_and_run_immediate(self, job, resource_until_time, node_id_list):
