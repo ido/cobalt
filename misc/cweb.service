@@ -1,0 +1,15 @@
+[Unit]
+Description=Daemon for serving Cobalt information via web service.
+
+[Service]
+Type=simple
+PIDFile=/var/run/cweb.pid
+StandardOutput=syslog
+StandardError=syslog
+Environment=COBALT_CONFIG_FILES=/etc/cobalt.conf
+Environment=cweb_path=/usr/sbin/cweb
+Environment=cweb_port=5050
+Environment=cweb_pidfile=/var/run/cweb.pid
+EnvironmentFile=-/usr/lib/systemd/system/cweb.env
+ExecStart=/usr/bin/python2.7 $cweb_path -p $cweb_port -d -f $cweb_pidfile
+
