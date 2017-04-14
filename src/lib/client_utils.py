@@ -1319,12 +1319,12 @@ def sec_to_human_time(raw_time):
 def print_node_list():
     '''fetch and print a list of node information with default headers'''
 
-    header = ['Node_id', 'Name', 'Queues', 'Status', 'Backfill']
+    HBMCACHEPCT_MCDRAM = {'0':'flat', '25':'split', '50':'equal', '100':'cache'}
+
+    header = ['Node_id', 'Name', 'Queues', 'Status', 'MCDRAM', 'NUMA', 'Backfill']
     header_aliases = {'Backfill': 'drain_until'}
-    fetch_header = list(header)
-    for headding in fetch_header:
-        if headding in header_aliases.keys():
-            fetch_header[fetch_header.index(headding)] = header_aliases[headding]
+    attribute_headers = {'MCDRAM': 'hbm_cache_pct', 'NUMA': 'numa_cfg'}
+    fetch_header = ['Node_id', 'Name', 'Queues', 'Status', 'attributes', 'drain_until']
     nodes = json.loads(component_call(SYSMGR, False, 'get_nodes',
             (True, None, fetch_header, True)))
 
@@ -1338,7 +1338,10 @@ def print_node_list():
         for node in nodes.values():
             entry = []
             for key in fetch_header:
-                if key.lower() == 'node_id':
+                if key.lower() == 'attributes':
+                    entry.append(HBMCACHEPCT_MCDRAM[node['attributes']['hbm_cache_pct']])
+                    entry.append(node['attributes']['numa_cfg'])
+                elif key.lower() == 'node_id':
                     entry.append(int(node[key.lower()]))
                 elif key.lower() in ['drain_until']:
                     if node[key.lower()] is not None:
