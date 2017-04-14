@@ -60,6 +60,7 @@ import os
 import sys
 import signal
 import socket
+import ast
 from Cobalt import client_utils
 from Cobalt.client_utils import \
     cb_debug, cb_env, cb_nodes, cb_time, cb_umask, cb_path, cb_dep, \
@@ -591,8 +592,10 @@ def main():
 
     filters = client_utils.get_filters()
     client_utils.process_filters(filters, spec)
+    # Attrs needs special handling filter won't set otherwise
+    if spec.get('attrs', None) is not None:
+        opts['attrs'].update(ast.literal_eval(str(spec['attrs'])))
     update_spec(parser, opts, spec, opt2spec)
-
     run_job(parser, user, spec, opts)
 
 if __name__ == '__main__':
