@@ -826,8 +826,8 @@ class CraySystem(BaseSystem):
             if len(ret_nids) < int(job['nodes']):
                 node_id_list.sort(key=lambda nid: int(nid))
                 for nid in node_id_list:
-                    if nid not in ret_nids:
-                        ret_nids.append(nid)
+                    if int(nid) not in ret_nids:
+                        ret_nids.append(int(nid))
                         if len(ret_nids) >= int(job['nodes']):
                             break
         return ret_nids[:int(job['nodes'])]
