@@ -10,12 +10,12 @@ The CAPMC module should be loaded on Cray systems.
 '''
 import sys
 import ast
-import subprocess
-from subprocess import Popen, PIPE, STDOUT
+from subprocess import Popen, PIPE
 import time
 import json
 import logging
 import logging.handlers
+import os.path
 
 SUCCESS = 0
 RESET_FAILURE = 3
@@ -28,23 +28,37 @@ DEFAULT_NUMA = 'a2a'
 AVAILABLE_MCDRAM = ['cache', 'split', 'equal', 'flat']
 AVAILABLE_NUMA = ['a2a', 'snc2', 'snc4', 'hemi', 'quad']
 
-TIMEOUT = 900 # reboot timeout in seconds
+INITIALIZATION_TIMEOUT = 120.0 #120 #Time to wait for reboot to start
+TIMEOUT = 2700 # reboot timeout in seconds
 
 POLL_INT = 0.25
 
 CAPMC_CMD = '/opt/cray/capmc/default/bin/capmc'
 
 #syslog setup
-log_datefmt = '%Y-%d-%m %H:%M:%S'
-base_fmt = '%(asctime)s %(message)s'
-syslog_fmt = '%(name)s[%(process)d]: %(asctime)s %(message)s'
+LOG_DATEFMT = '%Y-%d-%m %H:%M:%S'
+BASE_FMT = '%(asctime)s %(message)s'
+SYSLOG_FMT = '%(name)s[%(process)d]: %(asctime)s %(message)s'
 
-logging.basicConfig(format=base_fmt, datefmt=log_datefmt)
+logging.basicConfig(format=BASE_FMT, datefmt=LOG_DATEFMT)
 logger = logging.getLogger('reset_memory_mode')
 logger.setLevel(logging.INFO)
 syslog = logging.handlers.SysLogHandler('/dev/log')
-syslog.setFormatter(logging.Formatter(syslog_fmt, datefmt=log_datefmt))
+syslog.setFormatter(logging.Formatter(SYSLOG_FMT, datefmt=LOG_DATEFMT))
 logger.addHandler(syslog)
+
+ACCOUNTING_LOG_PATH = '/var/log/pbs/boot'
+ACCOUNTING_MSG_FMT = "%s;%s;%s;%s" # Date, Type, Jobid, keyvals
+ACCOUNTING_DATE_FMT = "%d/%m/%Y %H:%M:%s"
+
+def dict_to_keyval_str(dct):
+    '''put a record keyval dict into a string format for pbs logging'''
+    ret_pairs = []
+    for key, val in dct.iteritems():
+        ret_pairs.append("%s=%s" % (key, val))
+    return " ".join(ret_pairs)
+
+
 
 def expand_num_list(num_list):
     '''Take a compact, comma-seperated string of integer values and ranges and
@@ -185,13 +199,14 @@ def reboot_nodes(node_list, mcdram_mode, numa_mode, label):
     try:
         exec_fetch_output(CAPMC_CMD,
             ['node_reinit', '--nids', node_list, '--reason',
-             'Reset MCDRAM/NUMA mode to %s/%s' % (mcdram_mode, numa_mode)])
+                '%s: Reset MCDRAM/NUMA mode to %s/%s' % (label, mcdram_mode, numa_mode, )])
     except RuntimeError:
         print >> sys.stderr, "Unable to initiate node reboot"
         return False
     return True
 
 def reboot_complete(node_list, timeout, label):
+    '''determine if reboot completed'''
     endtime = int(time.time()) + int(timeout)
     exp_nodelist = set(expand_num_list(node_list))
     while True:
@@ -202,12 +217,12 @@ def reboot_complete(node_list, timeout, label):
             stdout, stderr = exec_fetch_output(CAPMC_CMD,
                     ['node_status', '--nids', node_list, '--filter', 'show_ready'])
         except RuntimeError as exc:
-            logger.error("%s: Unable to complete reboot: %s", label, exc.message)
+            logger.error("%s: Unable to complete reboot: %s\nstderr:%s", label, exc.message, stderr)
             return False
         node_info = json.loads(stdout)
         if 'ready' not in node_info.keys():
             pass
-        elif not (set(node_info['ready']) - set(exp_nodelist)):
+        elif not set(node_info['ready']) - set(exp_nodelist):
             break
         time.sleep(1.0)
 
@@ -215,7 +230,7 @@ def reboot_complete(node_list, timeout, label):
     return True
 
 def main():
-
+    '''driver for reboot'''
     mcdram_mode = DEFAULT_MCDRAM
     numa_mode = DEFAULT_NUMA
     node_list = ''
@@ -253,40 +268,80 @@ def main():
             user = val
         elif key == 'jobid':
             jobid = val
+            bootid = val #boot id matches jobid for now.
         else:
             pass
 
-    label = "%s/%s" % (user, jobid)
+    label = "%s/%s/%s" % (user, jobid, bootid)
+    accounting_log_filename = '%s-%s' % (time.strftime('%Y%m%d-boot', time.gmtime()), bootid)
 
     current_node_cfg = get_current_modes(node_list)
     nodes_to_modify = []
+    initial_modes = {}
     for nid, node in current_node_cfg.items():
         if (mcdram_mode.lower() != node['mcdram_mode'].lower() or
             numa_mode.lower() != node['numa_mode'].lower()):
             # node needs a reboot
+            mode = '%s:%s' % (node['mcdram_mode'].lower(), node['numa_mode'].lower())
+            if initial_modes.get(mode, None) is not None:
+                initial_modes[mode].append(int(nid))
+            else:
+                initial_modes[mode] = [int(nid)]
             nodes_to_modify.append(int(nid))
-
+    initial_mode_list = []
+    for mode, node_list in initial_modes.items():
+        initial_mode_list.append('%s:%s' % (mode, compact_num_list(node_list)))
     # assuming that mode change is immediately followed by reboot.  Modify when
     # current setting inspection available.
-    if len(nodes_to_modify) != 0:
+
+    success = True
+    exit_status = SUCCESS
+    reboot_info = {'bootid': bootid,
+                   'boot_time': 'N/A',
+                   'rebooted': compact_num_list(nodes_to_modify),
+                   'blocked': compact_num_list(node_list),
+                   'from_mode': ','.join(initial_mode_list),
+                   'to_mode': '%s:%s:%s' %(mcdram_mode, numa_mode, compact_num_list(node_list)),
+                   'successful': False,
+                   }
+    if len(nodes_to_modify) != 0: #if we don't have to reboot, don't go through this.
+        accounting_start_msg = ACCOUNTING_MSG_FMT % (time.strftime(ACCOUNTING_DATE_FMT, time.gmtime()), 'BS', jobid,
+                "bootid=%s" % bootid)
+        with open(os.path.join(ACCOUNTING_LOG_PATH, accounting_log_filename), "a+") as acc_file:
+            acc_file.write(accounting_start_msg + '\n')
+        logger.info("%s", accounting_start_msg)
+        start = time.time()
         compact_nodes_to_modify = compact_num_list(nodes_to_modify)
-        if not reset_modes(compact_nodes_to_modify, mcdram_mode, numa_mode,
-                label):
-            print >> sys.stderr, "Failed to reset memory mode"
-            return RESET_FAILURE
-        if not reboot_nodes(compact_nodes_to_modify, mcdram_mode, numa_mode,
-                label):
-            print >> sys.stderr, "Failed to initiate node reboot"
-            return BOOT_FAILURE
-        time.sleep(120)
-        if not reboot_complete(compact_nodes_to_modify, TIMEOUT,
-                label):
-            print >> sys.stderr, "Node reboot Failed to complete"
-            return BOOT_FAILURE
+        try:
+            if not reset_modes(compact_nodes_to_modify, mcdram_mode, numa_mode,
+                    label):
+                print >> sys.stderr, "Failed to reset memory mode"
+                success = False
+                exit_status = RESET_FAILURE
+            if success and not reboot_nodes(compact_nodes_to_modify, mcdram_mode, numa_mode,
+                    label):
+                print >> sys.stderr, "Failed to initiate node reboot"
+                success = False
+                exit_status = BOOT_FAILURE
+            if success:
+                #wait for boot intialization so that we can see reboot starting.
+                time.sleep(INITIALIZATION_TIMEOUT)
+            if success and not reboot_complete(compact_nodes_to_modify, TIMEOUT,
+                    label):
+                print >> sys.stderr, "Node reboot Failed to complete"
+                success = False
+                exit_status = BOOT_FAILURE
 
-    return SUCCESS
+            reboot_info['successful'] = success
+        finally:
+            reboot_info['boot_time'] = int(time.time() - start)
+            accounting_end_msg = ACCOUNTING_MSG_FMT % (time.strftime(ACCOUNTING_DATE_FMT, time.gmtime()), 'BE', jobid,
+                    dict_to_keyval_str(reboot_info))
+            with open(os.path.join(ACCOUNTING_LOG_PATH, accounting_log_filename), "a+") as acc_file:
+                acc_file.write(accounting_end_msg + '\n')
+            logger.info("%s", accounting_end_msg)
 
-
+    return exit_status
 
 if __name__ == '__main__':
     sys.exit(main())
