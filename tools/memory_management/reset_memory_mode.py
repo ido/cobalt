@@ -16,6 +16,7 @@ import json
 import logging
 import logging.handlers
 import os.path
+from Cobalt.Util import expand_num_list, compact_num_list
 
 SUCCESS = 0
 RESET_FAILURE = 3
@@ -49,7 +50,7 @@ logger.addHandler(syslog)
 
 ACCOUNTING_LOG_PATH = '/var/log/pbs/boot'
 ACCOUNTING_MSG_FMT = "%s;%s;%s;%s" # Date, Type, Jobid, keyvals
-ACCOUNTING_DATE_FMT = "%d/%m/%Y %H:%M:%s"
+ACCOUNTING_DATE_FMT = "%d/%m/%Y %H:%M:%S"
 
 def dict_to_keyval_str(dct):
     '''put a record keyval dict into a string format for pbs logging'''
@@ -60,56 +61,6 @@ def dict_to_keyval_str(dct):
 
 
 
-def expand_num_list(num_list):
-    '''Take a compact, comma-seperated string of integer values and ranges and
-    expand to a list of integers that is represented by that string.  Ranges of
-    the form "a-b" will be expanded to the full sequience of integers from a to
-    b, inclusive.
-
-    '''
-    retlist = []
-    elems = num_list.split(',')
-    for elem in elems:
-        if elem == '':
-            continue
-        elif len(elem.split('-')) == 1:
-            retlist.append(int(elem))
-        else:
-            nums = elem.split('-')
-            low = min(int(nums[0]), int(nums[1]))
-            high = max(int(nums[0]), int(nums[1])) + 1
-            retlist.extend(xrange(low, high))
-    return retlist
-
-def compact_num_list(num_list):
-    '''Given a list of integers return a compact string representation.
-    The entries are comma-separated.  If a contiguous sequence of integers
-    exist, they are compacted into the form "a-b" where the range is a to b,
-    inclusive.
-
-    '''
-    begin = None
-    end = begin
-    retcompact = []
-    working_list = [int(num) for num in num_list]
-    def append_run(begin, end):
-        '''convenience function for appending a value to the return list'''
-        if begin == end:
-            retcompact.append(str(begin))
-        else:
-            retcompact.append("%s-%s" % (begin, end))
-    for num in sorted(working_list):
-        if begin is None:
-            begin = num
-            end = num
-        elif end + 1 == num:
-            end = num
-        else: #run just ended.  Set up for a new run and store current one.
-            append_run(begin, end)
-            begin = num
-            end = num
-    append_run(begin, end)
-    return ','.join(retcompact)
 
 def get_current_modes(node_list):
 
