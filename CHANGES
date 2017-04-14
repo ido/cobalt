@@ -1,5 +1,21 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 1.0.13 ==
+ * Added a web-service interface "cweb" client.  This presents job, reservation
+   and node data over a REST API.  This is based on the gronkd daemon from
+   the ALCF.
+ * Added TaskStart and TaskEnd (TS and TE) PBS accounting records.  These are
+   specific to Cobalt.  They correspond to when the user task is started/ended
+   by the queue-manager.
+ * Enhanced the Cray CAPMC boot scripts and filters.  PBS style logs are now
+   provided wtih Boot Start and Boot End records.
+ * Enhanced the system component node allocator to try and prefer nodes that
+   match a job's requested memory modes to avoid unnecesssary memory mode shift
+   reboots.
+ * alpssystem now updates node attributes from ALPS.  Notably this updates the
+   MCDRAM(HBM) and NUMA information on the nodes.  This happens at the standard
+   hardware update interval.
+
 == Changes to 1.0.12 ==
  * The BlueGene/Q now has a more optimistic backfilling algorithm that also
    properly accounts for exactly which jobs are currently draining.
