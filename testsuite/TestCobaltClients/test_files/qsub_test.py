@@ -244,6 +244,8 @@ ADD_JOBS
 
 args:[]
 args type: <type 'list'>
+attrs:{}
+attrs type: <type 'dict'>
 command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
@@ -752,6 +754,8 @@ ADD_JOBS
 
 args:[]
 args type: <type 'list'>
+attrs:{}
+attrs type: <type 'dict'>
 command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
@@ -912,6 +916,8 @@ ADD_JOBS
 
 args:[]
 args type: <type 'list'>
+attrs:{}
+attrs type: <type 'dict'>
 command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
@@ -1072,6 +1078,8 @@ ADD_JOBS
 
 args:[]
 args type: <type 'list'>
+attrs:{}
+attrs type: <type 'dict'>
 command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
@@ -1269,6 +1277,8 @@ ADD_JOBS
 
 args:[]
 args type: <type 'list'>
+attrs:{}
+attrs type: <type 'dict'>
 command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
@@ -1466,6 +1476,8 @@ ADD_JOBS
 
 args:[]
 args type: <type 'list'>
+attrs:{}
+attrs type: <type 'dict'>
 command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
@@ -2266,6 +2278,8 @@ ADD_JOBS
 
 args:[]
 args type: <type 'list'>
+attrs:{}
+attrs type: <type 'dict'>
 command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp/
@@ -2426,6 +2440,8 @@ ADD_JOBS
 
 args:[]
 args type: <type 'list'>
+attrs:{}
+attrs type: <type 'dict'>
 command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
@@ -2623,6 +2639,8 @@ ADD_JOBS
 
 args:[]
 args type: <type 'list'>
+attrs:{}
+attrs type: <type 'dict'>
 command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp/
@@ -2785,6 +2803,8 @@ ADD_JOBS
 
 args:[]
 args type: <type 'list'>
+attrs:{}
+attrs type: <type 'dict'>
 command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
@@ -2947,6 +2967,8 @@ ADD_JOBS
 
 args:[]
 args type: <type 'list'>
+attrs:{}
+attrs type: <type 'dict'>
 cobalt_log_file:/tmp/y
 cobalt_log_file type: <type 'str'>
 command:/bin/ls
@@ -3148,6 +3170,8 @@ ADD_JOBS
 
 args:[]
 args type: <type 'list'>
+attrs:{}
+attrs type: <type 'dict'>
 command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
@@ -3308,6 +3332,8 @@ ADD_JOBS
 
 args:[]
 args type: <type 'list'>
+attrs:{}
+attrs type: <type 'dict'>
 command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
@@ -3468,6 +3494,8 @@ ADD_JOBS
 
 args:[]
 args type: <type 'list'>
+attrs:{}
+attrs type: <type 'dict'>
 cobalt_log_file:/tmp/tmp.cobaltlog
 cobalt_log_file type: <type 'str'>
 command:/bin/ls
@@ -3669,6 +3697,8 @@ ADD_JOBS
 
 args:[]
 args type: <type 'list'>
+attrs:{}
+attrs type: <type 'dict'>
 command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
@@ -3827,6 +3857,8 @@ ADD_JOBS
 
 args:[]
 args type: <type 'list'>
+attrs:{}
+attrs type: <type 'dict'>
 command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
@@ -3985,6 +4017,8 @@ ADD_JOBS
 
 args:[]
 args type: <type 'list'>
+attrs:{}
+attrs type: <type 'dict'>
 command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
@@ -4182,6 +4216,8 @@ ADD_JOBS
 
 args:[]
 args type: <type 'list'>
+attrs:{}
+attrs type: <type 'dict'>
 command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
@@ -4340,6 +4376,8 @@ ADD_JOBS
 
 args:[]
 args type: <type 'list'>
+attrs:{}
+attrs type: <type 'dict'>
 command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
@@ -4500,6 +4538,8 @@ ADD_JOBS
 
 args:[]
 args type: <type 'list'>
+attrs:{}
+attrs type: <type 'dict'>
 command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
@@ -4667,7 +4707,7 @@ component: "system.get_implementation", defer: False
 fd 1 not associated with a terminal device
 component: "queue-manager.add_jobs", defer: False
   add_jobs(
-     [{'kernel': 'default', 'tag': 'job', 'outputdir': '/tmp', 'envs': {'var1': 'val1', 'var3': 'val3', 'var2': 'svar1=sval1:svar2=sval2'}, 'umask': 18, 'command': '/bin/ls', 'nodes': 10, 'cwd': '/tmp', 'run_project': False, 'ttysession': None, 'args': [], 'user': 'gooduser', 'path': '/tmp', 'ion_kernel': 'default', 'procs': '512', 'walltime': '50', 'jobid': '*', 'queue': 'default', 'script_preboot': True, 'submithost': 'foo.bar', 'mode': 'c1', 'user_list': ['gooduser']}],
+     [{'kernel': 'default', 'tag': 'job', 'attrs': {}, 'outputdir': '/tmp', 'envs': {'var1': 'val1', 'var3': 'val3', 'var2': 'svar1=sval1:svar2=sval2'}, 'umask': 18, 'submithost': 'foo.bar', 'nodes': 10, 'cwd': '/tmp', 'run_project': False, 'ttysession': None, 'args': [], 'user': 'gooduser', 'path': '/tmp', 'ion_kernel': 'default', 'procs': '512', 'walltime': '50', 'jobid': '*', 'queue': 'default', 'script_preboot': True, 'command': '/bin/ls', 'mode': 'c1', 'user_list': ['gooduser']}],
      )
 
 
@@ -4683,6 +4723,8 @@ ADD_JOBS
 
 args:[]
 args type: <type 'list'>
+attrs:{}
+attrs type: <type 'dict'>
 command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
@@ -4843,6 +4885,8 @@ ADD_JOBS
 
 args:[]
 args type: <type 'list'>
+attrs:{}
+attrs type: <type 'dict'>
 command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
@@ -5003,6 +5047,8 @@ ADD_JOBS
 
 args:[]
 args type: <type 'list'>
+attrs:{}
+attrs type: <type 'dict'>
 command:/tmp/cobalt_script1.sh
 command type: <type 'str'>
 cwd:/tmp
@@ -5163,6 +5209,8 @@ ADD_JOBS
 
 args:[]
 args type: <type 'list'>
+attrs:{}
+attrs type: <type 'dict'>
 command:/tmp/cobalt_script1.sh
 command type: <type 'str'>
 cwd:/tmp
@@ -5400,6 +5448,8 @@ ADD_JOBS
 
 args:[]
 args type: <type 'list'>
+attrs:{}
+attrs type: <type 'dict'>
 command:/bin/ls
 command type: <type 'str'>
 cwd:/tmp
@@ -5669,6 +5719,8 @@ GET_IMPLEMENTATION
 
 ADD_JOBS
 
+attrs:{}
+attrs type: <type 'dict'>
 cwd:/tmp
 cwd type: <type 'str'>
 ion_kernel:default
@@ -5852,6 +5904,8 @@ GET_IMPLEMENTATION
 
 ADD_JOBS
 
+attrs:{}
+attrs type: <type 'dict'>
 cwd:/tmp
 cwd type: <type 'str'>
 ion_kernel:default
@@ -6035,6 +6089,8 @@ GET_IMPLEMENTATION
 
 ADD_JOBS
 
+attrs:{}
+attrs type: <type 'dict'>
 cwd:/tmp
 cwd type: <type 'str'>
 ion_kernel:default
