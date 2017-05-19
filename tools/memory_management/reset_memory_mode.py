@@ -50,7 +50,7 @@ logger.addHandler(syslog)
 
 ACCOUNTING_LOG_PATH = '/var/log/pbs/boot'
 ACCOUNTING_MSG_FMT = "%s;%s;%s;%s" # Date, Type, Jobid, keyvals
-ACCOUNTING_DATE_FMT = "%d/%m/%Y %H:%M:%S"
+ACCOUNTING_DATE_FMT = "%m/%d/%Y %H:%M:%S"
 
 def dict_to_keyval_str(dct):
     '''put a record keyval dict into a string format for pbs logging'''
@@ -240,8 +240,8 @@ def main():
                 initial_modes[mode] = [int(nid)]
             nodes_to_modify.append(int(nid))
     initial_mode_list = []
-    for mode, node_list in initial_modes.items():
-        initial_mode_list.append('%s:%s' % (mode, compact_num_list(node_list)))
+    for mode, mod_node_list in initial_modes.items():
+        initial_mode_list.append('%s:%s' % (mode, compact_num_list(mod_node_list)))
     # assuming that mode change is immediately followed by reboot.  Modify when
     # current setting inspection available.
 
@@ -250,9 +250,9 @@ def main():
     reboot_info = {'bootid': bootid,
                    'boot_time': 'N/A',
                    'rebooted': compact_num_list(nodes_to_modify),
-                   'blocked': compact_num_list(node_list),
+                   'blocked': node_list,
                    'from_mode': ','.join(initial_mode_list),
-                   'to_mode': '%s:%s:%s' %(mcdram_mode, numa_mode, compact_num_list(node_list)),
+                   'to_mode': '%s:%s:%s' % (mcdram_mode, numa_mode, node_list),
                    'successful': False,
                    }
     if len(nodes_to_modify) != 0: #if we don't have to reboot, don't go through this.
