@@ -104,7 +104,12 @@ def exec_fetch_output(cmd, args, timeout=None):
     cmd_list = [cmd]
     cmd_list.extend(args)
     proc = Popen(cmd_list, stdout=PIPE, stderr=PIPE)
+    stdout = ""
+    stderr = ""
     while(True):
+        curr_stdout, curr_stderr = proc.communicate()
+        stdout += curr_stdout
+        stderr += curr_stderr
         if endtime is not None and int(time.time()) >= endtime:
             #signal and kill
             timeout_trip
@@ -114,8 +119,12 @@ def exec_fetch_output(cmd, args, timeout=None):
         if proc.poll() is not None:
             break
         time.sleep(POLL_INT)
-
-    stdout, stderr = proc.communicate()
+    try:
+        curr_stdout, curr_stderr = proc.communicate()
+        stdout += curr_stdout
+        stderr += curr_stderr
+    except ValueError:
+        pass # Everything is closed and terminated.
     if timeout_trip:
         raise RuntimeError("%s timed out!" % cmd)
     if proc.returncode != 0:
