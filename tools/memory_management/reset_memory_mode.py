@@ -234,7 +234,6 @@ def main():
 
     label = "%s/%s/%s" % (user, jobid, bootid)
     accounting_log_filename = '%s-%s' % (time.strftime('%Y%m%d-boot', time.gmtime()), bootid)
-
     current_node_cfg = get_current_modes(node_list)
     nodes_to_modify = []
     initial_modes = {}
@@ -268,7 +267,7 @@ def main():
                    }
     if len(nodes_to_modify) != 0: #if we don't have to reboot, don't go through this.
         accounting_start_msg = ACCOUNTING_MSG_FMT % (time.strftime(ACCOUNTING_DATE_FMT, time.gmtime()), 'BS', jobid,
-                "bootid=%s blocked=%s" % (bootid, blocked))
+                "bootid=%s blocked=%s" % (bootid, reboot_info['blocked']))
         with open(os.path.join(ACCOUNTING_LOG_PATH, accounting_log_filename), "a+") as acc_file:
             acc_file.write(accounting_start_msg + '\n')
         logger.info("%s", accounting_start_msg)
