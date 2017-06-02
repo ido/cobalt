@@ -50,7 +50,7 @@ logger.addHandler(syslog)
 
 ACCOUNTING_LOG_PATH = '/var/log/pbs/boot'
 ACCOUNTING_MSG_FMT = "%s;%s;%s;%s" # Date, Type, Jobid, keyvals
-ACCOUNTING_DATE_FMT = "%d/%m/%Y %H:%M:%S"
+ACCOUNTING_DATE_FMT = "%m/%d/%Y %H:%M:%S"
 
 def dict_to_keyval_str(dct):
     '''put a record keyval dict into a string format for pbs logging'''
@@ -104,7 +104,12 @@ def exec_fetch_output(cmd, args, timeout=None):
     cmd_list = [cmd]
     cmd_list.extend(args)
     proc = Popen(cmd_list, stdout=PIPE, stderr=PIPE)
+    stdout = ""
+    stderr = ""
     while(True):
+        curr_stdout, curr_stderr = proc.communicate()
+        stdout += curr_stdout
+        stderr += curr_stderr
         if endtime is not None and int(time.time()) >= endtime:
             #signal and kill
             timeout_trip
@@ -114,8 +119,12 @@ def exec_fetch_output(cmd, args, timeout=None):
         if proc.poll() is not None:
             break
         time.sleep(POLL_INT)
-
-    stdout, stderr = proc.communicate()
+    try:
+        curr_stdout, curr_stderr = proc.communicate()
+        stdout += curr_stdout
+        stderr += curr_stderr
+    except ValueError:
+        pass # Everything is closed and terminated.
     if timeout_trip:
         raise RuntimeError("%s timed out!" % cmd)
     if proc.returncode != 0:
@@ -225,7 +234,6 @@ def main():
 
     label = "%s/%s/%s" % (user, jobid, bootid)
     accounting_log_filename = '%s-%s' % (time.strftime('%Y%m%d-boot', time.gmtime()), bootid)
-
     current_node_cfg = get_current_modes(node_list)
     nodes_to_modify = []
     initial_modes = {}
@@ -240,8 +248,8 @@ def main():
                 initial_modes[mode] = [int(nid)]
             nodes_to_modify.append(int(nid))
     initial_mode_list = []
-    for mode, node_list in initial_modes.items():
-        initial_mode_list.append('%s:%s' % (mode, compact_num_list(node_list)))
+    for mode, mod_node_list in initial_modes.items():
+        initial_mode_list.append('%s:%s' % (mode, compact_num_list(mod_node_list)))
     # assuming that mode change is immediately followed by reboot.  Modify when
     # current setting inspection available.
 
@@ -250,18 +258,21 @@ def main():
     reboot_info = {'bootid': bootid,
                    'boot_time': 'N/A',
                    'rebooted': compact_num_list(nodes_to_modify),
-                   'blocked': compact_num_list(node_list),
+                   'blocked': node_list,
                    'from_mode': ','.join(initial_mode_list),
-                   'to_mode': '%s:%s:%s' %(mcdram_mode, numa_mode, compact_num_list(node_list)),
+                   'to_mode': '%s:%s:%s' % (mcdram_mode, numa_mode, node_list),
                    'successful': False,
+                   'start': None,
+                   'end': None,
                    }
     if len(nodes_to_modify) != 0: #if we don't have to reboot, don't go through this.
         accounting_start_msg = ACCOUNTING_MSG_FMT % (time.strftime(ACCOUNTING_DATE_FMT, time.gmtime()), 'BS', jobid,
-                "bootid=%s" % bootid)
+                "bootid=%s blocked=%s" % (bootid, reboot_info['blocked']))
         with open(os.path.join(ACCOUNTING_LOG_PATH, accounting_log_filename), "a+") as acc_file:
             acc_file.write(accounting_start_msg + '\n')
         logger.info("%s", accounting_start_msg)
         start = time.time()
+        reboot_info['start'] = start
         compact_nodes_to_modify = compact_num_list(nodes_to_modify)
         try:
             if not reset_modes(compact_nodes_to_modify, mcdram_mode, numa_mode,
@@ -285,7 +296,9 @@ def main():
 
             reboot_info['successful'] = success
         finally:
-            reboot_info['boot_time'] = int(time.time() - start)
+            end = time.time()
+            reboot_info['end'] = end
+            reboot_info['boot_time'] = int(end - start)
             accounting_end_msg = ACCOUNTING_MSG_FMT % (time.strftime(ACCOUNTING_DATE_FMT, time.gmtime()), 'BE', jobid,
                     dict_to_keyval_str(reboot_info))
             with open(os.path.join(ACCOUNTING_LOG_PATH, accounting_log_filename), "a+") as acc_file:

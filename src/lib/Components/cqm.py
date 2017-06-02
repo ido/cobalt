@@ -705,6 +705,7 @@ class Job (StateMachine):
         if self.user_hold:
             dbwriter.log_to_db(self.user, "user_hold", "job_prog", JobProgMsg(self))
 
+        self.current_task_start = time.time()
 
         self.initializing = False
 
@@ -786,6 +787,7 @@ class Job (StateMachine):
             if self.ion_kerneloptions == False:
                 self.ion_kerneloptions = None
         self.runid = state.get("runid", None)
+        self.current_task_start = state.get("current_task_start", None)
         #for old statefiles, make sure to update the dependency state on restart:
         self.__dep_hold = False
         self.initializing = False
@@ -885,7 +887,8 @@ class Job (StateMachine):
             else:
                 self.__max_job_timer = Timer()
             self.__max_job_timer.start()
-            task_start = accounting.task_start(self.jobid, self.runid)
+            self.current_task_start = time.time()
+            task_start = accounting.task_start(self.jobid, self.runid, self.current_task_start, self.location)
             accounting_logger.info(task_start)
             logger.info(task_start)
         return Job.__rc_success
@@ -894,7 +897,9 @@ class Job (StateMachine):
         '''get exit code from system component'''
         def end_time_and_log():
             self.__max_job_timer.stop()
-            task_end = accounting.task_end(self.jobid, self.runid, self.__max_job_timer.elapsed_times[-1])
+            task_end = accounting.task_end(self.jobid, self.runid, self.__max_job_timer.elapsed_times[-1], self.current_task_start,
+                    time.time(), self.location)
+            self.current_task_start = None
             accounting_logger.info(task_end)
             logger.info(task_end)
         try:
@@ -3260,21 +3265,18 @@ class Restriction (Data):
         retval = False
         retstr = "You are not allowed to submit to the '%s' queue (group restriction)" % self.queue.name
         queue_groups = self.value.split(':')
-        try:
-            if '*' in queue_groups:
-                retval = True
-                retstr = ""
-            elif grp.getgrgid(pwd.getpwnam(job['user']).pw_gid).gr_name in queue_groups:
-                retval = True
-                retstr = ""
-            else:
-                all_groups = grp.getgrall()
-                for group in all_groups:
-                    if group.gr_name in queue_groups and job['user'] in group.gr_mem:
-                        retval = True
-                        retstr = ""
-        except KeyError:
-            retstr = "Group could not be verified for queue restriction."
+        if '*' in queue_groups:
+            return(True,"")
+
+        for group_name in queue_groups:
+            try:
+                if job['user'] in grp.getgrnam(group_name).gr_mem:
+                    retval = True
+                    retstr = ""
+                    break
+            except KeyError:
+                retstr = "Group could not be verified for queue restriction."
+
         return retval, retstr
 
     def maxuserjobs(self, job, queuestate=None):
