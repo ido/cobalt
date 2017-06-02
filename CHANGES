@@ -1,5 +1,21 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 1.0.14 ==
+ * Fix for cluster systems where nodes that weren't numbered could cause
+   showres/qstat to fail to error out when displaying locations.
+ * TS has location added, TE records have location, and seconds from epoch UTC
+   start and end for tasks
+ * Memory management scripts have been updated so that they can handle larger
+   Cray XC40 systems.
+ * Memory management boot records have been enhanced with start/end seconds from
+   epoch UTC times and blocked locations on the boot-start record.
+ * Fix for a potential memory mode script switch crash when rebooting from certain
+   memory mode mixes.
+ * Group membership checks for queues are now being handled more efficiently.
+ * Boot start and boot end records from the memory mode management scripts now have
+   a corrected date format in the message timestamp that is consistient with other
+   accounting records.
+
 == Changes to 1.0.13 ==
  * Added a web-service interface "cweb" client.  This presents job, reservation
    and node data over a REST API.  This is based on the gronkd daemon from
