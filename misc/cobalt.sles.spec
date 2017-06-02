@@ -11,8 +11,6 @@ Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 BuildRequires: systemd-rpm-macros
 Requires: python >= 2.7
-Requires: python-lockfile
-Requires: python-python-daemon
 
 %package -n cobalt-clients
 Version: %{version}
@@ -33,7 +31,7 @@ The Cobalt Resource Management System
 %{python} setup.py build
 %define client_wrapper_dir /usr/libexec/cobalt
 %define python_wrapper_dir %{client_wrapper_dir}/bin
-%define python_site_packages %{_libdir}%{python}/site-packages
+%define python_site_packages %{_libdir}/%{python}/site-packages
 
 %build
 cd src/clients && make PROGPREFIX=%{client_wrapper_dir}
@@ -54,6 +52,8 @@ install -m 755 src/clients/cobalt-admin ${RPM_BUILD_ROOT}%{_sbindir$}
 %{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/bg_mpirun_forker.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/bg_runjob_forker.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/system_script_forker.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/alps_script_forker.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/alpssystem.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/gravina.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/partadm.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/setres.py ${RPM_BUILD_ROOT}%{_sbindir}

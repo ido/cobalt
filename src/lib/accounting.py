@@ -255,26 +255,31 @@ def confirmed (reservation_id, requester):
 
     return entry("Y", reservation_id, {'requester':requester})
 
-def task_start(job_id, task_id):
+def task_start(job_id, task_id, start_time, location):
     '''Indicate a task has started.  Typically this would indicate that add_process_groups has been called successfully.
 
     Args:
         job_id - id of job that this task belongs to
         task_id - id of the task launched
+        start_time - time when the task started as seconds from epoch
+        location - a list of locations that this task is running on
 
     '''
-    return entry("TS", job_id, {'task_id': task_id})
+    return entry("TS", job_id, {'task_id': task_id, 'start': start_time, 'location': location})
 
-def task_end(job_id, task_id, task_runtime):
+def task_end(job_id, task_id, task_runtime, start_time, end_time, location):
     '''Indicate a task has started.  Typically this would indicate that add_process_groups has been called successfully.
 
     Args:
         job_id - id of job that this task belongs to
         task_id - id of the task launched
         task_runtime - The running time of the task in seconds.  Start time for this is the task_start record timestamp.
+        start_time - time when the task started as seconds from epoch
+        end_time - tme when the task ended as seconds from epoch
+        location - a list of locations that this task is running on
 
     '''
-    return entry("TE", job_id, {'task_id': task_id, 'task_runtime': task_runtime})
+    return entry("TE", job_id, {'task_id': task_id, 'task_runtime': task_runtime, 'start': start_time, 'end': end_time, 'location': location})
 
 class DatetimeFileHandler (BaseRotatingHandler):
 
