@@ -43,6 +43,8 @@ class ProcessGroup(Data):
     umask -- permissions to set
     user -- the user the process group is running under
     sigkill_time -- time at which to send a sigkill (seconds since epoch)
+    queue -- queue job was run from
+    project -- accounting project tied to the job
 
     Only used by BlueGene/Q systems:
     ion_kernel -- alternatve ION kernel to boot
@@ -57,7 +59,7 @@ class ProcessGroup(Data):
                             "stdin", "stdout", "umask", "user", "starttime",
                             "walltime", "resid", "runid", "forker",
                             "subblock", "subblock_parent", "corner", "extents",
-                            "attrs", "alps_res_id"]
+                            "attrs", "alps_res_id", "queue", "project"]
 
     required = Data.required + ["args", "cwd", "executable", "jobid",
                                 "location", "size", "user"]
@@ -104,6 +106,8 @@ class ProcessGroup(Data):
         #TODO: extract into subclass
         self.alps_res_id = spec.get('alps_res_id', None)
         self.startup_timeout = spec.get("pgroup_startup_timeout", 0)
+        self.project = spec.get('project', None)
+        self.queue = spec.get('queue', None)
 
     def __getstate__(self):
         data = {}

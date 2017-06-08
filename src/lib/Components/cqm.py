@@ -862,6 +862,8 @@ class Job (StateMachine):
                 'resid': self.resid,
                 'runid': self.runid,
                 'attrs': self.attrs,
+                'queue': self.queue,
+                'project': self.project
             }])
             if pgroup[0].has_key('id'):
                 self.taskid = pgroup[0]['id']
