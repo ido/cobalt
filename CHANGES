@@ -1,5 +1,11 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 1.0.15 ==
+ * Fix for an issue on Cray systems where Cobalt was not properly passing
+   a job's node list into the ALPS re-reservation.  This could cause a mismatch
+   in the nodes that Cobalt was actually running a job on and what it thought the job
+   was running on.
+
 == Changes to 1.0.14 ==
  * Fix for cluster systems where nodes that weren't numbered could cause
    showres/qstat to fail to error out when displaying locations.
