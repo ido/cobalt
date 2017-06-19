@@ -10,7 +10,7 @@ import Cobalt.Components.pg_forker
 PGChild = Cobalt.Components.pg_forker.PGChild
 PGForker = Cobalt.Components.pg_forker.PGForker
 import Cobalt.Util
-from Cobalt.Util import init_cobalt_config, get_config_option
+from Cobalt.Util import init_cobalt_config, get_config_option, expand_num_list
 
 from cray_messaging import BasilRequest
 from cray_messaging import parse_response, ALPSError
@@ -119,7 +119,7 @@ class ALPSScriptChild (PGChild):
             params['batch_id'] = self.pg.jobid
             params['width'] = int(self.pg.nodect) * int(DEFAULT_DEPTH)
             params['nppn'] = int(DEFAULT_DEPTH) #FIXME fix this.  Pass this in from qsub. FIXME
-            params['node_id_list'] = self.pg.location[0]
+            params['node_list'] = expand_num_list(self.pg.location[0])
             params['depth'] = None
             params['npps'] = None
             params['nspn'] = None
@@ -127,6 +127,7 @@ class ALPSScriptChild (PGChild):
             params['nppcu'] = None
             params['p-state'] = None
             params['p-govenor'] = None
+            _logger.debug("params: %s", params)
             reserve_request = BasilRequest('RESERVE', params=params)
             basil = subprocess.Popen(BASIL_PATH, stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
