@@ -127,7 +127,6 @@ class ALPSScriptChild (PGChild):
             params['nppcu'] = None
             params['p-state'] = None
             params['p-govenor'] = None
-            _logger.debug("params: %s", params)
             reserve_request = BasilRequest('RESERVE', params=params)
             basil = subprocess.Popen(BASIL_PATH, stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
