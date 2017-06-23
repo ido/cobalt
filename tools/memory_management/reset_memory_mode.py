@@ -24,15 +24,14 @@ BOOT_FAILURE = 4
 BAD_ARGS = 5
 
 DEFAULT_MCDRAM = 'cache'
-DEFAULT_NUMA = 'a2a'
+DEFAULT_NUMA = 'quad'
 
 AVAILABLE_MCDRAM = ['cache', 'split', 'equal', 'flat']
 AVAILABLE_NUMA = ['a2a', 'snc2', 'snc4', 'hemi', 'quad']
 
-INITIALIZATION_TIMEOUT = 120.0 #120 #Time to wait for reboot to start
+INITIALIZATION_TIMEOUT = 600.0 #defaulting to 10 minutes.  Reboots are slow.  Time to wait for reboot to start.
 TIMEOUT = 2700 # reboot timeout in seconds
-
-POLL_INT = 0.25
+POLL_INT = 1.00 # Polling interval once we start checking for reboot completion
 
 CAPMC_CMD = '/opt/cray/capmc/default/bin/capmc'
 
@@ -136,6 +135,7 @@ def exec_fetch_output(cmd, args, timeout=None):
     if timeout_trip:
         raise RuntimeError("%s timed out!" % cmd)
     if proc.returncode != 0:
+        logger.error('Error running cmd: %s args:%s.\nStdout: %s\nStderr: %s', cmd, args, stdout, stderr)
         raise RuntimeError("%s failed with an exit status of %s" % (cmd, proc.returncode))
     return (stdout, stderr)
 
@@ -179,18 +179,18 @@ def reboot_complete(node_list, timeout, label):
     exp_nodelist = set(expand_num_list(node_list))
     while True:
         if int(time.time()) > endtime:
-            print >> sys.stderr, "Reboot timed out."
+            logger.error("%s: Reboot of %s timed out.", label, node_list)
             return False
         try:
             stdout, stderr = exec_fetch_output(CAPMC_CMD,
                     ['node_status', '--nids', node_list, '--filter', 'show_ready'])
         except RuntimeError as exc:
-            logger.error("%s: Unable to complete reboot: %s\nstderr:%s", label, exc.message, stderr)
+            logger.error("%s: Unable to complete reboot: %s", label, exc.message)
             return False
         node_info = json.loads(stdout)
         if 'ready' not in node_info.keys():
             pass
-        if not set(node_info['ready']) - set(exp_nodelist):
+        if not set(exp_nodelist) - set(node_info.get('ready', [])):
             break
         time.sleep(1.0)
 
@@ -298,7 +298,7 @@ def main():
                 time.sleep(INITIALIZATION_TIMEOUT)
             if success and not reboot_complete(compact_nodes_to_modify, TIMEOUT,
                     label):
-                print >> sys.stderr, "Node reboot Failed to complete"
+                logger.error("%s: Node reboot failed to complete, nodes: %s", label, compact_nodes_to_modify)
                 success = False
                 exit_status = BOOT_FAILURE
 
