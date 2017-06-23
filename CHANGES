@@ -1,5 +1,8 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 1.0.17 ==
+ * Added queue and project information to enviornment in Cray jobs.
+
 == Changes to 1.0.15 ==
  * Fix for an issue on Cray systems where Cobalt was not properly passing
    a job's node list into the ALPS re-reservation.  This could cause a mismatch
