@@ -230,16 +230,12 @@ class CraySystem(BaseSystem):
             node.managed = True
             nodes[node.node_id] = node
         for node_id, nodespec in system.iteritems():
-            try:
-                nodes[node_id].attributes.update(nodespec['attrs'])
-            except KeyError:
-                continue #ignore the partial node information, this node is disabled.  This is a 6.0UP03/UP04 bug
-            else:
-                # Should this be a different status?
-                nodes[node_id].role = nodespec['role'].upper()
-                if nodes[node_id].role.upper() not in ['BATCH']:
-                    nodes[node_id].status = 'down'
-                nodes[node_id].status = nodespec['state']
+            nodes[node_id].attributes.update(nodespec['attrs'])
+            # Should this be a different status?
+            nodes[node_id].role = nodespec['role'].upper()
+            if nodes[node_id].role.upper() not in ['BATCH']:
+                nodes[node_id].status = 'down'
+            nodes[node_id].status = nodespec['state']
         self.nodes = nodes
 
     def _assemble_reservations(self, reservations, reserved_nodes):
@@ -468,7 +464,7 @@ class CraySystem(BaseSystem):
                     # Apparently, we CAN add nodes on the fly.  The node would
                     # have been disabled.  We need to add a new node and update
                     # it's state.
-                    #_logger.warning('Unknown node %s found. Starting reconstruction.', inven_node['node_id'])
+                    _logger.warning('Unknown node %s found. Starting reconstruction.', inven_node['node_id'])
                     try:
                         if recon_inventory is None:
                             recon_inventory = ALPSBridge.fetch_inventory()
