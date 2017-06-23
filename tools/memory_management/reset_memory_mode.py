@@ -63,7 +63,15 @@ def dict_to_keyval_str(dct):
 
 
 def get_current_modes(node_list):
+    '''Fetch the current memory mode of the listed nodes
 
+    Args:
+        node_list - A list of nodes to fetch current information for.
+                    May be cray compact notation
+    Returns:
+        A dictonary of the requested nids.  The value is dictonary of MCDRAM and NUMA
+        modes tuple.
+    '''
     # Short of going out to the nodes and reading secret sauce in /proc we are
     # assuming that the nodes mode have not been changed for the next reboot
     # (i.e. that this script and the scheduler are the only things changing
@@ -73,7 +81,7 @@ def get_current_modes(node_list):
     # The moral of this story: Do not change the memory mode unless the next
     # thing you do is reboot the node.
 
-    exp_nodelist = expand_num_list(node_list)
+    #exp_nodelist = expand_num_list(node_list)
     node_cfgs = {}
 
     mcdram_raw_info, err = exec_fetch_output(CAPMC_CMD, ['get_mcdram_cfg',
@@ -106,13 +114,13 @@ def exec_fetch_output(cmd, args, timeout=None):
     proc = Popen(cmd_list, stdout=PIPE, stderr=PIPE)
     stdout = ""
     stderr = ""
-    while(True):
+    while True:
         curr_stdout, curr_stderr = proc.communicate()
         stdout += curr_stdout
         stderr += curr_stderr
         if endtime is not None and int(time.time()) >= endtime:
             #signal and kill
-            timeout_trip
+            timeout_trip = True
             proc.terminate()
             break
         #check to see if the process has terminated.
@@ -182,11 +190,11 @@ def reboot_complete(node_list, timeout, label):
         node_info = json.loads(stdout)
         if 'ready' not in node_info.keys():
             pass
-        elif not set(node_info['ready']) - set(exp_nodelist):
+        if not set(node_info['ready']) - set(exp_nodelist):
             break
         time.sleep(1.0)
 
-        logger.info('%s: Reboot of nodes %s complete', label, node_list)
+    logger.info('%s: Reboot of nodes %s complete', label, node_list)
     return True
 
 def main():
