@@ -58,9 +58,6 @@ def dict_to_keyval_str(dct):
         ret_pairs.append("%s=%s" % (key, val))
     return " ".join(ret_pairs)
 
-
-
-
 def get_current_modes(node_list):
     '''Fetch the current memory mode of the listed nodes
 
@@ -134,22 +131,41 @@ def exec_fetch_output(cmd, args, timeout=None):
         pass # Everything is closed and terminated.
     if timeout_trip:
         raise RuntimeError("%s timed out!" % cmd)
+    if handle_capmc_error(stdout):
+        #error strings from capmc come back on stdout
+        logger.error('Error running cmd: %s args:%s.\nStdout: %s\nStderr: %s', cmd, args, stdout, stderr)
+        raise RuntimeError("%s failed with internal err status" % (cmd))
     if proc.returncode != 0:
         logger.error('Error running cmd: %s args:%s.\nStdout: %s\nStderr: %s', cmd, args, stdout, stderr)
         raise RuntimeError("%s failed with an exit status of %s" % (cmd, proc.returncode))
     return (stdout, stderr)
 
 
+def handle_capmc_error(capmc_json_str, label=None):
+    '''extract error status from CAPMC.  If nonzero, dump the entire message.'''
+
+    error = False
+    try:
+        response = json.loads(capmc_json_str)
+    except ValueError:
+        logger.error('Unable to parse json string %s', capmc_json_str)
+        error = True
+    else:
+        if int(response.get('e', '0')) != 0:
+            error = True
+            logger.error('Status %s detected.  Message: %s', response['e'], response['err_msg'])
+    return error
+
 def reset_modes(node_list, mcdram_mode, numa_mode, label):
     '''execute commands to reconfigure KNLs'''
     try:
-        exec_fetch_output(CAPMC_CMD,
+        stdout, stderr = exec_fetch_output(CAPMC_CMD,
             ['set_mcdram_cfg', '--mode', mcdram_mode, '--nids', node_list])
     except RuntimeError:
         print >> sys.stderr, "Could not reset mcdram_mode"
         return False
     try:
-        exec_fetch_output(CAPMC_CMD,
+        stdout, stderr = exec_fetch_output(CAPMC_CMD,
             ['set_numa_cfg', '--mode', numa_mode, '--nids', node_list])
     except RuntimeError:
         print >> sys.stderr, "Could not reset numa_mode"
@@ -165,7 +181,7 @@ def reboot_nodes(node_list, mcdram_mode, numa_mode, label):
     '''
     logger.info('%s: Rebooting nodes %s', label, node_list)
     try:
-        exec_fetch_output(CAPMC_CMD,
+        stdout, stderr = exec_fetch_output(CAPMC_CMD,
             ['node_reinit', '--nids', node_list, '--reason',
                 '%s: Reset MCDRAM/NUMA mode to %s/%s' % (label, mcdram_mode, numa_mode, )])
     except RuntimeError:
