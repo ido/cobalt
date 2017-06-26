@@ -24,15 +24,14 @@ BOOT_FAILURE = 4
 BAD_ARGS = 5
 
 DEFAULT_MCDRAM = 'cache'
-DEFAULT_NUMA = 'a2a'
+DEFAULT_NUMA = 'quad'
 
 AVAILABLE_MCDRAM = ['cache', 'split', 'equal', 'flat']
 AVAILABLE_NUMA = ['a2a', 'snc2', 'snc4', 'hemi', 'quad']
 
-INITIALIZATION_TIMEOUT = 120.0 #120 #Time to wait for reboot to start
+INITIALIZATION_TIMEOUT = 600.0 #defaulting to 10 minutes.  Reboots are slow.  Time to wait for reboot to start.
 TIMEOUT = 2700 # reboot timeout in seconds
-
-POLL_INT = 0.25
+POLL_INT = 1.00 # Polling interval once we start checking for reboot completion
 
 CAPMC_CMD = '/opt/cray/capmc/default/bin/capmc'
 
@@ -59,11 +58,16 @@ def dict_to_keyval_str(dct):
         ret_pairs.append("%s=%s" % (key, val))
     return " ".join(ret_pairs)
 
-
-
-
 def get_current_modes(node_list):
+    '''Fetch the current memory mode of the listed nodes
 
+    Args:
+        node_list - A list of nodes to fetch current information for.
+                    May be cray compact notation
+    Returns:
+        A dictonary of the requested nids.  The value is dictonary of MCDRAM and NUMA
+        modes tuple.
+    '''
     # Short of going out to the nodes and reading secret sauce in /proc we are
     # assuming that the nodes mode have not been changed for the next reboot
     # (i.e. that this script and the scheduler are the only things changing
@@ -73,7 +77,7 @@ def get_current_modes(node_list):
     # The moral of this story: Do not change the memory mode unless the next
     # thing you do is reboot the node.
 
-    exp_nodelist = expand_num_list(node_list)
+    #exp_nodelist = expand_num_list(node_list)
     node_cfgs = {}
 
     mcdram_raw_info, err = exec_fetch_output(CAPMC_CMD, ['get_mcdram_cfg',
@@ -106,13 +110,13 @@ def exec_fetch_output(cmd, args, timeout=None):
     proc = Popen(cmd_list, stdout=PIPE, stderr=PIPE)
     stdout = ""
     stderr = ""
-    while(True):
+    while True:
         curr_stdout, curr_stderr = proc.communicate()
         stdout += curr_stdout
         stderr += curr_stderr
         if endtime is not None and int(time.time()) >= endtime:
             #signal and kill
-            timeout_trip
+            timeout_trip = True
             proc.terminate()
             break
         #check to see if the process has terminated.
@@ -127,21 +131,41 @@ def exec_fetch_output(cmd, args, timeout=None):
         pass # Everything is closed and terminated.
     if timeout_trip:
         raise RuntimeError("%s timed out!" % cmd)
+    if handle_capmc_error(stdout):
+        #error strings from capmc come back on stdout
+        logger.error('Error running cmd: %s args:%s.\nStdout: %s\nStderr: %s', cmd, args, stdout, stderr)
+        raise RuntimeError("%s failed with internal err status" % (cmd))
     if proc.returncode != 0:
+        logger.error('Error running cmd: %s args:%s.\nStdout: %s\nStderr: %s', cmd, args, stdout, stderr)
         raise RuntimeError("%s failed with an exit status of %s" % (cmd, proc.returncode))
     return (stdout, stderr)
 
 
+def handle_capmc_error(capmc_json_str, label=None):
+    '''extract error status from CAPMC.  If nonzero, dump the entire message.'''
+
+    error = False
+    try:
+        response = json.loads(capmc_json_str)
+    except ValueError:
+        logger.error('Unable to parse json string %s', capmc_json_str)
+        error = True
+    else:
+        if int(response.get('e', '0')) != 0:
+            error = True
+            logger.error('Status %s detected.  Message: %s', response['e'], response['err_msg'])
+    return error
+
 def reset_modes(node_list, mcdram_mode, numa_mode, label):
     '''execute commands to reconfigure KNLs'''
     try:
-        exec_fetch_output(CAPMC_CMD,
+        stdout, stderr = exec_fetch_output(CAPMC_CMD,
             ['set_mcdram_cfg', '--mode', mcdram_mode, '--nids', node_list])
     except RuntimeError:
         print >> sys.stderr, "Could not reset mcdram_mode"
         return False
     try:
-        exec_fetch_output(CAPMC_CMD,
+        stdout, stderr = exec_fetch_output(CAPMC_CMD,
             ['set_numa_cfg', '--mode', numa_mode, '--nids', node_list])
     except RuntimeError:
         print >> sys.stderr, "Could not reset numa_mode"
@@ -157,7 +181,7 @@ def reboot_nodes(node_list, mcdram_mode, numa_mode, label):
     '''
     logger.info('%s: Rebooting nodes %s', label, node_list)
     try:
-        exec_fetch_output(CAPMC_CMD,
+        stdout, stderr = exec_fetch_output(CAPMC_CMD,
             ['node_reinit', '--nids', node_list, '--reason',
                 '%s: Reset MCDRAM/NUMA mode to %s/%s' % (label, mcdram_mode, numa_mode, )])
     except RuntimeError:
@@ -171,22 +195,22 @@ def reboot_complete(node_list, timeout, label):
     exp_nodelist = set(expand_num_list(node_list))
     while True:
         if int(time.time()) > endtime:
-            print >> sys.stderr, "Reboot timed out."
+            logger.error("%s: Reboot of %s timed out.", label, node_list)
             return False
         try:
             stdout, stderr = exec_fetch_output(CAPMC_CMD,
                     ['node_status', '--nids', node_list, '--filter', 'show_ready'])
         except RuntimeError as exc:
-            logger.error("%s: Unable to complete reboot: %s\nstderr:%s", label, exc.message, stderr)
+            logger.error("%s: Unable to complete reboot: %s", label, exc.message)
             return False
         node_info = json.loads(stdout)
         if 'ready' not in node_info.keys():
             pass
-        elif not set(node_info['ready']) - set(exp_nodelist):
+        if not set(exp_nodelist) - set(node_info.get('ready', [])):
             break
         time.sleep(1.0)
 
-        logger.info('%s: Reboot of nodes %s complete', label, node_list)
+    logger.info('%s: Reboot of nodes %s complete', label, node_list)
     return True
 
 def main():
@@ -290,7 +314,7 @@ def main():
                 time.sleep(INITIALIZATION_TIMEOUT)
             if success and not reboot_complete(compact_nodes_to_modify, TIMEOUT,
                     label):
-                print >> sys.stderr, "Node reboot Failed to complete"
+                logger.error("%s: Node reboot failed to complete, nodes: %s", label, compact_nodes_to_modify)
                 success = False
                 exit_status = BOOT_FAILURE
 
