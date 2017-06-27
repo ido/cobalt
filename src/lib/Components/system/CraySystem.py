@@ -401,7 +401,7 @@ class CraySystem(BaseSystem):
                             #pending hardware status update
                             self.nodes[str(node_id)].status = 'idle'
                     res_jobid_to_delete.append(alps_res.jobid)
-                    _logger.info('Jobid %s: Nodes %s cleanup complete.', alps_res.jobid, compact_num_list(alps_res.node_ids))
+                    _logger.info('job %s: Nodes %s cleanup complete.', alps_res.jobid, compact_num_list(alps_res.node_ids))
             for jobid in res_jobid_to_delete:
                 _logger.info('%s: ALPS reservation for this job complete.', jobid)
                 del self.alps_reservations[str(jobid)]
@@ -1152,7 +1152,7 @@ class CraySystem(BaseSystem):
                         failed_nodes.append(loc)
                     #cleanup pending has to be dealt with.  Do this in UNS for
                     #now
-                self.logger.info("job %s:  nodes '%s' released. Cleanup pending.",
+                self.logger.info("job %s: nodes '%s' released. Cleanup pending.",
                     jobid, compact_num_list(succeeded_nodes))
                 if failed_nodes != []:
                     self.logger.warning("job %s: failed to release nodes '%s'",
