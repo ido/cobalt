@@ -401,8 +401,7 @@ class CraySystem(BaseSystem):
                             #pending hardware status update
                             self.nodes[str(node_id)].status = 'idle'
                     res_jobid_to_delete.append(alps_res.jobid)
-                    _logger.info('Nodes %s cleanup complete.',
-                            compact_num_list(alps_res.node_ids))
+                    _logger.info('Jobid %s: Nodes %s cleanup complete.', alps_res.jobid, compact_num_list(alps_res.node_ids))
             for jobid in res_jobid_to_delete:
                 _logger.info('%s: ALPS reservation for this job complete.', jobid)
                 del self.alps_reservations[str(jobid)]
@@ -1503,7 +1502,7 @@ class ALPSReservation(object):
 
         '''
         self.pg_id = pagg_id
-        _logger.info('ALPS Reservation %s for job %s confirmed',
+        _logger.info('ALPS Reservation %s confirmed for job %s',
                 self.alps_res_id, self.jobid)
 
     def release(self):
