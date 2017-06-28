@@ -32,7 +32,6 @@ class ALPSScriptChild (PGChild):
         PGChild.__init__(self, id=id, **kwargs)
         self.pagg_id = None
         self.alps_res_id = None
-
         try:
             self.bg_partition = self.pg.location[0]
         except IndexError:
@@ -77,6 +76,9 @@ class ALPSScriptChild (PGChild):
         self.env["COBALT_PARTNAME"] = self.bg_partition
         self.env["COBALT_PARTSIZE"] = str(self.pg.nodect)
         self.env["COBALT_JOBSIZE"] = str(self.pg.size)
+        self.env["COBALT_PARTCORES"] = str(DEFAULT_DEPTH)
+        self.env["COBALT_PROJECT"] = str(self.pg.project)
+        self.env["COBALT_QUEUE"] = str(self.pg.queue)
         #used for "simulation modes"
         if os.environ.has_key('COBALT_CONFIG_FILES'):
             self.env['COBALT_CONFIG_FILES'] = os.environ['COBALT_CONFIG_FILES']
