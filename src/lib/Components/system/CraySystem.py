@@ -286,16 +286,21 @@ class CraySystem(BaseSystem):
 
     def _run_update_state(self):
         '''automated node update functions on the update timer go here.'''
-        while True:
+
+        def _run_and_wrap(func):
             try:
-                self.process_manager.update_launchers()
-                self.update_node_state()
-                self._get_exit_status()
+                func()
             except Exception:
-                # prevent the update thread from dying
+                # Prevent this thread from dying.
                 _logger.critical('Error in _run_update_state', exc_info=True)
-            finally:
-                Cobalt.Util.sleep(UPDATE_THREAD_TIMEOUT)
+
+        while True:
+            # Each of these is wrapped in it's own log-and-preserve block.
+            # The outer try is there to ensure the thread update timeout happens.
+            _run_and_wrap(self.process_manager.update_launchers)
+            _run_and_wrap(self.update_node_state)
+            _run_and_wrap(self._get_exit_status)
+            Cobalt.Util.sleep(UPDATE_THREAD_TIMEOUT)
 
     def _reconstruct_node(self, inven_node, inventory):
         '''Reconstruct a node from statefile information.  Needed whenever we
