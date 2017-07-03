@@ -1050,3 +1050,18 @@ class TestCraySystem(object):
         assert_match(info, None, 'Bad reservation info returned', is_match)
         assert_match(len(self.system.alps_reservations.keys()), 0, "Wrong number of entries.")
         TestCraySystem.verify_alps_reservation_dict(self.system)
+
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.reserve', fake_alps_reserve)
+    @patch.object(time, 'time', return_value=500.000)
+    def test__ALPS_reserve_resources_bad_int_pass(self, *args, **kwargs):
+        '''CraySystem._ALPS_reserve_resources: Force integer to string key'''
+        job = {'user': 'frodo',
+               'jobid': 1,
+               'nodes': 5,
+               'attrs': {},
+               }
+        node_id_list = [str(i) for i in xrange(1, 6)]
+        new_time = 600.0
+        info = self.system._ALPS_reserve_resources(job, new_time, node_id_list)
+        assert_match(info, node_id_list, 'Bad reservation info returned')
+        TestCraySystem.verify_alps_reservation_dict(self.system)
