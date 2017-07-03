@@ -982,6 +982,9 @@ class CraySystem(BaseSystem):
         if res_info is not None:
             new_alps_res = ALPSReservation(job, res_info, self.nodes)
             self.alps_reservations[str(job['jobid'])] = new_alps_res
+        else:
+            _logger.warning('Job %s: Attempted reservation but allocator returned no nodes.', job['jobid'])
+            return None
         return new_alps_res.node_ids
 
     def _clear_draining_for_queues(self, queue):
