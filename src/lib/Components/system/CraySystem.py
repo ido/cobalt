@@ -409,7 +409,14 @@ class CraySystem(BaseSystem):
                     _logger.info('job %s: Nodes %s cleanup complete.', alps_res.jobid, compact_num_list(alps_res.node_ids))
             for jobid in res_jobid_to_delete:
                 _logger.info('%s: ALPS reservation for this job complete.', jobid)
-                del self.alps_reservations[str(jobid)]
+                try:
+                    del self.alps_reservations[str(jobid)]
+                except KeyError:
+                    _logger.warning('Job %s: Attempted to remove ALPS reservation for this job multiple times', jobid)
+                if self.alps_reservations.get(int(jobid), None) is not None:
+                    # in case of type leakage
+                    _logger.warning('Job %s: ALPS reservation found with integer key: deleting', jobid)
+                    del self.alps_reservations[jobid]
             #process group should already be on the way down since cqm released the
             #resource reservation
             cleanup_nodes = [node for node in self.nodes.values()
@@ -974,7 +981,7 @@ class CraySystem(BaseSystem):
         new_alps_res = None
         if res_info is not None:
             new_alps_res = ALPSReservation(job, res_info, self.nodes)
-            self.alps_reservations[job['jobid']] = new_alps_res
+            self.alps_reservations[str(job['jobid'])] = new_alps_res
         return new_alps_res.node_ids
 
     def _clear_draining_for_queues(self, queue):
@@ -1423,7 +1430,7 @@ class CraySystem(BaseSystem):
                         'nodes': nodecount,
                         'attrs': {},
                         }
-            self._ALPS_reserve_resources(job_info, new_time, node_list)
+            self._ALPS_reserve_resources(job_info, new_time, expand_num_list(node_list))
             alps_res = self.alps_reservations.get(pg.jobid, None)
             if alps_res is None:
                 _logger.warning('%s: Unable to re-reserve ALPS resources.',
