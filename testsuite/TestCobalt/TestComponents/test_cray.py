@@ -25,6 +25,18 @@ from mock import MagicMock, Mock, patch
 def is_match(a, b):
     return a is b
 
+def fake_alps_reserve(user, jobid, nodes, attrs, node_id_list):
+    '''mock for AlpsBridge.reserve method'''
+    assert type(node_id_list) == type([])
+    ret_info = {'reserved_nodes': node_id_list,
+                'reservation_id': 1,
+                }
+    return ret_info
+
+def return_none(*args, **kwargs):
+    return None
+
+
 class TestCrayNode(object):
 
     def setup(self):
@@ -968,10 +980,10 @@ class TestCraySystem(object):
 
     def test_validate_job_normal(self):
         '''CraySystem.validate_job: valid job submission'''
-        expected = {'mode':'script', 'nodecount': 1, 'proccount': 1}
-        spec  = {'mode':'script', 'nodecount': 1}
+        expected = {'nodecount': 1, 'proccount': 1, 'mode': 'script', 'attrs': {'numa': 'quad', 'mcdram': 'cache'}}
+        spec = {'mode':'script', 'nodecount': 1}
         ret_spec = self.system.validate_job(spec)
-        assert expected == ret_spec, "Invalid spec returned"
+        assert_match(expected, ret_spec, "Invalid spec returned")
 
     @raises(Cobalt.Exceptions.JobValidationError)
     def test_validate_job_reject_too_large(self):
@@ -984,3 +996,72 @@ class TestCraySystem(object):
         '''CraySystem.validate_job: reject missing ssh host'''
         spec  = {'mode':'interactive', 'nodecount': 1, 'qsub_host':'foo'}
         ret_spec = self.system.validate_job(spec)
+
+    #CraySystem._ALPS_reserve_resources test functions
+
+    @staticmethod
+    def verify_alps_reservation_dict(system):
+        '''check and make sure keys are always strings.'''
+        for key in system.alps_reservations.keys():
+            assert type(key) == type("string")
+
+
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.reserve', fake_alps_reserve)
+    @patch.object(time, 'time', return_value=500.000)
+    def test__ALPS_reserve_resources(self, *args, **kwargs):
+        '''CraySystem._ALPS_reserve_resources: Set valid reservation dictionary entry'''
+        job = {'user': 'frodo',
+               'jobid': '1',
+               'nodes': 5,
+               'attrs': {},
+               }
+        node_id_list = [str(i) for i in xrange(1, 6)]
+        new_time = 600.0
+        info = self.system._ALPS_reserve_resources(job, new_time, node_id_list)
+        assert_match(info, node_id_list, 'Bad reservation info returned')
+        TestCraySystem.verify_alps_reservation_dict(self.system)
+
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.reserve', return_none)
+    def test__ALPS_reserve_resources_reserve_None(self):
+        '''CraySystem._ALPS_reserve_resources: No built reservation if None returned'''
+        job = {'user': 'frodo',
+               'jobid': '1',
+               'nodes': 5,
+               'attrs': {},
+               }
+        node_id_list = [str(i) for i in xrange(1, 6)]
+        new_time = 600.0
+        info = self.system._ALPS_reserve_resources(job, new_time, node_id_list)
+        assert_match(info, None, 'Bad reservation info returned', is_match)
+        assert_match(len(self.system.alps_reservations.keys()), 0, "Wrong number of entries.")
+        TestCraySystem.verify_alps_reservation_dict(self.system)
+
+    def test__ALPS_reserve_resources_handle_ALPS_error(self):
+        '''CraySystem._ALPS_reserve_resources: Raise ALPS Exception'''
+        Cobalt.Components.system.CraySystem.ALPSBridge.reserve = MagicMock(side_effect=AlpsBridge.ALPSError('test failure', 'ERROR'))
+        job = {'user': 'frodo',
+               'jobid': '1',
+               'nodes': 5,
+               'attrs': {},
+               }
+        node_id_list = [str(i) for i in xrange(1, 6)]
+        new_time = 600.0
+        info = self.system._ALPS_reserve_resources(job, new_time, node_id_list)
+        assert_match(info, None, 'Bad reservation info returned', is_match)
+        assert_match(len(self.system.alps_reservations.keys()), 0, "Wrong number of entries.")
+        TestCraySystem.verify_alps_reservation_dict(self.system)
+
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.reserve', fake_alps_reserve)
+    @patch.object(time, 'time', return_value=500.000)
+    def test__ALPS_reserve_resources_bad_int_pass(self, *args, **kwargs):
+        '''CraySystem._ALPS_reserve_resources: Force integer to string key'''
+        job = {'user': 'frodo',
+               'jobid': 1,
+               'nodes': 5,
+               'attrs': {},
+               }
+        node_id_list = [str(i) for i in xrange(1, 6)]
+        new_time = 600.0
+        info = self.system._ALPS_reserve_resources(job, new_time, node_id_list)
+        assert_match(info, node_id_list, 'Bad reservation info returned')
+        TestCraySystem.verify_alps_reservation_dict(self.system)
