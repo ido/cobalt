@@ -1,5 +1,13 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 1.0.18 ==
+ * Fix for a hang that can occur with interactive jobs if a Cray ALPS reservation
+   needs to be recreated at job execution time, usually in a rebooting context.
+ * Fix for a display issue when using the cluster_system component when the cluster
+   has nodes with a non-uniform prefix, or no prefix at all.  This changes some
+   existing numbering condensation as well, and allows the location string for
+   jobs and reservations to be used with tools like pdsh
+
 == Changes to 1.0.17 ==
  * Added queue and project information to enviornment in Cray jobs.
 
