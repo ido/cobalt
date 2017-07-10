@@ -1434,7 +1434,7 @@ class CraySystem(BaseSystem):
                         'attrs': {},
                         }
             self._ALPS_reserve_resources(job_info, new_time, expand_num_list(node_list))
-            alps_res = self.alps_reservations.get(pg.jobid, None)
+            alps_res = self.alps_reservations.get(str(pg.jobid), None)
             if alps_res is None:
                 _logger.warning('%s: Unable to re-reserve ALPS resources.',
                         pg.label)
