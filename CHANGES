@@ -1,5 +1,8 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 1.0.19 ==
+ * Hotfix for issue preventing rereservations for interactive jobs from being detected.
+
 == Changes to 1.0.18 ==
  * Fix for a hang that can occur with interactive jobs if a Cray ALPS reservation
    needs to be recreated at job execution time, usually in a rebooting context.
