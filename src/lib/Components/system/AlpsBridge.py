@@ -263,21 +263,25 @@ def fetch_ssd_diags(nid_list=None, raw=False):
     ret_info = _call_sys_forker_capmc(CAPMC_PATH, args)
     if not raw: # Not all consistency is foolish.
         fixed_ret_info = {}
-        for key, val in ret_info.items():
-            if key not in ['e', 'err_msg']:
-                for diag_key, diag_val in ret_info[key]:
-                    if diag_key not in ['serial_num', 'size']:
-                        fixed_ret_info[key][diag_key] = diag_val
-                    elif diag_key == 'serial_num':
-                        fixed_ret_info[key]['serial_number'] = diag_val
-                    elif diag_key == 'size':
-                        # It's storage so apparently we're using 10^3 instead of 2^10
-                        # Going from GB back to bytes
-                        fixed_ret_info[key][diag_key] = int(1000000000 * int(diag_val))
-            else:
-                fixed_ret_info[key] = val
+        fixed_ret_info['e'] = ret_info['e']
+        fixed_ret_info['err_msg'] = ret_info['err_msg']
+        fixed_ret_info['ssd_diags'] = []
+        diag_info = ret_info['ssd_diags']
+        for info in diag_info:
+            fixed_diag_info = {}
+            for diag_key, diag_val in info.items():
+                if diag_key not in ['serial_num', 'size']:
+                    fixed_diag_info[diag_key] = diag_val
+                elif diag_key == 'serial_num':
+                    fixed_diag_info['serial_number'] = diag_val
+                elif diag_key == 'size':
+                    # It's storage so apparently we're using 10^3 instead of 2^10
+                    # Going from GB back to bytes
+                    fixed_diag_info[diag_key] = int(1000000000 * int(diag_val))
+            fixed_ret_info['ssd_diags'].append(fixed_diag_info)
         ret_info = fixed_ret_info
     return ret_info
+
 def _log_xmlrpc_error(runid, fault):
     '''Log an xmlrpc error.
 
@@ -345,8 +349,8 @@ def _call_sys_forker(path, tag, label, args=None, in_str=None):
                              # invalid.  If we never got one, then let the
                              # caller handle the error.
                 if child['exit_status'] != 0:
-                    _logger.error("BASIL returned a status of %s",
-                            child['exit_status'])
+                    _logger.error("%s returned a status of %s, stderr: %s",
+                            cmd, child['exit_status'], "\n".join(child['stderr']))
                 resp = child['stdout_string']
                 try:
                     ComponentProxy(FORKER).cleanup_children([runid])
@@ -393,6 +397,7 @@ def _call_sys_forker_basil(basil_path, in_str):
 def _call_sys_forker_capmc(capmc_path, args):
     '''Call a CAPMC command and recieve response'''
     resp = _call_sys_forker(capmc_path, 'apbridge', 'capmc_ssd', args=args)
+    parsed_response = {}
     try:
         parsed_response = json.loads(resp)
     except TypeError:

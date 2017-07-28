@@ -1376,8 +1376,8 @@ def print_node_details(args):
             retval = str(value)
         return retval
 
-    nodes = component_call(SYSMGR, False, 'get_nodes',
-            (True, expand_node_args(args)))
+    nodes = json.loads(component_call(SYSMGR, False, 'get_nodes',
+            (True, expand_node_args(args), None, True)))
     res_queues = _setup_res_info()
     for node in nodes.values():
         header_list = []
@@ -1393,6 +1393,10 @@ def print_node_details(args):
                 if res_queues.get(str(node['node_id']), False):
                     queues.extend(res_queues[str(node['node_id'])])
                 value_list.append(':'.join(queues))
+            elif key == 'attributes':
+                for attr_key, attr_val in value.items():
+                    header_list.append(key +'.'+ attr_key )
+                    value_list.append(gen_printable_value(attr_val))
             else:
                 header_list.append(key)
                 value_list.append(gen_printable_value(value))
