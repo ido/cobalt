@@ -14,7 +14,6 @@ import logging
 import sys
 from Cobalt import client_utils
 from Cobalt.client_utils import cb_debug
-
 from Cobalt.arg_parser import ArgParse
 
 __revision__ = '$Revision: 559 $' # TBC may go away.
@@ -34,9 +33,9 @@ def validate_args(parser,user):
     jobids = client_utils.get_jobids(parser.args[1:])
 
     jobs = [{'tag':'job', 'user':user, 'jobid':jobid, 'project':'*', 'notify':'*',
-             'walltime':'*', 'queue':'*', 'procs':'*', 'nodes':'*'} for jobid in jobids]
-    queue = parser.args[0] 
-    return queue,jobs
+        'walltime':'*', 'queue':'*', 'procs':'*', 'nodes':'*', 'attrs':'*'} for jobid in jobids]
+    queue = parser.args[0]
+    return queue, jobs
 
 def main():
     """
@@ -70,9 +69,13 @@ def main():
     # move jobs to queue
     for job in jobdata:
         orig_job = job.copy()
+        # keep orig job's attrs.  If this gets reset (which the filter can do) this will cause the find for the set operation to
+        # fail. '*' will grab any here.
+        orig_job['attrs'] = '*'
         job.update({'queue':queue})
-        client_utils.process_filters(filters,job)
-        [j] = client_utils.component_call(QUEMGR, False, 'set_jobs', ([orig_job],job,user))
+        client_utils.process_filters(filters, job)
+        # FIXME: Need a better aggregate operation, this really should be one remote call.
+        [j] = client_utils.component_call(QUEMGR, False, 'set_jobs', ([orig_job], job, user))
         response.append("moved job %d to queue '%s'" % (j.get('jobid'), j.get('queue')))
 
     if not response:
