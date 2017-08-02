@@ -60,6 +60,8 @@ moved job 3 to queue 'kebra'
 """
 GET_JOBS
 
+attrs:*
+attrs type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
 nodes:*
@@ -78,6 +80,8 @@ user:gooduser
 user type: <type 'str'>
 walltime:*
 walltime type: <type 'str'>
+attrs:*
+attrs type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
 nodes:*
@@ -96,6 +100,8 @@ user:gooduser
 user type: <type 'str'>
 walltime:*
 walltime type: <type 'str'>
+attrs:*
+attrs type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
 nodes:*
@@ -123,6 +129,8 @@ Original Jobs:
 user: gooduser
 args:
 args type: <type 'str'>
+attrs:*
+attrs type: <type 'str'>
 envs:{}
 envs type: <type 'dict'>
 errorpath:/tmp
@@ -229,6 +237,8 @@ Original Jobs:
 user: gooduser
 args:
 args type: <type 'str'>
+attrs:*
+attrs type: <type 'str'>
 envs:{}
 envs type: <type 'dict'>
 errorpath:/tmp
@@ -335,6 +345,8 @@ Original Jobs:
 user: gooduser
 args:
 args type: <type 'str'>
+attrs:*
+attrs type: <type 'str'>
 envs:{}
 envs type: <type 'dict'>
 errorpath:/tmp
@@ -475,30 +487,30 @@ qmove.py -d myq 1 2 3
 
 component: "queue-manager.get_jobs", defer: False
   get_jobs(
-     [{'project': '*', 'queue': '*', 'tag': 'job', 'notify': '*', 'user': 'gooduser', 'nodes': '*', 'walltime': '*', 'procs': '*', 'jobid': 1}, {'project': '*', 'queue': '*', 'tag': 'job', 'notify': '*', 'user': 'gooduser', 'nodes': '*', 'walltime': '*', 'procs': '*', 'jobid': 2}, {'project': '*', 'queue': '*', 'tag': 'job', 'notify': '*', 'user': 'gooduser', 'nodes': '*', 'walltime': '*', 'procs': '*', 'jobid': 3}],
+     [{'project': '*', 'queue': '*', 'tag': 'job', 'notify': '*', 'user': 'gooduser', 'nodes': '*', 'walltime': '*', 'attrs': '*', 'procs': '*', 'jobid': 1}, {'project': '*', 'queue': '*', 'tag': 'job', 'notify': '*', 'user': 'gooduser', 'nodes': '*', 'walltime': '*', 'attrs': '*', 'procs': '*', 'jobid': 2}, {'project': '*', 'queue': '*', 'tag': 'job', 'notify': '*', 'user': 'gooduser', 'nodes': '*', 'walltime': '*', 'attrs': '*', 'procs': '*', 'jobid': 3}],
      )
 
 
 component: "queue-manager.set_jobs", defer: False
   set_jobs(
-     [{'errorpath': '/tmp', 'args': '', 'is_active': False, 'geometry': None, 'mode': 'smp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'procs': '512', 'walltime': '5', 'queue': 'jello', 'envs': {}, 'user_hold': False, 'jobid': 1, 'project': 'my_project', 'submittime': '60', 'state': 'user_hold', 'score': 50, 'location': '/tmp', 'nodes': '512', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'], 'user': 'land'}],
-     {'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'project': 'my_project', 'envs': {}, 'submittime': '60', 'state': 'user_hold', 'score': 50, 'location': '/tmp', 'nodes': '512', 'args': '', 'is_active': False, 'user': 'land', 'procs': '512', 'walltime': '5', 'geometry': None, 'user_hold': False, 'jobid': 1, 'queue': 'myq', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']},
+     [{'errorpath': '/tmp', 'args': '', 'is_active': False, 'geometry': None, 'mode': 'smp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'procs': '512', 'walltime': '5', 'queue': 'jello', 'resid': None, 'envs': {}, 'user_hold': False, 'jobid': 1, 'project': 'my_project', 'submittime': '60', 'state': 'user_hold', 'score': 50, 'location': '/tmp', 'nodes': '512', 'attrs': '*', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'], 'user': 'land'}],
+     {'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'project': 'my_project', 'envs': {}, 'submittime': '60', 'state': 'user_hold', 'score': 50, 'location': '/tmp', 'nodes': '512', 'args': '', 'is_active': False, 'user': 'land', 'procs': '512', 'walltime': '5', 'resid': None, 'geometry': None, 'user_hold': False, 'jobid': 1, 'queue': 'myq', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']},
      gooduser,
      )
 
 
 component: "queue-manager.set_jobs", defer: False
   set_jobs(
-     [{'errorpath': '/tmp', 'args': '', 'is_active': False, 'geometry': None, 'mode': 'smp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'procs': '1024', 'walltime': '10', 'queue': 'bello', 'envs': {}, 'user_hold': False, 'jobid': 2, 'project': 'my_project', 'submittime': '60', 'state': 'user_hold', 'score': 55, 'location': '/tmp', 'nodes': '1024', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'], 'user': 'house'}],
-     {'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'project': 'my_project', 'envs': {}, 'submittime': '60', 'state': 'user_hold', 'score': 55, 'location': '/tmp', 'nodes': '1024', 'args': '', 'is_active': False, 'user': 'house', 'procs': '1024', 'walltime': '10', 'geometry': None, 'user_hold': False, 'jobid': 2, 'queue': 'myq', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']},
+     [{'errorpath': '/tmp', 'args': '', 'is_active': False, 'geometry': None, 'mode': 'smp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'procs': '1024', 'walltime': '10', 'queue': 'bello', 'resid': None, 'envs': {}, 'user_hold': False, 'jobid': 2, 'project': 'my_project', 'submittime': '60', 'state': 'user_hold', 'score': 55, 'location': '/tmp', 'nodes': '1024', 'attrs': '*', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'], 'user': 'house'}],
+     {'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'project': 'my_project', 'envs': {}, 'submittime': '60', 'state': 'user_hold', 'score': 55, 'location': '/tmp', 'nodes': '1024', 'args': '', 'is_active': False, 'user': 'house', 'procs': '1024', 'walltime': '10', 'resid': None, 'geometry': None, 'user_hold': False, 'jobid': 2, 'queue': 'myq', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']},
      gooduser,
      )
 
 
 component: "queue-manager.set_jobs", defer: False
   set_jobs(
-     [{'errorpath': '/tmp', 'args': '', 'is_active': False, 'geometry': None, 'mode': 'smp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'procs': '1536', 'walltime': '15', 'queue': 'aaa', 'envs': {}, 'user_hold': False, 'jobid': 3, 'project': 'my_project', 'submittime': '60', 'state': 'user_hold', 'score': 40, 'location': '/tmp', 'nodes': '1536', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'], 'user': 'dog'}],
-     {'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'project': 'my_project', 'envs': {}, 'submittime': '60', 'state': 'user_hold', 'score': 40, 'location': '/tmp', 'nodes': '1536', 'args': '', 'is_active': False, 'user': 'dog', 'procs': '1536', 'walltime': '15', 'geometry': None, 'user_hold': False, 'jobid': 3, 'queue': 'myq', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']},
+     [{'errorpath': '/tmp', 'args': '', 'is_active': False, 'geometry': None, 'mode': 'smp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'procs': '1536', 'walltime': '15', 'queue': 'aaa', 'resid': None, 'envs': {}, 'user_hold': False, 'jobid': 3, 'project': 'my_project', 'submittime': '60', 'state': 'user_hold', 'score': 40, 'location': '/tmp', 'nodes': '1536', 'attrs': '*', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'], 'user': 'dog'}],
+     {'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'project': 'my_project', 'envs': {}, 'submittime': '60', 'state': 'user_hold', 'score': 40, 'location': '/tmp', 'nodes': '1536', 'args': '', 'is_active': False, 'user': 'dog', 'procs': '1536', 'walltime': '15', 'resid': None, 'geometry': None, 'user_hold': False, 'jobid': 3, 'queue': 'myq', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']},
      gooduser,
      )
 
@@ -509,6 +521,8 @@ component: "queue-manager.set_jobs", defer: False
 """
 GET_JOBS
 
+attrs:*
+attrs type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
 nodes:*
@@ -527,6 +541,8 @@ user:gooduser
 user type: <type 'str'>
 walltime:*
 walltime type: <type 'str'>
+attrs:*
+attrs type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
 nodes:*
@@ -545,6 +561,8 @@ user:gooduser
 user type: <type 'str'>
 walltime:*
 walltime type: <type 'str'>
+attrs:*
+attrs type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
 nodes:*
@@ -572,6 +590,8 @@ Original Jobs:
 user: gooduser
 args:
 args type: <type 'str'>
+attrs:*
+attrs type: <type 'str'>
 envs:{}
 envs type: <type 'dict'>
 errorpath:/tmp
@@ -678,6 +698,8 @@ Original Jobs:
 user: gooduser
 args:
 args type: <type 'str'>
+attrs:*
+attrs type: <type 'str'>
 envs:{}
 envs type: <type 'dict'>
 errorpath:/tmp
@@ -784,6 +806,8 @@ Original Jobs:
 user: gooduser
 args:
 args type: <type 'str'>
+attrs:*
+attrs type: <type 'str'>
 envs:{}
 envs type: <type 'dict'>
 errorpath:/tmp
@@ -924,6 +948,8 @@ moved job 4 to queue 'kebra'
 """
 GET_JOBS
 
+attrs:*
+attrs type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
 nodes:*
@@ -942,6 +968,8 @@ user:gooduser
 user type: <type 'str'>
 walltime:*
 walltime type: <type 'str'>
+attrs:*
+attrs type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
 nodes:*
@@ -960,6 +988,8 @@ user:gooduser
 user type: <type 'str'>
 walltime:*
 walltime type: <type 'str'>
+attrs:*
+attrs type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
 nodes:*
@@ -987,6 +1017,8 @@ Original Jobs:
 user: gooduser
 args:
 args type: <type 'str'>
+attrs:*
+attrs type: <type 'str'>
 envs:{}
 envs type: <type 'dict'>
 errorpath:/tmp
@@ -1093,6 +1125,8 @@ Original Jobs:
 user: gooduser
 args:
 args type: <type 'str'>
+attrs:*
+attrs type: <type 'str'>
 envs:{}
 envs type: <type 'dict'>
 errorpath:/tmp
@@ -1199,6 +1233,8 @@ Original Jobs:
 user: gooduser
 args:
 args type: <type 'str'>
+attrs:*
+attrs type: <type 'str'>
 envs:{}
 envs type: <type 'dict'>
 errorpath:/tmp
@@ -1319,9 +1355,9 @@ walltime type: <type 'str'>
 
 
 # ---------------------------------------------------------------------------------
-def test_qmove_queu_4():
+def test_qmove_queue_4():
     """
-    qmove test run: queu_4
+    qmove test run: queue_4
 
     """
 
