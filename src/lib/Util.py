@@ -1032,44 +1032,40 @@ class disk_writer_thread(Thread):
                     #on open, even though I believe the linux kernel gets this wrong.
                     fd = os.open(file_msg.filename, os.O_WRONLY|os.O_APPEND|os.O_NONBLOCK)
                 except IOError as (num, strerror):
-                    
                     errcode = errno.errorcode[num]
-
                     if num == errno.EACCES:
-                        logger.error("Unable to write to %s with error code: "
-                                "%s. Permission Denied.", errcode,
-                                    file_msg.filename)
+                        logger.error("Unable to write to %s with error code: %s. Permission Denied.", file_msg.filename, errcode)
                         messages_to_remove.append(file_msg)
                     elif num == errno.EDQUOT: 
-                        logger.error("Unable to write to %s. Quota Exceeded.", file_msg.filename)
+                        logger.error("Unable to write to %s with error code: %s. Quota Exceeded.", file_msg.filename, errcode)
                         messages_to_remove.append(file_msg)
                     elif num in [errno.EFAULT,errno.EINVAL,errno.EIO]:
-                        logger.error("Unable to write to %s. Fatal Error.", file_msg.filename)
+                        logger.error("Unable to write to %s with error code: %s. Fatal Error.", file_msg.filename, errcode)
                         messages_to_remove.append(file_msg) 
                     elif num == errno.ENXIO:
                         logger.error("Why are you trying to open a pipe?")
                         messages_to_remove.append(file_msg) 
                     else:
-                        logger.debug("Failed to write to %s.  Holding message for retry.",
-                                file_msg.filename)
+                        logger.debug("Failed to write to %s with error code: %s.  Holding message for retry.",
+                                file_msg.filename, errcode)
                         continue
                 except OSError as (num, strerror):
-
+                    errcode = errno.errorcode[num]
                     if num == errno.EACCES:
-                        logger.error("Unable to write to %s. Permission Denied.",file_msg.filename)
+                        logger.error("OSError: Unable to write to %s with error code: %s. Permission Denied.",file_msg.filename, errcode)
                         messages_to_remove.append(file_msg)
                     elif num == errno.EDQUOT: 
-                        logger.error("Unable to write to %s. Quota Exceeded.", file_msg.filename)
+                        logger.error("OSError: Unable to write to %s with error code: %s. Quota Exceeded.", file_msg.filename, errcode)
                         messages_to_remove.append(file_msg)
                     elif num in [errno.EFAULT,errno.EINVAL,errno.EIO]:
-                        logger.error("Unable to write to %s. Fatal Error.", file_msg.filename)
+                        logger.error("OSError: Unable to write to %s with error code: %s. Fatal Error.", file_msg.filename, errcode)
                         messages_to_remove.append(file_msg) 
                     elif num == errno.ENXIO:
-                        logger.error("Why are you trying to open a pipe?")
+                        logger.error("OSError: Why are you trying to open a pipe?")
                         messages_to_remove.append(file_msg) 
                     else:
-                        logger.debug("Failed to write to %s.  Holding message for retry.", 
-                                file_msg.filename)
+                        logger.debug("OSError: Failed to write to %s with error code: %s.  Holding message for retry.", 
+                                file_msg.filename, errcode)
                         continue
                 except Exception:
                     logger.critical("Unknown error recieved when writing to cobaltlog %s. "\
