@@ -190,13 +190,12 @@ def extract_system_node_data(node_data):
     return ret_nodeinfo
 
 
-def fetch_ssd_static_data(nid_list=None, raw=False):
+def fetch_ssd_static_data(nid_list=None, by_cname=False):
     '''Get static SSD information from CAPMC.
 
     Args:
         nid_list - optional list of nodes as a comma-delimited, hyphenated string (default None).
-        raw - If True returns raw json dict.  If False, adds nid indexing (default False)
-
+        by_cname - if True, returns the nodes keyed by Cray cname (default False
     Returns:
         A dictionary with call status, Consult CAPMC documentation for details
 
@@ -208,16 +207,17 @@ def fetch_ssd_static_data(nid_list=None, raw=False):
     if nid_list is not None:
         args.extend(['-n', nid_list])
     ret_info = _call_sys_forker_capmc(CAPMC_PATH, args)
-    if not raw:
+    if not by_cname:
         # Because everything else in this system works on nids.
         fixed_ret_info = {}
-        fixed_ret_info = {'e': ret_info['e'],
-                          'err_msg': ret_info['err_msg']}
         fixed_ret_info['nids'] = []
         for key, val in ret_info.items():
             if key not in ['e', 'err_msg']:
-                for ssd_info in val: # This is a list of SSDs potentially
-                    fixed_ret_info['nids'].append(ssd_info)
+                fixed_val = val
+                val['cname'] = key
+                fixed_ret_info['nids'].append(fixed_val)
+            else:
+                fixed_ret_info[key] = val
         ret_info = fixed_ret_info
     return ret_info
 
