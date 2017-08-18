@@ -2,7 +2,6 @@
 
 
 """
-
 import logging
 import time
 import Queue
@@ -162,10 +161,8 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
         # Hold for update.  Process group addition also results in a forker call, so we need to lock that, too
         # so we have a consistient view
         with self.process_groups_lock:
-            _logger.debug('updating groups')
             now = int(time.time())
             for forker in self.forkers:
-                completed[forker] = []
                 try:
                     child_data = ComponentProxy(forker).get_children("process group", None)
                 except ComponentLookupError, e:
@@ -174,6 +171,7 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
                     _logger.error("unexpected exception while getting a list of children from the %s component",
                         forker, exc_info=True)
                 else:
+                    completed[forker] = []
                     for child in child_data:
                         children[(forker, child['id'])] = child
 

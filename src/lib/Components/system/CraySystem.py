@@ -1,5 +1,4 @@
 """Resource management for Cray ALPS based systems"""
-
 import logging
 import threading
 import thread
@@ -1256,15 +1255,12 @@ class CraySystem(BaseSystem):
                 if alps_res is not None:
                     spec['alps_res_id'] = alps_res.alps_res_id
                 new_pgroups = self.process_manager.init_groups(specs)
-                _logger.debug('init groups')
             for pgroup in new_pgroups:
                 _logger.info('%s: process group %s created to track job status',
                         pgroup.label, pgroup.id)
                 #check resource reservation, and attempt to start.  If there's a
                 #failure here, set exit status in process group to a sentinel value.
                 try:
-                    _logger.debug('starting groups')
-                    time.sleep(30)
                     started = self.process_manager.start_groups([pgroup.id])
                 except ComponentLookupError:
                     _logger.error("%s: failed to contact the %s component",
@@ -1297,7 +1293,6 @@ class CraySystem(BaseSystem):
                         pgroup.exit_status = 255
                         self.reserve_resources_until(pgroup.location, None,
                                 pgroup.jobid)
-
         end_apg_timer = time.time()
         self.logger.debug("add_process_groups startup time: %s sec", (end_apg_timer - start_apg_timer))
         return new_pgroups
@@ -1344,11 +1339,12 @@ class CraySystem(BaseSystem):
         is called.
 
         '''
-        completed_pgs = self.process_manager.update_groups()
-        for pgroup in completed_pgs:
-            _logger.info('%s: process group reported as completed with status %s',
-                    pgroup.label, pgroup.exit_status)
-            self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
+        with self.process_manager.process_groups_lock:
+            completed_pgs = self.process_manager.update_groups()
+            for pgroup in completed_pgs:
+                _logger.info('%s: process group reported as completed with status %s',
+                        pgroup.label, pgroup.exit_status)
+                self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
         return
 
     @exposed
