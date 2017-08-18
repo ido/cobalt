@@ -159,7 +159,6 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
         completed_pgs = []
         now = int(time.time())
         for forker in self.forkers:
-            completed[forker] = []
             try:
                 child_data = ComponentProxy(forker).get_children("process group", None)
             except ComponentLookupError, e:
@@ -168,37 +167,39 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
                 _logger.error("unexpected exception while getting a list of children from the %s component",
                     forker, exc_info=True)
             else:
+                completed[forker] = []
                 for child in child_data:
                     children[(forker, child['id'])] = child
 
         #clean up orphaned process groups
         for pg in self.process_groups.values():
-            if now < pg.startup_timeout:
-                #wait for startup timeout.  We don't want any hasty kills
-                continue
-            pg_id = pg.id
-            child_uid = (pg.forker, pg.head_pid)
-            if child_uid not in children:
-                if pg.mode == 'interactive':
-                    #interactive job, there is no child job
-                    if pg.interactive_complete:
-                        completed_pgs.append(pg)
-                        #not really orphaned, but this causes the proper cleanup
-                        #to occur
-                        orphaned.append(pg_id)
+            if pg.forker in completed:
+                if now < pg.startup_timeout:
+                    #wait for startup timeout.  We don't want any hasty kills
                     continue
-                orphaned.append(pg_id)
-                _logger.warning('%s: orphaned job exited with unknown status', pg.jobid)
-                pg.exit_status = 1234567
-                completed_pgs.append(pg)
-            else:
-                children[child_uid]['found'] = True
-                pg.update_data(children[child_uid])
-                if pg.exit_status is not None:
-                    _logger.info('%s: job exited with status %s', pg.jobid,
-                                 pg.exit_status)
-                    completed[pg.forker].append(children[child_uid]['id'])
+                pg_id = pg.id
+                child_uid = (pg.forker, pg.head_pid)
+                if child_uid not in children:
+                    if pg.mode == 'interactive':
+                        #interactive job, there is no child job
+                        if pg.interactive_complete:
+                            completed_pgs.append(pg)
+                            #not really orphaned, but this causes the proper cleanup
+                            #to occur
+                            orphaned.append(pg_id)
+                        continue
+                    orphaned.append(pg_id)
+                    _logger.warning('%s: orphaned job exited with unknown status', pg.jobid)
+                    pg.exit_status = 1234567
                     completed_pgs.append(pg)
+                else:
+                    children[child_uid]['found'] = True
+                    pg.update_data(children[child_uid])
+                    if pg.exit_status is not None:
+                        _logger.info('%s: job exited with status %s', pg.jobid,
+                                     pg.exit_status)
+                        completed[pg.forker].append(children[child_uid]['id'])
+                        completed_pgs.append(pg)
         #check for children without process groups and clean
         for forker, child_id  in children.keys():
             if not children[(forker, child_id)].has_key('found'):
