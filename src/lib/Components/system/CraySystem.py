@@ -201,12 +201,6 @@ class CraySystem(BaseSystem):
                 reservations = ALPSBridge.fetch_reservations()
                 _logger.info('ALPS RESERVATION DATA FETCHED')
                 # reserved_nodes = ALPSBridge.reserved_nodes()
-                ssd_enabled = ALPSBridge.fetch_ssd_enable()
-                _logger.info('CAPMC SSD ENABLED DATA FETCHED')
-                ssd_info = ALPSBridge.fetch_ssd_static_data()
-                _logger.info('CAPMC SSD DETAIL DATA FETCHED')
-                ssd_diags = ALPSBridge.fetch_ssd_diags()
-                _logger.info('CAPMC SSD DIAG DATA FETCHED')
             except Exception:
                 #don't crash out here.  That may trash a statefile.
                 _logger.error('Possible transient encountered during initialization. Retrying.',
@@ -215,7 +209,7 @@ class CraySystem(BaseSystem):
             else:
                 pending = False
 
-        self._assemble_nodes(inventory, system, ssd_enabled, ssd_info, ssd_diags)
+        self._assemble_nodes(inventory, system)
         #Reversing the node name to id lookup is going to save a lot of cycles.
         for node in self.nodes.values():
             self.node_name_to_id[node.name] = node.node_id
@@ -224,22 +218,9 @@ class CraySystem(BaseSystem):
         # self._assemble_reservations(reservations, reserved_nodes)
         return
 
-    def _assemble_nodes(self, inventory, system, ssd_enabled, ssd_info, ssd_diags):
+    def _assemble_nodes(self, inventory, system):
         '''merge together the INVENTORY and SYSTEM query data to form as
         complete a picture of a node as we can.
-
-        Args:
-            inventory - ALPS QUERY(INVENTORY) data
-            system - ALPS QUERY(SYSTEM) data
-            ssd_enable - CAPMC get_ssd_enable data
-            ssd_info - CAPMC get_ssds data
-            ssd_diags - CAPMC get_ssd_diags data
-
-        Returns:
-            None
-
-        Side Effects:
-            Populates the node dictionary
 
         '''
         nodes = {}
@@ -254,33 +235,7 @@ class CraySystem(BaseSystem):
             if nodes[node_id].role.upper() not in ['BATCH']:
                 nodes[node_id].status = 'down'
             nodes[node_id].status = nodespec['state']
-        self._update_ssd_data(nodes, ssd_enabled, ssd_info, ssd_diags)
         self.nodes = nodes
-
-    def _update_ssd_data(self, nodes, ssd_enabled=None, ssd_info=None, ssd_diags=None):
-        '''Update/add ssd data from CAPMC'''
-        if ssd_enabled is not None:
-            for ssd_data in ssd_enabled['nids']:
-                try:
-                    nodes[str(ssd_data['nid'])].attributes['ssd_enabled'] = int(ssd_data['ssd_enable'])
-                except KeyError:
-                    _logger.warning('ssd info present for nid %s, but not reported in ALPS.', ssd_data['nid'])
-        if ssd_info is not None:
-            for ssd_data in ssd_info['nids']:
-                try:
-                    nodes[str(ssd_data['nid'])].attributes['ssd_info'] = ssd_data
-                except KeyError:
-                    _logger.warning('ssd info present for nid %s, but not reported in ALPS.', ssd_data['nid'])
-        if ssd_diags is not None:
-            for diag_info in ssd_diags['ssd_diags']:
-                try:
-                    node = nodes[str(diag_info['nid'])]
-                except KeyError:
-                    _logger.warning('ssd diag data present for nid %s, but not reported in ALPS.', ssd_data['nid'])
-                else:
-                    for field in ['life_remaining', 'ts', 'firmware', 'percent_used']:
-                        node.attributes['ssd_info'][field] = diag_info[field]
-
 
     def _assemble_reservations(self, reservations, reserved_nodes):
         # FIXME: we can recover reservations now.  Implement this.
@@ -385,7 +340,6 @@ class CraySystem(BaseSystem):
         self.nodes[str(nid)] = new_node
         self.logger.warning('Node %s added to tracking.', nid)
 
-
     @exposed
     def update_node_state(self):
         '''update the state of cray nodes. Check reservation status and system
@@ -416,9 +370,6 @@ class CraySystem(BaseSystem):
                 inven_nodes = ALPSBridge.extract_system_node_data(ALPSBridge.system())
                 reservations = ALPSBridge.fetch_reservations()
                 #reserved_nodes = ALPSBridge.reserved_nodes()
-                # Fetch SSD diagnostic data and enabled flags. I would hope these change in event of dead ssd
-                ssd_enabled = ALPSBridge.fetch_ssd_enable()
-                ssd_diags = ALPSBridge.fetch_ssd_diags()
             except (ALPSBridge.ALPSError, ComponentLookupError):
                 _logger.warning('Error contacting ALPS for state update.  Aborting this update',
                         exc_info=True)
@@ -533,8 +484,6 @@ class CraySystem(BaseSystem):
                         self._reconstruct_node(inven_node, recon_inventory)
                    # _logger.error('UNS: ALPS reports node %s but not in our node list.',
                    #               inven_node['node_id'])
-            # Update SSD data:
-            self._update_ssd_data(self.nodes, ssd_enabled=ssd_enabled, ssd_diags=ssd_diags)
             #should down win over running in terms of display?
             #keep node that are marked for cleanup still in cleanup
             for node in cleanup_nodes:
