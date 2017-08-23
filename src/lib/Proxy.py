@@ -70,7 +70,7 @@ class RetryMethod(_Method):
                 return retval 
             except xmlrpclib.ProtocolError, err:
                 log.error("Server failure: Protocol Error: %s %s" % \
-                              (err.errcode, err.errmsg))
+                              (err.errcode, err.errmsg), exc_info=1)
                 raise xmlrpclib.Fault(20, "Server Failure")
             except xmlrpclib.Fault as fault:
                 raise

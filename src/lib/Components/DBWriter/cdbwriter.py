@@ -162,7 +162,7 @@ class MessageQueue(Component):
             logging.debug(traceback.format_exc())
             self.msg_queue.pop(0)
          except:
-            logger.error ("Error updating databse.  Unable to add message.")
+            logger.error ("Error updating databse.  Unable to add message. %s", msg)
             logging.debug(traceback.format_exc())
             self.connected = False
             #if we were clearing an overflow, here we go again.
@@ -872,7 +872,7 @@ class no_pk_dao(db2util.dao):
         invalidFields = record.invalidFields()
         
         if invalidFields:
-            raise adapterError("Validation error prior to insert.\n\nTable: %s\n\nField(s): %s\n" % (record.fqtn, str(invalidFields)))
+            raise db2util.adapterError("Validation error prior to insert.\n\nTable: %s\n\nField(s): %s\n" % (record.fqtn, str(invalidFields)))
         
         insertSQL = "insert into %s (%s) values (%s)" %(
             self.table.fqName,

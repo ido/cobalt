@@ -1,5 +1,4 @@
 """Resource management for Cray ALPS based systems"""
-
 import logging
 import threading
 import thread
@@ -1255,57 +1254,58 @@ class CraySystem(BaseSystem):
             Invokes a forker component to run a user script.  In the event of a
             fatal startup error, will release resource reservations.
 
-        '''
-        start_apg_timer = int(time.time())
+        Note:
+            Process Group startup and intialization holds the process group data lock.
 
-        for spec in specs:
-            spec['forker'] = None
-            alps_res = self.alps_reservations.get(str(spec['jobid']), None)
-            if alps_res is not None:
-                spec['alps_res_id'] = alps_res.alps_res_id
-            new_pgroups = self.process_manager.init_groups(specs)
-        for pgroup in new_pgroups:
-            _logger.info('%s: process group %s created to track job status',
-                    pgroup.label, pgroup.id)
-            #check resource reservation, and attempt to start.  If there's a
-            #failure here, set exit status in process group to a sentinel value.
-            try:
-                started = self.process_manager.start_groups([pgroup.id])
-            except ComponentLookupError:
-                _logger.error("%s: failed to contact the %s component",
-                        pgroup.label, pgroup.forker)
-                #this should be reraised and the queue-manager handle it
-                #that would allow re-requesting the run instead of killing the
-                #job --PMR
-            except xmlrpclib.Fault:
-                _logger.error("%s: a fault occurred while attempting to start "
-                        "the process group using the %s component",
-                        pgroup.label, pgroup.forker)
-                pgroup.exit_status = 255
-                self.reserve_resources_until(pgroup.location, None,
-                        pgroup.jobid)
-            except Exception:
-                _logger.error("%s: an unexpected exception occurred while "
-                        "attempting to start the process group using the %s "
-                        "component; releasing resources", pgroup.label,
-                        pgroup.forker, exc_info=True)
-                pgroup.exit_status = 255
-                self.reserve_resources_until(pgroup.location, None,
-                        pgroup.jobid)
-            else:
-                if started is not None and started != []:
-                    _logger.info('%s: Process Group %s started successfully.',
-                            pgroup.label, pgroup.id)
-                else:
-                    _logger.error('%s: Process Group startup failed. Aborting.',
-                            pgroup.label)
+        '''
+        start_apg_timer = time.time()
+        with self.process_manager.process_groups_lock:
+            for spec in specs:
+                spec['forker'] = None
+                alps_res = self.alps_reservations.get(str(spec['jobid']), None)
+                if alps_res is not None:
+                    spec['alps_res_id'] = alps_res.alps_res_id
+                new_pgroups = self.process_manager.init_groups(specs)
+            for pgroup in new_pgroups:
+                _logger.info('%s: process group %s created to track job status',
+                        pgroup.label, pgroup.id)
+                #check resource reservation, and attempt to start.  If there's a
+                #failure here, set exit status in process group to a sentinel value.
+                try:
+                    started = self.process_manager.start_groups([pgroup.id])
+                except ComponentLookupError:
+                    _logger.error("%s: failed to contact the %s component",
+                            pgroup.label, pgroup.forker)
+                    #this should be reraised and the queue-manager handle it
+                    #that would allow re-requesting the run instead of killing the
+                    #job --PMR
+                except xmlrpclib.Fault:
+                    _logger.error("%s: a fault occurred while attempting to start "
+                            "the process group using the %s component",
+                            pgroup.label, pgroup.forker)
                     pgroup.exit_status = 255
                     self.reserve_resources_until(pgroup.location, None,
                             pgroup.jobid)
-
-        end_apg_timer = int(time.time())
-        self.logger.debug("add_process_groups startup time: %s sec",
-                (end_apg_timer - start_apg_timer))
+                except Exception:
+                    _logger.error("%s: an unexpected exception occurred while "
+                            "attempting to start the process group using the %s "
+                            "component; releasing resources", pgroup.label,
+                            pgroup.forker, exc_info=True)
+                    pgroup.exit_status = 255
+                    self.reserve_resources_until(pgroup.location, None,
+                            pgroup.jobid)
+                else:
+                    if started is not None and started != []:
+                        _logger.info('%s: Process Group %s started successfully.',
+                                pgroup.label, pgroup.id)
+                    else:
+                        _logger.error('%s: Process Group startup failed. Aborting.',
+                                pgroup.label)
+                        pgroup.exit_status = 255
+                        self.reserve_resources_until(pgroup.location, None,
+                                pgroup.jobid)
+        end_apg_timer = time.time()
+        self.logger.debug("add_process_groups startup time: %s sec", (end_apg_timer - start_apg_timer))
         return new_pgroups
 
     @exposed
@@ -1350,11 +1350,12 @@ class CraySystem(BaseSystem):
         is called.
 
         '''
-        completed_pgs = self.process_manager.update_groups()
-        for pgroup in completed_pgs:
-            _logger.info('%s: process group reported as completed with status %s',
-                    pgroup.label, pgroup.exit_status)
-            self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
+        with self.process_manager.process_groups_lock:
+            completed_pgs = self.process_manager.update_groups()
+            for pgroup in completed_pgs:
+                _logger.info('%s: process group reported as completed with status %s',
+                        pgroup.label, pgroup.exit_status)
+                self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
         return
 
     @exposed
