@@ -117,15 +117,18 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
 
         '''
         selected_forker = None
-        ordered_forkers = [f[0] for f in sorted(self.forker_taskcounts.items(), key=lambda x:x[1])]
+        ordered_forkers = [f[0] for f in sorted(self.forker_taskcounts.items(), key=lambda x: x[1])]
         if len(ordered_forkers) < 0:
             raise RuntimeError("Job %s: No forkers registered!", jobid)
         else:
+            count = 0
             for forker in ordered_forkers:
                 if self.forker_reachable[forker]:
-                    selected_forker = ordered_forkers[0] #this is now a tuple
+                    selected_forker = ordered_forkers[count]
                     self.forker_taskcounts[selected_forker] += 1
                     _logger.info("Job %s using forker %s", jobid, selected_forker)
+                    break
+                count += 1
         if selected_forker is None:
             # We didn't find a forker, raise a RuntimeError for this
             raise RuntimeError("Job %s: No valid forkers found!" % jobid)
