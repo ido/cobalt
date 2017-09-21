@@ -134,7 +134,7 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
             raise RuntimeError("Job %s: No valid forkers found!" % jobid)
         return selected_forker
 
-    def signal_groups(self, pgids, signame="SIGINT"):
+    def signal_groups(self, pgids, signame="SIGTERM"):
         '''Send signal with signame to a list of process groups.
 
         Returns:

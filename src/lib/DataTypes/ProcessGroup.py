@@ -150,7 +150,7 @@ class ProcessGroup(Data):
                 _logger.error(err)
                 raise ProcessGroupStartupError(err)
 
-    def signal(self, signame="SIGINT"):
+    def signal(self, signame="SIGTERM"):
         '''Validate and send signal to ProcessGroup.  Consult your system and
         python documentation for valid signals to send.
 
