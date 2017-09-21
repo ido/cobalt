@@ -134,7 +134,6 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
             raise RuntimeError("Job %s: No valid forkers found!" % jobid)
         return selected_forker
 
-
     def signal_groups(self, pgids, signame="SIGINT"):
         '''Send signal with signame to a list of process groups.
 
@@ -364,10 +363,9 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
                 if service['name'] not in self.forker_taskcounts.keys():
                     self.forker_taskcounts[service['name']] = 0
                     _logger.info('Forker %s found', service['name'])
-        for service_name in updated_forker_list:
-            if service_name not in found_services:
-                self.forker_reachable[service_name] = service_name in [fs['name'] for fs in found_services]
         # Get currently running tasks from forkers.  Different loop?
         self.forkers = updated_forker_list
         self.forker_locations = new_forker_locations
+        for service_name in self.forker_taskcounts.keys():
+            self.forker_reachable[service_name] = service_name in [fs['name'] for fs in found_services]
         return
