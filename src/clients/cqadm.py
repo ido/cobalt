@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
 """
 Administrative interface for queue manager. Allowsone to hold, run, kill, and set 
 the queue for jobs in the queue manager. Can also add/del queues and set queue properties.
