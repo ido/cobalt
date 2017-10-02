@@ -1,4 +1,6 @@
 """Tests for the bgqsystem component of Cobalt.  Right now these focus on subblock handling.
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
 
 Mock is required for this set of tests to work
 

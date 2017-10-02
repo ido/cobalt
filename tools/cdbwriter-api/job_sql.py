@@ -1,4 +1,6 @@
 # select t.job_data_id, t.jobid, t.prog_id, p.event_type from (select max(d.id) as job_data_id, d.jobid, max (p.id) as prog_id from intrepid.job_data as d, intrepid.job_prog as p where d.id = p.job_data_id group by d.jobid) as t, intrepid.job_prog as p where t.prog_id = p.id" (Estimated Cost = 14270.824219) - last state for all jobs
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
 
 from db2util.helpers import whereIn
 from db2util.helpers import commaList

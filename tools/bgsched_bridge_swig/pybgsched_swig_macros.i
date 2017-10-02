@@ -1,4 +1,6 @@
 
+// Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+// Licensed under a modified BSD 3-clause license. See LICENSE for details.
 /*macro to make the boost.shared_ptr template construct
 wraping cleaner.*/
 %define PYBGSCHED_SHARED_PTR_VECTORS(class)

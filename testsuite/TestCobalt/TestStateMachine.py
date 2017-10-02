@@ -1,4 +1,6 @@
 from Cobalt.StateMachine import StateMachine
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
 from Cobalt.Exceptions import DataStateError, DataStateTransitionError, StateMachineError, StateMachineIllegalEventError, \
     StateMachineNonexistentEventError
 import traceback

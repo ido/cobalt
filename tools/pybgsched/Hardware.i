@@ -1,4 +1,6 @@
 /*General Hardware object definitions:
+// Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+// Licensed under a modified BSD 3-clause license. See LICENSE for details.
 
 These get inherited by other hardware-entities:
 Midplane

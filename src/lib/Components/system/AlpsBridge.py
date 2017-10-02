@@ -1,4 +1,6 @@
 """Bridge for communicating and fetching system state in ALPS."""
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
 
 #this requires forking off a apbasil process, sending XML to stdin and
 #parsing XML from stdout. Synchyronous, however, the system script

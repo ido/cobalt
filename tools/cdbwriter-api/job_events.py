@@ -1,4 +1,6 @@
 HOLD_RELEASE_LABEL = '_release'		# literal found at end of event name for release events
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
 ALL_HOLDS_CLEAR = 'all_holds_clear'
 
 # Literal Event CLASS Names

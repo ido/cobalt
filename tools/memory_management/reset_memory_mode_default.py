@@ -1,4 +1,6 @@
 #!/usr/bin/env python2.7
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
 '''Reset MCDRAM configuration and NUMA mode on KNL nodes. If we are on a Cray,
 this will use CAPMC controls, otherwise we're using Intel controls.
 

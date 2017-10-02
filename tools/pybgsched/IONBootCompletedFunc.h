@@ -1,4 +1,6 @@
 /*Class to wrap function pointer and track callback status from outside C++*/
+// Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+// Licensed under a modified BSD 3-clause license. See LICENSE for details.
 #include <boost/bind.hpp>
 
 namespace bgsched {

@@ -1,4 +1,6 @@
 """Generic resource model for Cobalt.  This should be used as the base for any
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
 allocatable reource.  Under certain circumstances this may also be used as a
 base for a resource grouping, like a machine parition.
 

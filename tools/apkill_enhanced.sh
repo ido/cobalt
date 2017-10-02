@@ -1,4 +1,6 @@
 #!/bin/bash
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
 # For those times when politely asking an applicaiton to terminate isn't
 # sufficient.  This first sends the passed signal through to apkill, then waits
 # 5 minutes for termination. Then sends another apkill -SIGKILL.  This is as big

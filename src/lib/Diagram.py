@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
 """Generate graphical representation of the current reservations in Blue Gene/L.
    gen_tree_view --
    mod_reserv_dict --

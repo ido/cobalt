@@ -1,4 +1,6 @@
 '''Utility funtions for Cobalt programs'''
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
 __revision__ = '$Revision: 2208 $'
 
 import copy_reg

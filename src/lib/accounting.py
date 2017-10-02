@@ -1,4 +1,6 @@
 from datetime import datetime
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
 from time import mktime
 from logging.handlers import BaseRotatingHandler
 import os

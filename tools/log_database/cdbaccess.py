@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
 
 """A set of helper methods to access data from the database.
 These are intentionally read-only.

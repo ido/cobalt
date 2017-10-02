@@ -1,4 +1,6 @@
 /*This is another place where there are a lot of nested structs
+// Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+// Licensed under a modified BSD 3-clause license. See LICENSE for details.
 Also, we have a function pointer return containning an exception
 so that is also getting special handling*/
 %module pybgsched
