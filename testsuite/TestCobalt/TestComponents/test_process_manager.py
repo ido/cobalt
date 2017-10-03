@@ -167,6 +167,8 @@ class TestProcessManager(object):
         assert self.process_manager.process_groups[1].startup_timeout == 0, (
                 "startup_timeout not reset")
         assert_match(self.process_manager.process_groups[1].forker, 'forker2', "Wrong forker selected")
+        assert_match(self.process_manager.forker_taskcounts['forker1'], 0, "Wrong count forker1")
+        assert_match(self.process_manager.forker_taskcounts['forker2'], 2, "Wrong count forker2")
 
     @patch.object(Cobalt.Proxy.DeferredProxyMethod, '__call__', return_value=1,
             side_effect=Cobalt.Exceptions.ComponentLookupError('failed lookup'))

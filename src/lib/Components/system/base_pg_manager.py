@@ -175,6 +175,7 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
                 except ComponentLookupError:
                     # Retry this with a different forker, if we run out of forkers, then this startup fails.
                     self.forker_reachable[process_group.forker] = False
+                    self.forker_taskcounts[process_group.forker] -= 1 #decrement since we failed to use this forker.
                     try:
                         process_group.forker = self._select_forker(process_group.jobid)
                     except RuntimeError as err:
