@@ -82,7 +82,7 @@ def check_required_options(secopt_list):
             missing.append((sec, opt))
     return missing
 
-def get_config_option(section, option, *args):
+def get_config_option(section, option, *args, **kwargs):
     '''Get an option from the cobalt config file.  Must be called after
        Cobalt.Util.init_cobalt_config.
 
@@ -110,13 +110,15 @@ def get_config_option(section, option, *args):
         if have_default:
             value = default
         else:
-            logger.error("%s: Option %s not found in section [%s]", inspect.currentframe().f_code.co_name, option, section)
+            if not kwargs.get('optional', False):
+                logger.error("%s: Option %s not found in section [%s]", inspect.currentframe().f_code.co_name, option, section)
             raise
     except NoSectionError:
         if have_default:
             value = default
         else:
-            logger.error("%s: Section [%s] not found", inspect.currentframe().f_code.co_name, section)
+            if not kwargs.get('optional', False):
+                logger.error("%s: Section [%s] not found", inspect.currentframe().f_code.co_name, section)
             raise
 
     return value

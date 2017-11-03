@@ -28,7 +28,8 @@ BASIL_PATH = get_config_option('alps', 'basil', '/opt/cray/alps/default/bin/apba
 DEFAULT_DEPTH = int(get_config_option('alps', 'default_depth', 72))
 
 class ALPSScriptChild (PGChild):
-    def __init__(self, id = None, **kwargs):
+
+    def __init__(self, id=None, **kwargs):
         PGChild.__init__(self, id=id, **kwargs)
         self.pagg_id = None
         self.alps_res_id = None
@@ -43,6 +44,9 @@ class ALPSScriptChild (PGChild):
             self.pg.nodect = data['nodect']
         else:
             self.pg.nodect = self.pg.size
+        self._set_cgroup_config('forker.alps')
+        if kwargs.get('forker_name', None) is not None:
+            self._set_cgroup_config('forker.%s' % kwargs.get('forker_name'))
 
     def __getstate__(self):
         state = {}
