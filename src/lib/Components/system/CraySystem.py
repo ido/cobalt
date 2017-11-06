@@ -122,9 +122,17 @@ class CraySystem(BaseSystem):
         if spec is None:
             self.process_manager = ProcessGroupManager(pgroup_type=ALPSProcessGroup)
         else:
-            self.process_manager = spec['process_manager']
-            self.process_manager.pgroup_type = ALPSProcessGroup
-            self.logger.debug('pg type %s', self.process_manager.process_groups.item_cls)
+            spec_version = spec.get('alps_system_statefile_version', 1)
+            if spec_version <= 1:
+                # Compat for old version of process manager information that was stored as a dict
+                # rather than an actual object.  Yes, this results in a double initialize. Ugly, but
+                # doesn't hurt anything, yet.
+                self.process_manager = ProcessGroupManager(pgroup_type=ALPSProcessGroup).__setstate__(spec['process_manager'])
+                self.logger.debug('pg type %s', self.process_manager.process_groups.item_cls)
+            else:
+                self.process_manager = spec['process_manager']
+                self.process_manager.pgroup_type = ALPSProcessGroup
+                self.logger.debug('pg type %s', self.process_manager.process_groups.item_cls)
         self.process_manager.update_launchers()
         self.pending_start_timeout = PENDING_STARTUP_TIMEOUT
         _logger.info('PROCESS MANAGER INTIALIZED')
@@ -164,7 +172,7 @@ class CraySystem(BaseSystem):
         information'''
         state = {}
         state.update(super(CraySystem, self).__getstate__())
-        state['alps_system_statefile_version'] = 1
+        state['alps_system_statefile_version'] = 2
         state['process_manager'] = self.process_manager
         state['alps_reservations'] = self.alps_reservations
         state['node_info'] = self.nodes
@@ -172,6 +180,7 @@ class CraySystem(BaseSystem):
 
     def __setstate__(self, state):
         start_time = time.time()
+        _logger.info('INITIALIZING FROM ALPS SYSTEM STATE FILE VERSION %s', state.get('alps_system_statefile_version', None))
         super(CraySystem, self).__setstate__(state)
         _logger.info('BASE SYSTEM INITIALIZED')
         self._common_init_restart(state)
