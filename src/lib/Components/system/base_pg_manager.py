@@ -6,6 +6,7 @@ import logging
 import time
 import Queue
 import re
+import xmlrpclib
 from threading import RLock
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup, ProcessGroupDict
@@ -40,8 +41,7 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
             self.process_groups = ProcessGroupDict()
             self.process_groups.item_cls = self.pgroup_type
         else:
-            self.process_groups = state.get('process_groups',
-                    ProcessGroupDict())
+            self.process_groups = state.get('process_groups', ProcessGroupDict())
             for pgroup in self.process_groups.values():
                 _logger.info('recovering pgroup %s, jobid %s', pgroup.id, pgroup.jobid)
             self.process_groups.id_gen.set(int(state['next_pg_id']))
@@ -49,6 +49,7 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
         self.forkers = [] #list of forker identifiers to use with ComponentProxy
         self.forker_taskcounts = {} # dict of forkers and counts of pgs attached
         self.forker_locations = {}   # dict of forkers a tuple (host, port)
+        self.forker_reachable = {}  # Is the forker currently reachable?
         self.remote_qsub_hosts = [] # list of hosts that qsub -I requires
                                     # ssh-ing to a forker host
         self.process_groups_lock = RLock()
@@ -67,12 +68,14 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
 
     def __getstate__(self):
         state = {}
+        state['pgroup_type'] = self.pgroup_type
         state['process_groups'] = self.process_groups
         state['next_pg_id'] = self.process_groups.id_gen.idnum + 1
         return state
 
     def __setstate__(self, state):
         self._init_config_vars()
+        self.pgroup_type = state.get('pgroup_type', ProcessGroup)
         self._common_init_restart(state)
         return self
 
@@ -91,17 +94,45 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
         # modify the forker in specs to force the job to round-robbin forkers
         with self.process_groups_lock:
             for spec in specs:
-                ordered_forkers = [f[0] for f in
-                        sorted(self.forker_taskcounts.items(), key=lambda x:x[1])]
-                if len(ordered_forkers) < 0:
-                    raise RuntimeError("No forkers registered!")
-                else:
-                    spec['forker'] = ordered_forkers[0] #this is now a tuple
-                    self.forker_taskcounts[spec['forker']] += 1
-                    _logger.info("Job %s using forker %s", spec['jobid'], spec['forker'])
+                try:
+                    spec['forker'] = self._select_forker(spec['jobid'])
+                except RuntimeError:
+                    _logger.error('Job %s: Unable to find valid forker to associate with pending process group.  Failing startup.',
+                            spec['jobid'])
+                    raise
             return self.process_groups.q_add(specs)
 
-    def signal_groups(self, pgids, signame="SIGINT"):
+    def _select_forker(self, jobid):
+        '''Select a forker from the list of registered forkers for job execution.
+        This favors the forker with the lowest current running jobcount.
+
+        Args:
+            jobid - jobid for ProcessGroup object that we are assigning a forker to.
+
+        Returns:
+            String name of forker to use.  If none found, None returned
+
+        Exceptions:
+            Raises a RuntimeError if there are no registered forkers, or none otherwise available.
+
+        '''
+        selected_forker = None
+        ordered_forkers = [f[0] for f in sorted(self.forker_taskcounts.items(), key=lambda x: x[1])]
+        if len(ordered_forkers) < 0:
+            raise RuntimeError("Job %s: No forkers registered!", jobid)
+        else:
+            for forker in ordered_forkers:
+                if self.forker_reachable[forker]:
+                    selected_forker = forker
+                    self.forker_taskcounts[selected_forker] += 1
+                    _logger.info("Job %s using forker %s", jobid, selected_forker)
+                    break
+        if selected_forker is None:
+            # We didn't find a forker, raise a RuntimeError for this
+            raise RuntimeError("Job %s: No valid forkers found!" % jobid)
+        return selected_forker
+
+    def signal_groups(self, pgids, signame="SIGTERM"):
         '''Send signal with signame to a list of process groups.
 
         Returns:
@@ -136,14 +167,25 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
         with self.process_groups_lock:
             started = []
             for pg_id in pgids:
+                process_group = self.process_groups[pg_id]
                 try:
-                    self.process_groups[pg_id].start()
-                except ProcessGroupStartupError:
-                    _logger.error("%s: Unable to start process group.",
-                            self.process_groups[pg_id].label)
+                    process_group.start()
+                except ComponentLookupError:
+                    # Retry this with a different forker, if we run out of forkers, then this startup fails.
+                    self.forker_reachable[process_group.forker] = False
+                    self.forker_taskcounts[process_group.forker] -= 1 #decrement since we failed to use this forker.
+                    try:
+                        process_group.forker = self._select_forker(process_group.jobid)
+                    except RuntimeError as err:
+                        #No forkers left!
+                        _logger.critical('%s: Unable to assign forker to starting job.  Failing startup: %s',
+                                process_group.label, err.message)
+                        raise ProcessGroupStartupError('No functional forkers.')
+                except (ProcessGroupStartupError, xmlrpclib.Fault, xmlrpclib.ProtocolError):
+                    _logger.error("%s: Unable to start process group.", process_group.label)
                 else:
                     started.append(pg_id)
-                    self.process_groups[pg_id].startup_timeout = 0
+                    process_group.startup_timeout = 0
         return started
 
     #make automatic get final status of process group
@@ -281,34 +323,49 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
         alps_forkers.  Drop entries that slp doesn't know about and add in ones
         that it does.
 
-        Will want to run this in the normal update loop
+        Args: None
 
-        If we have no launchers, we should prevent jobs from starting.
+        Returns: None
 
-        resets the internal forker list to an updated list based on SLP registry
+        Side Effects:
+            Updates current active forkers.  If a new forker is found this is
+            added to the list we can select from.  If a loss-of-contact is
+            detected, by a forker being unregistered with SLP, then the forker
+            data will be retained for possible reconnection, while it will at
+            the same time be marked as unavailable for selection.
 
-        return is void
+        Notes: This runs as a part of the state update driver loop and is
+        invoked by a system component class.
+
 
         '''
         updated_forker_list = []
         new_forker_locations = {}
+        found_services = []
+        asf_re = re.compile('alps_script_forker')
+        host_re = re.compile(r'https://(?P<host>.*):[0-9]*')
         try:
-            services = ComponentProxy('service-location').get_services([{'name': '*',
-                                                              'location': '*'}])
+            services = ComponentProxy('service-location').get_services([{'name': '*', 'location': '*'}])
         except Exception:
+            # SLP is down! We can't contact anybody at all
+            for forker in self.forker_reachable.keys():
+                self.forker_reachable[forker] = False
             _logger.critical('Unable to reach service-location', exc_info=True)
             return
         for service in services:
-            asf_re = re.compile('alps_script_forker')
-            host_re = re.compile(r'https://(?P<host>.*):[0-9]*')
             if re.match(asf_re, service['name']):
+                found_services.append(service)
                 loc = re.match(host_re, service['location']).group('host')
                 if loc:
                     new_forker_locations[service['name']] = loc
                 updated_forker_list.append(service['name'])
                 if service['name'] not in self.forker_taskcounts.keys():
                     self.forker_taskcounts[service['name']] = 0
+                    _logger.info('Forker %s found', service['name'])
         # Get currently running tasks from forkers.  Different loop?
-        self.forkers = updated_forker_list
-        self.forker_locations = new_forker_locations
+        with self.process_groups_lock:
+            self.forkers = updated_forker_list
+            self.forker_locations = new_forker_locations
+            for service_name in self.forker_taskcounts.keys():
+                self.forker_reachable[service_name] = service_name in [fs['name'] for fs in found_services]
         return
