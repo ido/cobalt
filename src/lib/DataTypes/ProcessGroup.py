@@ -1,21 +1,23 @@
-"""Contains the ProcessGroup and ProcessGroupDict Data Types"""
 # Copyright 2017 UChicago Argonne, LLC. All rights reserved.
 # Licensed under a modified BSD 3-clause license. See LICENSE for details.
 
+"""Contains the ProcessGroup and ProcessGroupDict Data Types"""
 __revision__ = "$Revision$"
 
 
 import logging
 import signal
+import xmlrpclib
 from Cobalt.Data import Data, DataDict, IncrID
 from Cobalt.Exceptions import DataCreationError, ProcessGroupStartupError
 from Cobalt.Exceptions import ComponentLookupError
 from Cobalt.Proxy import ComponentProxy
 
+__revision__ = "$Revision$"
 _logger = logging.getLogger()
 
 #Get a list of valid signal strings
-SIGNALS = [ s for s in signal.__dict__.keys()
+SIGNALS = [s for s in signal.__dict__.keys()
         if (s.startswith("SIG") and not s.startswith("SIG_"))]
 
 class ProcessGroup(Data):
@@ -37,7 +39,7 @@ class ProcessGroup(Data):
     location -- location in system where job will run
     mode -- "script" or other
     nodefile -- used to make a file listing locations that job can run
-    size -- 
+    size -- allocated resource size (usually nodecount)
     state -- "running" or "terminated"
     stderr -- file to use for stderr of script
     stdin -- file to use for stdin of script
@@ -138,13 +140,23 @@ class ProcessGroup(Data):
                 data = self.prefork()
                 self.head_pid = ComponentProxy(self.forker, retry=False).fork([self.executable] + self.args, self.tag,
                     "Job %s/%s/%s" %(self.jobid, self.user, self.id), self.env, data, self.runid)
+            except ComponentLookupError:
+                _logger.error('Unable to reach %s component.', self.forker)
+                raise
+            except xmlrpclib.Fault as fault:
+                _logger.error('XMLRPC fault from %s: code: %s string %s', self.forker, fault.faultCode, fault.faultString)
+                raise
+            except xmlrpclib.ProtocolError as err:
+                _logger.error('Protocol Error while contacting %s.  code: %s msg: %s headers: %s', self.forker, err.errcode,
+                        err.errmsg, err.headers)
+                raise
             except:
                 err = "Job %s/%s/%s: problem forking; %s did not return a child id" % (self.jobid,
                         self.user, self.id, self.forker)
                 _logger.error(err)
                 raise ProcessGroupStartupError(err)
 
-    def signal(self, signame="SIGINT"):
+    def signal(self, signame="SIGTERM"):
         '''Validate and send signal to ProcessGroup.  Consult your system and
         python documentation for valid signals to send.
 
