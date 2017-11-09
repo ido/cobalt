@@ -214,7 +214,7 @@ class CraySystem(BaseSystem):
                 # reserved_nodes = ALPSBridge.reserved_nodes()
                 ssd_enabled = ALPSBridge.fetch_ssd_enable()
                 _logger.info('CAPMC SSD ENABLED DATA FETCHED')
-                ssd_info = ALPSBridge.fetch_ssd_static_data()
+                ssd_info = ALPSBridge.fetch_ssd_static_data(raw=True) #2017-09-15: API doc is wrong.  Need RAW and work on cname here.
                 _logger.info('CAPMC SSD DETAIL DATA FETCHED')
                 ssd_diags = ALPSBridge.fetch_ssd_diags()
                 _logger.info('CAPMC SSD DIAG DATA FETCHED')
@@ -277,11 +277,23 @@ class CraySystem(BaseSystem):
                 except KeyError:
                     _logger.warning('ssd info present for nid %s, but not reported in ALPS.', ssd_data['nid'])
         if ssd_info is not None:
-            for ssd_data in ssd_info['nids']:
-                try:
-                    nodes[str(ssd_data['nid'])].attributes['ssd_info'] = ssd_data
-                except KeyError:
-                    _logger.warning('ssd info present for nid %s, but not reported in ALPS.', ssd_data['nid'])
+            # Cray broke this query.  Need to remap based on cray-cname.  Yes, not having the nid is a violation of their own API.
+            for ssd_data_key, ssd_data_val in ssd_info.items():
+                if ssd_data_key not in ['e', 'err_msg']:
+                    found = False
+                    for node in nodes.values():
+                        if node.name == ssd_data_key:
+                            node.attributes['ssd_info'] = ssd_data_val[0]
+                            found = True
+                            break
+                    if not found:
+                        _logger.warning('ssd data for %s found, but no node found.', ssd_data_key)
+            #This is the corrected query where we can reconstruct the nid index.
+            # for ssd_data in ssd_info['nids']:
+                # try:
+                    # nodes[str(ssd_data['nid'])].attributes['ssd_info'] = ssd_data
+                # except KeyError:
+                    # _logger.warning('ssd info present for nid %s, but not reported in ALPS.', ssd_data['nid'])
         if ssd_diags is not None:
             for diag_info in ssd_diags['ssd_diags']:
                 try:
