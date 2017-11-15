@@ -885,12 +885,12 @@ class no_pk_dao(db2util.dao):
 
 
 
-    def updat (self, record):
+    def update(self, record):
         """Updates of a primary-keyless record aren't supported."""
         raise AssertionError("update operations are not supported on "\
                                  "tables without primary keys.")
 
-    def delet (self, record):
+    def delete(self, record):
         """Delete not supported on primary-keyless tables via db2util."""
         raise AssertionError("delete operations are not supported on "\
                                  "tables without primary keys.")
