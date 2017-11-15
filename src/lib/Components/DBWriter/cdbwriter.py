@@ -54,7 +54,7 @@ class MessageQueue(Component):
     config = _config._sections['cdbwriter']
     mfields = [field for field in _configfields if not config.has_key(field)]
     if mfields:
-        logger.error("Missing option(s) in cobalt config file [cdbwriter] section: %s" % (" ".join(mfields)))
+        logger.error("Missing option(s) in cobalt config file [cdbwriter] section: %s", " ".join(mfields))
         sys.exit(1)
 
 
@@ -126,7 +126,7 @@ class MessageQueue(Component):
             self.database_writer = DatabaseWriter(database, user, pwd, schema)
         except:
             #make this a log statement
-            logging.error("Unable to connect to %s as %s" % (database, user))
+            logging.error("Unable to connect to %s as %s", database, user)
             self.connected = False
             logging.debug(traceback.format_exc())
         else:
@@ -160,11 +160,11 @@ class MessageQueue(Component):
                 self.database_writer.addMessage(msg)
             except db2util.adapterError:
                 logger.error("Error updating databse.  Unable to add message due to adapter error. Message dropped.")
-                logging.debug(traceback.format_exc())
+                logger.debug(traceback.format_exc())
                 self.msg_queue.pop(0)
             except:
                 logger.error("Error updating databse.  Unable to add message. %s", msg)
-                logging.debug(traceback.format_exc())
+                logger.debug(traceback.format_exc())
                 self.connected = False
                 #if we were clearing an overflow, here we go again.
                 if ((self.max_queued != None) and
@@ -207,7 +207,7 @@ class MessageQueue(Component):
             msgDict = self.decoder.decode(msg)
 
         except ValueError:
-            logger.error("Bad message recieved.  Failed to decode string %s" % msg)
+            logger.error("Bad message recieved.  Failed to decode string %s", msg)
             return
         except:
             logging.debug(traceback.format_exc())
@@ -249,8 +249,7 @@ class MessageQueue(Component):
                 self.overflow_file.write(json.dumps(msg, cls=LogMessageEncoder)+'\n')
                 elements_written += 1
             except IOError:
-                logger.error('Could only partially empty queue, %d messages written' %
-                             elements_written)
+                logger.error('Could only partially empty queue, %d messages written', elements_written)
                 self.msg_queue.insert(0, msg)
 
         if elements_written > 0:
@@ -275,7 +274,7 @@ class DatabaseWriter(object):
         try:
             self.db.connect(dbName, username, password)
         except:
-            logger.error("Failed to open a connection to database %s as user %s" %(dbName, username))
+            logger.error("Failed to open a connection to database %s as user %s", dbName, username)
             raise
 
         self.schema = schema
@@ -292,7 +291,7 @@ class DatabaseWriter(object):
         self.daos = {}
         try:
             for table_name in table_names:
-                logger.info("Accessing table: %s" % table_name)
+                logger.info("Accessing table: %s", table_name)
 
                 if table_name in ['RESERVATION_EVENTS', 'JOB_EVENTS',
                                 'JOB_COBALT_STATES']:
@@ -317,7 +316,7 @@ class DatabaseWriter(object):
                     self.daos[table_name] = db2util.dao(self.db, schema,
                                                         table_name)
         except:
-            logger.error("Error accessing table %s!" % table_name)
+            logger.error("Error accessing table %s!", table_name)
             self.db.close()
             raise
 
@@ -326,7 +325,7 @@ class DatabaseWriter(object):
         self.db.prepExec("set current schema %s" % schema)
 
     def addMessage(self, logMsg):
-        logger.debug("Inserting Data message of type: %s.%s " % (logMsg.item_type, logMsg.state))
+        logger.debug("Inserting Data message of type: %s.%s ", logMsg.item_type, logMsg.state)
         #print logMsg
 
         if logMsg.item_type == 'reservation':
@@ -394,8 +393,8 @@ class DatabaseWriter(object):
         reservation_event_record = self.daos['RESERVATION_EVENTS'].table.getRecord({'NAME': logMsg.state})
         match = self.daos['RESERVATION_EVENTS'].search(reservation_event_record)
         if not match:
-            logger.warning("Received message with a nonexistent event for resid %s.  Event was: %s" %
-                           (logMsg.item.res_id, logMsg.state))
+            logger.warning("Received message with a nonexistent event for resid %s.  Event was: %s",
+                    logMsg.item.res_id, logMsg.state)
         else:
             reservation_event_record.v.ID = match[0]['ID']
 
@@ -419,8 +418,8 @@ class DatabaseWriter(object):
         reservation_event_record = self.daos['RESERVATION_EVENTS'].table.getRecord({'NAME': logMsg.state})
         match = self.daos['RESERVATION_EVENTS'].search(reservation_event_record)
         if not match:
-            logger.warning("Received message with a nonexistent event for resid %s.  Event was: %s" %
-                           (logMsg.item.res_id, logMsg.state))
+            logger.warning("Received message with a nonexistent event for resid %s.  Event was: %s",
+                    logMsg.item.res_id, logMsg.state)
         else:
             reservation_event_record.v.ID = match[0]['ID']
 
@@ -573,8 +572,8 @@ class DatabaseWriter(object):
         job_event_record = self.daos['JOB_EVENTS'].table.getRecord({'NAME': logMsg.state})
         match = self.daos['JOB_EVENTS'].search(job_event_record)
         if not match:
-            logger.warning("Received message with a nonexistent event for jobid %s.  Event was: %s" %
-                          (job_data_id, logMsg.state))
+            logger.warning("Received message with a nonexistent event for jobid %s.  Event was: %s",
+                          job_data_id, logMsg.state)
         else:
             job_event_record.v.ID = match[0]['ID']
 
@@ -584,8 +583,8 @@ class DatabaseWriter(object):
         job_cobalt_states_record = self.daos['JOB_COBALT_STATES'].table.getRecord({'NAME': job_prog_msg.cobalt_state})
         match = self.daos['JOB_COBALT_STATES'].search(job_cobalt_states_record)
         if not match:
-            logger.warning("Received message with a nonexistent cobalt state for jobid %s.  Event was: %s" %
-                          (job_data_id, job_prog_msg.cobalt_state))
+            logger.warning("Received message with a nonexistent cobalt state for jobid %s.  Event was: %s",
+                          job_data_id, job_prog_msg.cobalt_state)
         else:
             job_cobalt_states_record.v.ID = match[0]['ID']
 
