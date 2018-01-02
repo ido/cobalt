@@ -19,6 +19,7 @@ import time
 import json
 
 import Cobalt.Util
+from Cobalt.Util import compact_num_list, expand_num_list
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Util import parse_geometry_string
 from Cobalt.arg_parser import ArgParse
@@ -201,10 +202,33 @@ def run_jobs(jobs,location,user):
     """
     run jobs
     """
-    part_list = component_call(SYSMGR, True, 'get_partitions', ([{'name': location}],))
-    if len(part_list) != 1:
-        logger.error("cannot find partition named '%s'" % location)
-        sys.exit(1)
+    # fetch system type.  Cluster and Cray systems need different handling:
+    impl = component_call(SYSMGR, True, 'get_implementation', ())
+    if impl in ['bgsystem', 'bgqsystem']:
+        part_list = component_call(SYSMGR, True, 'get_partitions', ([{'name': location}],))
+        if len(part_list) != 1:
+            logger.error("cannot find partition named '%s'" % location)
+            sys.exit(1)
+    elif impl in ['alps_system']:
+        # stitch together location.  Only takes one argument, but may have ':''s in it.
+        split_loc = location.split(':')
+        merged_locs = set(expand_num_list(split_loc[0]))
+        for loc in split_loc[1:]:
+            merged_locs.update(set(expand_num_list(loc)))
+        nodes = compact_num_list(merged_locs) # convert merged set to string for consistiency
+        node_list = component_call(SYSMGR, True, 'get_nodes', (True, list(merged_locs), ['node_id'], False))
+        if len(merged_locs) != len(node_list):
+            for loc in merged_locs:
+                if str(loc) not in node_list.keys():
+                    logger.error('cannot find node id: %s', loc)
+            logger.error('Mismatch between requested nodes and system nodes. Aborting.')
+            sys.exit(1)
+        else:
+            location = nodes
+    elif impl in ['cluster_system']:
+        pass
+    else:
+        logger.error("Force-run not supported on systems running the %s component", impl)
     return component_call(QUEMGR, True, 'run_jobs', (jobs, location.split(':'), user))
 
 def add_queues(jobs,parser,user,info):
