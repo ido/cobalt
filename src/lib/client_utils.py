@@ -225,10 +225,12 @@ def run_jobs(jobs,location,user):
             sys.exit(1)
         else:
             location = nodes
-    elif impl in ['cluster_system']:
-        pass
+    #elif impl in ['cluster_system']:
+        # we don't have get partitions, can only get full node status at this point.  Make
+        # sure requested nodes exist and then pass through location otherwise.
     else:
         logger.error("Force-run not supported on systems running the %s component", impl)
+        sys.exit(1)
     return component_call(QUEMGR, True, 'run_jobs', (jobs, location.split(':'), user))
 
 def add_queues(jobs,parser,user,info):
