@@ -837,6 +837,11 @@ class CraySystem(BaseSystem):
                     # reservation to do so.  Don't risk blocking anything.
                     node_id_list = []
             else:
+                # Check to see if the job is requesting resources that are not
+                # available in the queue specified and raise an exception.  This
+                # results in a warning.
+                if not requested_locations.issubset(set(self.nodes_by_queue[job['queue']])):
+                    raise ValueError("requested locations not in queue")
                 #normal queues.  Restrict to the non-reserved nodes.
                 if job_set <= set([str(node_id) for node_id in
                                     self.nodes_by_queue[job['queue']]]):
@@ -846,8 +851,8 @@ class CraySystem(BaseSystem):
                         # active reservation.  Remove locaitons and drop available
                         # nodecount appropriately.
                         node_id_list = list(set(node_id_list) - forbidden - ssd_unavail)
-                    if not requested_loc_in_forbidden:
-                        raise ValueError("forbidden locations not in queue")
+                    # if not requested_loc_in_forbidden:
+                        # raise ValueError("forbidden locations not in queue")
         with self._node_lock:
             if idle_only:
                 unavailable_nodes = [node_id for node_id in node_id_list
