@@ -46,7 +46,7 @@ test_argslist = [
     { "tc_name" : "setjobid_option_5", "args" : """-j 1 --setjobid 2""", },
     { "tc_name" : "run_option_1", "args" : """--run""", 'new_only' : True, },
     { "tc_name" : "run_option_2", "args" : """--run mayaguez""", "new_only" : True, },
-    { "tc_name" : "run_option_3", "args" : """--run mayaguez 1 2 3""", 'skip_list' : ['not_bsim'], },
+    { "tc_name" : "run_option_3", "args" : """--run mayaguez 1 2 3""", 'skip_list' : ['not_bsim'], "new_only": True },
     { "tc_name" : "hold_option_1", "args" : """--hold""", 'new_only' : True, },
     { "tc_name" : "hold_option_2", "args" : """--hold 1 2 3""", },
     { "tc_name" : "hold_option_3", "args" : """-d --hold  1 2 3""", },
