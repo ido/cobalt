@@ -113,7 +113,7 @@ def check_finished(run_jobs):
 def cobalt_query(state):
     cqm = ComponentProxy('queue-manager', defer=True)
     scheduler = ComponentProxy('scheduler', defer=True)
-    if state not in ('running', 'queued', 'reservation'):
+    if state not in ('running', 'starting', 'queued', 'reservation'):
         return None
     # Templates for queries to coblat
 
@@ -122,7 +122,7 @@ def cobalt_query(state):
     if state == 'reservation':
         return scheduler.get_reservations([query_res])
     if state == 'running' or state == 'starting':
-        query_job['state'] = 'running'
+        query_job['state'] = state
         query_job['location'] = '*'
     if state == 'queued':
         query_job['state'] = 'queued'
@@ -139,6 +139,7 @@ def get_job_data():
             'nodeinfo': defaultdict(dict),
             'indexes': indexes,
             'running': cobalt_query('running'),
+            'starting': cobalt_query('starting'),
             'queued': cobalt_query('queued'),
             'reservation': cobalt_query('reservation'),
             'systemType': system_type,
@@ -146,7 +147,7 @@ def get_job_data():
     # Remove stale jobs from color map
     check_finished([job['jobid'] for job in jobs['running']])
     for state in jobs:
-        if state not in ('running', 'queued', 'reservation'):
+        if state not in ('running', 'starting', 'queued', 'reservation'):
             continue
         for job in jobs[state]:
             if 'walltime' in job: #walltime is in minutes
@@ -163,7 +164,7 @@ def get_job_data():
                     # On BGQ jobs only have one location
                     job['location'] = job['location'][0]
                     job['locationf'] = job['location']
-            if state == 'running':
+            if state in ['running', 'starting']:
                 if not color_map.get(job['jobid']):
                     color_map[job['jobid']] = color_queue.pop()
                 job['color'] = color_map[job['jobid']]
