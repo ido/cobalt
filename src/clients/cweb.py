@@ -145,7 +145,9 @@ def get_job_data():
             'systemType': system_type,
             }
     # Remove stale jobs from color map
-    check_finished([job['jobid'] for job in jobs['running']])
+    # Extended to get starting jobs and keep their colors stable.
+    all_running_jobs = jobs['running'] + jobs['starting']
+    check_finished([job['jobid'] for job in all_running_jobs])
     for state in jobs:
         if state not in ('running', 'starting', 'queued', 'reservation'):
             continue
