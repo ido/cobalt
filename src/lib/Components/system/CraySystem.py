@@ -691,34 +691,38 @@ class CraySystem(BaseSystem):
         return
 
     @exposed
-    def find_queue_equivalence_classes(self, reservation_dict,
-            active_queue_names, passthrough_blocking_res_list=[]):
-        '''Aggregate queues together that can impact eachother in the same
-        general pass (both drain and backfill pass) in find_job_location.
-        Equivalence classes will then be used in find_job_location to consider
-        placement of jobs and resources, in separate passes.  If multiple
-        equivalence classes are returned, then they must contain orthogonal sets
-        of resources.
+    def find_queue_equivalence_classes(self, reservation_dict, active_queue_names, passthrough_blocking_res_list=[]):
+        '''Given a list of reservations and a list of active queues from the queue-manager
+        via the scheduler, returns a list of dictionaries containing the current active
+        reservations on the machine as well as a list of active queues that have nodes
+        associated with them.   From this the scheduler can determine which jobs have
+        any chance at all of being eligible to run.
 
         Inputs:
-        reservation_dict -- a mapping of active reservations to resrouces.
-                            These will block any job in a normal queue.
-        active_queue_names -- A list of queues that are currently enabled.
-                              Queues that are not in the 'running' state
-                              are ignored.
-        passthrough_partitions -- Not used on Cray systems currently.  This is
-                                  for handling hardware that supports
-                                  partitioned interconnect networks.
+            reservation_dict -- a mapping of active reservations to resrouces.
+                                These will block any job in a normal queue.
+            active_queue_names -- A list of queues that are currently enabled.
+                                  Queues that are not in the 'running' state
+                                  are ignored.
+            passthrough_partitions -- Not used on Cray systems currently.  This is
+                                      for handling hardware that supports
+                                      partitioned interconnect networks.
 
         Output:
-        A list of dictionaries of queues that may impact eachother while
-        scheduling resources.
+            A list containing a dictionary with reservations and active queues with associated nodes.
 
         Side effects:
-        None
+            None
 
         Internal Data:
-        queue_assignments: a mapping of queues to schedulable locations.
+            This does make use of a list of current queues associated with nodes.
+            This is done for speed, to prevent a lot of needless iteration.
+            The nodes_by_queue association is updated any time that there is a change
+            in the mapping of queues to nodes, when nodeadm --queue is invoked.
+
+        Notes:
+            This always returns a single "equivalence class" no matter what the
+            current queue-node binding on the machine is.
 
         '''
         return [{'reservations': reservation_dict.keys(),
@@ -946,7 +950,7 @@ class CraySystem(BaseSystem):
         resource_until_time = now + TEMP_RESERVATION_TIME
         with self._node_lock:
             # only valid for this scheduler iteration.
-            self._clear_draining_for_queues(arg_list[0]['queue'])
+            self._clear_draining_for_queues()
             #check if we can run immedaitely, if not drain.  Keep going until all
             #nodes are marked for draining or have a pending run.
             best_match = {} #jobid: list(locations)
@@ -1017,15 +1021,20 @@ class CraySystem(BaseSystem):
             return None
         return new_alps_res.node_ids
 
-    def _clear_draining_for_queues(self, queue):
-        '''Given a list of queues, remove the draining flags on nodes.
+    def _clear_draining_for_queues(self):
+        '''Clear the drain/backfill times on nodes.
 
-        queues - a queue in an equivalence class to consider.  This will clear
-        the entire equiv class
+        Inputs:
+            None
 
-        return - none
+        Return:
+            None
 
-        Note: does not acquire block lock.  Must be locked externally.
+        Side Effects:
+            All Cobalt-managed nodes will have their draining information cleared.
+
+        Notes:
+            Acquires the node lock.  This lock is reentrant.
 
         '''
         # now we can just clear all the nodes at once.  Always have a single equivalence class

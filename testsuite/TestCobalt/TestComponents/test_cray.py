@@ -454,7 +454,7 @@ class TestCraySystem(object):
         for node in self.system.nodes.values():
             node.set_drain(101.0, 300)
         self.system.find_queue_equivalence_classes({}, ['default'], [])
-        self.system._clear_draining_for_queues('default')
+        self.system._clear_draining_for_queues()
         for node in self.system.nodes.values():
             assert not node.draining, "node %s marked as draining!" % node.node_id
 
@@ -466,7 +466,7 @@ class TestCraySystem(object):
         for node in self.system.nodes.values():
             node.set_drain(100.0, 300)
         self.system.find_queue_equivalence_classes({}, ['default', 'foo'], [])
-        self.system._clear_draining_for_queues('default')
+        self.system._clear_draining_for_queues()
         for node in self.system.nodes.values():
             assert not node.draining, "node %s marked as draining!" % node.node_id
 
@@ -479,7 +479,7 @@ class TestCraySystem(object):
         for node in self.system.nodes.values():
             node.set_drain(100.0, 300)
         self.system.find_queue_equivalence_classes({}, ['default', 'foo'], [])
-        self.system._clear_draining_for_queues('default')
+        self.system._clear_draining_for_queues()
         for node in self.system.nodes.values():
             assert not node.draining, "node %s marked as draining!" % node.node_id
 
@@ -492,7 +492,7 @@ class TestCraySystem(object):
         for node in self.system.nodes.values():
             node.set_drain(100.0, 300)
         self.system.find_queue_equivalence_classes({}, ['default', 'foo'], [])
-        self.system._clear_draining_for_queues('R.reservation')
+        self.system._clear_draining_for_queues()
         for node in self.system.nodes.values():
             assert not node.draining, "node %s marked as draining!" % node.node_id
 
