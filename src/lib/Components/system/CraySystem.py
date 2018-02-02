@@ -160,7 +160,6 @@ class CraySystem(BaseSystem):
         self._gen_node_to_queue()
         self.node_update_thread = thread.start_new_thread(self._run_update_state, tuple())
         _logger.info('UPDATE THREAD STARTED')
-        self.current_equivalence_classes = []
         self.killing_jobs = {}
         #hold on to the initial spec in case nodes appear out of nowhere.
         self.init_spec = None
@@ -722,63 +721,9 @@ class CraySystem(BaseSystem):
         queue_assignments: a mapping of queues to schedulable locations.
 
         '''
-        equiv = []
-        node_active_queues = set([])
-        self.current_equivalence_classes = [] #reverse mapping of queues to nodes
-        for node in self.nodes.values():
-            if node.managed and node.schedulable:
-                #only condiser nodes that we are scheduling.
-                node_active_queues = set([])
-                for queue in node.queues:
-                    if queue in active_queue_names:
-                        node_active_queues.add(queue)
-                if node_active_queues == set([]):
-                    #this node has nothing active.  The next check can get
-                    #expensive, so skip it.
-                    continue
-            #determine the queues that overlap.  Hardware has to be included so
-            #that reservations can be mapped into the equiv classes.
-            found_a_match = False
-            for e in equiv:
-                for queue in node_active_queues:
-                    if queue in e['queues']:
-                        e['data'].add(node.node_id)
-                        e['queues'] = e['queues'] | set(node_active_queues)
-                        found_a_match = True
-                        break
-                if found_a_match:
-                    break
-            if not found_a_match:
-                equiv.append({'queues': set(node_active_queues),
-                              'data': set([node.node_id]),
-                              'reservations': set()})
-        #second pass to merge queue lists based on hardware
-        real_equiv = []
-        for eq_class in equiv:
-            found_a_match = False
-            for e in real_equiv:
-                if e['queues'].intersection(eq_class['queues']):
-                    e['queues'].update(eq_class['queues'])
-                    e['data'].update(eq_class['data'])
-                    found_a_match = True
-                    break
-            if not found_a_match:
-                real_equiv.append(eq_class)
-        equiv = real_equiv
-        #add in reservations:
-        for eq_class in equiv:
-            for res_name in reservation_dict:
-                for node_hunk in reservation_dict[res_name].split(":"):
-                    for node_id in expand_num_list(node_hunk):
-                        if str(node_id) in eq_class['data']:
-                            eq_class['reservations'].add(res_name)
-                            break
-            #don't send what could be a large block list back in the returun
-            for key in eq_class:
-                eq_class[key] = list(eq_class[key])
-            del eq_class['data']
-            self.current_equivalence_classes.append(eq_class)
-        return equiv
+        return [{'reservations': reservation_dict.keys(),
+                 'queues': [queue_name for queue_name in self.nodes_by_queue.keys()
+                            if queue_name in active_queue_names]}]
 
     def _setup_special_locations(self, job):
         forbidden = set([str(loc) for loc in chain_loc_list(job.get('forbidden', []))])
@@ -1083,17 +1028,10 @@ class CraySystem(BaseSystem):
         Note: does not acquire block lock.  Must be locked externally.
 
         '''
-        now = int(time.time())
-        current_queues = []
-        for equiv_class in self.current_equivalence_classes:
-            if queue in equiv_class['queues']:
-                current_queues = equiv_class['queues']
-        if current_queues:
-            with self._node_lock:
-                for node in self.nodes.values():
-                    for q in node.queues:
-                        if q in current_queues:
-                            node.clear_drain()
+        # now we can just clear all the nodes at once.  Always have a single equivalence class
+        with self._node_lock:
+            for node in self.nodes.values():
+                node.clear_drain()
 
     def _select_nodes_for_draining(self, job, end_times):
         '''Select nodes to be drainined.  Set backfill windows on draining
