@@ -351,7 +351,7 @@ class BaseChild (object):
                 _logger.error("%s: unexpected error executing cgclassify with parameters: %s", self.label, cgroup_args,
                         exc_info=True)
                 if self.cgroup_failure_fatal:
-                    _logger.error("%s: cgroup failure fatal flag set: terminating task")
+                    _logger.error("%s: cgroup failure fatal flag set: terminating task", self.label)
                     raise
             else:
                 stdout, stderr = cgclassify.communicate(None)
@@ -360,7 +360,7 @@ class BaseChild (object):
                     _logger.error("%s: cgclassify stdout: %s", self.label, stdout)
                     _logger.error("%s: cgclassify stderr: %s", self.label, stderr)
                     if self.cgroup_failure_fatal:
-                        _logger.error("%s: cgroup failure fatal flag set: terminating task")
+                        _logger.error("%s: cgroup failure fatal flag set: terminating task", self.label)
                         raise RuntimeError('%s: Unable to set cgroup with cgclassify' % self.label)
                 else:
                     _logger.info('%s: cgclassify successful', self.label)
