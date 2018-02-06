@@ -167,15 +167,14 @@ class BaseChild (object):
         '''
         #set defaults in forker section.  forker.NAME sections override this behavior
 
-        new_use_cgroups = get_config_option(section, 'use_cgroups', None).lower() in Cobalt.Util.config_true_values
-        new_cgroup_failure_fatal = (get_config_option(section, 'cgroup_failure_fatal', None).lower() in
-                Cobalt.Util.config_true_values)
+        new_use_cgroups = get_config_option(section, 'use_cgroups', None)
+        new_cgroup_failure_fatal = get_config_option(section, 'cgroup_failure_fatal', None)
         new_cgclassify_path = get_config_option(section, 'cgclassify_path', None)
         new_cgclassify_args = get_config_option(section, 'cgclassify_args', None)
         if new_use_cgroups is not None:
-            self.use_cgroups = new_use_cgroups
+            self.use_cgroups = new_use_cgroups.lower() in Cobalt.Util.config_true_values
         if new_cgroup_failure_fatal is not None:
-            self.cgroup_failure_fatal = new_cgroup_failure_fatal
+            self.cgroup_failure_fatal = new_cgroup_failure_fatal.lower() in Cobalt.Util.config_true_values
         if new_cgclassify_path is not None:
             self.cgclassify_path = new_cgclassify_path
         if new_cgclassify_args is not None:
