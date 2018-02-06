@@ -166,25 +166,20 @@ class BaseChild (object):
 
         '''
         #set defaults in forker section.  forker.NAME sections override this behavior
-        try:
-            self.use_cgroups = get_config_option(section, 'use_cgroups', optional=True).lower() in Cobalt.Util.config_true_values
-        except (NoOptionError, NoSectionError):
-            pass # May or may not have this section
-        try:
-            self.cgroup_failure_fatal = (get_config_option(section, 'cgroup_failure_fatal', optional=True).lower() in
-                    Cobalt.Util.config_true_values)
-        except (NoOptionError, NoSectionError):
-            pass # May or may not have this section
-        try:
-            # I am sure some distro somewhere changes this
-            self.cgclassify_path = get_config_option(section, 'cgclassify_path', optional=True)
-        except (NoOptionError, NoSectionError):
-            pass # May or may not have this section
-        try:
-            self.cgclassify_args = get_config_option(section, 'cgclassify_args', optional=True)
-        except (NoOptionError, NoSectionError):
-            pass # May or may not have this section
-        else:
+
+        new_use_cgroups = get_config_option(section, 'use_cgroups', None).lower() in Cobalt.Util.config_true_values
+        new_cgroup_failure_fatal = (get_config_option(section, 'cgroup_failure_fatal', None).lower() in
+                Cobalt.Util.config_true_values)
+        new_cgclassify_path = get_config_option(section, 'cgclassify_path', None)
+        new_cgclassify_args = get_config_option(section, 'cgclassify_args', None)
+        if new_use_cgroups is not None:
+            self.use_cgroups = new_use_cgroups
+        if new_cgroup_failure_fatal is not None:
+            self.cgroup_failure_fatal = new_cgroup_failure_fatal
+        if new_cgclassify_path is not None:
+            self.cgclassify_path = new_cgclassify_path
+        if new_cgclassify_args is not None:
+            self.cgclassify_args = new_cgclassify_args
             self.cgclassify_args = self.cgclassify_args.split(' ') #Nothing we're passing has spaces we need to link back up
         return
 
