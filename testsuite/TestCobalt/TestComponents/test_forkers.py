@@ -21,6 +21,7 @@ import ConfigParser
 import time
 import os
 import subprocess
+import StringIO
 
 config_file = Cobalt.CONFIG_FILES[0]
 config_fp = open(config_file, "w")
@@ -37,6 +38,9 @@ from nose.tools import raises
 import Cobalt.Components.base_forker
 from Cobalt.Components.user_script_forker import UserScriptForker
 from Cobalt.Components.user_script_forker import UserScriptChild
+from Cobalt.Components.alps_script_forker import ALPSScriptChild
+from Cobalt.Components.system_script_forker import SystemScriptChild
+
 Cobalt.Components.base_forker.config = config
 
 class TestChild(Cobalt.Components.base_forker.BaseChild):
@@ -129,6 +133,7 @@ class TestBaseChild(object):
     #start is getting tested as a part of the overall forker test here.
 
     def setup(self):
+        self.old_config = Cobalt.Util.config
         self.args = ['/usr/bin/foo', '--flag0', 'arg0', 'arg1']
         self.child_spec = {'args': self.args,
                       'tag': 'testsuite',
@@ -139,6 +144,7 @@ class TestBaseChild(object):
 
     def teardown(self):
         Cobalt.Components.base_forker.BaseChild.id_gen = Cobalt.Data.IncrID()
+        Cobalt.Util.config = self.old_config
 
     def test_child_construction(self):
         '''BaseChild: construction'''
@@ -242,3 +248,261 @@ class TestBaseChild(object):
         child.preexec_first()
         mock_subprocess_popen.assert_called_once_with(expected_arguments, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         communicate.assert_called_once_with(None)
+
+
+    def test_set_cgclassify_attributes(self):
+        '''BaseForker: set cgclassify attributes'''
+        test_config_params = ['[forker]',
+                              'foo = bar',
+                              'use_cgroups = True',
+                              ]
+
+        fake_config_file = StringIO.StringIO("\n".join(test_config_params))
+        local_config = ConfigParser.ConfigParser()
+        local_config.readfp(fake_config_file)
+        old_config = Cobalt.Util.config
+        # Need to override the one in Util so actually correctly override things.
+        Cobalt.Util.config = local_config
+        child = Cobalt.Components.base_forker.BaseChild(**self.child_spec)
+        assert_match(child.use_cgroups, True, 'cgroup use flag wrong')
+        assert_match(child.cgroup_failure_fatal, False, 'cgroup_failure_fatal wrong')
+        assert_match(child.cgclassify_path, '/usr/bin/cgclassify', 'wrong cgclassify path')
+        assert_match(child.cgclassify_args, None, 'bad cgclassify args')
+        Cobalt.Util.config = old_config
+
+    def test_set_cgclassify_path(self):
+        '''BaseForker: set cgclassify path'''
+        test_config_params = ['[forker]',
+                              'foo = bar',
+                              'cgclassify_path = /why/did/you/move/this'
+                              ]
+
+        fake_config_file = StringIO.StringIO("\n".join(test_config_params))
+        local_config = ConfigParser.ConfigParser()
+        local_config.readfp(fake_config_file)
+        old_config = Cobalt.Util.config
+        # Need to override the one in Util so actually correctly override things.
+        Cobalt.Util.config = local_config
+        child = Cobalt.Components.base_forker.BaseChild(**self.child_spec)
+        assert_match(child.use_cgroups, False, 'cgroup use flag wrong')
+        assert_match(child.cgroup_failure_fatal, False, 'cgroup_failure_fatal wrong')
+        assert_match(child.cgclassify_path, '/why/did/you/move/this', 'wrong cgclassify path')
+        assert_match(child.cgclassify_args, None, 'bad cgclassify args')
+        Cobalt.Util.config = old_config
+
+    def test_set_cgclassify_args(self):
+        '''BaseForker: set cgclassify args'''
+        test_config_params = ['[forker]',
+                              'foo = bar',
+                              'use_cgroups = True',
+                              'cgclassify_args = -g foo bar'
+                              ]
+
+        fake_config_file = StringIO.StringIO("\n".join(test_config_params))
+        local_config = ConfigParser.ConfigParser()
+        local_config.readfp(fake_config_file)
+        old_config = Cobalt.Util.config
+        # Need to override the one in Util so actually correctly override things.
+        Cobalt.Util.config = local_config
+        child = Cobalt.Components.base_forker.BaseChild(**self.child_spec)
+        assert_match(child.use_cgroups, True, 'cgroup use flag wrong')
+        assert_match(child.cgroup_failure_fatal, False, 'cgroup_failure_fatal wrong')
+        assert_match(child.cgclassify_path, '/usr/bin/cgclassify', 'wrong cgclassify path')
+        assert_match(child.cgclassify_args, ['-g', 'foo', 'bar'], 'bad cgclassify args')
+        Cobalt.Util.config = old_config
+
+    def test_set_cgclassify_failure_fatal(self):
+        '''BaseForker: set cgclassify_failure_fatal'''
+        test_config_params = ['[forker]',
+                              'foo = bar',
+                              'cgroup_failure_fatal = True'
+                              ]
+
+        fake_config_file = StringIO.StringIO("\n".join(test_config_params))
+        local_config = ConfigParser.ConfigParser()
+        local_config.readfp(fake_config_file)
+        old_config = Cobalt.Util.config
+        # Need to override the one in Util so actually correctly override things.
+        Cobalt.Util.config = local_config
+        child = Cobalt.Components.base_forker.BaseChild(**self.child_spec)
+        assert_match(child.use_cgroups, False, 'cgroup use flag wrong')
+        assert_match(child.cgroup_failure_fatal, True, 'cgroup_failure_fatal wrong')
+        assert_match(child.cgclassify_path, '/usr/bin/cgclassify', 'wrong cgclassify path')
+        assert_match(child.cgclassify_args, None, 'bad cgclassify args')
+
+class TestALPSScriptChild(object):
+
+    def setup(self):
+        self.old_config = Cobalt.Util.config
+        self.args = ['/usr/bin/foo', '--flag0', 'arg0', 'arg1']
+        self.child_spec = {'data':{'args': self.args,
+                      'tag': 'testsuite',
+                      'cwd': '/home/joshua',
+                      'umask': '0077',
+                      'runid': 42,
+                      'jobid': 1,
+                      'executable':'/usr/bin/foo',
+                      'size': 1,
+                      'user': 'joshua',
+                      'location': '0',
+                     }}
+
+    def teardown(self):
+        Cobalt.Components.base_forker.BaseChild.id_gen = Cobalt.Data.IncrID()
+        Cobalt.Util.config = self.old_config
+
+    def test_set_cgclassify_args_base_only(self):
+        '''ALPSScriptChild: set cgclassify attributes'''
+        test_config_params = ['[forker]',
+                              'foo = bar',
+                              'use_cgroups = True',
+                              'cgroup_failure_fatal = True',
+                              'cgclassify_path = /why/did/you/move/this',
+                              'cgclassify_args = -g foo bar',
+                              ]
+
+        fake_config_file = StringIO.StringIO("\n".join(test_config_params))
+        local_config = ConfigParser.ConfigParser()
+        local_config.readfp(fake_config_file)
+        Cobalt.Util.config = local_config
+        child = Cobalt.Components.alps_script_forker.ALPSScriptChild(1, **self.child_spec)
+        assert_match(child.use_cgroups, True, 'cgroup use flag wrong')
+        assert_match(child.cgroup_failure_fatal, True, 'cgroup_failure_fatal wrong')
+        assert_match(child.cgclassify_path, '/why/did/you/move/this', 'wrong cgclassify path')
+        assert_match(child.cgclassify_args, ['-g', 'foo', 'bar'], 'bad cgclassify args')
+
+    def test_set_cgclassify_args_override_all_forkers(self):
+        '''ALPSScriptChild: set cgclassify attributes for alps_script_forker'''
+        test_config_params = ['[forker]',
+                              'foo = bar',
+                              'use_cgroups = True',
+                              'cgroup_failure_fatal = True',
+                              'cgclassify_path = /why/did/you/move/this',
+                              'cgclassify_args = -g foo bar',
+                              '[forker.alps]',
+                              'use_cgroups = True',
+                              'cgroup_failure_fatal = True',
+                              'cgclassify_path = /yet/another/one',
+                              'cgclassify_args = -g baz',
+                              '[forker.system]',
+                              'use_cgroups = False',
+                              'cgroup_failure_fatal = False',
+                              ]
+
+        fake_config_file = StringIO.StringIO("\n".join(test_config_params))
+        local_config = ConfigParser.ConfigParser()
+        local_config.readfp(fake_config_file)
+        Cobalt.Util.config = local_config
+        child = Cobalt.Components.alps_script_forker.ALPSScriptChild(1, **self.child_spec)
+        assert_match(child.use_cgroups, True, 'cgroup use flag wrong')
+        assert_match(child.cgroup_failure_fatal, True, 'cgroup_failure_fatal wrong')
+        assert_match(child.cgclassify_path, '/yet/another/one', 'wrong cgclassify path')
+        assert_match(child.cgclassify_args, ['-g', 'baz'], 'bad cgclassify args')
+
+    def test_set_cgclassify_args_override_single_forker(self):
+        '''ALPSScriptChild: set cgclassify attributes for alps_script_forker_localhost_1'''
+        test_config_params = ['[forker]',
+                              'foo = bar',
+                              'use_cgroups = True',
+                              'cgroup_failure_fatal = True',
+                              'cgclassify_path = /why/did/you/move/this',
+                              'cgclassify_args = -g foo bar',
+                              '[forker.alps]',
+                              'use_cgroups = True',
+                              'cgroup_failure_fatal = True',
+                              'cgclassify_path = /yet/another/one',
+                              'cgclassify_args = -g baz',
+                              '[forker.system]',
+                              'use_cgroups = False',
+                              'cgroup_failure_fatal = False',
+                              '[forker.alps_script_forker_localhost_1]',
+                              'use_cgroups = False',
+                              'cgroup_failure_fatal = False',
+                              'cgclassify_path = /again',
+                              'cgclassify_args = -g qux',
+                              ]
+
+        fake_config_file = StringIO.StringIO("\n".join(test_config_params))
+        local_config = ConfigParser.ConfigParser()
+        local_config.readfp(fake_config_file)
+        Cobalt.Util.config = local_config
+        self.child_spec['forker_name'] = 'alps_script_forker_localhost_1'
+        child = Cobalt.Components.alps_script_forker.ALPSScriptChild(1, **self.child_spec)
+        assert_match(child.use_cgroups, False, 'cgroup use flag wrong')
+        assert_match(child.cgroup_failure_fatal, False, 'cgroup_failure_fatal wrong')
+        assert_match(child.cgclassify_path, '/again', 'wrong cgclassify path')
+        assert_match(child.cgclassify_args, ['-g', 'qux'], 'bad cgclassify args')
+
+
+class TestSystemScriptChild(object):
+    def setup(self):
+        self.old_config = Cobalt.Util.config
+        self.args = ['/usr/bin/foo', '--flag0', 'arg0', 'arg1']
+        self.child_spec = {'data':{'args': self.args,
+                      'tag': 'testsuite',
+                      'cwd': '/home/joshua',
+                      'umask': '0077',
+                      'runid': 42,
+                      'jobid': 1,
+                      'executable':'/usr/bin/foo',
+                      'size': 1,
+                      'user': 'joshua',
+                      'location': '0',
+                     }}
+
+    def teardown(self):
+        Cobalt.Components.base_forker.BaseChild.id_gen = Cobalt.Data.IncrID()
+        Cobalt.Util.config = self.old_config
+
+    def test_set_cgclassify_args_base_only(self):
+        '''SystemScriptChild: set cgclassify attributes'''
+        test_config_params = ['[forker]',
+                              'foo = bar',
+                              'use_cgroups = True',
+                              'cgroup_failure_fatal = True',
+                              'cgclassify_path = /why/did/you/move/this',
+                              'cgclassify_args = -g foo bar',
+                              ]
+
+        fake_config_file = StringIO.StringIO("\n".join(test_config_params))
+        local_config = ConfigParser.ConfigParser()
+        local_config.readfp(fake_config_file)
+        # Need to override the one in Util so actually correctly override things.
+        Cobalt.Util.config = local_config
+        child = Cobalt.Components.system_script_forker.SystemScriptChild(1, **self.child_spec)
+        assert_match(child.use_cgroups, True, 'cgroup use flag wrong')
+        assert_match(child.cgroup_failure_fatal, True, 'cgroup_failure_fatal wrong')
+        assert_match(child.cgclassify_path, '/why/did/you/move/this', 'wrong cgclassify path')
+        assert_match(child.cgclassify_args, ['-g', 'foo', 'bar'], 'bad cgclassify args')
+
+    def test_set_cgclassify_args_override_system_script_forker(self):
+        '''SystemScriptChild: set cgclassify attributes for system_script_forker'''
+        test_config_params = ['[forker]',
+                              'foo = bar',
+                              'use_cgroups = True',
+                              'cgroup_failure_fatal = True',
+                              '[forker.alps]',
+                              'use_cgroups = True',
+                              'cgroup_failure_fatal = True',
+                              'cgclassify_path = /yet/another/one',
+                              'cgclassify_args = -g baz',
+                              '[forker.system]',
+                              'use_cgroups = False',
+                              'cgroup_failure_fatal = False',
+                              '[forker.alps_script_forker_localhost_1]',
+                              'use_cgroups = False',
+                              'cgroup_failure_fatal = False',
+                              'cgclassify_path = /yet/another/one',
+                              'cgclassify_args = -g baz',
+                              ]
+
+        fake_config_file = StringIO.StringIO("\n".join(test_config_params))
+        local_config = ConfigParser.ConfigParser()
+        local_config.readfp(fake_config_file)
+        Cobalt.Util.config = local_config
+        self.child_spec['forker_name'] = 'alps_script_forker_localhost_1'
+        child = Cobalt.Components.system_script_forker.SystemScriptChild(1, **self.child_spec)
+        assert_match(child.use_cgroups, False, 'cgroup use flag wrong')
+        assert_match(child.cgroup_failure_fatal, False, 'cgroup_failure_fatal wrong')
+        assert_match(child.cgclassify_path, '/usr/bin/cgclassify', 'wrong cgclassify path')
+        assert_match(child.cgclassify_args, None, 'bad cgclassify args')
