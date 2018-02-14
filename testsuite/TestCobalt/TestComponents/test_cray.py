@@ -412,6 +412,20 @@ class TestCraySystem(object):
                     'mismatch in returned equiv class queues %s' %
                     equiv['queues'])
 
+    def test_find_queue_equivalence_classes_overlap_single_active(self):
+        '''CraySystem.find_queue_equivalence_classes: partial overlapping queues one active queue only'''
+        self.system.nodes['1'].queues = ['foo']
+        self.system.nodes['2'].queues = ['foo', 'default']
+        self.system._gen_node_to_queue()
+        equivs = self.system.find_queue_equivalence_classes({}, ['foo'], [])
+        assert len(equivs) == 1, (
+                'Have %s equiv classes, should have 1.' %
+                len(equivs))
+        for equiv in equivs:
+            assert sorted(equiv['queues']) == ['foo'], (
+                    'mismatch in returned equiv class queues %s' %
+                    equiv['queues'])
+
     def test_find_queue_equivalence_classes_disjoint(self):
         '''CraySystem.find_queue_equivalence_classes: disjoint queues'''
         # we return one class now, no matter what.
