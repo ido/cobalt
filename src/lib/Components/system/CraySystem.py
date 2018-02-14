@@ -725,9 +725,11 @@ class CraySystem(BaseSystem):
             current queue-node binding on the machine is.
 
         '''
-        return [{'reservations': reservation_dict.keys(),
+        with self._node_lock:
+            equiv_class = [{'reservations': reservation_dict.keys(),
                  'queues': [queue_name for queue_name in self.nodes_by_queue.keys()
                             if queue_name in active_queue_names]}]
+        return equiv_class
 
     def _setup_special_locations(self, job):
         forbidden = set([str(loc) for loc in chain_loc_list(job.get('forbidden', []))])
