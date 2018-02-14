@@ -709,7 +709,7 @@ class CraySystem(BaseSystem):
                                       partitioned interconnect networks.
 
         Output:
-            A list containing a dictionary with reservations and active queues with associated nodes.
+            A list containing dictionaries with reservations and active queues with associated nodes.
 
         Side effects:
             None
