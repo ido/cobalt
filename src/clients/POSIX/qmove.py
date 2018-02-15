@@ -82,6 +82,7 @@ def main():
             if 'message' in resp and resp['message'] is not None:
                 if 'jobid' in resp and resp['jobid'] is not None:
                     hold_msg.append("%s: %s" % (resp['jobid'], resp['message']))
+
     if not response:
         client_utils.logger.error("Failed to match any jobs or queues")
     else:
