@@ -305,23 +305,23 @@ class header_info(object):
     Class to organize the header type information
     """
     # define headers, long_header is used to query the queue-manager
-    default_header = ['JobID','User','WallTime','Nodes','State','Location']
+    default_header = ['JobID', 'User', 'WallTime', 'Nodes', 'State', 'Location']
 
-    full_header = ['JobID','JobName','User','WallTime','QueuedTime','RunTime','TimeRemaining','Nodes','State',
-                   'Location','Mode','Procs','Preemptable','Queue','StartTime','Index']
+    full_header = ['JobID', 'JobName', 'User', 'WallTime', 'QueuedTime', 'RunTime', 'TimeRemaining', 'Nodes', 'State',
+                   'Location', 'Mode', 'Procs', 'Preemptable', 'Queue', 'StartTime', 'Index']
 
-    long_header = ['JobID','JobName','User','WallTime','QueuedTime','RunTime','TimeRemaining','Nodes','State',
-                   'Location','Mode','Procs','Preemptable','User_Hold','Admin_Hold','Queue','StartTime','Index',
-                   'SubmitTime','Path','OutputDir','ErrorPath','OutputPath','Envs','Command','Args','Kernel',
-                   'KernelOptions', 'ION_Kernel', 'ION_KernelOptions', 'Project','Dependencies','short_state','Notify','Score','Maxtasktime','attrs',
-                   'dep_frac','user_list','Geometry']
+    long_header = ['JobID', 'JobName', 'User', 'WallTime', 'QueuedTime', 'RunTime', 'TimeRemaining', 'Nodes', 'State',
+                   'Location', 'Mode', 'Procs', 'Preemptable', 'User_Hold', 'Admin_Hold', 'Accounting_Hold', 'Queue', 'StartTime',
+                   'Index', 'SubmitTime', 'Path', 'OutputDir', 'ErrorPath', 'OutputPath', 'Envs', 'Command', 'Args', 'Kernel',
+                   'KernelOptions',  'ION_Kernel',  'ION_KernelOptions',  'Project', 'Dependencies', 'short_state', 'Notify',
+                   'Score', 'Maxtasktime', 'attrs', 'dep_frac', 'user_list', 'Geometry']
 
     custom_header      = None
     custom_header_full = None
 
     header  = None
 
-    def __init__(self,parser):
+    def __init__(self, parser):
         """
         Get header information 
         """
@@ -357,7 +357,7 @@ class header_info(object):
 
 def sleep(t):
     """
-    Wrap the Util sleep function
+    Wrap the Util sleep function, see Util.sleep for an explanation of why this is necessary on 64-bit PPC Linux platforms.
     """
     Cobalt.Util.sleep(t)
 
@@ -1195,17 +1195,17 @@ def _setbool_attr(parser, opt_str, attr, true_opt_list):
     Set the specified attr to true if opt string in the true option list.
     Will generate an error if the attr is already set.
     """
-    if hasattr(parser.values,attr):
-        val = getattr(parser.values,attr)
+    if hasattr(parser.values, attr):
+        val = getattr(parser.values, attr)
         if  val != None:
             logger.error("Attribute %s already set" % attr)
             sys.exit(1)
     if opt_str in true_opt_list:
-        setattr(parser.values,attr,True)
+        setattr(parser.values, attr, True)
     else:
-        setattr(parser.values,attr,False)
+        setattr(parser.values, attr, False)
 
-def cb_hold(option,opt_str,value,parser,*args):
+def cb_hold(option, opt_str, value, parser, *args):
     """
     handles the (user | admin) hold and release attributes
     """
