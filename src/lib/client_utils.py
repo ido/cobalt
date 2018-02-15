@@ -311,7 +311,7 @@ class header_info(object):
                    'Location', 'Mode', 'Procs', 'Preemptable', 'Queue', 'StartTime', 'Index']
 
     long_header = ['JobID', 'JobName', 'User', 'WallTime', 'QueuedTime', 'RunTime', 'TimeRemaining', 'Nodes', 'State',
-                   'Location', 'Mode', 'Procs', 'Preemptable', 'User_Hold', 'Admin_Hold', 'Accounting_Hold', 'Queue', 'StartTime',
+                   'Location', 'Mode', 'Procs', 'Preemptable', 'User_Hold', 'Admin_Hold', 'Queue', 'StartTime',
                    'Index', 'SubmitTime', 'Path', 'OutputDir', 'ErrorPath', 'OutputPath', 'Envs', 'Command', 'Args', 'Kernel',
                    'KernelOptions',  'ION_Kernel',  'ION_KernelOptions',  'Project', 'Dependencies', 'short_state', 'Notify',
                    'Score', 'Maxtasktime', 'attrs', 'dep_frac', 'user_list', 'Geometry']
