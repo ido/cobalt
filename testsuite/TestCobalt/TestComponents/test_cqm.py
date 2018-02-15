@@ -59,6 +59,7 @@ from TestCobalt.Utilities.ThreadSupport import *
 from TestCobalt.Utilities.Time import timeout
 from TestCobalt.Utilities.disable import disabled
 
+
 # if logging is enabled, send all cqm and generic component logging to a file
 if ENABLE_LOGGING:
     import testsuite
