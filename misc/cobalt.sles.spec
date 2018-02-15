@@ -3,7 +3,7 @@ Name: cobalt
 Version: $Version$
 
 Release: 1
-License: CPL
+License: BSD 3-Clause
 Group: System Software
 URL: http://www.mcs.anl.gov/cobalt
 Prefix: /usr
@@ -20,6 +20,15 @@ Requires: %{requires}
 
 %description -n cobalt-clients
 Cobalt Resource Management clients.
+
+%package -n cobalt-node
+Version: %{version}
+Summary: Cobalt Resource Management System on-node utilities
+Group: Applications/System
+Requires: %{requires}
+
+%description -n cobalt-node
+Cobalt Resource Management on-node utilities.
 
 %description
 The Cobalt Resource Management System
@@ -44,6 +53,7 @@ mkdir -p ${RPM_BUILD_ROOT}%{client_wrapper_dir}
 
 %{python} setup.py install --prefix=${RPM_BUILD_ROOT}%{client_wrapper_dir} --install-lib ${RPM_BUILD_ROOT}%{python_site_packages}
 install -m 755 src/clients/wrapper ${RPM_BUILD_ROOT}%{python_wrapper_dir}
+%{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/cobalt-launcher.py ${RPM_BUILD_ROOT}%{_bindir}/cobalt-launcher.py
 install -m 755 src/clients/cobalt-admin ${RPM_BUILD_ROOT}%{_sbindir$}
 %{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/slp.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}%{python_wrapper_dir}/bgsched.py ${RPM_BUILD_ROOT}%{_sbindir}
@@ -85,7 +95,8 @@ install -m 640 misc/cweb.service ${RPM_BUILD_ROOT}%{_unitdir}
 cd ${RPM_BUILD_ROOT}%{_sbindir}
 #for file in `find . -name \*.py | sed -e 's/\.py//' ` ; do ln -s cobalt-admin $file ; done
 cd ${RPM_BUILD_ROOT}%{python_wrapper_dir}
-for file in `find . -name \*.py | sed -e 's/\.py//' |grep -v fake` ; do ln -sf  %{python_wrapper_dir}/wrapper ${RPM_BUILD_ROOT}%{_bindir}/$file ; done
+for file in `find . -name \*.py | sed -e 's/\.py//' |grep -v fake | grep -v cobalt-launcher` ; do ln -sf  %{python_wrapper_dir}/wrapper ${RPM_BUILD_ROOT}%{_bindir}/$file ; done
+ln -sf {_bindir}/cobalt-launcher.py ${RPM_BUILD_ROOT}%{_bindir}/cobalt-launcher # do not link this to the wrapper
 find . -wholename "./Parser" -prune -o -name '*.py' -type f -print0 | xargs -0 grep -lE '^#! *(/usr/.*bin/(env +)?) ?python' | xargs sed -r -i -e '1s@^#![[:space:]]*(/usr/(local/)?bin/(env +)?)?python@#!/usr/bin/python@'
 #cd ${RPM_BUILD_ROOT}%{python_wrapper_dir} ; for file in `find . -name \*.py -print` ; do ln -sf wrapper `echo ${RPM_BUILD_ROOT}%{_bindir}/$file|sed -e 's/.py//'` ; done
 cd ${RPM_BUILD_ROOT}%{_sbindir} ; for file in `find . -name \*.py -print` ; do ln -sf $file `echo $file|sed -e 's/.py//'` ; done
@@ -100,6 +111,7 @@ if ! /usr/bin/getent group cobalt &>/dev/null
 then
     groupadd cobalt
 fi
+
 
 %post -n cobalt
 if test ! -d /var/spool/cobalt ; then
@@ -116,6 +128,7 @@ if [ ! -d /var/log/cobalt ]; then
     chmod 755 /var/log/cobalt
     chgrp cobalt /var/log/cobalt
 fi
+
 
 %files -n cobalt
 %{_sbindir}/*
@@ -135,6 +148,15 @@ fi
 %{python_site_packages}/Cobalt/*
 %{python_site_packages}/Cobalt-*egg-info*
 %{_mandir}/man1/*.1*
+%exclude %{_bindir}/cobalt-launcher
+%exclude %{_bindir}/cobalt-launcher.py
+
+%files -n cobalt-node
+# Compute-node-only.  Used for cobalt-only managed clusters
+%{_bindir}/cobalt-launcher.py
+%{_bindir}/cobalt-launcher
+%attr(0755,root,cobalt) %{_bindir}/cobalt-launcher.py
+
 
 %defattr(-,root,root,-)
 
