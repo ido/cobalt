@@ -273,12 +273,12 @@ def main():
     #  if Q option specified then get the info for the specified queues 
     if parser.options.Q != None:
 
-        output = get_output_for_queues(parser,hinfo)
+        output = get_output_for_queues(parser, hinfo)
 
     else:
 
         # build query from long_header (all fields) and fetch response        
-        output = get_output_for_jobs(parser,hinfo,queues)
+        output = get_output_for_jobs(parser, hinfo, queues)
 
     process_the_output(output,parser,hinfo)
             
