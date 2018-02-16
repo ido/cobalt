@@ -301,14 +301,17 @@ def fetch_tty_session():
         client_utils.logger.debug("fd %d not associated with a terminal device", stdoutfh)
     return ttyname
 
-def logjob(jobid, spec, log_to_console, ttyname=None):
+def logjob(jobid, spec, log_to_console, msg=None, ttyname=None):
     """
     log job info
     """
     # log jobid to stdout
     if jobid:
         if log_to_console:
-            client_utils.logger.info(jobid)
+            if msg is None:
+                client_utils.logger.info(jobid)
+            else:
+                client_utils.logger.info("%s %s", jobid, msg)
         if spec.has_key('cobalt_log_file'):
             filename = spec['cobalt_log_file']
             template = string.Template(filename)
@@ -321,6 +324,8 @@ def logjob(jobid, spec, log_to_console, ttyname=None):
                 print >> cobalt_log_file, "qsub %s" % (" ".join(sys.argv[1:]))
                 print >> cobalt_log_file, ("%s submitted with cwd set to: %s" %
                     (client_utils.sec_to_str(time.time()), spec['cwd']))
+                if msg is not None:
+                    print >> cobalt_log_file, "Special Message for jobid %s: %s" % (jobid, msg)
                 if ttyname is not None:
                     print >> cobalt_log_file, ("jobid %d submitted from terminal %s" %
                         (jobid, ttyname))
@@ -484,6 +489,9 @@ def run_job(parser, user, spec, opts):
         not_exit_on_interrupt()
         jobs  =  client_utils.component_call(QUEMGR, False, 'add_jobs',([spec],), False)
         jobid = jobs[0]['jobid']
+        msg = None
+        if 'message' in jobs[0]:
+            msg = jobs[0]['message']
         exit_on_interrupt()
 
         if parser.options.envs:
@@ -491,10 +499,10 @@ def run_job(parser, user, spec, opts):
 
         # If this is an interactive job, wait for it to start, then start user shell
         if parser.options.mode == 'interactive':
-            logjob(jobid, spec, False, spec['ttysession'])
+            logjob(jobid, spec, False, msg=msg, ttyname=spec['ttysession'])
             deljob = run_interactive_job(jobid, user,  opts['disable_preboot'], opts['nodecount'], opts['proccount'])
         else:
-            logjob(jobid, spec, True, spec['ttysession'])
+            logjob(jobid, spec, True, msg=msg, ttyname=spec['ttysession'])
     except Exception, e:
         client_utils.logger.error(e)
         exc_occurred = True
@@ -556,6 +564,7 @@ def main():
     def_spec['user_list']      = [user]
     def_spec['procs']          = False
     def_spec['script_preboot'] = True
+    def_spec['message']        = None
 
     parser    = ArgParse(opt_def, callbacks)
     opt_count = parse_options(parser, spec, opts, opt2spec, def_spec)
