@@ -88,6 +88,8 @@ kernel:kernel
 kernel type: <type 'str'>
 kerneloptions:kopts
 kerneloptions type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:script
 mode type: <type 'str'>
 nodes:10
@@ -258,6 +260,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:script
 mode type: <type 'str'>
 nodes:512
@@ -768,6 +772,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:script
 mode type: <type 'str'>
 nodes:10
@@ -930,6 +936,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:script
 mode type: <type 'str'>
 nodes:10
@@ -1092,6 +1100,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:script
 mode type: <type 'str'>
 nodes:10
@@ -1291,6 +1301,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:script
 mode type: <type 'str'>
 nodes:10
@@ -1488,6 +1500,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:c1
 mode type: <type 'str'>
 nodes:10
@@ -1650,6 +1664,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:c1
 mode type: <type 'str'>
 nodes:10
@@ -1810,6 +1826,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:c1
 mode type: <type 'str'>
 nodes:10
@@ -1970,6 +1988,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:c1
 mode type: <type 'str'>
 nodes:10
@@ -2130,6 +2150,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:c1
 mode type: <type 'str'>
 nodes:10
@@ -2292,6 +2314,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:c1
 mode type: <type 'str'>
 nodes:10
@@ -2454,6 +2478,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:c1
 mode type: <type 'str'>
 nodes:10
@@ -2653,6 +2679,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:c1
 mode type: <type 'str'>
 nodes:10
@@ -2817,6 +2845,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:c1
 mode type: <type 'str'>
 nodes:10
@@ -2983,6 +3013,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:c1
 mode type: <type 'str'>
 nodes:10
@@ -3184,6 +3216,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:c1
 mode type: <type 'str'>
 nodes:10
@@ -3344,6 +3378,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:c1
 mode type: <type 'str'>
 nodes:10
@@ -3510,6 +3546,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:c1
 mode type: <type 'str'>
 nodes:10
@@ -3709,6 +3747,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:vn
 mode type: <type 'str'>
 nodes:512
@@ -3869,6 +3909,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:vn
 mode type: <type 'str'>
 nodes:512
@@ -4031,6 +4073,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:script
 mode type: <type 'str'>
 nodes:10
@@ -4228,6 +4272,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:vn
 mode type: <type 'str'>
 nodes:512
@@ -4390,6 +4436,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:c1
 mode type: <type 'str'>
 nodes:10
@@ -4552,6 +4600,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:c1
 mode type: <type 'str'>
 nodes:10
@@ -4737,6 +4787,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:c1
 mode type: <type 'str'>
 nodes:10
@@ -4899,6 +4951,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:c1
 mode type: <type 'str'>
 nodes:10
@@ -5061,6 +5115,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:script
 mode type: <type 'str'>
 nodes:100
@@ -5223,6 +5279,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:script
 mode type: <type 'str'>
 nodes:100
@@ -5460,6 +5518,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:c1
 mode type: <type 'str'>
 nodes:10
@@ -5729,6 +5789,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:interactive
 mode type: <type 'str'>
 nodes:1
@@ -5914,6 +5976,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:interactive
 mode type: <type 'str'>
 nodes:1
@@ -6099,6 +6163,8 @@ jobid:*
 jobid type: <type 'str'>
 kernel:default
 kernel type: <type 'str'>
+message:None
+message type: <type 'NoneType'>
 mode:interactive
 mode type: <type 'str'>
 nodes:1
