@@ -95,11 +95,18 @@ component, in seconds. By default the interval is 10.0 seconds.  Under periods
 of high load on the component, the interval between statefiles may be longer.
 .TP
 .B use_cgroups
-Default false.  If true, cgclassify support is enabled.
+The default is false.  If enabled, cgroup support is enabled.  When cgroup
+support is enabled, Cobalt will use cgclassify during script process startup
+to place Cobalt initiated scripts into an administrator-specified cgroup.
+This is generally used if proc connector is disabled on a given system.
+Cgroup-related options may be set on a per forker-type basis, or on a per-
+instance basis.  This is currently supported for Cray systems, and for site-
+specified system scripts, such as job and resource pre and postscripts.
 .TP
 .B cgroup_failure_fatal
-Default if false.  If true, if cgclassify fails to set a cgroup, then script
-startup will fail and the process will exit with a nonzero status.
+The default is false.  If cgclassify fails to set a cgroup and
+cgroup_failure_fatal is set to true, then script startup will fail and the
+process will exit with a nonzero status.
 .TP
 .B cgclassify_path
 This is the path to the cgclassify executable.  By default this is
@@ -121,8 +128,8 @@ user-provided scripts.
 If true, cgclassify support is enabled.
 .TP
 .B cgroup_failure_fatal
-If true, if cgclassify fails to set a cgroup, then script
-startup will fail and the process will exit with a nonzero status.
+If cgclassify fails to set a cgroup and cgroup_failure_fatal is set to true,
+then script startup will fail and the process will exit with a nonzero status.
 .TP
 .B cgclassify_path
 This is the path to the cgclassify executable.  By default this is
@@ -143,8 +150,8 @@ overridden.  These options will affect all user-run jobs on a Cray system.
 If true, cgclassify support is enabled.
 .TP
 .B cgroup_failure_fatal
-If true, if cgclassify fails to set a cgroup, then script
-startup will fail and the process will exit with a nonzero status.
+If cgclassify fails to set a cgroup and cgroup_failure_fatal is set to true,
+then script startup will fail and the process will exit with a nonzero status.
 .TP
 .B cgclassify_path
 This is the path to the cgclassify executable.  By default this is
