@@ -22,6 +22,7 @@ import time
 import os
 import subprocess
 import StringIO
+import sys
 
 config_file = Cobalt.CONFIG_FILES[0]
 config_fp = open(config_file, "w")
@@ -34,6 +35,9 @@ config.read(Cobalt.CONFIG_FILES)
 from mock import Mock, MagicMock, patch
 from testsuite.TestCobalt.Utilities.assert_functions import assert_match, assert_not_match
 from nose.tools import raises
+
+#Fake the import for cray_messaging.  This has to be mocked if we're testing any ALPS functions.
+sys.modules['cray_messaging'] = MagicMock()
 
 import Cobalt.Components.base_forker
 from Cobalt.Components.user_script_forker import UserScriptForker
