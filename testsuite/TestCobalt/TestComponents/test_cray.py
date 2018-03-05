@@ -16,7 +16,11 @@ from mock import MagicMock, Mock, patch
 # need to mock the import of a dependency library for sending messages to BASIL.
 # None of these tests actually communicate with BASIL and this library should be a stub
 # for these purposes
-sys.modules['Cobalt.Components.system.CraySystem.cray_messaging'] = MagicMock()
+cray_messaging_mock = MagicMock()
+# This error gets passed through the ALPSBridge module as ALPSError, but originates from
+# cray_messaging.
+cray_messaging_mock.ALPSError = ValueError
+sys.modules['cray_messaging'] = cray_messaging_mock
 
 from nose.tools import raises
 from testsuite.TestCobalt.Utilities.assert_functions import assert_match, assert_not_match
