@@ -6,13 +6,26 @@ elogin_hosts: foo:bar
 """
 import Cobalt
 import TestCobalt
+import sys
 config_file = Cobalt.CONFIG_FILES[0]
 config_fp = open(config_file, "w")
 config_fp.write(SYSTEM_CONFIG_ENTRY)
 config_fp.close()
 
+from mock import MagicMock, Mock, patch
+# need to mock the import of a dependency library for sending messages to BASIL.
+# None of these tests actually communicate with BASIL and this library should be a stub
+# for these purposes
+cray_messaging_mock = MagicMock()
+# This error gets passed through the ALPSBridge module as ALPSError, but originates from
+# cray_messaging.
+cray_messaging_mock.ALPSError = ValueError
+sys.modules['cray_messaging'] = cray_messaging_mock
+
 from nose.tools import raises
 from testsuite.TestCobalt.Utilities.assert_functions import assert_match, assert_not_match
+
+
 from Cobalt.Components.system.CrayNode import CrayNode
 import Cobalt.Exceptions
 import time
@@ -20,7 +33,6 @@ from Cobalt.Components.system.CraySystem import CraySystem
 from Cobalt.Components.system.base_pg_manager import ProcessGroupManager
 import Cobalt.Components.system.AlpsBridge as AlpsBridge
 
-from mock import MagicMock, Mock, patch
 
 def is_match(a, b):
     return a is b
