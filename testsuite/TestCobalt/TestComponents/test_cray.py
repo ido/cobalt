@@ -1151,3 +1151,154 @@ class TestCraySystem(object):
         info = self.system._ALPS_reserve_resources(job, new_time, node_id_list)
         assert_match(info, node_id_list, 'Bad reservation info returned')
         TestCraySystem.verify_alps_reservation_dict(self.system)
+
+from Cobalt.Components.system.ALPSProcessGroup import ALPSProcessGroup
+import logging
+from Cobalt.Components.system.CraySystem import _logger
+logging.basicConfig()
+_logger.setLevel(logging.getLevelName('DEBUG'))
+
+from Cobalt.Util import init_cobalt_config, get_config_option
+#init_cobalt_config()
+system_size = int(get_config_option('system', 'size'))
+
+def _init_nodes_and_reservations(xself):
+    xself.logger.warning("_init_nodes_and_reservations setting update_thread_timeout")
+    xself.update_thread_timeout = 0.2
+CraySystem._init_nodes_and_reservations = _init_nodes_and_reservations
+CraySystem.logger.setLevel(logging.getLevelName('DEBUG'))
+
+class FakeCraySystem(CraySystem):
+    def __init__(self, force_raise=False):
+        self.force_raise = force_raise
+        self.test_counter = 0
+        from Cobalt.Components.system.base_pg_manager import ProcessGroupManager
+        pgm = ProcessGroupManager
+        pgm.update_launchers = self.fake_func_always_pass
+        super(FakeCraySystem, self).__init__(*[], **{})
+        pgm.update_launchers = self.fake_func
+
+    def fake_func_always_pass(self, *args, **kwargs):
+        self.logger.warning("calling fake_func_always_pass/update_launchers")
+        self.test_counter = self.test_counter | 0x80
+
+    def fake_func(self, *args, **kwargs):
+        self.logger.warning("calling fake_func/update_launchers")
+        if self.force_raise:
+            self.test_counter = self.test_counter | 0x10
+            raise Exception("0x01")
+        else:
+            self.test_counter = self.test_counter | 0x01
+
+    def update_node_state(self):
+        self.logger.warning("calling update_node_state")
+        if self.force_raise:
+            self.test_counter = self.test_counter | 0x20
+            raise Exception("0x02")
+        else:
+            self.test_counter = self.test_counter | 0x02
+
+    def _get_exit_status(self):
+        self.logger.warning("calling _get_exit_status")
+        if self.force_raise:
+            self.test_counter = self.test_counter | 0x40
+            raise Exception("0x04")
+        else:
+            self.test_counter = self.test_counter | 0x04
+
+class TestCraySystem2(object):
+    def setup(self, *args, **kwargs):
+        pass
+
+    @patch.object(AlpsBridge, 'init_bridge')
+    def test_run_update_state_00(self, *args, **kwargs):
+
+        # this is silly, without fundamental change in CraySystem, we need a way to
+        # set the update_thread_timeout and this can be done inside _init_nodes_and_reservations
+        system = FakeCraySystem(force_raise=False)
+
+        #----boilerplatestuff----
+        base_spec = {'name':'test', 'state': 'UP', 'node_id': '1', 'role':'batch',
+                          'architecture': 'XT', 'SocketArray':['foo', 'bar'],
+                          'queues':['default'],
+                          }
+        for i in range(1,6):
+            base_spec['name'] = "test%s" % i
+            base_spec['node_id'] = str(i)
+            node_dict=dict(base_spec)
+            system.nodes[str(i)] = CrayNode(node_dict)
+            system.node_name_to_id[node_dict['name']] = node_dict['node_id']
+        for node in system.nodes.values():
+            node.managed = True
+        system._gen_node_to_queue()
+        base_job = {'jobid':1, 'user':'crusher', 'attrs':{},
+                         'queue':'default', 'nodes': 1, 'walltime': 60,
+                         }
+        fake_reserve_called = False
+        Cobalt.Components.system.CraySystem.BACKFILL_EPSILON = 120
+        Cobalt.Components.system.CraySystem.DRAIN_MODE = "first-fit"
+        #----boilerplatestuff----
+
+        # kill it
+        time.sleep(1.0)
+        system.node_update_thread_kill_queue.put(True)
+        _logger.info("node_update_thread_kill_queue sent!")
+
+        while system.node_update_thread_dead is False:
+            _logger.info("waiting for thread to die.")
+            time.sleep(0.5)
+        _logger.info("node_update_thread_dead:%s" , system.node_update_thread_dead)
+
+        assert system.test_counter == 0x87, system.test_counter
+        _logger.info("test_counter passed, %s", system.test_counter)
+
+    @patch.object(AlpsBridge, 'init_bridge')
+    def test_run_update_state_01(self, *args, **kwargs):
+        # this is silly, without fundamental change in CraySystem, we need a way to
+        # set the update_thread_timeout and this can be done inside _init_nodes_and_reservations
+        system = FakeCraySystem(force_raise=True)
+
+        #----boilerplatestuff----
+        base_spec = {'name':'test', 'state': 'UP', 'node_id': '1', 'role':'batch',
+                          'architecture': 'XT', 'SocketArray':['foo', 'bar'],
+                          'queues':['default'],
+                          }
+        for i in range(1,6):
+            base_spec['name'] = "test%s" % i
+            base_spec['node_id'] = str(i)
+            node_dict=dict(base_spec)
+            system.nodes[str(i)] = CrayNode(node_dict)
+            system.node_name_to_id[node_dict['name']] = node_dict['node_id']
+        for node in system.nodes.values():
+            node.managed = True
+        system._gen_node_to_queue()
+        base_job = {'jobid':1, 'user':'crusher', 'attrs':{},
+                         'queue':'default', 'nodes': 1, 'walltime': 60,
+                         }
+        fake_reserve_called = False
+        Cobalt.Components.system.CraySystem.BACKFILL_EPSILON = 120
+        Cobalt.Components.system.CraySystem.DRAIN_MODE = "first-fit"
+        #----boilerplatestuff----
+
+        # kill it
+        time.sleep(1.0)
+        system.node_update_thread_kill_queue.put(True)
+        _logger.info("node_update_thread_kill_queue sent!")
+
+        while system.node_update_thread_dead is False:
+            _logger.info("waiting for thread to die.")
+            time.sleep(0.5)
+        _logger.info("node_update_thread_dead:%s", system.node_update_thread_dead)
+
+        assert system.test_counter == 0xf0, system.test_counter
+        _logger.info("test_counter passed, %s", system.test_counter)
+
+    def teardown(self):
+        pass
+
+if __name__ == "__main__":
+    t = TestCraySystem2()
+    t.setup()
+    t.test_run_update_state_00()
+    t.test_run_update_state_01()
+    t.teardown()

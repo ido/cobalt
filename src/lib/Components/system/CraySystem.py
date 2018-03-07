@@ -1,7 +1,6 @@
 """Resource management for Cray ALPS based systems"""
 import logging
 import threading
-import thread
 import time
 import sys
 import xmlrpclib
@@ -21,6 +20,9 @@ from Cobalt.Exceptions import JobValidationError
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
 from Cobalt.Util import compact_num_list, expand_num_list
 from Cobalt.Util import init_cobalt_config, get_config_option
+from Cobalt.Util import init_cobalt_config, get_config_option
+from Cobalt.Util import extract_traceback, sanatize_password, get_current_thread_identifier
+from Queue import Queue
 
 _logger = logging.getLogger(__name__)
 init_cobalt_config()
@@ -29,7 +31,8 @@ UPDATE_THREAD_TIMEOUT = int(get_config_option('alpssystem', 'update_thread_timeo
 TEMP_RESERVATION_TIME = int(get_config_option('alpssystem', 'temp_reservation_time', 300))
 SAVE_ME_INTERVAL = float(get_config_option('alpsssytem', 'save_me_interval', 10.0))
 #default 20 minutes to account for boot.
-PENDING_STARTUP_TIMEOUT = float(get_config_option('alpssystem', 'pending_startup_timeout', 1200))
+# DISABLED: Not used
+#PENDING_STARTUP_TIMEOUT = float(get_config_option('alpssystem', 'pending_startup_timeout', 1200))
 APKILL_CMD = get_config_option('alps', 'apkill', '/opt/cray/alps/default/bin/apkill')
 DRAIN_MODE = get_config_option('system', 'drain_mode', 'first-fit')
 #cleanup time in seconds
@@ -49,7 +52,6 @@ DEFAULT_NUMA_MODE = get_config_option('alpssystem', 'default_numa_mode', 'quad')
 MCDRAM_TO_HBMCACHEPCT = {'flat':'0', 'cache':'100', 'split':'25', 'equal':'50', '0':'0', '25':'25', '50':'50', '100':'100'}
 VALID_MCDRAM_MODES = ['flat', 'cache', 'split', 'equal', '0', '25', '50', '100']
 VALID_NUMA_MODES = ['a2a', 'hemi', 'quad', 'snc2', 'snc4']
-
 
 def chain_loc_list(loc_list):
     '''Take a list of compact Cray locations,
@@ -78,26 +80,27 @@ class CraySystem(BaseSystem):
 
         '''
         start_time = time.time()
+        self.update_thread_timeout = UPDATE_THREAD_TIMEOUT
         super(CraySystem, self).__init__(*args, **kwargs)
         _logger.info('BASE SYSTEM INITIALIZED')
         self._common_init_restart()
         _logger.info('ALPS SYSTEM COMPONENT READY TO RUN')
-        _logger.info('Initilaization complete in %s sec.', (time.time() -
+        _logger.info('Initialization complete in %s sec.', (time.time() -
                 start_time))
 
     def _common_init_restart(self, spec=None):
-        '''Common routine for cold and restart intialization of the system
+        '''Common routine for cold and restart initialization of the system
         component.
 
         '''
         try:
             self.system_size = int(get_config_option('system', 'size'))
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-            _logger.critical('ALPS SYSTEM: ABORT STARTUP: System size must be specified in the [system] section of the cobalt configuration file.')
+            self.logger.critical('ALPS SYSTEM: ABORT STARTUP: System size must be specified in the [system] section of the cobalt configuration file.')
             sys.exit(1)
         if DRAIN_MODE not in DRAIN_MODES:
             #abort startup, we have a completely invalid config.
-            _logger.critical('ALPS SYSTEM: ABORT STARTUP: %s is not a valid drain mode.  Must be one of %s.',
+            self.logger.critical('ALPS SYSTEM: ABORT STARTUP: %s is not a valid drain mode.  Must be one of %s.',
                 DRAIN_MODE, ", ".join(DRAIN_MODES))
             sys.exit(1)
         #initilaize bridge.
@@ -110,14 +113,14 @@ class CraySystem(BaseSystem):
             try:
                 ALPSBridge.init_bridge()
             except ALPSBridge.BridgeError:
-                _logger.error('Bridge Initialization failed.  Retrying.')
+                self.logger.error('Bridge Initialization failed.  Retrying.')
                 Cobalt.Util.sleep(10)
             except ComponentLookupError:
-                _logger.warning('Error reaching forker.  Retrying.')
+                self.logger.warning('Error reaching forker.  Retrying.')
                 Cobalt.Util.sleep(10)
             else:
                 bridge_pending = False
-                _logger.info('BRIDGE INITIALIZED')
+                self.logger.info('BRIDGE INITIALIZED')
         #process manager setup
         if spec is None:
             self.process_manager = ProcessGroupManager(pgroup_type=ALPSProcessGroup)
@@ -133,9 +136,16 @@ class CraySystem(BaseSystem):
                 self.process_manager = spec['process_manager']
                 self.process_manager.pgroup_type = ALPSProcessGroup
                 self.logger.debug('pg type %s', self.process_manager.process_groups.item_cls)
-        self.process_manager.update_launchers()
-        self.pending_start_timeout = PENDING_STARTUP_TIMEOUT
-        _logger.info('PROCESS MANAGER INTIALIZED')
+
+        # DISABLED: Why are we calling this here?  It's called below in the update thread.
+        # Any error in update_launchers will cause CraySystem to fail to start.
+        # the below thread that has wrappers will protect it and should be used.
+        #self.process_manager.update_launchers()
+        self.logger.info('PROCESS MANAGER INITIALIZED')
+
+        # DISABLED: Not used
+        # self.pending_start_timeout = PENDING_STARTUP_TIMEOUT
+
         #resource management setup
         self.nodes = {} #cray node_id: CrayNode
         self.node_name_to_id = {} #cray node name to node_id map
@@ -158,8 +168,12 @@ class CraySystem(BaseSystem):
         #state update thread and lock
         self._node_lock = threading.RLock()
         self._gen_node_to_queue()
-        self.node_update_thread = thread.start_new_thread(self._run_update_state, tuple())
-        _logger.info('UPDATE THREAD STARTED')
+        self.node_update_thread_kill_queue = Queue()
+        self.node_update_thread_dead = False
+        self.logger.info("_run_update_state thread starting.")
+        self.node_update_thread = threading.Thread(target=self._run_update_state)
+        self.node_update_thread.start()
+        self.logger.info("_run_update_state thread started:%s", self.node_update_thread)
         self.killing_jobs = {}
         #hold on to the initial spec in case nodes appear out of nowhere.
         self.init_spec = None
@@ -350,23 +364,57 @@ class CraySystem(BaseSystem):
             return json.dumps(node_info)
         return node_info
 
+    def _run_and_wrap(self, update_func):
+        self.logger.info('_run_and_wrap %s, tid:%s', update_func, get_current_thread_identifier())
+        update_func_name = update_func.__name__
+        bool_error = False
+        td = -1.0
+        ts = time.time()
+        try:
+            update_func()
+        except Exception:
+            te = time.time()
+            tb_str = sanatize_password('\n'.join(extract_traceback()))
+            td = te - ts
+            self.logger.error('_run_and_wrap(%s): td:%s error:%s' % (update_func_name, td, tb_str))
+            bool_error = True
+        else:
+            te = time.time()
+            td = te - ts
+            bool_error = False
+        return update_func_name, bool_error, td
+
     def _run_update_state(self):
         '''automated node update functions on the update timer go here.'''
-
-        def _run_and_wrap(func):
-            try:
-                func()
-            except Exception:
-                # Prevent this thread from dying.
-                _logger.critical('Error in _run_update_state', exc_info=True)
-
-        while True:
-            # Each of these is wrapped in it's own log-and-preserve block.
-            # The outer try is there to ensure the thread update timeout happens.
-            _run_and_wrap(self.process_manager.update_launchers)
-            _run_and_wrap(self.update_node_state)
-            _run_and_wrap(self._get_exit_status)
-            Cobalt.Util.sleep(UPDATE_THREAD_TIMEOUT)
+        try:
+            self.logger.info('_run_update_state starting, tid:%s, queue:%s',
+                              get_current_thread_identifier(), self.node_update_thread_kill_queue.qsize())
+            while self.node_update_thread_kill_queue.empty() is True:
+                self.logger.info('_run_update_state running, tid:%s', get_current_thread_identifier())
+                # Each of these is wrapped in it's own log-and-preserve block.
+                # The outer try is there to ensure the thread update timeout happens.
+                metadata_lst = []
+                metadata_lst.append(self._run_and_wrap(self.process_manager.update_launchers))
+                metadata_lst.append(self._run_and_wrap(self.update_node_state))
+                metadata_lst.append(self._run_and_wrap(self._get_exit_status))
+                any_error = False
+                for func_name, error, td in metadata_lst:
+                    if error is True:
+                        any_error = True
+                if any_error is True:
+                    self.logger.critical("_run_update_state: error occurred, timings below.")
+                    for func_name, error, td in metadata_lst:
+                        self.logger.critical("%s: %s", func_name, td)
+                self.logger.info('_run_update_state sleeping for %s, tid:%s', self.update_thread_timeout,
+                                  get_current_thread_identifier())
+                Cobalt.Util.sleep(self.update_thread_timeout)
+            self.logger.critical('_run_update_state exiting, tid:%s', get_current_thread_identifier())
+            self.node_update_thread_kill_queue.get(timeout=1.0)
+            self.node_update_thread_dead = True
+        finally:
+            self.node_update_thread_dead = True
+        self.logger.critical('_run_update_state dead, tid:%s', get_current_thread_identifier())
+        return
 
     def _reconstruct_node(self, inven_node, inventory):
         '''Reconstruct a node from statefile information.  Needed whenever we
@@ -905,6 +953,7 @@ class CraySystem(BaseSystem):
             if job_locs is not None and len(job_locs) == int(job['nodes']):
                 compact_locs = compact_num_list(job_locs)
                 #temporary reservation until job actually starts
+                #FIXME: data race, self.pending_starts can be modified without locks
                 self.pending_starts[job['jobid']] = resource_until_time
                 self.reserve_resources_until(compact_locs, resource_until_time, job['jobid'])
         return compact_locs
@@ -1156,6 +1205,7 @@ class CraySystem(BaseSystem):
 
         '''
         completed = False
+        self.logger.info("job %s: tid:%s reserve_resources_until:%s", get_current_thread_identifier(), jobid, new_time)
         with self._node_lock:
             succeeded_nodes = []
             failed_nodes = []
@@ -1166,7 +1216,7 @@ class CraySystem(BaseSystem):
             elif isinstance(location, str):
                 exp_location = expand_num_list(location)
             else:
-                raise TypeError("location type is %s.  Must be one of 'list' or 'str'", type(location))
+                raise TypeError("job %s: location type is %s.  Must be one of 'list' or 'str'", jobid, type(location))
             if new_time is not None:
                 #reserve the location. Unconfirmed reservations will have to
                 #be lengthened.  Maintain a list of what we have reserved, so we
@@ -1230,7 +1280,7 @@ class CraySystem(BaseSystem):
             fatal startup error, will release resource reservations.
 
         Note:
-            Process Group startup and intialization holds the process group data lock.
+            Process Group startup and initialization holds the process group data lock.
 
         '''
         start_apg_timer = time.time()

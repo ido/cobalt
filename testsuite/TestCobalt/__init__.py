@@ -16,6 +16,10 @@ log_dir: /tmp
 
 [bgsched]
 utility_file: /dev/null
+
+[system]
+size: 10
+elogin_hosts: foo:bar
 """)
 fp.close()
 

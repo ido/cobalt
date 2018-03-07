@@ -1527,8 +1527,7 @@ class Job (StateMachine):
             count = 0
             for local_id in self.job_prescript_ids:
                 if local_id == None:
-                    logger.error("Job %s/%s: Script: %s failed to run.",
-                        self.user, self.jobid, script[count])
+                    logger.error("Job %s/%s: Script: %s failed to run.", self.user, self.jobid, script[count])
                     break
                 count += 1
             dbwriter.log_to_db(None, "job_prologue_failed",
@@ -1555,20 +1554,17 @@ class Job (StateMachine):
 
         for script in scripts:
             try:
-               retval = ComponentProxy("system_script_forker").fork(
-                   script, tag, label, None)
-               if retval != None:
-                   script_ids.append(retval)
-               else:
-                   #job failed to run
-                   script_ids = [None]
+                retval = ComponentProxy("system_script_forker", retry=False).fork(script, tag, label, None)
+                if retval != None:
+                    script_ids.append(retval)
+                else:
+                    #job failed to run
+                    script_ids = [None]
             except ComponentLookupError:
-                logger.error("%s: Error connecting to forker. Retrying",
-                        label)
+                logger.error("%s: Error connecting to forker. Retrying", label)
                 raise ComponentLookupError
             except xmlrpclib.Fault:
-                logger.error("%s: Failure in exectuing script: %s",
-                        label, script)
+                logger.error("%s: Failure in exectuing script: %s", label, script)
                 script_ids.append(None)
         return script_ids
 
@@ -1827,8 +1823,7 @@ class Job (StateMachine):
                 else:
                     self._sm_state = 'Job_Prologue_Retry_Release'
             else:
-                logger.info("Job %s/%s: Job Prologue scripts completed "
-                    "successfuly.", self.jobid, self.user)
+                logger.info("Job %s/%s: Job Prologue scripts completed successfuly.", self.jobid, self.user)
                 #if we have recieved a kill, we shouldn't bother running any further
                 #scripts and should invoke cleanup.
                 if (has_private_attr(self, '__signaling_info')  and
@@ -2077,7 +2072,7 @@ class Job (StateMachine):
         elif rc != Job.__rc_retry:
             # if the task failed to run, then proceed with job termination by
             # starting the resource prologue scripts
-            self._sm_log_error("execution failure; initiating job cleanup and "
+            self._sm_log_error("execution l; initiating job cleanup and "
                 "removal", cobalt_log = True)
             dbwriter.log_to_db(None, "failed", "job_prog", JobProgMsg(self))
             self._sm_start_resource_epilogue_scripts()
@@ -3017,7 +3012,7 @@ class Job (StateMachine):
         try:
             self.trigger_event('Progress')
         except:
-            self._sm_log_exception(None, "an exception occurred during a progress event")
+            self._sm_log_exception("an exception occurred during a progress event", cobalt_log=True)
 
     def run(self, nodelist, user = None):
         '''casue the job to go from queued to starting.
@@ -3031,7 +3026,7 @@ class Job (StateMachine):
             raise JobRunError("Jobs in the '%s' state may not be started." % (self.state,), self.jobid,
                 self.state, self._sm_state)
         except:
-            self._sm_log_exception(None, "an unexpected exception occurred while attempting to start the task")
+            self._sm_log_exception("an unexpected exception occurred while attempting to start the task", cobalt_log=True)
             raise JobRunError("An unexpected exception occurred while attempting to start the job.  See log for details.",
                 self.jobid, self.state, self._sm_state)
         finally:
@@ -3078,7 +3073,7 @@ class Job (StateMachine):
         except StateMachineIllegalEventError:
             raise JobPreemptionError("Jobs in the '%s' state may not be preempted." % (self.state,), self.jobid, user, force)
         except:
-            self._sm_log_exception(None, "an unexpected exception occurred while attempting to preempt the task")
+            self._sm_log_exception("an unexpected exception occurred while attempting to preempt the task", cobalt_log=True)
             raise JobPreemptionError("An unexpected exception occurred while attempting to preempt the job.  See log for details.",
                 self.jobid, user, force)
 
@@ -3099,8 +3094,7 @@ class Job (StateMachine):
                 self.trigger_event('Kill', {'user' : user,
                                             'signal' : signame})
             except:
-                self._sm_log_exception(None, "an unexpected exception occurred"
-                    " while attempting to kill the task")
+                self._sm_log_exception("an unexpected exception occurred while attempting to kill the task", cobalt_log=True)
                 raise JobDeleteError("An unexpected exception occurred while "
                     "attempting to delete the job.  See log for details.",
                     self.jobid, user, force, self.state, self._sm_state)
@@ -3115,8 +3109,7 @@ class Job (StateMachine):
                 if self.taskid != None:
                     self.__task_signal(retry = False)
             except:
-                self._sm_log_exception(None, "an exception occurred while "
-                        "attempting to forcibly kill the task")
+                self._sm_log_exception("an exception occurred while attempting to forcibly kill the task", cobalt_log=True)
                 raise JobDeleteError(("An error occurred while forcibly "
                     "killing the job.  The job has been removed from the "
                     "queue; however, resouces may not have been released.  "
@@ -4111,7 +4104,7 @@ class QueueManager(Component):
         try:
             f = open(filename)
         except:
-            self.logger.error("Can't read utility function definitions from file %s" % get_bgsched_config("utility_file", ""))
+            self.logger.error("Can't read utility function definitions from file %s" % filename)
             return
 
         str = f.read()

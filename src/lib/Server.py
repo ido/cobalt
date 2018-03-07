@@ -24,6 +24,7 @@ import time
 import ssl
 
 import Cobalt
+from Cobalt.Util import extract_traceback, sanatize_password
 from Cobalt.Proxy import ComponentProxy
 
 class ForkedChild(Exception):
@@ -181,6 +182,12 @@ class SSLServer (SocketServer.TCPServer, object):
         return "%s://%s:%i" % (protocol, hostname, port)
     url = property(_get_url)
 
+    def handle_error(self, request, client_address):
+        """used to grab the exception and format the traceback from the error."""
+        timeout = request.gettimeout()
+        tb_str = sanatize_password('\n'.join(extract_traceback()))
+        self.logger.error("Exception: request:%s, addr:%s, timeout:%s "
+                          "error:%s", request, client_address, timeout, tb_str)
 
 class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
     
@@ -262,7 +269,9 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             data = ''.join(L)
 
             response = self.server._marshaled_dispatch(data)
-        except: 
+        except:
+            tb_str = sanatize_password('\n'.join(extract_traceback()))
+            self.logger.error("Exception: error:%s", tb_str)
             raise
             self.send_response(500)
             self.end_headers()
@@ -319,7 +328,7 @@ class BaseXMLRPCServer (SSLServer, CobaltXMLRPCDispatcher, object):
         allow_none -- allow None values in xml-rpc
         encoding -- encoding to use for xml-rpc (default UTF-8)
         """
-        
+
         CobaltXMLRPCDispatcher.__init__(self, allow_none, encoding)
         
         if not RequestHandlerClass:
@@ -356,8 +365,9 @@ class BaseXMLRPCServer (SSLServer, CobaltXMLRPCDispatcher, object):
             return
         try:
             ComponentProxy("service-location").register(name, self.url)
-        except Exception, e:
-            self.logger.error("register_with_slp() [%s]" % (e))
+        except Exception:
+            tb_str = sanatize_password('\n'.join(extract_traceback()))
+            self.logger.error("register_with_slp() [%s]" % tb_str)
             raise
     
     def unregister_with_slp (self):
@@ -367,8 +377,9 @@ class BaseXMLRPCServer (SSLServer, CobaltXMLRPCDispatcher, object):
             return
         try:
             ComponentProxy("service-location").unregister(name)
-        except Exception, e:
-            self.logger.error("unregister_with_slp() [%s]" % (e))
+        except Exception:
+            tb_str = sanatize_password('\n'.join(extract_traceback()))
+            self.logger.error("unregister_with_slp() [%s]" % tb_str)
             raise
         else:
             self.logger.info("unregister_with_slp()")
@@ -396,14 +407,11 @@ class BaseXMLRPCServer (SSLServer, CobaltXMLRPCDispatcher, object):
                         self.instance.do_tasks()
                 except:
                     self.logger.error("Unexpected task failure", exc_info=1)
+                # this causes delays such as in control-c
                 Cobalt.Util.sleep(self.timeout)
         except:
             self.logger.error("tasks_thread failed", exc_info=1)
-    
-    
-    
-    
-    
+
     def server_close (self):
         SSLServer.server_close(self)
         if self.register:
@@ -413,6 +421,7 @@ class BaseXMLRPCServer (SSLServer, CobaltXMLRPCDispatcher, object):
     
     def _get_require_auth (self):
         return getattr(self.RequestHandlerClass, "require_auth", False)
+
     def _set_require_auth (self, value):
         self.RequestHandlerClass.require_auth = value
     require_auth = property(_get_require_auth, _set_require_auth)
@@ -422,6 +431,7 @@ class BaseXMLRPCServer (SSLServer, CobaltXMLRPCDispatcher, object):
             return self.RequestHandlerClass.credentials
         except AttributeError:
             return dict()
+
     def _set_credentials (self, value):
         self.RequestHandlerClass.credentials = value
     credentials = property(_get_credentials, _set_credentials)
@@ -439,7 +449,8 @@ class BaseXMLRPCServer (SSLServer, CobaltXMLRPCDispatcher, object):
                 try:
                     self.handle_request()
                 except socket.timeout:
-                    pass
+                    self.logger.error("socket.timeout error in handle_request",
+                                      exc_info=1)
                 except:
                     self.logger.error("Got unexpected error in handle_request",
                                       exc_info=True)
@@ -472,22 +483,23 @@ class BaseXMLRPCServer (SSLServer, CobaltXMLRPCDispatcher, object):
         self.logger.info("ping(%s)" % (", ".join([repr(arg) for arg in args])))
         return args
 
-
 class XMLRPCServer (SocketServer.ThreadingMixIn, BaseXMLRPCServer): 
     
     def __init__ (self, server_address, RequestHandlerClass=None,
                   keyfile=None, certfile=None,
                   timeout=10,
                   logRequests=False,
-                  register=True, allow_none=True, encoding=None, cafile=None):
+                  register=True, allow_none=True, encoding=None, cafile=None,
+                  sleeptime=10.0):
         
         
         BaseXMLRPCServer.__init__(self, server_address, RequestHandlerClass, keyfile, 
-                                  certfile, timeout, logRequests, register, allow_none, encoding, cafile=cafile)
-        
+                                  certfile, timeout, logRequests, register, allow_none, encoding, cafile=cafile,
+                                  )
+        self.sleeptime=sleeptime
         self.task_thread = threading.Thread(target=self._tasks_thread)
 
-    
+    #FIXME: this will fail if a get is called before self._register is defined
     def _get_register (self):
         return self._register
     
@@ -518,7 +530,7 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, BaseXMLRPCServer):
                         self.instance.do_tasks()
                 except:
                     self.logger.error("Unexpected task failure", exc_info=1)
-                Cobalt.Util.sleep(self.timeout)
+                Cobalt.Util.sleep(self.sleeptime)
         except:
             self.logger.error("tasks_thread failed", exc_info=1)
     
@@ -537,7 +549,8 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, BaseXMLRPCServer):
                 try:
                     self.handle_request()
                 except socket.timeout:
-                    pass
+                    self.logger.error("socket.timeout error in handle_request",
+                                      exc_info=1)
                 except:
                     self.logger.error("Got unexpected error in handle_request",
                                       exc_info=1)

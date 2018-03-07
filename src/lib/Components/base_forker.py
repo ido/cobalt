@@ -538,6 +538,12 @@ class BaseChild (object):
         if self.pipe_write is not None:
             self._close_pipe_and_check(self.pipe_write)
 
+
+    def _handle_preexec_error_and_exit(self, exc_info):
+        _logger.error("%s: pre-exec function failed; terminating job", self.label, exc_info=exc_info)
+        self.print_clf_error("forker's pre-exec methods failed; terminating job")
+        os._exit(255)
+
     def start(self):
 
         if self.stdin_string is not None:
@@ -590,10 +596,10 @@ class BaseChild (object):
         try:
             self.preexec_first()
             self.preexec_last()
+        except SystemExit:
+            self._handle_preexec_error_and_exit(exc_info=False)
         except:
-            _logger.error("%s: pre-exec function failed; terminating job", self.label, exc_info = True)
-            self.print_clf_error("forker's pre-exec methods failed; terminating job")
-            os._exit(255)
+            self._handle_preexec_error_and_exit(exc_info=True)
 
         if not self.exe:
             self.exe = self.args[0]
