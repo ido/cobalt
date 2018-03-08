@@ -18,7 +18,8 @@ import signal
 import sys
 import ConfigParser
 import time
-
+import subprocess
+from ConfigParser import NoOptionError, NoSectionError
 
 import Cobalt
 import Cobalt.Components.base
@@ -138,6 +139,53 @@ class BaseChild (object):
         self._cobalt_log_failed = False
         self._cobalt_log_reporting_errors = False
         self._cobalt_log_have_blank_line = False
+        # cgroup control
+        self.use_cgroups = False
+        self.cgclassify_path = '/usr/bin/cgclassify'
+        self.cgclassify_args = None
+        self.cgroup_failure_fatal = False
+        self._set_cgroup_config('forker')
+
+
+    def _set_cgroup_config(self, section):
+        '''Read and set cgroup configuration for the forker instance from config file
+
+        Args:
+            section - section of cobalt config file to use.  Other subclasses may
+                      call this with different sections to override the configuration
+
+        Returns:
+                None
+
+        Side Effects:
+            Sets use_cgexec, cgexec_path, and cgexec_args for this instance.
+
+        Notes:
+            * Override goes from forker to forker.implementation to forker.name.  More specific wins.
+            * This gets called on both child init and will be reset for childeren on re-initialization from a statefile.
+
+        '''
+        #set defaults in forker section.  forker.NAME sections override this behavior
+
+        new_use_cgroups = get_config_option(section, 'use_cgroups', None)
+        new_cgroup_failure_fatal = get_config_option(section, 'cgroup_failure_fatal', None)
+        new_cgclassify_path = get_config_option(section, 'cgclassify_path', None)
+        new_cgclassify_args = get_config_option(section, 'cgclassify_args', None)
+        if new_use_cgroups is not None:
+            self.use_cgroups = new_use_cgroups.lower() in Cobalt.Util.config_true_values
+        if new_cgroup_failure_fatal is not None:
+            self.cgroup_failure_fatal = new_cgroup_failure_fatal.lower() in Cobalt.Util.config_true_values
+        if new_cgclassify_path is not None:
+            self.cgclassify_path = new_cgclassify_path
+        if new_cgclassify_args is not None:
+            self.cgclassify_args = new_cgclassify_args
+            self.cgclassify_args = self.cgclassify_args.split(' ') #Nothing we're passing has spaces we need to link back up
+        return
+
+    def _log_cgroup_info(self):
+        _logger.debug('Cgroup configuration: use_cgroup: %s\ncgclassify_path: %s\ncgclassify_args: %s\ncgroup_failure_fatal: %s',
+                self.use_cgroups, self.cgclassify_path, self.cgclassify_args, self.cgroup_failure_fatal)
+        return
 
     def __getstate__(self):
         '''
@@ -174,6 +222,7 @@ class BaseChild (object):
             self.lost_child = True
             self.return_output = False
             self.complete = True
+        self._set_cgroup_config('forker')
 
     def export_state(self):
         d = {}
@@ -254,6 +303,21 @@ class BaseChild (object):
                 self._cobalt_log_failed = True
 
     def preexec_first(self):
+        '''Configuration changes that should happen early in process life.
+        If we are being used for a forker that executes setuid/setgid operations,
+        this is the point where we're still root.
+
+        Args:
+            None
+
+        Returns:
+            None
+
+        Notes:
+            Current version sets cgroups if cgroups are enabled, sets the process sid
+            and the umask.
+
+        '''
         try:
             os.setsid()
             _logger.debug("%s: session id set to %s", self.label, os.getsid(os.getpid()))
@@ -268,6 +332,32 @@ class BaseChild (object):
             except:
                 _logger.error("%s: failed to set umask to %s", self.label, self.umask)
                 self._umask_failed = True
+
+        # Migrate this process (and all it's child processes) to an admin-specified cgroup
+        if self.use_cgroups:
+            cgroup_args = [self.cgclassify_path]
+            cgroup_args.extend(self.cgclassify_args)
+            cgroup_args.append(str(os.getpid())) # going as a string to the command line.
+            _logger.info('%s: setting cgroup with "%s"', self.label, " ".join(cgroup_args))
+            try:
+                cgclassify = subprocess.Popen(cgroup_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            except:
+                _logger.error("%s: unexpected error executing cgclassify with parameters: %s", self.label, cgroup_args,
+                        exc_info=True)
+                if self.cgroup_failure_fatal:
+                    _logger.error("%s: cgroup failure fatal flag set: terminating task", self.label)
+                    raise
+            else:
+                stdout, stderr = cgclassify.communicate(None)
+                if cgclassify.returncode != 0:
+                    _logger.error("%s: cgclassify failed with status: %s", self.label, cgclassify.returncode)
+                    _logger.error("%s: cgclassify stdout: %s", self.label, stdout)
+                    _logger.error("%s: cgclassify stderr: %s", self.label, stderr)
+                    if self.cgroup_failure_fatal:
+                        _logger.error("%s: cgroup failure fatal flag set: terminating task", self.label)
+                        raise RuntimeError('%s: Unable to set cgroup with cgclassify' % self.label)
+                else:
+                    _logger.info('%s: cgclassify successful', self.label)
 
     def preexec_last(self):
         if self.stdin_string is not None:
@@ -451,7 +541,7 @@ class BaseChild (object):
     def start(self):
 
         if self.stdin_string is not None:
-            _logger.debug("%s: setting stdin pipe",  self.label)
+            _logger.debug("%s: setting stdin pipe", self.label)
             try:
                 #self.pipe_read, self.pipe_write = os.pipe()
                 self.pipe_child_stdin = os.pipe()
@@ -464,7 +554,7 @@ class BaseChild (object):
                     _logger.critical("%s: FATAL: FIFO creation failed with error: %s",
                             self.label, errno.errorcode[exc.errno])
         if self.use_stdout_string:
-            _logger.debug("%s: setting stdout pipe",  self.label)
+            _logger.debug("%s: setting stdout pipe", self.label)
             try:
                 #self.pipe_read, self.pipe_write = os.pipe()
                 self.pipe_child_stdout = os.pipe()
@@ -675,7 +765,7 @@ class BaseForker (Component):
             try:
                 child = self.child_cls(label_prefix=label, tag=tag, args=args,
                         env=env, runid=runid, data=preexec_data,
-                        stdin_string=stdin_string, stdout_string=stdout_string)
+                        stdin_string=stdin_string, stdout_string=stdout_string, forker_name=self.name)
             except:
                 _logger.error("%s: failed to create child object; aborting fork", label, exc_info=True)
             else:

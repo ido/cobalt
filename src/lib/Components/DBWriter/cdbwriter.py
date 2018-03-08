@@ -21,7 +21,6 @@ import Cobalt.Util
 from Cobalt.Statistics import Statistics
 from Cobalt.Components.DBWriter.cdbMessages import LogMessage, LogMessageDecoder, LogMessageEncoder
 from Cobalt.Components.base import Component, exposed, automatic, query, locking
-from Cobalt.Proxy import ComponentProxy
 
 __revision__ = '$Revision: 1 $'
 
@@ -29,8 +28,8 @@ logger = logging.getLogger("Cobalt.Components.cdbwriter")
 config = ConfigParser.ConfigParser()
 config.read(Cobalt.CONFIG_FILES)
 if not config.has_section('cdbwriter'):
-   logger.error('"cdbwriter" section missing from config file.')
-   sys.exit(1)
+    logger.error('"cdbwriter" section missing from config file.')
+    sys.exit(1)
 
 def get_cdbwriter_config(option, default):
     try:
@@ -201,18 +200,18 @@ class MessageQueue(Component):
                 self.close_overflow()
         #and now queue as normal
 
-        msgDict = None
+        msg_dict = None
 
         try:
-            msgDict = self.decoder.decode(msg)
+            msg_dict = self.decoder.decode(msg)
 
         except ValueError:
-            logger.error("Bad message recieved.  Failed to decode string %s", msg)
+            logger.error("Bad message received.  Failed to decode string %s", msg)
             return
         except:
             logging.debug(traceback.format_exc())
 
-        self.msg_queue.append(msgDict)
+        self.msg_queue.append(msg_dict)
 
     add_message = exposed(add_message)
 
@@ -236,6 +235,7 @@ class MessageQueue(Component):
 
     def del_overflow(self):
         os.remove(self.overflow_filename)
+
 
     def queue_to_overflow(self):
 
@@ -267,7 +267,10 @@ def decodeLogMsg(msgStr):
 
 #Class for handling database output
 class DatabaseWriter(object):
+    '''Handle output of queued messages to a backend database.  By changing the db class, we can
+    use other database backends.
 
+    '''
     def __init__(self, dbName, username, password, schema):
         self.db = db2util.db()
 
@@ -333,8 +336,6 @@ class DatabaseWriter(object):
                 self.__addResMsg(logMsg)
             else:
                 self.__modifyResMsg(logMsg)
-        #elif logMsg.item_type == 'partition':
-         #  print "Not yet implemented."
         elif logMsg.item_type == 'job_prog':
             self.__addJobProgMsg(logMsg, logMsg.item)
         elif logMsg.item_type == 'job_data':
@@ -747,19 +748,17 @@ class ResDataData(db2util.dao):
                "and reservation_data.resid = %d" % record.v.RESID,
                "order by entry_time DESC")
 
+
         return self.db.getDict(' '.join(SQL))
 
     def search (self, record):
-
         SQL = "select ID from %s.%s where resid = %s" % (self.table.schema,
-                                                         self.table.table,
-                                                         record.v.RESID)
+                                                          self.table.table,
+                                                          record.v.RESID)
         return self.db.getDict(SQL)
 
 
-
 class JobDataData(db2util.dao):
-
 
     def find_dummy(self, jobid):
         """returns a dummy record.  If there is none for this job, returns None"""
@@ -826,24 +825,19 @@ class JobProgData(db2util.dao):
 
     """helpers for getting at job progress data"""
 
-    def get_list_by_data_id(self, job_data_id):
 
+    def get_list_by_data_id(self, job_data_id):
         """gets a list of all of the progress objects pointing to
            a job_data entry."""
-
         SQL = ("select id" ,
                "from job_prog",
                "where job_prog.job_data_id = %d" % job_data_id,
                "order by entry_time")
-
         resultdicts = self.db.getDict(' '.join(SQL))
         if not resultdicts:
             return []
 
         return [self.getID(result['ID']) for result in resultdicts]
-
-
-
 
 class JobDepsData(db2util.dao):
 
