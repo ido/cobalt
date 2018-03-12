@@ -89,6 +89,7 @@ class SystemScriptChild (BaseChild):
                 raise
 
         self.return_output = True
+        self._set_cgroup_config('forker.system')
 
     def __getstate__(self):
         state = {}
