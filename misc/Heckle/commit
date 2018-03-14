@@ -1,7 +1,0 @@
-#!/bin/bash +x
-
-#Script to update files on server
-
-cd ~/cobalt/trunk
-svn commit
-cd ~
