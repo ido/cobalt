@@ -29,6 +29,17 @@ class InspectMock(MagicMock):
             return MagicMock(return_value=1)
         return super(InspectMock, self).__getattr__(attr)
 
+child_mock = MagicMock()
+
+class InspectMockMultiCall(MagicMock):
+    '''allow us to inspect what is going on within a proxy call'''
+    def __getattr__(self, attr):
+        if attr == 'get_children':
+            return child_mock
+        elif attr == 'fork':
+            return MagicMock(return_value=1)
+        return super(InspectMockMultiCall, self).__getattr__(attr)
+
 _loc_list = [{'name': 'system', 'location': 'https://localhost:52140'},
              {'name': 'system_script_forker', 'location': 'https://localhost:49242'},
              {'name': 'alps_script_forker_localhost_0', 'location': 'https://localhost:39303'},
@@ -209,6 +220,50 @@ class TestProcessManager(object):
         pgroups = self.process_manager.process_groups
         assert len(pgroups) == 0, "%s groups, should have 0" % len(pgroups)
         assert sorted(pgroups.keys()) == [], "groups should be empty"
+
+    @patch('Cobalt.Proxy.DeferredProxy', side_effect=InspectMockMultiCall)
+    def test_update_groups_get_status(self, *args, **kwargs):
+        '''ProcessGroupManager.update_groups: set exit status.'''
+        global child_mock
+        child_mock = MagicMock()
+        child_mock.side_effect=[[{'id': 1, 'exit_status': 0, 'complete': True, 'lost_child': False, 'signum': 0}],
+                          [],
+                         #[{'id': 1, 'exit_status': None, 'complete': True, 'lost_child': True, 'signum': 0}],
+                         ]
+        now = int(time.time())
+        pgroups = self.process_manager.process_groups
+        self.process_manager.init_groups([self.base_spec])
+        self.process_manager.start_groups([1])
+        pgroups[1].startup_timeout = now - 120
+        self.process_manager.update_groups()
+        pgroups = self.process_manager.process_groups
+        assert len(pgroups) == 1, "%s groups, should have 1" % len(pgroups)
+        assert sorted(pgroups.keys()) == [1], "wrong groups."
+        component_call_count = args[0].call_count
+        assert component_call_count == 3, "Component called %s times, should be 3" % component_call_count
+        assert pgroups[1].exit_status == 0, "Expected status 0, got status %s" % pgroups[1].exit_status
+
+    @patch('Cobalt.Proxy.DeferredProxy', side_effect=InspectMockMultiCall)
+    def test_update_groups_get_status_only_once(self, *args, **kwargs):
+        '''ProcessGroupManager.update_groups: set exit status once.'''
+        global child_mock
+        child_mock = MagicMock()
+        child_mock.side_effect=[[{'id': 1, 'exit_status': 0, 'complete': True, 'lost_child': False, 'signum': 0}],
+                               [],
+                               ]
+        now = int(time.time())
+        pgroups = self.process_manager.process_groups
+        self.process_manager.init_groups([self.base_spec])
+        self.process_manager.start_groups([1])
+        pgroups[1].startup_timeout = now - 120
+        self.process_manager.update_groups()
+        self.process_manager.update_groups()
+        pgroups = self.process_manager.process_groups
+        assert len(pgroups) == 1, "%s groups, should have 1" % len(pgroups)
+        assert sorted(pgroups.keys()) == [1], "wrong groups."
+        component_call_count = args[0].call_count
+        assert component_call_count == 4, "Component called %s times, should be 4" % component_call_count
+        assert pgroups[1].exit_status == 0, "Expected status 0, got status %s" % pgroups[1].exit_status
 
 class TestPMUpdateLaunchers(object):
 
