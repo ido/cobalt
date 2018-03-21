@@ -18,8 +18,8 @@ src/Cobalt
 .DS_Store
 *.swo
 *.swp
+/.gitignore
 *.o
 *.so
 tools/pybgsched/*.py
 tools/pybgsched/*.cxx
-

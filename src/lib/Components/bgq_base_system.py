@@ -712,7 +712,7 @@ class BGProcessGroupDict(ProcessGroupDict):
 
 
 class BGBaseSystem (Component):
-    """base system class. 
+    """base system class.
 
     Methods:
     add_blocks -- tell the system to manage blocks (exposed, query)

@@ -2013,48 +2013,20 @@ def test_cqadm_run_option_3():
 
     cmdout    = ''
 
-    cmderr    = ''
+    cmderr    = \
+"""Force-run not supported on systems running the cluster_system component
+"""
 
     stubout   = \
 """
-GET_PARTITIONS
+GET_IMPLEMENTATION
 
-plist: [{'name': 'mayaguez'}]
-
-RUN_JOBS
-
-location:['mayaguez']
-whoami:gooduser
-jobid:1
-jobid type: <type 'int'>
-location:*
-location type: <type 'str'>
-tag:job
-tag type: <type 'str'>
-walltime:*
-walltime type: <type 'str'>
-jobid:2
-jobid type: <type 'int'>
-location:*
-location type: <type 'str'>
-tag:job
-tag type: <type 'str'>
-walltime:*
-walltime type: <type 'str'>
-jobid:3
-jobid type: <type 'int'>
-location:*
-location type: <type 'str'>
-tag:job
-tag type: <type 'str'>
-walltime:*
-walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       0, # Expected return status 
+                       256, # Expected return status 
                        cmdout, # Expected command output
                        stubout, # Expected stub functions output
                        cmderr, # Expected command error output 

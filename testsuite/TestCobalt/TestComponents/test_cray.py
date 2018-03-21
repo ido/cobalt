@@ -8,13 +8,26 @@ elogin_hosts: foo:bar
 """
 import Cobalt
 import TestCobalt
+import sys
 config_file = Cobalt.CONFIG_FILES[0]
 config_fp = open(config_file, "w")
 config_fp.write(SYSTEM_CONFIG_ENTRY)
 config_fp.close()
 
+from mock import MagicMock, Mock, patch
+# need to mock the import of a dependency library for sending messages to BASIL.
+# None of these tests actually communicate with BASIL and this library should be a stub
+# for these purposes
+cray_messaging_mock = MagicMock()
+# This error gets passed through the ALPSBridge module as ALPSError, but originates from
+# cray_messaging.
+cray_messaging_mock.ALPSError = ValueError
+sys.modules['cray_messaging'] = cray_messaging_mock
+
 from nose.tools import raises
 from testsuite.TestCobalt.Utilities.assert_functions import assert_match, assert_not_match
+
+
 from Cobalt.Components.system.CrayNode import CrayNode
 import Cobalt.Exceptions
 import time
@@ -22,7 +35,6 @@ from Cobalt.Components.system.CraySystem import CraySystem
 from Cobalt.Components.system.base_pg_manager import ProcessGroupManager
 import Cobalt.Components.system.AlpsBridge as AlpsBridge
 
-from mock import MagicMock, Mock, patch
 
 def is_match(a, b):
     return a is b
@@ -216,11 +228,9 @@ class TestCraySystem(object):
 
     @raises(ValueError)
     def test_assemble_queue_data_attrs_bad_location(self):
-        '''CraySystem._assemble_queue_data: raise error for location completely outside of
-        queue'''
+        '''CraySystem._assemble_queue_data: raise error for location completely outside of queue'''
         self.base_job['attrs'] = {'location':'6'}
         nodelist = self.system._assemble_queue_data(self.base_job)
-        assert nodelist == ['3'], 'Wrong node in list %s' % nodelist
 
     def test_assemble_queue_data_attrs_location_multi(self):
         '''CraySystem._assemble_queue_data: return only attr locaiton complex loc string'''
@@ -396,59 +406,83 @@ class TestCraySystem(object):
 
     def test_find_queue_equivalence_classes_single(self):
         '''CraySystem.find_queue_equivalence_classes: single queue'''
-        self.system.find_queue_equivalence_classes([], ['default'], [])
-        self.system.current_equivalence_classes
-        assert len(self.system.current_equivalence_classes) == 1, 'Have %s equiv classes, should have 1.'
-        for equiv in self.system.current_equivalence_classes:
+        self.system._gen_node_to_queue()
+        equivs = self.system.find_queue_equivalence_classes({}, ['default'], [])
+        assert len(equivs) == 1, 'Have %s equiv classes, should have 1.'
+        for equiv in equivs:
             assert equiv['queues'] == ['default'], 'mismatch in returned equiv class queues'
 
     def test_find_queue_equivalence_classes_overlap(self):
         '''CraySystem.find_queue_equivalence_classes: partial overlapping queues'''
         self.system.nodes['1'].queues = ['foo']
         self.system.nodes['2'].queues = ['foo', 'default']
-        self.system.find_queue_equivalence_classes([], ['default', 'foo'], [])
-        assert len(self.system.current_equivalence_classes) == 1, (
+        self.system._gen_node_to_queue()
+        equivs = self.system.find_queue_equivalence_classes({}, ['default', 'foo'], [])
+        assert len(equivs) == 1, (
                 'Have %s equiv classes, should have 1.' %
-                len(self.system.current_equivalence_classes))
-        for equiv in self.system.current_equivalence_classes:
+                len(equivs))
+        for equiv in equivs:
             assert sorted(equiv['queues']) == ['default', 'foo'], (
+                    'mismatch in returned equiv class queues %s' %
+                    equiv['queues'])
+
+    def test_find_queue_equivalence_classes_overlap_single_active(self):
+        '''CraySystem.find_queue_equivalence_classes: partial overlapping queues one active queue only'''
+        self.system.nodes['1'].queues = ['foo']
+        self.system.nodes['2'].queues = ['foo', 'default']
+        self.system._gen_node_to_queue()
+        equivs = self.system.find_queue_equivalence_classes({}, ['foo'], [])
+        assert len(equivs) == 1, (
+                'Have %s equiv classes, should have 1.' %
+                len(equivs))
+        for equiv in equivs:
+            assert sorted(equiv['queues']) == ['foo'], (
                     'mismatch in returned equiv class queues %s' %
                     equiv['queues'])
 
     def test_find_queue_equivalence_classes_disjoint(self):
         '''CraySystem.find_queue_equivalence_classes: disjoint queues'''
+        # we return one class now, no matter what.
         self.system.nodes['1'].queues = ['foo']
         self.system.nodes['2'].queues = ['foo']
-        val = self.system.find_queue_equivalence_classes([], ['default', 'foo'], [])
-        self.system.current_equivalence_classes
-        expect = [{'reservations': [], 'queues': ['foo']},
-                  {'reservations': [], 'queues': ['default']}]
-        assert self.system.current_equivalence_classes == expect, (
-                'Expected %s, got %s' % (expect,
-                    self.system.current_equivalence_classes))
-        assert val == self.system.current_equivalence_classes, (
-                "val/current_equivalence_class mismatch\nReturn: %s\nInternal: %s")
+        self.system._gen_node_to_queue()
+        equivs = self.system.find_queue_equivalence_classes({}, ['default', 'foo'], [])
+        expect = [{'reservations': [], 'queues': ['default', 'foo']}]
+        assert equivs == expect, 'Expected %s, got %s' % (expect, equivs)
 
     def test_find_queue_equivalence_classes_disjoint_reservation(self):
         '''CraySystem.find_queue_equivalence_classes: bind reservation all eq classes'''
         self.system.nodes['1'].queues = ['foo']
         self.system.nodes['2'].queues = ['foo']
-        val = self.system.find_queue_equivalence_classes({'test':'1-2,4-5'}, ['default', 'foo'], [])
-        self.system.current_equivalence_classes
-        expect = [{'reservations': ['test'], 'queues': ['foo']},
-                  {'reservations': ['test'], 'queues': ['default']}]
-        assert self.system.current_equivalence_classes == expect, (
-                'Expected %s, got %s' % (expect,
-                    self.system.current_equivalence_classes))
-        assert val == self.system.current_equivalence_classes, (
-                "val/current_equivalence_class mismatch\nReturn: %s\nInternal: %s")
+        self.system._gen_node_to_queue()
+        equivs = self.system.find_queue_equivalence_classes({'test':'1-2,4-5'}, ['default', 'foo'], [])
+        expect = [{'reservations': ['test'], 'queues': ['default', 'foo']}]
+        assert equivs == expect, 'Expected %s, got %s' % (expect, equivs)
+
+    def test_find_queue_equivalence_classes_disjoint_fuse_res(self):
+        '''CraySystem.find_queue_equivalence_classes: fuse equivalence classes with overlapping reservation'''
+        self.system.nodes['1'].queues = ['foo']
+        self.system.nodes['2'].queues = ['foo']
+        self.system._gen_node_to_queue()
+        equivs = self.system.find_queue_equivalence_classes({'test':'1-2,4-5'}, ['default', 'foo'], [])
+        expect = [ {'reservations': ['test'], 'queues': ['default', 'foo']}]
+        assert equivs == expect, 'Expected %s, got %s' % (expect, equivs)
+
+    def test_find_queue_equivalence_classes_disjoint_single_res(self):
+        '''CraySystem.find_queue_equivalence_classes: bind only appropriate equivalence class'''
+        self.system.nodes['1'].queues = ['foo']
+        self.system.nodes['2'].queues = ['foo']
+        self.system._gen_node_to_queue()
+        equivs = self.system.find_queue_equivalence_classes({'test':'3-5'}, ['default', 'foo'], [])
+        expect = [{'reservations': ['test'], 'queues': ['default', 'foo']}]
+        assert equivs == expect, 'Expected %s, got %s' % (expect, equivs)
 
     def test_clear_draining_for_queues_full_clear(self):
         '''CraySystem._clear_draining_for_queues: clear queue's draining times'''
         for node in self.system.nodes.values():
-            node.set_drain(100.0, 300)
-        self.system.find_queue_equivalence_classes([], ['default'], [])
-        self.system._clear_draining_for_queues('default')
+            node.set_drain(101.0, 300)
+        self.system.find_queue_equivalence_classes({}, ['default'], [])
+        self.system._clear_draining_for_queues()
         for node in self.system.nodes.values():
             assert not node.draining, "node %s marked as draining!" % node.node_id
 
@@ -456,26 +490,39 @@ class TestCraySystem(object):
         '''CraySystem._clear_draining_for_queues: clear whole equivalence class'''
         self.system.nodes['1'].queues = ['foo']
         self.system.nodes['2'].queues = ['foo', 'default']
+        self.system._gen_node_to_queue()
         for node in self.system.nodes.values():
             node.set_drain(100.0, 300)
-        self.system.find_queue_equivalence_classes([], ['default', 'foo'], [])
-        self.system._clear_draining_for_queues('default')
+        self.system.find_queue_equivalence_classes({}, ['default', 'foo'], [])
+        self.system._clear_draining_for_queues()
         for node in self.system.nodes.values():
             assert not node.draining, "node %s marked as draining!" % node.node_id
 
-    def test_clear_drianing_for_queues_one_equiv(self):
+    def test_clear_draining_for_queues_one_equiv(self):
         '''CraySystem._clear_draining_for_queues: clear only one equivalence class'''
+        # There is now one and only one equivalence class so everything should be cleared
         self.system.nodes['1'].queues = ['foo']
         self.system.nodes['2'].queues = ['foo']
+        self.system._gen_node_to_queue()
         for node in self.system.nodes.values():
             node.set_drain(100.0, 300)
-        self.system.find_queue_equivalence_classes([], ['default', 'foo'], [])
-        self.system._clear_draining_for_queues('default')
+        self.system.find_queue_equivalence_classes({}, ['default', 'foo'], [])
+        self.system._clear_draining_for_queues()
         for node in self.system.nodes.values():
-            if node.node_id not in ['1', '2']:
-                assert not node.draining, "node %s marked as draining!" % node.node_id
-            else:
-                assert node.draining, "drain should not be cleared for node %s" % node.node_id
+            assert not node.draining, "node %s marked as draining!" % node.node_id
+
+    def test_clear_draining_for_queues_reservation(self):
+        '''CraySystem._clear_draining_for_queues: clear specified reservation nodes'''
+        # There is now one and only one equivalence class so everything should be cleared
+        self.system.nodes['1'].queues = ['foo']
+        self.system.nodes['2'].queues = ['foo']
+        self.system._gen_node_to_queue()
+        for node in self.system.nodes.values():
+            node.set_drain(100.0, 300)
+        self.system.find_queue_equivalence_classes({}, ['default', 'foo'], [])
+        self.system._clear_draining_for_queues()
+        for node in self.system.nodes.values():
+            assert not node.draining, "node %s marked as draining!" % node.node_id
 
     def test_select_nodes_for_draining_single_job(self):
         '''CraySystem._select_nodes_for_draining: drain nodes from a single job'''
@@ -580,7 +627,7 @@ class TestCraySystem(object):
         self.system.nodes['5'].queues = ['default', 'bar']
         self.system.nodes['2'].status = 'busy'
         self.system.nodes['5'].status = 'busy'
-        self.system.find_queue_equivalence_classes([],['default', 'bar'],[])
+        self.system.find_queue_equivalence_classes({},['default', 'bar'],[])
         self.system._gen_node_to_queue()
         self.base_job['nodes'] = 3
         drain_nodes = self.system._select_nodes_for_draining(self.base_job,
@@ -705,7 +752,7 @@ class TestCraySystem(object):
         jobs[1]['walltime'] = 400
         self.system.reserve_resources_until('1', 100, 1)
         self.system.nodes['1'].status = 'busy'
-        self.system.find_queue_equivalence_classes([], ['default'], [])
+        self.system.find_queue_equivalence_classes({}, ['default'], [])
         retval = self.system.find_job_location(jobs, [[['1'], 600]], [])
         assert_match(retval, {}, "no location should be assigned")
         assert_match(self.system.pending_starts, {}, "no starts should be pending")
@@ -728,7 +775,7 @@ class TestCraySystem(object):
         jobs[1]['walltime'] = 400
         self.system.reserve_resources_until('1', 600, 1)
         self.system.nodes['1'].status = 'busy'
-        self.system.find_queue_equivalence_classes([], ['default'], [])
+        self.system.find_queue_equivalence_classes({}, ['default'], [])
         retval = self.system.find_job_location(jobs, [[['1'], 600]], [])
         assert_match(retval, {3: ['2']}, "bad location")
         assert_match(self.system.pending_starts, {3: 800.0}, "no starts should be pending")
@@ -754,7 +801,7 @@ class TestCraySystem(object):
         self.system.nodes['3'].status = 'busy'
         self.system.nodes['4'].status = 'busy'
         self.system.nodes['5'].status = 'busy'
-        self.system.find_queue_equivalence_classes([], ['default'], [])
+        self.system.find_queue_equivalence_classes({}, ['default'], [])
         retval = self.system.find_job_location(jobs, [[['3-5'], 600]], [])
         assert_match(retval, {3: ['1-2']}, 'bad location')
         assert_match(self.system.pending_starts, {3: 800.0}, "bad pending start")
@@ -781,7 +828,7 @@ class TestCraySystem(object):
         self.system.nodes['2'].status = 'busy'
         self.system.nodes['3'].status = 'down'
         self.system.nodes['5'].status = 'busy'
-        self.system.find_queue_equivalence_classes([], ['default'], [])
+        self.system.find_queue_equivalence_classes({}, ['default'], [])
         retval = self.system.find_job_location(jobs, [[['2,5'], 600]], [])
         assert_match(retval, {3: ['1,4']}, 'bad location')
         assert_match(self.system.pending_starts, {3: 800.0}, "bad pending start")
@@ -810,7 +857,7 @@ class TestCraySystem(object):
         self.system.update_nodes({'queues': 'bar:default'}, ['4', '5'], None)
         self.system.nodes['2'].status = 'busy'
         self.system.nodes['5'].status = 'busy'
-        self.system.find_queue_equivalence_classes([], ['default', 'foo', 'bar'], [])
+        self.system.find_queue_equivalence_classes({}, ['default', 'foo', 'bar'], [])
         retval = self.system.find_job_location(jobs, [[['2,5'], 600]], [])
         assert_match(retval, {}, 'bad location')
         assert_match(self.system.pending_starts, {}, "bad pending start")
@@ -841,7 +888,7 @@ class TestCraySystem(object):
         self.system.update_nodes({'queues': 'bar:default'}, ['4', '5'], None)
         self.system.nodes['2'].status = 'busy'
         self.system.nodes['5'].status = 'busy'
-        self.system.find_queue_equivalence_classes([], ['default', 'foo', 'bar'], [])
+        self.system.find_queue_equivalence_classes({}, ['default', 'foo', 'bar'], [])
         retval = self.system.find_job_location(jobs, [[['2,5'], 1000]], [])
         assert_match(retval, {3: ['4']}, 'bad location')
         assert_match(self.system.pending_starts, {3: 800.0}, "bad pending start")
@@ -867,7 +914,7 @@ class TestCraySystem(object):
         jobs[1]['walltime'] = 400
         self.system.reserve_resources_until('1', 600, 1)
         self.system.nodes['1'].status = 'busy'
-        self.system.find_queue_equivalence_classes([], ['default'], [])
+        self.system.find_queue_equivalence_classes({}, ['default'], [])
         retval = self.system.find_job_location(jobs, [[['1'], 600]], [])
         assert_match(retval, {}, 'bad location')
         assert_match(self.system.pending_starts, {}, "bad pending start")
@@ -900,7 +947,7 @@ class TestCraySystem(object):
         self.system.nodes['2'].status = 'busy'
         self.system.nodes['3'].status = 'busy'
         self.system.nodes['4'].status = 'busy'
-        self.system.find_queue_equivalence_classes([], ['default'], [])
+        self.system.find_queue_equivalence_classes({}, ['default'], [])
         retval = self.system.find_job_location(jobs, [[['2-3'], 550.0], [['1'],
             600.0], [['4'], 700.0]], [])
         assert_match(retval, {}, 'bad location')
@@ -935,7 +982,7 @@ class TestCraySystem(object):
         self.system.nodes['2'].status = 'busy'
         self.system.nodes['3'].status = 'busy'
         self.system.nodes['4'].status = 'busy'
-        self.system.find_queue_equivalence_classes([], ['default'], [])
+        self.system.find_queue_equivalence_classes({}, ['default'], [])
         retval = self.system.find_job_location(jobs, [[['2-3'], 550.0], [['1,4'],
             600.0]], [])
         assert_match(retval, {4: ['5']}, 'bad location')
@@ -970,7 +1017,7 @@ class TestCraySystem(object):
         self.system.nodes['2'].status = 'busy'
         self.system.nodes['3'].status = 'busy'
         self.system.nodes['4'].status = 'busy'
-        self.system.find_queue_equivalence_classes([], ['default'], [])
+        self.system.find_queue_equivalence_classes({}, ['default'], [])
         retval = self.system.find_job_location(jobs, [[['2-3'], 550.0], [['1,4'],
             600.0]], [])
         assert_match(retval, {4: ['5']}, 'bad location')
@@ -978,6 +1025,45 @@ class TestCraySystem(object):
         for i in [2, 3]:
             self.assert_draining(i, 550, 2)
         for i in [1, 4, 5]:
+            self.assert_not_draining(i)
+
+    @patch.object(CraySystem, '_ALPS_reserve_resources', fake_reserve)
+    @patch.object(time, 'time', return_value=500.000)
+    def test_find_job_location_allocate_ignore_drain_for_reservation(self, *args, **kwargs):
+        '''CraySystem.find_job_locaton: Ignore existing drain for reservation'''
+        Cobalt.Components.system.CraySystem.DRAIN_MODE = "backfill"
+        jobs = []
+        jobs.append(dict(self.base_job))
+        jobs.append(dict(self.base_job))
+        jobs[0]['jobid'] = 2
+        jobs[0]['nodes'] = 5
+        jobs[0]['walltime'] = 500
+        jobs[1]['jobid'] = 3
+        jobs[1]['nodes'] = 1
+        jobs[1]['walltime'] = 400
+        self.system.reserve_resources_until('1', 100, 1)
+        self.system.nodes['1'].status = 'busy'
+        self.system.find_queue_equivalence_classes({}, ['default'], [])
+        retval = self.system.find_job_location(jobs, [[['1'], 600]], [])
+        assert_match(retval, {}, "no location should be assigned")
+        assert_match(self.system.pending_starts, {}, "no starts should be pending")
+        for i in range(1,6):
+            self.assert_draining(i, 600, 2)
+        # All nodes should be draining, now send in a reservation job.
+        # This situation can occur as a reservation is ending, and a job is
+        # waiting for reservation resources to free/cleanup within reservatino
+        jobs_reservation = []
+        jobs_reservation.append(dict(self.base_job))
+        jobs_reservation[0]['jobid'] = 10
+        jobs_reservation[0]['nodes'] = 4 # Get the other four nodes with the job
+        jobs_reservation[0]['walltime'] = 700 # Walltime longer than any possible drain window
+        jobs_reservation[0]['required'] = ['1-5']
+        jobs_reservation[0]['queue'] = 'R.test'
+        self.system.find_queue_equivalence_classes({'test':'1-5'}, ['default'], [])
+        retval = self.system.find_job_location(jobs_reservation, [[['1'], 600]], [])
+        assert_match(retval, {10: ['2-5']}, "Bad Location Match")
+        assert_match(self.system.pending_starts, {10: 800.0}, "Bad reservation pending start")
+        for i in range(1, 6):
             self.assert_not_draining(i)
 
     def test_validate_job_normal(self):

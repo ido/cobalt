@@ -338,28 +338,30 @@ def _call_sys_forker(path, tag, label, args=None, in_str=None):
         raise
 
     while True:
+        complete = False
         #Is a timeout needed here?
         try:
             children = ComponentProxy(FORKER).get_children('apbridge', [runid])
         except xmlrpclib.Fault as fault:
             _log_xmlrpc_error(runid, fault)
-        complete = False
-        for child in children:
-            if child['complete']:
-                if child['lost_child'] and resp is None:
-                    continue # Use the original response.  This child object is
-                             # invalid.  If we never got one, then let the
-                             # caller handle the error.
-                if child['exit_status'] != 0:
-                    _logger.error("%s returned a status of %s, stderr: %s",
-                            cmd, child['exit_status'], "\n".join(child['stderr']))
-                resp = child['stdout_string']
-                try:
-                    ComponentProxy(FORKER).cleanup_children([runid])
-                except xmlrpclib.Fault as fault:
-                    _log_xmlrpc_error(runid, fault)
-                else:
-                    complete = True
+        else:
+            for child in children:
+                if child['complete']:
+                    if child['lost_child'] and resp is None:
+                        # Use the original response.  This child object is
+                        # invalid.  If we never got one, then let the
+                        # caller handle the error.
+                        continue
+                    if child['exit_status'] != 0:
+                        _logger.error("%s returned a status of %s, stderr: %s",
+                                cmd, child['exit_status'], "\n".join(child['stderr']))
+                    resp = child['stdout_string']
+                    try:
+                        ComponentProxy(FORKER).cleanup_children([runid])
+                    except xmlrpclib.Fault as fault:
+                        _log_xmlrpc_error(runid, fault)
+                    else:
+                        complete = True
         if complete:
             break
         sleep(CHILD_SLEEP_TIMEOUT)

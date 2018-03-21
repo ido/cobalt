@@ -1,5 +1,27 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 1.0.23 ==
+ * Support for cgroups via cgclassify has been added.  This is off by default.
+   Currently, this is only supported for Cray systems, and is intended for systems
+   that do not have kernel support for using proc connector.
+ * Fixed an unhandled UnboundLocalError that could arise when querying child status
+   when interacting with apbasil.
+
+== Changes to 1.0.22 ==
+ * Fixed error on Cray systems that prevented cqadm --run from working on those
+   systems.
+ * Forkers that are de-registered while Cobalt is running, such as a login node
+   crashing will now be properly removed from the pool for running jobs, until
+   they are brought back up and re-registered on Cray systems.  Jobs that were
+   running on that forker will be cleaned up (or will continue running
+   normally) once the forker is re-registered with the rest of Cobalt.
+ * The default signal sent to processes at the end of a job in Cray systems is
+   now SIGTERM not SIGINT.
+ * Cobalt will now detect SSDs on Cray XC40 systems through the CAPMC
+   interface.  This allows users to request to be placed on nodes with optional
+   SSDs and allows users to specify a minimum free size for their job.  By
+   default no SSDs are requested.
+
 == Changes to 1.0.21 ==
  * Fixed numerous locking issues in job startup that could result in a small chance
    of failed job initialization.

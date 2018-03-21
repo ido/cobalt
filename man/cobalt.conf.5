@@ -93,6 +93,96 @@ systems using the BASIL interface to ALPS.  Default 16777216 bytes.
 The minimum interval that Cobalt will wait between saving statefiles for this
 component, in seconds. By default the interval is 10.0 seconds.  Under periods
 of high load on the component, the interval between statefiles may be longer.
+.TP
+.B use_cgroups
+The default is false.  If enabled, cgroup support is enabled.  When cgroup
+support is enabled, Cobalt will use cgclassify during script process startup
+to place Cobalt initiated scripts into an administrator-specified cgroup.
+This is generally used if proc connector is disabled on a given system.
+Cgroup-related options may be set on a per forker-type basis, or on a per-
+instance basis.  This is currently supported for Cray systems, and for site-
+specified system scripts, such as job and resource pre and postscripts.
+.TP
+.B cgroup_failure_fatal
+The default is false.  If cgclassify fails to set a cgroup and
+cgroup_failure_fatal is set to true, then script startup will fail and the
+process will exit with a nonzero status.
+.TP
+.B cgclassify_path
+This is the path to the cgclassify executable.  By default this is
+/usr/bin/cgclassify.  Use this if cgclassify is in a different location.
+.TP
+.B cgclassify_args
+Arguments to pass to cgclassify. No default arguments are provided by Cobalt.
+See
+.BR cgclassify(1)
+for information on options to cgclassify.
+.SS "[forker.system]"
+This applies cgroup options to the system_script_forker.  Any options not
+specified here will default to the values set by the general forker section.
+These options will affect any auxiliary scripts that Cobalt from the system
+or queue-manager components.  These options will not be applied to any
+user-provided scripts.
+.TP
+.B use_cgroups
+If true, cgclassify support is enabled.
+.TP
+.B cgroup_failure_fatal
+If cgclassify fails to set a cgroup and cgroup_failure_fatal is set to true,
+then script startup will fail and the process will exit with a nonzero status.
+.TP
+.B cgclassify_path
+This is the path to the cgclassify executable.  By default this is
+/usr/bin/cgclassify.  Use this if cgclassify is in a different location.
+.TP
+.B cgclassify_args
+Arguments to pass to cgclassify. No default arguments are provided by Cobalt.
+See
+.BR cgclassify(1)
+for information on options to cgclassify.
+.SS "[forker.alps]"
+This applies cgroup options to all alps_script_forker instances.  Any options not
+specified here will default to the values set by the general forker section.
+These options will be applied to all alps_script_forkers that are not individually
+overridden.  These options will affect all user-run jobs on a Cray system.
+.TP
+.B use_cgroups
+If true, cgclassify support is enabled.
+.TP
+.B cgroup_failure_fatal
+If cgclassify fails to set a cgroup and cgroup_failure_fatal is set to true,
+then script startup will fail and the process will exit with a nonzero status.
+.TP
+.B cgclassify_path
+This is the path to the cgclassify executable.  By default this is
+/usr/bin/cgclassify.  Use this if cgclassify is in a different location.
+.TP
+.B cgclassify_args
+Arguments to pass to cgclassify. No default arguments are provided by Cobalt.
+See
+.BR cgclassify(1)
+for information on options to cgclassify.
+.SS "[forker.<alps_script_forker_instance_name>]"
+Applies these configuration options to an individual forker instance.  If these
+are not defined then the values used or passed along by the "[forker.alps]"
+section will be used.
+.TP
+.B use_cgroups
+If true, cgclassify support is enabled.
+.TP
+.B cgroup_failure_fatal
+If true, if cgclassify fails to set a cgroup, then script
+startup will fail and the process will exit with a nonzero status.
+.TP
+.B cgclassify_path
+This is the path to the cgclassify executable.  By default this is
+/usr/bin/cgclassify.  Use this if cgclassify is in a different location.
+.TP
+.B cgclassify_args
+Arguments to pass to cgclassify. No default arguments are provided by Cobalt.
+See
+.BR cgclassify(1)
+for information on options to cgclassify.
 .SS "[logger]"
 This section handles cobalt component logging and default levels.
 Valid logging levels in this section are

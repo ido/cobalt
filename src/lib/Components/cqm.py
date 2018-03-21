@@ -70,7 +70,6 @@
 #
 
 
-import errno
 import logging
 import os
 import pwd
@@ -83,24 +82,23 @@ import xmlrpclib
 import ConfigParser
 import signal
 import thread
-from threading import Thread, Lock
 import traceback
+import copy
 import string
 
 
 import Cobalt
 import Cobalt.Util
-from Cobalt.Util import Timer, pickle_data, unpickle_data, disk_writer_thread
+from Cobalt.Util import Timer, disk_writer_thread
 import Cobalt.Cqparse
 from Cobalt.Data import Data, DataList, DataDict, IncrID
 from Cobalt.StateMachine import StateMachine
-from Cobalt.Components.base import Component, exposed, automatic, query, locking
+from Cobalt.Components.base import Component, exposed, automatic, query
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import (QueueError, ComponentLookupError, DataStateError, DataStateTransitionError, StateMachineError,
     StateMachineIllegalEventError, StateMachineNonexistentEventError, ThreadPickledAliveException, JobProcessingError,
     JobRunError, JobPreemptionError, JobDeleteError, IncrIDError, ResourceReservationFailure)
 from Cobalt import accounting
-from Cobalt.Statistics import Statistics
 from Cobalt.Util import get_config_option, init_cobalt_config
 
 __revision__ = '$Revision$'
@@ -155,14 +153,13 @@ walltime_prediction_enabled = False
 if walltime_prediction  == "true":
     walltime_prediction_configured = True
     walltime_prediction_enabled = True
-#print "walltime_prediction_configured=", walltime_prediction_configured 
+#print "walltime_prediction_configured=", walltime_prediction_configured
 
 prediction_scheme = get_histm_config("prediction_scheme", "combined").lower()  # ["project", "user", "combined"]   # *AdjEst*
 
 accounting_logdir = os.path.expandvars(get_cqm_config("log_dir", Cobalt.DEFAULT_LOG_DIRECTORY))
 accounting_logger = logging.getLogger("cqm.accounting")
-accounting_logger.addHandler(
-    accounting.DatetimeFileHandler(os.path.join(accounting_logdir, "%Y%m%d")))
+accounting_logger.addHandler( accounting.DatetimeFileHandler(os.path.join(accounting_logdir, "%Y%m%d")))
 
 
 dbwriter = Cobalt.Logging.dbwriter(logging)
@@ -197,6 +194,7 @@ def cobalt_log_terminate():
     cobalt_log_writer.send(None)
 
 def str_elapsed_time(elapsed_time):
+    '''print elapsed time in HH:MM:SS format for PBS logging purposes'''
     return "%d:%02d:%02d" % (elapsed_time / 3600, elapsed_time / 60 % 60, elapsed_time % 60)
 
 def has_private_attr(obj, attr):
@@ -214,6 +212,7 @@ class Signal_Map (object):
     force_kill = 'SIGKILL'
 
 class Signal_Info (object):
+    '''signal handling information needed for preemption'''
     class Reason (object):
         delete = 'delete'
         preempt = 'preempt'
@@ -274,7 +273,7 @@ class Signal_Info (object):
     pending = property(__get_pending, __set_pending)
 
 
-#TODO: I want to get rid of this.  I don't want to see threaded-forks in 
+#TODO: I want to get rid of this.  I don't want to see threaded-forks in
 # cobalt ever again. --PR
 class RunScriptsThread(object):
     '''stub for restart compatibility'''
@@ -321,7 +320,7 @@ def get_job_sm_transitions():
         ('Job_Prologue', 'Job_Prologue_Retry'),             # Lost communication to forker during progress
         ('Job_Prologue', 'Job_Epilogue'),                   # kill / job prologue failed
         ('Job_Prologue', 'Job_Epilogue_Retry'),             # kill / job prologue failed.  Error communicating with forker
-        ('Job_Prologue', 'Job_Prologue_Retry_Release'),     # kill / job prologue failed.  error releasing system resources
+        ('Job_Prologue', 'Job_Prologue_Retry_Release'),     # kill / job prologue failed.  Error releasing system resources
         ('Job_Prologue_Retry', 'Job_Prologue'),             # forker starting job prologue scripts
         ('Job_Prologue_Retry', 'Terminal'),                 # kill; error contacting forker component
         ('Job_Prologue_Retry_Release', 'Job_Epilogue'),     # resource successfully released
@@ -330,8 +329,8 @@ def get_job_sm_transitions():
         ('Resource_Prologue', 'Running'),                   # prologue scripts complete; system component starting task
         ('Resource_Prologue', 'Resource_Prologue_Retry'),   # Lost communication to forker during progress
         ('Resource_Prologue', 'Resource_Epilogue'),         # kill / resource prologue failed; system component released resource
-        ('Resource_Prologue', 'Resource_Epilogue_Retry'),   # kill / resource prologue failed; error contacting forker component
-        ('Resource_Prologue', 'Resource_Prologue_Retry_Release'), # kill / job_prologue failed.  error releasing system resources
+        ('Resource_Prologue', 'Resource_Epilogue_Retry'),   # kill / resource prologue failed; Error contacting forker component
+        ('Resource_Prologue', 'Resource_Prologue_Retry_Release'), # kill / job_prologue failed.  Error releasing system resources
         ('Resource_Prologue_Retry','Resource_Prologue'),    # run resource prologue scripts
         ('Resource_Prologue_Retry','Job_Epilogue'),         # kill; run any required job cleanup
         ('Resource_Prologue_Retry_Release', 'Resource_Epilogue'),       # resource successfully released
@@ -346,7 +345,7 @@ def get_job_sm_transitions():
         ('Running', 'Finalize_Retry'),                      # task execution complete; error finalizing task and obtaining exit
                                                             #     status
         ('Running', 'Resource_Epilogue'),                   # task execution complete; task finalized and exit status obtained
-        ('Running', 'Resource_Epilogue_Retry'),             # task executioncomplete; error contacting forker component 
+        ('Running', 'Resource_Epilogue_Retry'),             # task execution complete; error contacting forker component
         ('Kill_Retry', 'Kill_Retry'),                       # handle multiple task signaling failures
         ('Kill_Retry', 'Killing'),                          # system component signaling task
         ('Kill_Retry', 'Finalize_Retry'),                   # task execution complete/terminated; task finalization failed
@@ -361,7 +360,7 @@ def get_job_sm_transitions():
                                                             #   error contacting forker component
         ('Preempt_Retry', 'Kill_Retry'),                    # kill; error contacting system component
         ('Preempt_Retry', 'Killing'),                       # kill; system component signaling task
-        ('Preempt_Retry', 'Preempt_Retry'),                 # hasndle multiple task signaling failures
+        ('Preempt_Retry', 'Preempt_Retry'),                 # handle multiple task signaling failures
         ('Preempt_Retry', 'Preempting'),                    # system component signaling task
         ('Preempt_Retry', 'Preempt_Finalize_Retry'),        # task execution terminated, task finalization failed
         ('Preempt_Retry', 'Preempt_Epilogue'),              # task execution terminated successfully
@@ -413,7 +412,7 @@ def get_job_sm_seas(job):
             ('Hold', 'Release') : [job._sm_hold__release],
             ('Hold', 'Kill') : [job._sm_hold__kill],
             ('Job_Prologue', 'Progress') : [job._sm_job_prologue__progress],
-            ('Job_Prologue', 'Hold') : [job._sm_common__pending_hold], 
+            ('Job_Prologue', 'Hold') : [job._sm_common__pending_hold],
             ('Job_Prologue', 'Release') : [job._sm_common__pending_release],
             ('Job_Prologue', 'Preempt') : [job._sm_common__pending_preempt], #custom?
             ('Job_Prologue', 'Kill') : [job._sm_common__pending_kill],
@@ -527,8 +526,7 @@ class Job (StateMachine):
 
     # properties for easier accounting logging
     ctime = property(lambda self: self.__timers['queue'].start_times[0])
-    qtime = property(lambda self:
-        self.__timers['current_queue'].start_times[0])
+    qtime = property(lambda self: self.__timers['current_queue'].start_times[0])
     start = property(lambda self: self.__timers['user'].start_times[-1])
     exec_host = property(lambda self: ":".join(self.__locations[-1]))
     end = property(lambda self: self.__timers['user'].stop_times[-1])
@@ -700,7 +698,6 @@ class Job (StateMachine):
         #This is here for BG/Q ensemble job support.  --PMR
         self.script_preboot = spec.get("script_preboot", True) #preboot a block for a script.
 
-
         dbwriter.log_to_db(self.user, "creating", "job_data", JobDataMsg(self))
         if self.admin_hold:
             dbwriter.log_to_db(self.user, "admin_hold", "job_prog", JobProgMsg(self))
@@ -733,9 +730,9 @@ class Job (StateMachine):
         #reset the statemachine's states
         self.update_seas(get_job_sm_seas(self))
 
-        # BRT: why is the current queue timer being reset?  if cqm is 
+        # BRT: why is the current queue timer being reset?  if cqm is
         #restarted, the job remained in the queue during that time, so I would
-        #think that timer should continue to run during the restart rather 
+        #think that timer should continue to run during the restart rather
         #than been reset.
         if not self.__timers.has_key('current_queue'):
             self.__timers['current_queue'] = Timer()
@@ -796,19 +793,19 @@ class Job (StateMachine):
 
     def __task_signal(self, retry = True):
         '''send a signal to the managed task'''
-        # BRT: this routine should probably check if the task could not be 
+        # BRT: this routine should probably check if the task could not be
         #signaled because it was no longer running
         try:
             self._sm_log_info("instructing the system component to send signal %s" % (self.__signaling_info.signal,))
             pgroup = ComponentProxy("system").signal_process_groups([{'id':self.taskid}], self.__signaling_info.signal)
         except (ComponentLookupError, xmlrpclib.Fault), e:
             #
-            # BRT: will a ComponentLookupError ever be raised directly or will 
+            # BRT: will a ComponentLookupError ever be raised directly or will
             # it always be buried in a XML-RPC fault?
             #
-            # BRT: shouldn't we be checking the XML-RPC fault code?  which 
-            # fault codes are valid for this operation?  at the very least 
-            # unexpected fault code should be reported as such and the retry 
+            # BRT: shouldn't we be checking the XML-RPC fault code?  which
+            # fault codes are valid for this operation?  at the very least
+            # unexpected fault code should be reported as such and the retry
             # loop broken.
             #
             if retry:
@@ -874,7 +871,7 @@ class Job (StateMachine):
                 else:
                     self.__resource_nodects.append(self.nodes)
             else:
-                self._sm_log_error("process group creation failed", 
+                self._sm_log_error("process group creation failed",
                         cobalt_log = True)
                 return Job.__rc_pg_create
         except (ComponentLookupError, xmlrpclib.Fault), e:
@@ -1101,7 +1098,7 @@ class Job (StateMachine):
 
         '''
 
-        dbwriter.log_to_db(None, "resource_epilogue_start", "job_prog", 
+        dbwriter.log_to_db(None, "resource_epilogue_start", "job_prog",
                 JobProgMsg(self))
         scripts = get_cqm_config('resource_postscripts', "").split(':')
         if scripts == ['']:
@@ -1128,7 +1125,7 @@ class Job (StateMachine):
 
         try:
             self.resource_postscript_ids = self._start_common_scripts(
-                    scripts, '%s_%s'%(self.jobid, self._sm_state)) 
+                    scripts, '%s_%s'%(self.jobid, self._sm_state))
         except ComponentLookupError:
             if self._sm_state != "Resource_Epilogue_Retry":
                 logger.warning("Job %s/%s: Unable to connect to forker "
@@ -1139,9 +1136,9 @@ class Job (StateMachine):
         except Exception as e:
             logger.error("Job %s/%s: %s exception recieved. "
                     "Resource_Epilogue "
-                "launcher has catastrophicaly failed.", self.user, 
+                "launcher has catastrophicaly failed.", self.user,
                 self.jobid, str(e))
-            dbwriter.log_to_db(None, "resource_epilogue_failed", 
+            dbwriter.log_to_db(None, "resource_epilogue_failed",
                     "job_prog", JobProgMsg(self))
             self._sm_start_job_epilogue_scripts(error=True)
             return
@@ -1155,33 +1152,33 @@ class Job (StateMachine):
                     break
                 count += 1
             self._sm_state = 'Resource_Epilogue'
-            dbwriter.log_to_db(None, "resource_epilogue_failed", 
+            dbwriter.log_to_db(None, "resource_epilogue_failed",
                     "job_prog", JobProgMsg(self))
-            dbwriter.log_to_db(None, "resource_epilogue_finished", 
+            dbwriter.log_to_db(None, "resource_epilogue_finished",
                     "job_prog", JobProgMsg(self))
             self._sm_start_job_epilogue_scripts(error=True)
         else:
-            logger.info("Job %s/%s: Resource epilogue scripts started.", 
+            logger.info("Job %s/%s: Resource epilogue scripts started.",
                     self.jobid, self.user)
             self._sm_state = "Resource_Epilogue"
             return Job.__rc_success
 
 
-    def _sm_start_job_epilogue_scripts(self, error=False, 
+    def _sm_start_job_epilogue_scripts(self, error=False,
             new_state = 'Job_Epilogue'):
         '''Start the job epilogue scripts.
 
         '''
 
-        dbwriter.log_to_db(None, "job_epilogue_start", "job_prog", 
+        dbwriter.log_to_db(None, "job_epilogue_start", "job_prog",
                 JobProgMsg(self))
-        scripts = get_cqm_config('job_postscripts', "").split(':') 
+        scripts = get_cqm_config('job_postscripts', "").split(':')
         if scripts == ['']:
             self._sm_state = 'Job_Epilogue'
-            logger.debug("Job %s/%s: DEBUG: No scripts for Job Epilogue " 
+            logger.debug("Job %s/%s: DEBUG: No scripts for Job Epilogue "
                     "state.  Skipping to Terminal.", self.jobid, self.user)
 
-            dbwriter.log_to_db(None, "job_epilogue_finished", "job_prog", 
+            dbwriter.log_to_db(None, "job_epilogue_finished", "job_prog",
                     JobProgMsg(self))
             self._write_end_records()
             self._sm_state = 'Terminal'
@@ -1202,23 +1199,23 @@ class Job (StateMachine):
             script.extend(params)
 
         try:
-            self.job_postscript_ids = self._start_common_scripts(scripts, 
-                    '%s_%s'%(self.jobid, self._sm_state),error) 
+            self.job_postscript_ids = self._start_common_scripts(scripts,
+                    '%s_%s'%(self.jobid, self._sm_state),error)
         except ComponentLookupError:
             if self._sm_state != "Job_Epilogue_Retry":
                 logger.warning("Job %s/%s: Unable to connect to forker "
-                    "component to launch job postscripts.  Will retry", 
+                    "component to launch job postscripts.  Will retry",
                     self.user, self.jobid)
                 self._sm_state = "Job_Epilogue_Retry"
                 return
         except Exception as e:
             logger.error("Job %s/%s: %s exception recieved. Job epilogue "
-                "launcher has catastrophicaly failed.", self.user, 
+                "launcher has catastrophicaly failed.", self.user,
                 self.jobid, str(e))
-            # we have failed, but there is nothing left but the terminal 
+            # we have failed, but there is nothing left but the terminal
             # state anyway.  Things outside of cobalt need to catch this.
 
-            dbwriter.log_to_db(None, "job_epilogue_failed", 
+            dbwriter.log_to_db(None, "job_epilogue_failed",
                 "job_prog", JobProgMsg(self))
             self._write_end_records()
             self._sm_state = 'Terminal'
@@ -1234,20 +1231,20 @@ class Job (StateMachine):
                 count += 1
 
             self._sm_state = 'Job_Epilogue'
-            dbwriter.log_to_db(None, "job_epilogue_failed", 
+            dbwriter.log_to_db(None, "job_epilogue_failed",
                     "job_prog", JobProgMsg(self))
-            dbwriter.log_to_db(None, "job_epilogue_finished", 
+            dbwriter.log_to_db(None, "job_epilogue_finished",
                     "job_prog", JobProgMsg(self))
             self._write_end_records()
             self._sm_state = 'Terminal'
         else:
-            logger.info("Job %s/%s: Job epilogue scripts started.", 
+            logger.info("Job %s/%s: Job epilogue scripts started.",
                     self.jobid, self.user)
             self._sm_state = new_state
             return Job.__rc_success
 
     def _sm_scripts_are_finished(self, script_type):  #Script Forking ***
-        #modify to check to see if a set of scripts for this job are finished.  
+        #modify to check to see if a set of scripts for this job are finished.
         #Tag will require job-information (jobid and script-type should be adequate)
         #Making this go away, TODO: Move these to appropriate epilogue functions
         if script_type == 'resource postscript':
@@ -1259,8 +1256,7 @@ class Job (StateMachine):
     def _sm_common_queued__hold(self, hold_state, args):
         '''place a hold on a job in the queued state'''
         if self.__admin_hold:
-            self._sm_raise_exception("admin hold set on a job in the '%s' "
-                    "state", self._sm_state)
+            self._sm_raise_exception("admin hold set on a job in the '%s' state", self._sm_state)
             return
         if self.__user_hold:
             self._sm_raise_exception("user hold set on a job in the '%s' "
@@ -1285,7 +1281,7 @@ class Job (StateMachine):
         if not self.__timers.has_key('hold'):
             self.__timers['hold'] = Timer()
         self.__timers['hold'].start()
-        self._sm_log_info("%s hold placed on job" % (args['type'],), 
+        self._sm_log_info("%s hold placed on job" % (args['type'],),
                 cobalt_log = True)
         self._sm_state = hold_state
 
@@ -1306,7 +1302,6 @@ class Job (StateMachine):
     def _sm_common_hold__hold(self, args):
         '''place another hold on a job that is already in a hold state'''
         activity = False
-
         if args['type'] == 'admin':
             if not self.__admin_hold:
                 self.__admin_hold = True
@@ -1328,7 +1323,7 @@ class Job (StateMachine):
         else:
             self._sm_log_info("%s hold already present; ignoring hold request" % (args['type'],), cobalt_log = True)
 
-        '''release a hold previous placed on a job'''
+        #release a hold previous placed on a job
         activity = False
 
     def _sm_common_hold__release(self, queued_state, args):
@@ -1370,7 +1365,7 @@ class Job (StateMachine):
 
         '''
 
-        self._sm_log_info("preparing job for execution") 
+        self._sm_log_info("preparing job for execution")
 
         try:
             # stop queue timers
@@ -1481,7 +1476,7 @@ class Job (StateMachine):
         '''Launch our job prescripts.
 
         '''
-        dbwriter.log_to_db(None, "job_prologue_start", 
+        dbwriter.log_to_db(None, "job_prologue_start",
                 "job_prog", JobProgMsg(self))
         scripts = get_cqm_config('job_prescripts', '').split(':')
         if scripts == ['']:
@@ -1509,22 +1504,22 @@ class Job (StateMachine):
             script.extend(params)
 
         try:
-            self.job_prescript_ids = self._start_common_scripts(scripts, 
+            self.job_prescript_ids = self._start_common_scripts(scripts,
                     '%s_%s'%(self.jobid, self._sm_state))
         except ComponentLookupError:
             #Forker wasn't there, we need to go to the retry-state.
             #print "failing lookup for forker"
             if self._sm_state != "Job_Prologue_Retry":
                 logger.warning("Job %s/%s: Unable to connect to forker "
-                        "component to launch job prologue.  Will retry", 
+                        "component to launch job prologue.  Will retry",
                         self.user, self.jobid)
                 self._sm_state = "Job_Prologue_Retry"
         except Exception as e:
             #we just blew up badly, bail out
             logger.error(("Job %s/%s: %s exception recieved. Job prologue "
-                "launcher has catastrophicaly failed.", self.jobid, 
+                "launcher has catastrophicaly failed.", self.jobid,
                 self.user, str(e)))
-            dbwriter.log_to_db(None, "job_prologue_failed", 
+            dbwriter.log_to_db(None, "job_prologue_failed",
                 "job_prog", JobProgMsg(self))
             self._sm_start_job_epilogue_scripts(error=True)
             return
@@ -1538,7 +1533,7 @@ class Job (StateMachine):
                         self.user, self.jobid, script[count])
                     break
                 count += 1
-            dbwriter.log_to_db(None, "job_prologue_failed", 
+            dbwriter.log_to_db(None, "job_prologue_failed",
                 "job_prog", JobProgMsg(self))
             self._sm_state = "Job_Prologue"
             self._sm_start_job_epilogue_scripts(error=True)
@@ -1548,12 +1543,12 @@ class Job (StateMachine):
             self._sm_state = "Job_Prologue"
             return Job.__rc_success
 
-    def _start_common_scripts(self, scripts, tag, error=False): 
+    def _start_common_scripts(self, scripts, tag, error=False):
         '''Use the forker component to launch scripts.  Should it fail, we will
         have to go to retry.
 
         scripts -- list of scripts with their arguments to execute.
-        error -- set to true if the scripts should be made aware that an 
+        error -- set to true if the scripts should be made aware that an
                  error-state exists.
 
         '''
@@ -1589,7 +1584,7 @@ class Job (StateMachine):
 
     def _sm_resource_prologue_retry__progress(self, args):
 
-        '''Try and run the resource prologue scripts again.  Since these are 
+        '''Try and run the resource prologue scripts again.  Since these are
         usually failures due to a component going down, keep retrying.
 
         '''
@@ -1597,14 +1592,14 @@ class Job (StateMachine):
 
     def _sm_resource_epilogue_retry__progress(self, args):
 
-        '''Try and run the resource epilogue scripts again.  Since these are 
+        '''Try and run the resource epilogue scripts again.  Since these are
         usually failures due to a component going down, keep retrying.
 
         '''
         rc = self._sm_start_resource_epilogue_scripts()
 
     def _sm_job_epilogue_retry__progress(self, args):
-        '''Try and run the job epilogue scripts again.  Since these are 
+        '''Try and run the job epilogue scripts again.  Since these are
         usually failures due to a component going down, keep retrying.
 
         '''
@@ -1624,24 +1619,24 @@ class Job (StateMachine):
         self._sm_common_retry__kill(self._sm_start_resource_epilogue_scripts, args)
 
     def _sm_common_retry__kill(self, cleanup_state_start, args):
-        '''Killing something in the retry state is pretty uniform, 
+        '''Killing something in the retry state is pretty uniform,
         cleanup_state_start is a function to be called to initiate proper
-        post-step cleanups.  This may be different from retry-state to 
+        post-step cleanups.  This may be different from retry-state to
         retry-state.
 
         '''
         self._sm_log_info("user delete with signal %s requested by user %s; "
-                "initiating job cleanup and removal" % (args['signal'], 
+                "initiating job cleanup and removal" % (args['signal'],
                     args['user']), cobalt_log = True)
 
-         # set signal information so that the terminal state handler knows to 
+         # set signal information so that the terminal state handler knows to
          #write the delete record
-        self.__signaled_info = Signal_Info(Signal_Info.Reason.delete, 
+        self.__signaled_info = Signal_Info(Signal_Info.Reason.delete,
                 args['signal'], args['user'])
 
         # start the resource epilogue scripts
         cleanup_state_start()
-        dbwriter.log_to_db(args['user'], "killing", "job_prog", 
+        dbwriter.log_to_db(args['user'], "killing", "job_prog",
                 JobProgMsg(self))
 
     def _sm_ready__hold(self, args):
@@ -1656,7 +1651,7 @@ class Job (StateMachine):
         '''delete a job in the ready state'''
         self._sm_log_info("user delete requested; removing job from the queue",
                 cobalt_log = True)
-        self.__signaled_info = Signal_Info(Signal_Info.Reason.delete, 
+        self.__signaled_info = Signal_Info(Signal_Info.Reason.delete,
                 args['signal'], args['user'])
         self._sm_state = 'Terminal'
 
@@ -1672,7 +1667,7 @@ class Job (StateMachine):
         '''delete a job in the hold state'''
         self._sm_log_info("user delete requested; removing job from the queue",
                 cobalt_log = True)
-        self.__signaled_info = Signal_Info(Signal_Info.Reason.delete, 
+        self.__signaled_info = Signal_Info(Signal_Info.Reason.delete,
                 args['signal'], args['user'])
         self._sm_state = 'Terminal'
 
@@ -1735,24 +1730,24 @@ class Job (StateMachine):
             return
 
         if activity:
-            self._sm_log_info("pending %s hold removed" % (args['type'],), 
+            self._sm_log_info("pending %s hold removed" % (args['type'],),
                     cobalt_log = True)
         else:
             self._sm_log_info("pending %s hold not present; ignoring release "
                     "request" % (args['type'],), cobalt_log = True)
 
     def _sm_common__pending_kill(self, args):
-        '''place a pending user delete request on a job whose current state 
+        '''place a pending user delete request on a job whose current state
         does not permit immediately signaling the job
 
         '''
-        if (has_private_attr(self, '__signaling_info') and 
-                self.__signaling_info.reason == Signal_Info.Reason.delete and 
+        if (has_private_attr(self, '__signaling_info') and
+                self.__signaling_info.reason == Signal_Info.Reason.delete and
                 self.__signaling_info.signal == args['signal']):
             self._sm_log_info("user delete request already pending with signal "
                     "%s; ignoring user delete request", cobalt_log = True)
             return
-        self._sm_signaling_info_set_user_delete(args['signal'], args['user'], 
+        self._sm_signaling_info_set_user_delete(args['signal'], args['user'],
                 pending = True)
 
     def _sm_common__pending_preempt(self, args):
@@ -1774,22 +1769,22 @@ class Job (StateMachine):
                     self.jobid, user, force)
 
         # if a delete is already pending, then ignore preemption request
-        if (has_private_attr(self, '__signaling_info') and 
+        if (has_private_attr(self, '__signaling_info') and
                 self.__signaling_info.reason == Signal_Info.Reason.delete):
             self._sm_log_info("user delete request already pending; ignoring "
                     "preemption request", cobalt_log = True)
             return
 
-        # if preemption is being forced, reset the time limit on the minimum 
+        # if preemption is being forced, reset the time limit on the minimum
         # task timer so that the preemption request will be
         # processed the next time a progress event is triggered
         if args.has_key('force'):
             self.__mintasktimer.max_time = 0
         if self.maxcptime > 0:
-            self.__signaling_info = Signal_Info(Signal_Info.Reason.preempt, 
+            self.__signaling_info = Signal_Info(Signal_Info.Reason.preempt,
                     Signal_Map.checkpoint, None, True)
         else:
-            self.__signaling_info = Signal_Info(Signal_Info.Reason.preempt, 
+            self.__signaling_info = Signal_Info(Signal_Info.Reason.preempt,
                     Signal_Map.terminate, None, True)
         if args.has_key('user'):
             self.__signaling_info.user = args['user']
@@ -1797,17 +1792,17 @@ class Job (StateMachine):
             user_msg = ""
             if args.has_key('user'):
                 user_msg = " by user %s" % (args['user'],)
-            self._sm_log_info("preemption forced%s" % (user_msg,), 
+            self._sm_log_info("preemption forced%s" % (user_msg,),
                     cobalt_log = True)
         else:
-            self._sm_log_info("preemption request now pending", 
+            self._sm_log_info("preemption request now pending",
                     cobalt_log = True)
 
     def _sm_job_prologue__progress(self, args):
         '''wait for job prologue scripts to complete.  If successful completion
         of all scripts (exit code 0)
 
-        If scripts fail, trigger the job_epilogue state and let it know that 
+        If scripts fail, trigger the job_epilogue state and let it know that
         we had scripts fail.
 
         Otherwise proceed to resource_prologue
@@ -1825,7 +1820,7 @@ class Job (StateMachine):
                     self.log_script_failure(job_dict, "Job Prologue")
                     script_failed = True
             if script_failed:
-                dbwriter.log_to_db(None, "job_prologue_failed", 
+                dbwriter.log_to_db(None, "job_prologue_failed",
                     "job_prog", JobProgMsg(self))
                 rc = self.__release_resources()
                 if rc == Job.__rc_success:
@@ -1838,13 +1833,13 @@ class Job (StateMachine):
                     "successfuly.", self.jobid, self.user)
                 #if we have recieved a kill, we shouldn't bother running any further
                 #scripts and should invoke cleanup.
-                if (has_private_attr(self, '__signaling_info')  and 
-                        self.__signaling_info.pending and 
+                if (has_private_attr(self, '__signaling_info')  and
+                        self.__signaling_info.pending and
                         self.__signaling_info.reason == Signal_Info.Reason.delete):
                     self.__signaled_info = self.__signaling_info
                     self.__signaled_info.pending = False
                     del self.__signaling_info
-                    self._sm_log_info("pending user delete; releasing resources", 
+                    self._sm_log_info("pending user delete; releasing resources",
                         cobalt_log = True)
                     rc = self.__release_resources()
                     if rc == Job.__rc_success:
@@ -1870,7 +1865,7 @@ class Job (StateMachine):
 
         '''
 
-        dbwriter.log_to_db(None, "resource_prologue_start", 
+        dbwriter.log_to_db(None, "resource_prologue_start",
                 "job_prog", JobProgMsg(self))
         scripts = get_cqm_config('resource_prescripts', '').split(':')
         if scripts == ['']:
@@ -1904,15 +1899,15 @@ class Job (StateMachine):
             #Forker wasn't there, we need to go to the retry-state.
             if self._sm_state != "Resource_Prologue_Retry":
                 logger.warning("Job %s/%s: Unable to connect to forker "
-                        "component to launch resource prescripts.  Will retry", 
+                        "component to launch resource prescripts.  Will retry",
                         self.user, self.jobid)
                 self._sm_state = "Resource_Prologue_Retry"
         except Exception as e:
             #we just blew up badly, bail out
             logger.error("Job %s/%s: %s exception recieved. Resource "
-                    "prescript launcher has catastrophicaly failed.", 
+                    "prescript launcher has catastrophicaly failed.",
                     self.user, self.jobid, str(e))
-            dbwriter.log_to_db(None, "resource_prologue_failed", 
+            dbwriter.log_to_db(None, "resource_prologue_failed",
                         "job_prog", JobProgMsg(self))
             self._sm_start_resource_epilogue_scripts(error=True)
             return
@@ -1925,7 +1920,7 @@ class Job (StateMachine):
                         self.jobid, self.user, script[count])
                     break
                 count += 1
-            dbwriter.log_to_db(None, "resource_prologue_failed", 
+            dbwriter.log_to_db(None, "resource_prologue_failed",
                 "job_prog", JobProgMsg(self))
             self._sm_state = "Resource_Prologue"
             self._sm_start_resource_epilogue_scripts(error=True)
@@ -1954,7 +1949,7 @@ class Job (StateMachine):
         for job_dict in job_dicts:
             if job_dict['exit_status'] != 0:
                 self.log_script_failure(job_dict, "Resource prologue")
-                dbwriter.log_to_db(None, "resource_prologue_failed", 
+                dbwriter.log_to_db(None, "resource_prologue_failed",
                         "job_prog", JobProgMsg(self))
                 script_failed = True
         if script_failed:
@@ -1971,13 +1966,13 @@ class Job (StateMachine):
                 "successfuly.", self.jobid, self.user)
         #check for pending job-deletion.  If it is pending, don't run, just
         #drop to the resource_epilogue and proceed.
-        if (has_private_attr(self, '__signaling_info')  and 
-                self.__signaling_info.pending and 
+        if (has_private_attr(self, '__signaling_info')  and
+                self.__signaling_info.pending and
                 self.__signaling_info.reason == Signal_Info.Reason.delete):
             self.__signaled_info = self.__signaling_info
             self.__signaled_info.pending = False
             del self.__signaling_info
-            self._sm_log_info("pending user delete; releasing resources", 
+            self._sm_log_info("pending user delete; releasing resources",
                     cobalt_log = True)
             rc = self.__release_resources()
             if rc == Job.__rc_success:
@@ -2005,14 +2000,14 @@ class Job (StateMachine):
             dbwriter.log_to_db(None, "running", "job_prog", JobProgMsg(self))
         elif rc == Job.__rc_retry:
             self._sm_state = 'Run_Retry'
-            dbwriter.log_to_db(None, "run_retrying", "job_prog", 
+            dbwriter.log_to_db(None, "run_retrying", "job_prog",
                     JobProgMsg(self))
         else:
-            # if the task failed to run, then proceed with job termination by 
+            # if the task failed to run, then proceed with job termination by
             #starting the resource prologue scripts
             self._sm_log_error("execution failure; initiating job cleanup and "
                     "removal", cobalt_log = True)
-            dbwriter.log_to_db(None, "running_failed", "job_prog", 
+            dbwriter.log_to_db(None, "running_failed", "job_prog",
                     JobProgMsg(self))
             self._sm_start_resource_epilogue_scripts()
 
@@ -2026,7 +2021,7 @@ class Job (StateMachine):
             args = job_dict['args'][1:]
         except:
             args = "(unknown)"
-        logger.error("Job %s/%s: %s %s failed with an exit status of %s. Output follows:", 
+        logger.error("Job %s/%s: %s %s failed with an exit status of %s. Output follows:",
             self.jobid, self.user, script_type, cmd, job_dict['exit_status'])
         logger.error("Job %s/%s: Arguments: %s", self.jobid, self.user, args)
         if job_dict.has_key('stderr') and job_dict['stderr'] != None:
@@ -2060,7 +2055,7 @@ class Job (StateMachine):
         # resources still used by the scripts
         try:
             ComponentProxy("system_script_forker").cleanup_children(script_ids)
-        except ComponentLookupError:        
+        except ComponentLookupError:
             logger.error("Job %s/%s: Could not communicate with "
                 "forker component.", self.user, self.jobid)
             # cleanup faled.  reattempt in a little while...
@@ -2082,7 +2077,7 @@ class Job (StateMachine):
             self.task_running = True
             dbwriter.log_to_db(None, "running", "job_prog", JobProgMsg(self))
         elif rc != Job.__rc_retry:
-            # if the task failed to run, then proceed with job termination by 
+            # if the task failed to run, then proceed with job termination by
             # starting the resource prologue scripts
             self._sm_log_error("execution failure; initiating job cleanup and "
                 "removal", cobalt_log = True)
@@ -2098,14 +2093,14 @@ class Job (StateMachine):
             "initiating job cleanup and removal" % \
             (args['signal'], args['user']), cobalt_log = True)
 
-        # set signal information so that the terminal state handler knows to 
+        # set signal information so that the terminal state handler knows to
         #write the delete record
-        self.__signaled_info = Signal_Info(Signal_Info.Reason.delete, 
+        self.__signaled_info = Signal_Info(Signal_Info.Reason.delete,
                 args['signal'], args['user'])
 
         # start the resource epilogue scripts
         self._sm_start_resource_epilogue_scripts()
-        dbwriter.log_to_db(args['user'], "killing", "job_prog", 
+        dbwriter.log_to_db(args['user'], "killing", "job_prog",
                 JobProgMsg(self))
 
     def _sm_running__progress(self, args):
@@ -2599,11 +2594,11 @@ class Job (StateMachine):
         self._sm_start_resource_epilogue_scripts()
 
     def _sm_resource_epilogue__progress(self, args):
-        '''wait for resource epilogue scripts to complete.  once they have 
+        '''wait for resource epilogue scripts to complete.  once they have
         completed, start the job epilogue scripts.
 
         '''
-        # wait for the resource epilogue scripts to complete, and report any 
+        # wait for the resource epilogue scripts to complete, and report any
         # errors
         job_dicts = self._sm_common_script_progress(self.resource_postscript_ids)
 
@@ -2618,7 +2613,7 @@ class Job (StateMachine):
                     script_failed = True
             if script_failed:
                 logger.error("Job %s/%s: Resource epilogue scripts failed! "
-                    "Continuing to Job Epilogue Scripts.", self.jobid, 
+                    "Continuing to Job Epilogue Scripts.", self.jobid,
                     self.user)
                 dbwriter.log_to_db(None, "resource_epilogue_failed", "job_prog",
                         JobProgMsg(self))
@@ -2631,7 +2626,7 @@ class Job (StateMachine):
 
 
     def _sm_job_epilogue__progress(self, args):
-        '''wait for job epilogue scripts to complete.  once they have 
+        '''wait for job epilogue scripts to complete.  once they have
         completed, write out end-of-job accounting logs
 
         '''
@@ -2651,7 +2646,7 @@ class Job (StateMachine):
             #No matter what, we die now.
             if script_failed:
                 logger.error("Job %s/%s: Job epilogue scripts failed! "
-                    "Continuing to Job Termination.", self.jobid, 
+                    "Continuing to Job Termination.", self.jobid,
                     self.user)
                 dbwriter.log_to_db(None, "job_epilogue_failed", "job_prog",
                     JobProgMsg(self))
@@ -2671,7 +2666,7 @@ class Job (StateMachine):
         Also send mail to user and stamp the pbs_end record to the cobalt database.
 
         '''
-        # stop the execution timer and get the stats; 
+        # stop the execution timer and get the stats;
         # NOTE: the execution timer may not be running if the job was preempted
         if self.__timers['user'].is_active:
             self.__timers['user'].stop()
@@ -2914,18 +2909,18 @@ class Job (StateMachine):
     is_runnable = property(__is_runnable)
 
     def __has_resources(self):
-        '''returns true if the job has resources assigned to it.  the running 
+        '''returns true if the job has resources assigned to it.  the running
         of resource epilogue scripts is included in the set of state considered
-        as active since they may be responsible for cleaning up and releasing 
+        as active since they may be responsible for cleaning up and releasing
         the resources.  the running of the job epilogue scripts is not included
-        since the resources should have been released no later than by the time 
-        the resource epilogue scripts complete.  the running of the job 
+        since the resources should have been released no later than by the time
+        the resource epilogue scripts complete.  the running of the job
         prologue scripts are included since resources would have been allocated
         and assigned to the job prior to the 'Run' event being triggered in the
         'Ready' state, which is what initiates the running of the job scripts.
 
         '''
-        return self._sm_state not in ('Ready', 'Hold', 'Preempted', 
+        return self._sm_state not in ('Ready', 'Hold', 'Preempted',
                 'Preempted_Hold', 'Job_Epilogue', 'Job_Epilogue_Retry', 'Terminal')
 
     has_resources = property(__has_resources)
@@ -2934,7 +2929,7 @@ class Job (StateMachine):
         '''returns true if the job is not queued or held, and has not completed
 
         '''
-        return self._sm_state not in ('Ready', 'Hold', 'Preempted', 
+        return self._sm_state not in ('Ready', 'Hold', 'Preempted',
                 'Preempted_Hold', 'Terminal')
 
     is_active = property(__is_active)
@@ -3039,13 +3034,13 @@ class Job (StateMachine):
                 self.state, self._sm_state)
         except:
             self._sm_log_exception(None, "an unexpected exception occurred while attempting to start the task")
-            raise JobRunError("An unexpected exception occurred while attempting to start the job.  See log for details.", 
+            raise JobRunError("An unexpected exception occurred while attempting to start the job.  See log for details.",
                 self.jobid, self.state, self._sm_state)
         finally:
             if not start_successful:
                 #free the resource allocation the run from our end will not start.
                 try:
-                    #if the system component is unreachable, then cleanup is no 
+                    #if the system component is unreachable, then cleanup is no
                     #longer an issue...
                     ComponentProxy("system").reserve_resources_until(nodelist, None, self.jobid)
                     logger.critical("Job %s/%s: releasing resources from failed run attempt.",
@@ -3101,12 +3096,12 @@ class Job (StateMachine):
 
         if not force:
             try:
-                dbwriter.log_to_db(user, "killing", "job_prog", 
-                        JobProgMsg(self)) 
-                self.trigger_event('Kill', {'user' : user, 
+                dbwriter.log_to_db(user, "killing", "job_prog",
+                        JobProgMsg(self))
+                self.trigger_event('Kill', {'user' : user,
                                             'signal' : signame})
             except:
-                self._sm_log_exception(None, "an unexpected exception occurred" 
+                self._sm_log_exception(None, "an unexpected exception occurred"
                     " while attempting to kill the task")
                 raise JobDeleteError("An unexpected exception occurred while "
                     "attempting to delete the job.  See log for details.",
@@ -3116,7 +3111,7 @@ class Job (StateMachine):
             self._sm_log_info(("forced delete requested by user '%s'; initiating "
                 "job termination and removal of job from the queue") % (user,),
                 cobalt_log = True)
-            self.__signaling_info = Signal_Info(Signal_Info.Reason.delete, 
+            self.__signaling_info = Signal_Info(Signal_Info.Reason.delete,
                     signame, user)
             try:
                 if self.taskid != None:
@@ -3142,9 +3137,9 @@ class Job (StateMachine):
                     used_time = 0
                     for index in xrange(len(self.__locations)):
                         used_time += int(self.__timers['user'].elapsed_times[index]) * len(self.__locations[index])
-                    logger.info('E;%s;%s;%s' % (self.jobid, self.user, 
+                    logger.info('E;%s;%s;%s' % (self.jobid, self.user,
                         str(used_time)))
-                    self.acctlog.LogMessage('E;%s;%s;%s' % (self.jobid, 
+                    self.acctlog.LogMessage('E;%s;%s;%s' % (self.jobid,
                         self.user, str(used_time)))
                     self.endtime = str(time.time())
 
@@ -3152,10 +3147,10 @@ class Job (StateMachine):
                     if self.project:
                         optional['account'] = self.project
                     # group, session and exit_status are unknown
-                    accounting_logger.info(accounting.end(self.jobid, 
+                    accounting_logger.info(accounting.end(self.jobid,
                         self.user, "unknown", self.jobname, self.queue,
                         self.outputdir, self.command, self.args, self.mode,
-                        self.ctime, self.qtime, self.etime, self.start, 
+                        self.ctime, self.qtime, self.etime, self.start,
                         self.exec_host,
                         {'ncpus':self.procs, 'nodect':self.nodes,
                          'walltime':str_elapsed_time(self.walltime * 60)},
@@ -3169,10 +3164,10 @@ class Job (StateMachine):
                         "job_prog", JobProgMsg(self), self.end)
 
                     logger.info("Job %s/%s on %s nodes forcibly terminated by "
-                            "user %s. %s" % (self.jobid, self.user, self.nodes, 
+                            "user %s. %s" % (self.jobid, self.user, self.nodes,
                                 user, stats))
                     self.acctlog.LogMessage("Job %s/%s on %s nodes forcibly "
-                            "terminated by user %s. %s" % (self.jobid, 
+                            "terminated by user %s. %s" % (self.jobid,
                                 self.user, self.nodes, user, stats))
 
     def task_end(self):
@@ -3509,7 +3504,7 @@ class QueueDict(DataDict):
         failed = False
         for spec in specs:
             if spec['queue'] not in queue_names:
-                logger.error("trying to add job to non-existant queue %s" % spec['queue'])
+                logger.error("trying to add job to non-existent queue %s" % spec['queue'])
                 failed = True
             if not self.can_queue(spec)[0]:
                 logger.error("job %r cannot be added to queue" % spec)
@@ -3764,7 +3759,7 @@ class QueueManager(Component):
         job.add_terminal_action(self._job_terminal_action, {'job':job})
 
     def test_history_manager(self):
-        '''test if history manager is alive. If not, inhibit walltime prediction''' 
+        '''test if history manager is alive. If not, inhibit walltime prediction'''
         if walltime_prediction_configured:
             histm_alive = False
             try:
@@ -3782,7 +3777,7 @@ class QueueManager(Component):
     test_history_manager = automatic(test_history_manager, 60)
 
 
-    def get_walltime_Ap(self, spec):  
+    def get_walltime_Ap(self, spec):
         '''get walltime adjusting parameter from history manager component'''  #*AdjEst*
 
         projectname = spec.get('project')
@@ -3840,11 +3835,11 @@ class QueueManager(Component):
                     if spec.has_key('walltime'):
                         spec['walltime_p'] = spec['walltime']
             else:
-                failure_msg = "trying to add job to non-existant queue '%s'" % spec['queue']
+                failure_msg = "trying to add job to non-existent queue '%s'" % spec['queue']
                 logger.error(failure_msg)
                 failed = True
         if failed:
-            raise QueueError, failure_msg
+            raise QueueError(failure_msg)
 
         response = self.Queues.add_jobs(specs, self.__add_job_terminal_action)
         return response
@@ -3854,11 +3849,37 @@ class QueueManager(Component):
         return self.Queues.get_jobs(specs)
     get_jobs = exposed(query(get_jobs))
 
-    def set_jobs(self, specs, updates, user_name=None):
+    def set_jobs(self, specs, updates, user_name=None, force=False):
+        '''Set attributes contained in updates on jobs specified by specs.
+        Any field specified by updates will be changed.
+        Inputs:
+            specs     - A list of dictionaries that specify jobs to be
+                        modified. Jobid must be included in each spec.
+            updates   - A dictionary containing fields to update in a job and
+                        their new values.  New keys will be created for keys
+                        that currently do not exist in a job, and current
+                        fields will be set to new values in the new spec.
+                        If jobid is included in this field, it will be ignored.
+            user_name - (default: None) The name of the user requesting the
+                        change, if any.
+            force     - (default False) If True, force the changes to be set.
+                        This is intended for administrative commands.
+
+        Outputs:
+            Returns a list of modified jobs, and a list of failed modifications.
+
+        Side Effects:
+            Specified jobs will have their fields updates. This may cause state
+            transitions to occur in jobs.
+
+        Exceptions:
+            QueueError - The changes would result in a job no longer being
+                         queueable, or would no longer conform to policy, and
+                         the changes have been rejected.
+
+        '''
         joblist = self.Queues.get_jobs(specs)
-
         logger.info("%s calling set_jobs on %s with updates %s", user_name, specs, updates)
-
         new_q_name = None
         if updates.has_key("queue"):
             new_q_name = updates["queue"]
@@ -3879,10 +3900,10 @@ class QueueManager(Component):
                 raise QueueError("Bad new score value.")
 
         for job in joblist:
-
             old_q_name = job.queue
             test = job.to_rx()
             test.update(updates)
+
             #if we are requesting a change in hold:
             set_user_hold = updates.get('user_hold', None)
             set_admin_hold = updates.get('admin_hold', None)
@@ -3900,7 +3921,7 @@ class QueueManager(Component):
             #is always on the list.
             elif 'user_list' in updates.keys():
                 if job.user not in updates['user_list']:
-                    updates['user_list'].insert(0,job.user)
+                    updates['user_list'].insert(0, job.user)
 
             #if update "user_hold" alone, do not check MaxQueued restriction
             #and "admin_holds" can get the same treatment.
@@ -3924,7 +3945,6 @@ class QueueManager(Component):
                     logger.info("Job %s/%s: dependencies set to %s", job.jobid, job.user, message)
                     job.update_dep_state()
                 self.check_dep_fail()
-
                 # only do this if the new queue can accept this job
                 if new_q_name:
                     new_q = self.Queues[new_q_name]
@@ -3977,7 +3997,7 @@ class QueueManager(Component):
                 raise
             if not res_success:
                 raise ResourceReservationFailure("%s/%s: Unable to reserve "\
-                    "resource at runtime. Does another job have the resrouce?"\
+                    "resource at runtime. Does another job have the resource?"\
                     % (job.jobid, job.user))
 
             if resid != None:
@@ -4261,9 +4281,9 @@ class QueueManager(Component):
                     break
             if (job.dep_fail and (not already_failed)):
                 dbwriter.log_to_db(None, "dep_fail", "job_prog", JobProgMsg(job))
-            if ((not job.dep_fail) and already_failed and 
+            if ((not job.dep_fail) and already_failed and
                 (job.no_holds_left())):
-                dbwriter.log_to_db(None, "all_holds_clear", "job_prog", 
+                dbwriter.log_to_db(None, "all_holds_clear", "job_prog",
                                    JobProgMsg(job))
     check_dep_fail = automatic(check_dep_fail, period=60)
 
@@ -4318,14 +4338,14 @@ class JobDataMsg(object):
             #isn't a job
             raise TypeError, 'JobDataMsg only accepts Job objects'
 
-        attr_list = ['jobid', 'umask', 'jobname', 'job_type', 'job_user', 
+        attr_list = ['jobid', 'umask', 'jobname', 'job_type', 'job_user',
                      'walltime', 'procs', 'nodes', 'command', 'args',
                      'project', 'lienID', 'host', 'port', 'inputfile',
-                     'kernel', 'kerneloptions', 'notify', 'adminemail', 
-                     'location', 'outputpath', 'outputdir', 'errorpath', 
+                     'kernel', 'kerneloptions', 'notify', 'adminemail',
+                     'location', 'outputpath', 'outputdir', 'errorpath',
                      'path', 'mode', 'envs', 'queue', 'priority_core_hours',
-                     'force_kill_delay', 'all_dependencies', 'attribute', 
-                     'attrs', 'satisfied_dependencies', 'preemptable', 
+                     'force_kill_delay', 'all_dependencies', 'attribute',
+                     'attrs', 'satisfied_dependencies', 'preemptable',
                      'user_list', 'dep_frac', 'resid', 'cwd', 'ion_kernel',
                      'ion_kerneloptions', 'geometry'
                      ]
