@@ -3,7 +3,7 @@ import time
 import logging
 import sys
 from nose.tools import raises
-from mock import Mock, MagicMock, patch
+from mock import Mock, MagicMock, patch, call
 
 import Cobalt.Proxy
 from Cobalt.Components.system.base_pg_manager import ProcessGroupManager
@@ -30,6 +30,7 @@ class InspectMock(MagicMock):
         return super(InspectMock, self).__getattr__(attr)
 
 child_mock = MagicMock()
+cleanup_mock = MagicMock()
 
 class InspectMockMultiCall(MagicMock):
     '''allow us to inspect what is going on within a proxy call'''
@@ -38,6 +39,8 @@ class InspectMockMultiCall(MagicMock):
             return child_mock
         elif attr == 'fork':
             return MagicMock(return_value=1)
+        elif attr == 'cleanup_children':
+            return cleanup_mock
         return super(InspectMockMultiCall, self).__getattr__(attr)
 
 _loc_list = [{'name': 'system', 'location': 'https://localhost:52140'},
@@ -262,8 +265,38 @@ class TestProcessManager(object):
         assert len(pgroups) == 1, "%s groups, should have 1" % len(pgroups)
         assert sorted(pgroups.keys()) == [1], "wrong groups."
         component_call_count = args[0].call_count
+        # only called 4 times.  There is no call to the forker cleanup on the second pass, already cleaned on first.
         assert component_call_count == 4, "Component called %s times, should be 4" % component_call_count
         assert pgroups[1].exit_status == 0, "Expected status 0, got status %s" % pgroups[1].exit_status
+
+    @patch('Cobalt.Proxy.DeferredProxy', side_effect=InspectMockMultiCall)
+    def test_update_groups_clean_if_first_fail(self, *args, **kwargs):
+        '''ProcessGroupManager.update_groups: cleanup after status fetch, cleanup fail, pg destruction.'''
+        mock_proxy = args[0]
+        global child_mock
+        global cleanup_mock
+        child_mock = MagicMock()
+        child_mock.side_effect = [[{'id': 1, 'exit_status': 0, 'complete': True, 'lost_child': False, 'signum': 0}],
+                               [{'id': 1, 'exit_status': 0, 'complete': True, 'lost_child': False, 'signum': 0}],
+                               ]
+        cleanup_mock = MagicMock()
+        cleanup_mock.side_effect = [RuntimeError('Generic failure'), MagicMock()]
+        now = int(time.time())
+        pgroups = self.process_manager.process_groups
+        self.process_manager.init_groups([self.base_spec])
+        self.process_manager.start_groups([1])
+        pgroups[1].startup_timeout = now - 120
+        #first time, get exit status, but fail to cleanup child
+        self.process_manager.update_groups()
+        self.process_manager.cleanup_groups([1])
+        # second time, try to get exit status, but we've already deleted the process group on our end, so ensure
+        # forker data also gets cleaned up.
+        self.process_manager.update_groups()
+        pgroups = self.process_manager.process_groups
+        assert len(pgroups) == 0, "%s groups, should have 0" % len(pgroups)
+        component_call_count = args[0].call_count
+        assert component_call_count == 5, "Component called %s times, should be 4" % component_call_count
+        cleanup_mock.assert_has_calls([call([1]), call([1])])
 
 class TestPMUpdateLaunchers(object):
 
