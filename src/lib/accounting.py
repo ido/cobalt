@@ -2,16 +2,42 @@ from datetime import datetime
 from time import mktime
 from logging.handlers import BaseRotatingHandler
 import os
+from Cobalt.Util import get_config_option
 
+RESOURCE_NAME = get_config_option('system', 'resource_name', 'default')
+RECORD_MAPPING = {'abort': 'A',
+                  'begin': 'B',
+                  'checkpoint': 'C',
+                  'checkpoint_restart': 'T',
+                  'delete': 'D',
+                  'end': 'E',
+                  'finish': 'F',
+                  'system_remove': 'K',
+                  'remove': 'k',
+                  'queue': 'Q',
+                  'rerun': 'R',
+                  'start': 'S',
+                  'unconfirmed': 'U',
+                  'confirmed': 'Y',
+                  'task_start': 'TS',
+                  'task_end': 'TE',
+                  'modify': 'QA',
+                  'hold_acquire': 'HA',
+                  'hold_release': 'HR',
+                  'kill': 'KL',
+                  }
 
 __all__ = ["abort", "begin", "checkpoint", "delete", "end", "finish",
-    "system_remove", "remove", "queue", "rerun", "start", "unconfirmed",
-    "confirmed", "task_start", "task_end",  "DatetimeFileHandler"]
+           "system_remove", "remove", "queue", "rerun", "start", "unconfirmed",
+           "confirmed", "task_start", "task_end",  "DatetimeFileHandler",
+           "modify", 'hold_acquire', 'hold_release', 'kill_job']
 
-
-def abort (job_id):
+def abort (job_id, user, resource_list, account=None, resource=RESOURCE_NAME):
     """Job was aborted by the server."""
-    return entry("A", job_id)
+    message = {'resource':resource, 'Resource_List':resource_list, 'user': user}
+    if account is not None:
+        message['account'] = account
+    return entry("A", job_id, message)
 
 
 def begin (id_string,
@@ -55,29 +81,28 @@ def begin (id_string,
     return entry("B", id_string, message)
 
 
-def checkpoint (job_id):
+def checkpoint (job_id, resource=RESOURCE_NAME):
     """Job was checkpointed and held."""
-    return entry("C", job_id)
+    return entry("C", job_id, {'resource':resource})
 
 
-def delete (job_id, requester):
-
+def delete (job_id, requester, user, resource_list, account=None, resource=RESOURCE_NAME):
     """Job was deleted by request.
 
     Arguments:
     job_id -- id of the deleted job
     requester -- who deleted the job (user@host)
+    resource -- the resource that this job will run on (specified in the cobalt.conf file, default: default)
     """
+    message = {'requester':requester, 'resource':resource, 'Resource_List':resource_list, 'user': user}
+    if account is not None:
+        message['account'] = account
+    return entry("D", job_id, message)
 
-    return entry("D", job_id, {'requester':requester})
 
-
-def end (job_id,
-         user, group, jobname, queue, cwd, exe, args, mode,
-         ctime, qtime, etime, start, exec_host,
-         resource_list, session, end, exit_status, resources_used,
-         account=None, resvname=None, resv_id=None, alt_id=None,
-         accounting_id=None, total_etime=None, priority_core_hours=None):
+def end (job_id, user, group, jobname, queue, cwd, exe, args, mode, ctime, qtime, etime, start, exec_host, resource_list, session,
+         end, exit_status, resources_used, account=None, resvname=None, resv_id=None, alt_id=None, accounting_id=None,
+         total_etime=None, priority_core_hours=None, resource=RESOURCE_NAME):
 
     """Job ended (terminated execution).
 
@@ -108,6 +133,7 @@ def end (job_id,
     resv_id -- the id of the resource reservation, if applicable
     alt_id -- optional alternate job identifier
     accounting_id -- CSA JID, job ID
+    resource -- the resource that this job will run on (specified in the cobalt.conf file, default: default)
     """
 
     message = {'user':user, 'group':group, 'jobname':jobname, 'queue':queue,
@@ -115,7 +141,7 @@ def end (job_id,
         'ctime':ctime, 'qtime':qtime, 'etime':etime, 'start':start,
         'exec_host':exec_host, 'Resource_List':resource_list,
         'session':session, 'end':end, 'Exit_status':exit_status,
-        'resources_used':resources_used}
+        'resources_used':resources_used, 'resource':resource}
     if account is not None:
         message['account'] = account
     if resvname is not None:
@@ -164,16 +190,39 @@ def remove (reservation_id, requester):
     return entry("k", reservation_id, {'requester':requester})
 
 
-def queue (job_id, queue_):
-
+def queue (job_id, queue, user, resource_list, account=None, resource=RESOURCE_NAME):
     """Job entered a queue.
 
     Arguments:
     job_id -- id of the job that entered the queue
-    queue_ -- the queue into which the job was placed
-    """
+    queue -- the queue into which the job was placed
+    user -- the user name under which the job will be executed
+    resource_list -- a dictionary of specified resource limits
+    account -- if not None, the account the job will be charged to (default: None)
+    resource -- the resource that this job will run on (specified in the cobalt.conf file, default: default)
 
-    return entry("Q", job_id, {'queue':queue_})
+    """
+    message = {'queue':queue, 'resource':resource, 'Resource_List':resource_list, 'user': user}
+    if account is not None:
+        message['account'] = account
+    return entry("Q", job_id, message)
+
+def modify (job_id, queue, user, resource_list, account=None, resource=RESOURCE_NAME):
+    """Job was modified
+
+    Arguments:
+    job_id -- id of the job
+    queue -- the queue into which the job was placed
+    user -- the user name under which the job will be executed
+    resource_list -- a dictionary of specified resource limits
+    account -- if not None, the account the job will be charged to (default: None)
+    resource -- the resource that this job will run on (specified in the cobalt.conf file, default: default)
+
+    """
+    message = {'queue':queue, 'resource':resource, 'Resource_List':resource_list, 'user': user}
+    if account is not None:
+        message['account'] = account
+    return entry(RECORD_MAPPING['modify'], job_id, message)
 
 
 def rerun (job_id):
@@ -181,12 +230,8 @@ def rerun (job_id):
     return entry("R", job_id)
 
 
-def start (job_id,
-           user, group, jobname, queue, cwd, exe, args, mode,
-           ctime, qtime, etime, start, exec_host,
-           resource_list, session,
-           account=None, resvname=None, resv_id=None, alt_id=None,
-           accounting_id=None):
+def start (job_id, user, group, jobname, queue, cwd, exe, args, mode, ctime, qtime, etime, start, exec_host, resource_list, session,
+           account=None, resvname=None, resv_id=None, alt_id=None, accounting_id=None, resource=RESOURCE_NAME):
 
     """Job started (terminated execution).
 
@@ -214,13 +259,12 @@ def start (job_id,
     resv_id -- the id of the resource reservation, if applicable
     alt_id -- optional alternate job identifier
     accounting_id -- CSA JID, job ID
+    resource -- the resource that this job will run on (specified in the cobalt.conf file, default: default)
     """
 
-    message = {'user':user, 'group':group, 'jobname':jobname, 'queue':queue,
-        'cwd':cwd, 'exe':exe, 'args':args, 'mode':mode,
-        'ctime':ctime, 'qtime':qtime, 'etime':etime, 'start':start,
-        'exec_host':exec_host, 'Resource_List':resource_list,
-        'session':session}
+    message = {'user':user, 'group':group, 'jobname':jobname, 'queue':queue, 'cwd':cwd, 'exe':exe, 'args':args, 'mode':mode,
+               'ctime':ctime, 'qtime':qtime, 'etime':etime, 'start':start, 'exec_host':exec_host, 'Resource_List':resource_list,
+               'session':session, 'resource':resource}
     if account is not None:
         message['account'] = account
     if resvname is not None:
@@ -230,7 +274,6 @@ def start (job_id,
     if alt_id is not None:
         message['accounting_id'] = accounting_id
     return entry("S", job_id, message)
-
 
 def unconfirmed (reservation_id, requester):
 
@@ -255,7 +298,7 @@ def confirmed (reservation_id, requester):
 
     return entry("Y", reservation_id, {'requester':requester})
 
-def task_start(job_id, task_id, start_time, location):
+def task_start(job_id, task_id, start_time, location, resource=RESOURCE_NAME):
     '''Indicate a task has started.  Typically this would indicate that add_process_groups has been called successfully.
 
     Args:
@@ -263,11 +306,12 @@ def task_start(job_id, task_id, start_time, location):
         task_id - id of the task launched
         start_time - time when the task started as seconds from epoch
         location - a list of locations that this task is running on
+        resource -- the resource that this job will run on (specified in the cobalt.conf file, default: default)
 
     '''
-    return entry("TS", job_id, {'task_id': task_id, 'start': start_time, 'location': location})
+    return entry("TS", job_id, {'task_id': task_id, 'start': start_time, 'location': location, 'resource':resource})
 
-def task_end(job_id, task_id, task_runtime, start_time, end_time, location):
+def task_end(job_id, task_id, task_runtime, start_time, end_time, location, resource=RESOURCE_NAME):
     '''Indicate a task has started.  Typically this would indicate that add_process_groups has been called successfully.
 
     Args:
@@ -277,9 +321,40 @@ def task_end(job_id, task_id, task_runtime, start_time, end_time, location):
         start_time - time when the task started as seconds from epoch
         end_time - tme when the task ended as seconds from epoch
         location - a list of locations that this task is running on
+        resource -- the resource that this job will run on (specified in the cobalt.conf file, default: default)
 
     '''
-    return entry("TE", job_id, {'task_id': task_id, 'task_runtime': task_runtime, 'start': start_time, 'end': end_time, 'location': location})
+    return entry("TE", job_id, {'task_id': task_id, 'task_runtime': task_runtime, 'start': start_time, 'end': end_time,
+                                'location': location, 'resource':resource})
+
+def kill_job(job_id, kill_time, resource=RESOURCE_NAME):
+    #TODO, fixme
+    return entry(RECORD_MAPPING['kill'], job_id, {'kill_time': kill_time, 'resource':resource})
+
+def hold_acquire(job_id, hold_type, start_time, user, resource=RESOURCE_NAME):
+    '''Indicate a hold has been acquired.
+
+    Args:
+        job_id - id of job that this task belongs to
+        start_time - time when the task started as seconds from epoch
+        resource -- the resource that this job will run on (specified in the cobalt.conf file, default: default)
+
+    '''
+    return entry("HA", job_id, {'hold_type': hold_type, 'start': start_time, 'resource': resource, 'user':user})
+
+def hold_release(job_id, hold_type, end_time, user, resource=RESOURCE_NAME):
+    '''Indicate a hold has been released.
+
+    Args:
+        job_id - id of job that this task belongs to
+        start_time - time when the task started as seconds from epoch
+        end_time - tme when the task ended as seconds from epoch
+        resource -- the resource that this job will run on (specified in the cobalt.conf file, default: default)
+
+    '''
+    return entry("HR", job_id, {'hold_type': hold_type, 'end': end_time, 'resource': resource, 'user':user})
+
+
 
 class DatetimeFileHandler (BaseRotatingHandler):
 
@@ -345,8 +420,7 @@ def entry_ (datetime_, record_type, id_string, message):
     message -- dictionary containing appropriate message data
     """
 
-    assert record_type in ("A", "B", "C", "D", "E", "F", "K", "k", "Q", "R",
-        "S", "T", "U", "Y", "TS", "TE"), "invalid record_type %r" % record_type
+    assert record_type in RECORD_MAPPING.values(), "invalid record_type %r" % record_type
     datetime_s = datetime_.strftime("%m/%d/%Y %H:%M:%S")
     message_text = serialize_message(message)
     return "%s;%s;%s;%s" % (datetime_s, record_type, id_string, message_text)
