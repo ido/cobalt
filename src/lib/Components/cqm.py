@@ -1022,9 +1022,9 @@ class Job (StateMachine):
     def _sm_check_job_timers(self):
         if self.__max_job_timer.has_expired:
             # if the job execution time has exceeded the wallclock time, then inform the task that it must terminate
-            self._sm_log_info("maximum execution time exceeded; initiating job termination", cobalt_log=True)
-            accounting_logger.info(accounting.abort(self.jobid, self.user, {'ncpus': self.procs, 'nodect': self.nodes,
-                'walltime': str_elapsed_time(self.walltime * 60)}))
+            self._sm_log_info("maximum execution time exceeded; initiating job termination", cobalt_log = True)
+            accounting_logger.info(accounting.abort(self.jobid, self.user, {'ncpus':self.procs, 'nodect':self.nodes,
+                'walltime':str_elapsed_time(self.walltime * 60)}))
             return Signal_Info(Signal_Info.Reason.time_limit, Signal_Map.terminate)
         else:
             return None
@@ -2409,9 +2409,9 @@ class Job (StateMachine):
         self.location = None
         if self.__max_job_timer.has_expired:
             # if the job execution time has exceeded the wallclock time, then proceed to cleanup and remove the job
-            self._sm_log_info("maximum execution time exceeded; initiating job cleanup and removal", cobalt_log=True)
-            accounting_logger.info(accounting.abort(self.jobid, self.user, {'ncpus': self.procs, 'nodect': self.nodes,
-                                                                            'walltime': str_elapsed_time(self.walltime * 60)}))
+            self._sm_log_info("maximum execution time exceeded; initiating job cleanup and removal", cobalt_log = True)
+            accounting_logger.info(accounting.abort(self.jobid, self.user, {'ncpus':self.procs, 'nodect':self.nodes,
+                'walltime':str_elapsed_time(self.walltime * 60)}))
             self._sm_start_job_epilogue_scripts()
             return
 
@@ -2716,17 +2716,16 @@ class Job (StateMachine):
         optional['priority_core_hours'] = self.priority_core_hours
         # group and session are unknown
         accounting_logger.info(accounting.end(self.jobid, self.user,
-                                              "unknown", self.jobname, self.queue,
-                                              self.outputdir, self.command, self.args, self.mode,
-                                              self.ctime, self.qtime, self.etime, self.start, self.exec_host,
-                                              {'ncpus': self.procs, 'nodect': self.nodes,
-                                               'walltime': str_elapsed_time(self.walltime * 60)},
-                                              "unknown", self.end, exit_status,
-                                              {'location': ",".join([":".join(l) for l in self.__locations]),
-                                               'nodect': ",".join([str(n) for n in self.__resource_nodects]),
-                                               'walltime': ",".join(
-                                                   [str_elapsed_time(t) for t in self.__timers['user'].elapsed_times])},
-                                              **optional))
+            "unknown", self.jobname, self.queue,
+            self.outputdir, self.command, self.args, self.mode,
+            self.ctime, self.qtime, self.etime, self.start, self.exec_host,
+            {'ncpus':self.procs, 'nodect':self.nodes,
+             'walltime':str_elapsed_time(self.walltime * 60)},
+            "unknown", self.end, exit_status,
+            {'location':",".join([":".join(l) for l in self.__locations]),
+             'nodect':",".join([str(n) for n in self.__resource_nodects]),
+             'walltime':",".join([str_elapsed_time(t) for t in self.__timers['user'].elapsed_times])},
+            **optional))
 
         dbwriter.log_to_db(None, "terminal_action_start",
             "job_prog", JobProgMsg(self), self.end)
@@ -2754,9 +2753,13 @@ class Job (StateMachine):
         return self.__queue
 
     def __set_queue(self, queue):
-        queue_info_str = accounting.queue(self.jobid, queue, self.user, {'ncpus': self.procs, 'nodect': self.nodes,
-                                                                         'walltime': str_elapsed_time(self.walltime * 60)},
-                                          self.project)
+        '''Add a job to a given queue and log the change.
+
+        '''
+        queue_info_str = accounting.queue(self.jobid, queue, self.user, {'ncpus':self.procs, 'nodect':self.nodes,
+            'walltime':str_elapsed_time(self.walltime * 60)}, self.project)
+        stripped_info = ';'.join(queue_info_str.split(';')[1:])
+        logger.info(stripped_info) #'Q;%s;%s;%s' % (self.jobid, self.user, queue))
         self.acctlog.LogMessage('Q;%s;%s;%s' % (self.jobid, self.user, queue))
         accounting_logger.info(queue_info_str)
         self.__timers['current_queue'] = Timer()
@@ -3097,11 +3100,12 @@ class Job (StateMachine):
             user = self.user
 
         # write job delete information to CQM and accounting logs
-        delete_msg = accounting.delete(self.jobid, user, self.user, {'ncpus': self.procs, 'nodect': self.nodes,
-            'walltime': str_elapsed_time(self.walltime * 60)})
+        delete_msg = accounting.delete(self.jobid, user, self.user, {'ncpus':self.procs, 'nodect':self.nodes,
+                'walltime':str_elapsed_time(self.walltime * 60)})
+        stripped_msg = ";".join(delete_msg.split(';')[1:])
         accounting_logger.info(delete_msg)
-        logger.info('D;%s;%s' % (self.jobid, self.user))
-        self.acctlog.LogMessage('D;%s;%s' % (self.jobid, self.user))
+        logger.info(stripped_msg) #'D;%s;%s' % (self.jobid, self.user))
+        self.acctlog.LogMessage(stripped_msg) #'D;%s;%s' % (self.jobid, self.user))
 
         if not force:
             try:
@@ -3157,17 +3161,17 @@ class Job (StateMachine):
                         optional['account'] = self.project
                     # group, session and exit_status are unknown
                     accounting_logger.info(accounting.end(self.jobid,
-                                                          self.user, "unknown", self.jobname, self.queue,
-                                                          self.outputdir, self.command, self.args, self.mode,
-                                                          self.ctime, self.qtime, self.etime, self.start,
-                                                          self.exec_host,
-                                                          {'ncpus':self.procs, 'nodect':self.nodes,
-                                                           'walltime':str_elapsed_time(self.walltime * 60)},
-                                                          "unknown", self.end, "unknown",
-                                                          {'location':",".join([":".join(l) for l in self.__locations]),
-                                                           'nodect':",".join([str(n) for n in self.__resource_nodects]),
-                                                           'walltime':",".join([str_elapsed_time(t) for t in self.__timers['user'].elapsed_times])},
-                                                          **optional))
+                        self.user, "unknown", self.jobname, self.queue,
+                        self.outputdir, self.command, self.args, self.mode,
+                        self.ctime, self.qtime, self.etime, self.start,
+                        self.exec_host,
+                        {'ncpus':self.procs, 'nodect':self.nodes,
+                         'walltime':str_elapsed_time(self.walltime * 60)},
+                         "unknown", self.end, "unknown",
+                        {'location':",".join([":".join(l) for l in self.__locations]),
+                         'nodect':",".join([str(n) for n in self.__resource_nodects]),
+                         'walltime':",".join([str_elapsed_time(t) for t in self.__timers['user'].elapsed_times])},
+                        **optional))
 
                     dbwriter.log_to_db(None, "terminal_action_start",
                         "job_prog", JobProgMsg(self), self.end)
@@ -3831,20 +3835,30 @@ class QueueManager(Component):
         return walltime_p
 
     def add_jobs(self, specs):
-        '''Add a job, throws in adminemail'''
+        '''Add a job.
+        Input:
+            specs - a list of dictionaries specifying jobs to queue
+        Output:
+            a list of dictionaries containing jobid, status, and reason fields.
+        Side Effects:
+            Any jobs created will be added to queues.  Also, the job spec will
+            be modified to add in the adminemail field for a given queue.
+            A predicted walltime may also be added automatically.
+        Exceptions:
+            QueueError: Cobalt was unable to queue the list of jobs.
 
-        queue_names = self.Queues.keys()
+        '''
 
+        maxtime = get_cqm_config('max_walltime', None)
         failed = False
         for spec in specs:
             if spec['queue'] in self.Queues:
                 if 'walltime' in spec:
                     if float(spec['walltime']) <= 0 and 'maxtime' not in self.Queues[spec['queue']].restrictions:
-                        maxtime = get_cqm_config('max_walltime', None)
                         if not maxtime:
                             failure_msg = 'No Max Walltime default or for queue "%s" defined. Please contact system administrator' % spec['queue']
                             logger.error(failure_msg)
-                            raise QueueError, failure_msg
+                            raise QueueError(failure_msg)
 
                 spec.update({'adminemail':self.Queues[spec['queue']].adminemail})
                 if walltime_prediction_enabled:
