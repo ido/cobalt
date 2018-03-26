@@ -2854,8 +2854,9 @@ class Job (StateMachine):
                     return "dep_fail"
                 else:
                     return "dep_hold"
-            return "admin_hold"
-        if self._sm_state in ['Job_Prologue', 'Job_Prologue_Retry',
+            else:
+                return "admin_hold"
+        if self._sm_state in ['Job_Prologue','Job_Prologue_Retry',
                 'Resource_Prologue', 'Resource_Prologue_Retry', 'Run_Retry']:
             return "starting"
         if self._sm_state == 'Running':
@@ -2883,7 +2884,8 @@ class Job (StateMachine):
         of job information.
 
         '''
-        if self._sm_state in ('Ready', 'Preempted') and self.max_running:
+        if self._sm_state in ('Ready', 'Preempted') and (self.dep_hold or
+                self.max_running):
             return "H"
         if self._sm_state == 'Ready':
             return "Q"
