@@ -1193,19 +1193,34 @@ class TestALPSReservation(object):
         spec = {'reserved_nodes': [1], 'reservation_id': 2, 'pagg_id': 3, }
         mock_fetch_reservations.return_value = {'reservations':
                                                 [{'reservation_id': '2',
-                                                    'ApplicationArray': [{'Application': [{'CommandArray':[{'Command': [{'cmd': 'BATCH'}]}], 'application_id': '10'}]
-                                                                        }],
+                                                  'ApplicationArray': [{'Application': [{'CommandArray': [{'Command': [{'cmd': 'BASIL'}]}],
+                                                                                         'application_id': '10'
+                                                                                       }]
+                                                                       }],
+                                                 },
+                                                 {'reservation_id': '2',
+                                                  'ApplicationArray': [{'Application': [{'CommandArray': [{'Command': [{'cmd': '/bin/date'}]}],
+                                                                                         'application_id': '12'
+                                                                                       }]
+                                                                      }],
                                                  },
                                                  {'reservation_id': '4',
-                                                  'ApplicationArray': [{'CommandArray': [{'cmd': '/bin/date'}], 'application_id': '12'}],
-                                                  'ApplicationArray': [{'Application': [{'CommandArray':[{'Command': [{'cmd': '/bin/date'}]}], 'application_id': '12'}]
-                                                                        }],
+                                                  'ApplicationArray': [{'Application': [{'CommandArray': [{'Command': [{'cmd': 'BASIL'}]}],
+                                                                                         'application_id': '13'
+                                                                                       }]
+                                                                      }],
+                                                 },
+                                                 {'reservation_id': '4',
+                                                  'ApplicationArray': [{'Application': [{'CommandArray': [{'Command': [{'cmd': '/bin/sleep'}]}],
+                                                                                         'application_id': '14'
+                                                                                       }]
+                                                                      }],
                                                  }
                                                 ]
                                                }
         alps_res = Cobalt.Components.system.CraySystem.ALPSReservation(self.base_job, spec, self.nodes.values())
         apids = alps_res.release()
-        assert_match(apids, ['10'], "Wrong apids returned.")
+        assert_match(apids, ['12'], "Wrong apids returned.")
         assert alps_res.dying, "ALPSReservation not marked as dying"
         assert_match(mock_release.call_count, 1, "ALPSBridge.release call count wrong.")
         assert_match(mock_fetch_reservations.call_count, 1, "ALPSBridge.fetch_reservations call count wrong.")
@@ -1255,7 +1270,7 @@ class TestALPSReservation(object):
         alps_res = Cobalt.Components.system.CraySystem.ALPSReservation(self.base_job, spec, self.nodes.values())
         apids = alps_res.release()
         assert_match(apids, [], "Wrong apids returned.")
-        assert alps_res.dying, "ALPSReservation not marked as dying"
+        assert not alps_res.dying, "ALPSReservation marked as dying"
         assert_match(mock_release.call_count, 1, "ALPSBridge.release call count wrong.")
         assert_match(mock_fetch_reservations.call_count, 1, "ALPSBridge.fetch_reservations call count wrong.")
 
@@ -1268,7 +1283,7 @@ class TestALPSReservation(object):
         alps_res = Cobalt.Components.system.CraySystem.ALPSReservation(self.base_job, spec, self.nodes.values())
         apids = alps_res.release()
         assert_match(apids, [], "Wrong apids returned.")
-        assert alps_res.dying, "ALPSReservation not marked as dying"
+        assert not alps_res.dying, "ALPSReservation marked as dying"
         assert_match(mock_release.call_count, 1, "ALPSBridge.release call count wrong.")
         assert_match(mock_fetch_reservations.call_count, 1, "ALPSBridge.fetch_reservations call count wrong.")
 
@@ -1280,7 +1295,7 @@ class TestALPSReservation(object):
         alps_res = Cobalt.Components.system.CraySystem.ALPSReservation(self.base_job, spec, self.nodes.values())
         apids = alps_res.release()
         assert_match(apids, [], "Wrong apids returned.")
-        assert alps_res.dying, "ALPSReservation not marked as dying"
+        assert not alps_res.dying, "ALPSReservation marked as dying"
         assert_match(mock_release.call_count, 1, "ALPSBridge.release call count wrong.")
         assert_match(mock_fetch_reservations.call_count, 1, "ALPSBridge.fetch_reservations call count wrong.")
 

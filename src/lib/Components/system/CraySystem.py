@@ -1609,10 +1609,11 @@ class ALPSReservation(object):
                         # completes between the release and the subsequent fetch reservations
                         # Generally happens on systems on the last cobalt job run.
                         _logger.info('No ALPS reservations remaining on system.')
+                    self.dying = True
             else:
                 _logger.info('ALPS reservation: %s has no claims left.',
                     self.alps_res_id)
-            self.dying = True
+                self.dying = True
         return apids
 
 def _find_non_batch_apids(resinfo, alps_res_id):
