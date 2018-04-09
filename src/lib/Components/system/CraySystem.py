@@ -6,9 +6,11 @@ import time
 import sys
 import xmlrpclib
 import json
+from xml.etree.ElementTree import ParseError
 import ConfigParser
 import Cobalt.Util
 import Cobalt.Components.system.AlpsBridge as ALPSBridge
+from Cobalt.Components.system.AlpsBridge import ALPSError
 from Cobalt.Components.base import Component, exposed, automatic, query, locking
 from Cobalt.Components.system.base_system import BaseSystem
 from Cobalt.Components.system.CrayNode import CrayNode
@@ -1577,18 +1579,40 @@ class ALPSReservation(object):
             #release already issued.  Ignore
             return
         apids = []
-        status = ALPSBridge.release(self.alps_res_id)
-        if int(status['claims']) != 0:
-            _logger.info('ALPS reservation: %s still has %s claims.',
-                    self.alps_res_id, status['claims'])
-            # fetch reservation information so that we can send kills to
-            # interactive apruns.
-            resinfo = ALPSBridge.fetch_reservations()
-            apids = _find_non_batch_apids(resinfo['reservations'], self.alps_res_id)
+        try:
+            status = ALPSBridge.release(self.alps_res_id)
+        except ParseError as exc:
+            _logger.error("ALPSReservation.release: error parsing release message from ALPS: %s", exc)
+        except ALPSError as exc:
+            _logger.error("ALPSReservation.release: ALPS error in reservation release: %s", exc)
+        except xmlrpclib.Fault as exc:
+            _logger.error("ALPSReservation.release: XMLRPC error in reservation release: %s", exc)
         else:
-            _logger.info('ALPS reservation: %s has no claims left.',
-                self.alps_res_id)
-        self.dying = True
+            if int(status['claims']) != 0:
+                _logger.info('ALPS reservation: %s still has %s claims.',
+                        self.alps_res_id, status['claims'])
+                # fetch reservation information so that we can send kills to
+                # interactive apruns.
+                try:
+                    resinfo = ALPSBridge.fetch_reservations()
+                except ParseError as exc:
+                    _logger.error("ALPSReservation.release: error parsing reservation fetch from ALPS: %s", exc)
+                except ALPSError as exc:
+                    _logger.error("ALPSReservation.release: ALPS error in reservation fetch: %s", exc)
+                except xmlrpclib.Fault as exc:
+                    _logger.error("ALPSReservation.release: XMLRPC error in reservation fetch: %s", exc)
+                else:
+                    try:
+                        apids = _find_non_batch_apids(resinfo['reservations'], self.alps_res_id)
+                    except KeyError:
+                        # This occurs if the claim is removed and the aprun cleanup
+                        # completes between the release and the subsequent fetch reservations
+                        # Generally happens on systems on the last cobalt job run.
+                        _logger.info('No ALPS reservations remaining on system.')
+            else:
+                _logger.info('ALPS reservation: %s has no claims left.',
+                    self.alps_res_id)
+            self.dying = True
         return apids
 
 def _find_non_batch_apids(resinfo, alps_res_id):
@@ -1600,14 +1624,18 @@ def _find_non_batch_apids(resinfo, alps_res_id):
             for applications in alps_res['ApplicationArray']:
                 for application in applications.values():
                     for app_data in application:
-                        # applicaiton id is at the app_data level.  Multiple
+                        # application id is at the app_data level.  Multiple
                         # commands don't normally happen.  Maybe in a MPMD job?
-                        # All commands will have the same applicaiton id.
+                        # All commands will have the same application id.
                         for commands in app_data['CommandArray']:
                             for command in commands.values():
-                                # BASIL is the indicaiton of a apbasil
+                                # BASIL is the indication of a apbasil
                                 # reservation.  apruns with the application of
                                 # BASIL would be an error.
-                                if command[0]['cmd'] != 'BASIL':
-                                    apids.append(app_data['application_id'])
+                                # in case of MPMD command, iterate
+                                for command_data in command: #this is actually a list of arrays
+                                    if command_data['cmd'] != 'BASIL':
+                                        # This is the basil tracking reservation, so we can get appid from here
+                                        apids.append(app_data['application_id'])
+
     return apids
