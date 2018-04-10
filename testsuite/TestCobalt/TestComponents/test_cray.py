@@ -7,6 +7,8 @@ elogin_hosts: foo:bar
 import Cobalt
 import TestCobalt
 import sys
+import xml.etree.ElementTree
+import xmlrpclib
 config_file = Cobalt.CONFIG_FILES[0]
 config_fp = open(config_file, "w")
 config_fp.write(SYSTEM_CONFIG_ENTRY)
@@ -1151,3 +1153,161 @@ class TestCraySystem(object):
         info = self.system._ALPS_reserve_resources(job, new_time, node_id_list)
         assert_match(info, node_id_list, 'Bad reservation info returned')
         TestCraySystem.verify_alps_reservation_dict(self.system)
+
+class TestALPSReservation(object):
+    '''Tests for the ALPSReservation class in src/lib/Components/system/CraySystem.py'''
+
+    def setup(self, *args, **kwargs):
+        self.base_spec = {'name':'test', 'state': 'UP', 'node_id': '1', 'role':'batch',
+                'architecture': 'XT', 'SocketArray':['foo', 'bar'],
+                'queues':['default'],
+                }
+        self.nodes = {}
+
+        for i in range(1,6):
+            self.base_spec['name'] = "test%s" % i
+            self.base_spec['node_id'] = str(i)
+            node_dict=dict(self.base_spec)
+            self.nodes[str(i)] = CrayNode(node_dict)
+
+        self.base_job = {'jobid':1, 'user':'crusher', 'attrs':{},
+                'queue':'default', 'nodes': 1, 'walltime': 60,
+                }
+
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.release', return_value={'claims': '0'})
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.fetch_reservations')
+    def test_ALPSReservation_release_no_claims(self, mock_fetch_reservations, mock_release):
+        '''ALPSReservation.release: no claims'''
+        spec = {'reserved_nodes': [1], 'reservation_id': 2, 'pagg_id': 3, }
+        alps_res = Cobalt.Components.system.CraySystem.ALPSReservation(self.base_job, spec, self.nodes.values())
+        apids = alps_res.release()
+        assert_match(apids, [], "Wrong apids returned.")
+        assert alps_res.dying, "ALPSReservation not marked as dying"
+        assert_match(mock_release.call_count, 1, "ALPSBridge.release call count wrong.")
+        assert_match(mock_fetch_reservations.call_count, 0, "ALPSBridge.fetch_reservations call count wrong.")
+
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.release', return_value={'claims': '1'})
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.fetch_reservations')
+    def test_ALPSReservation_release_have_claims(self, mock_fetch_reservations, mock_release):
+        '''ALPSReservation.release: has claims remaining'''
+        spec = {'reserved_nodes': [1], 'reservation_id': 2, 'pagg_id': 3, }
+        mock_fetch_reservations.return_value = {'reservations':
+                                                [{'reservation_id': '2',
+                                                  'ApplicationArray': [{'Application': [{'CommandArray': [{'Command': [{'cmd': 'BASIL'}]}],
+                                                                                         'application_id': '10'
+                                                                                       }]
+                                                                       }],
+                                                 },
+                                                 {'reservation_id': '2',
+                                                  'ApplicationArray': [{'Application': [{'CommandArray': [{'Command': [{'cmd': '/bin/date'}]}],
+                                                                                         'application_id': '12'
+                                                                                       }]
+                                                                      }],
+                                                 },
+                                                 {'reservation_id': '4',
+                                                  'ApplicationArray': [{'Application': [{'CommandArray': [{'Command': [{'cmd': 'BASIL'}]}],
+                                                                                         'application_id': '13'
+                                                                                       }]
+                                                                      }],
+                                                 },
+                                                 {'reservation_id': '4',
+                                                  'ApplicationArray': [{'Application': [{'CommandArray': [{'Command': [{'cmd': '/bin/sleep'}]}],
+                                                                                         'application_id': '14'
+                                                                                       }]
+                                                                      }],
+                                                 }
+                                                ]
+                                               }
+        alps_res = Cobalt.Components.system.CraySystem.ALPSReservation(self.base_job, spec, self.nodes.values())
+        apids = alps_res.release()
+        assert_match(apids, ['12'], "Wrong apids returned.")
+        assert alps_res.dying, "ALPSReservation not marked as dying"
+        assert_match(mock_release.call_count, 1, "ALPSBridge.release call count wrong.")
+        assert_match(mock_fetch_reservations.call_count, 1, "ALPSBridge.fetch_reservations call count wrong.")
+
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.release', side_effect=xml.etree.ElementTree.ParseError('Error parsing XML'))
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.fetch_reservations')
+    def test_ALPSReservation_release_fail_release_xmlparse(self, mock_fetch_reservations, mock_release):
+        '''ALPSReservation.release: graceful reserved ParserError failure'''
+        spec = {'reserved_nodes': [1], 'reservation_id': 2, 'pagg_id': 3, }
+        alps_res = Cobalt.Components.system.CraySystem.ALPSReservation(self.base_job, spec, self.nodes.values())
+        apids = alps_res.release()
+        assert_match(apids, [], "Wrong apids returned.")
+        assert not alps_res.dying, "ALPSReservation marked as dying"
+        assert_match(mock_release.call_count, 1, "ALPSBridge.release call count wrong.")
+        assert_match(mock_fetch_reservations.call_count, 0, "ALPSBridge.fetch_reservations call count wrong.")
+
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.release',
+            side_effect=Cobalt.Components.system.AlpsBridge.ALPSError('Error reported from ALPS', "PERMANENT"))
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.fetch_reservations')
+    def test_ALPSReservation_release_fail_release_alpserror(self, mock_fetch_reservations, mock_release):
+        '''ALPSReservation.release: graceful reserved ALPS Error failure'''
+        spec = {'reserved_nodes': [1], 'reservation_id': 2, 'pagg_id': 3, }
+        alps_res = Cobalt.Components.system.CraySystem.ALPSReservation(self.base_job, spec, self.nodes.values())
+        apids = alps_res.release()
+        assert_match(apids, [], "Wrong apids returned.")
+        assert not alps_res.dying, "ALPSReservation marked as dying"
+        assert_match(mock_release.call_count, 1, "ALPSBridge.release call count wrong.")
+        assert_match(mock_fetch_reservations.call_count, 0, "ALPSBridge.fetch_reservations call count wrong.")
+
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.release', side_effect=xmlrpclib.Fault(faultCode=1, faultString='test'))
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.fetch_reservations')
+    def test_ALPSReservation_release_fail_release_xmlrpc(self, mock_fetch_reservations, mock_release):
+        '''ALPSReservation.release: graceful reserved XML-RPC failure'''
+        spec = {'reserved_nodes': [1], 'reservation_id': 2, 'pagg_id': 3, }
+        alps_res = Cobalt.Components.system.CraySystem.ALPSReservation(self.base_job, spec, self.nodes.values())
+        apids = alps_res.release()
+        assert_match(apids, [], "Wrong apids returned.")
+        assert not alps_res.dying, "ALPSReservation marked as dying"
+        assert_match(mock_release.call_count, 1, "ALPSBridge.release call count wrong.")
+        assert_match(mock_fetch_reservations.call_count, 0, "ALPSBridge.fetch_reservations call count wrong.")
+
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.release', return_value={'claims': '1'})
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.fetch_reservations', side_effect=xml.etree.ElementTree.ParseError('Error parsing XML'))
+    def test_ALPSReservation_release_fail_res_fetch_xmlparse(self, mock_fetch_reservations, mock_release):
+        '''ALPSReservation.release: graceful fetch ParserError failure'''
+        spec = {'reserved_nodes': [1], 'reservation_id': 2, 'pagg_id': 3, }
+        alps_res = Cobalt.Components.system.CraySystem.ALPSReservation(self.base_job, spec, self.nodes.values())
+        apids = alps_res.release()
+        assert_match(apids, [], "Wrong apids returned.")
+        assert not alps_res.dying, "ALPSReservation marked as dying"
+        assert_match(mock_release.call_count, 1, "ALPSBridge.release call count wrong.")
+        assert_match(mock_fetch_reservations.call_count, 1, "ALPSBridge.fetch_reservations call count wrong.")
+
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.release', return_value={'claims': '1'})
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.fetch_reservations',
+            side_effect=Cobalt.Components.system.AlpsBridge.ALPSError('Error reported from ALPS', "PERMANENT"))
+    def test_ALPSReservation_release_fail_res_fetch_alpserror(self, mock_fetch_reservations, mock_release):
+        '''ALPSReservation.release: graceful fetch ALPS Error failure'''
+        spec = {'reserved_nodes': [1], 'reservation_id': 2, 'pagg_id': 3, }
+        alps_res = Cobalt.Components.system.CraySystem.ALPSReservation(self.base_job, spec, self.nodes.values())
+        apids = alps_res.release()
+        assert_match(apids, [], "Wrong apids returned.")
+        assert not alps_res.dying, "ALPSReservation marked as dying"
+        assert_match(mock_release.call_count, 1, "ALPSBridge.release call count wrong.")
+        assert_match(mock_fetch_reservations.call_count, 1, "ALPSBridge.fetch_reservations call count wrong.")
+
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.release', return_value={'claims': '1'})
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.fetch_reservations', side_effect=xmlrpclib.Fault(faultCode=1, faultString='test'))
+    def test_ALPSReservation_release_fail_res_fetch_xmlrpc(self, mock_fetch_reservations, mock_release):
+        '''ALPSReservation.release: graceful fetch XML-RPC failure'''
+        spec = {'reserved_nodes': [1], 'reservation_id': 2, 'pagg_id': 3, }
+        alps_res = Cobalt.Components.system.CraySystem.ALPSReservation(self.base_job, spec, self.nodes.values())
+        apids = alps_res.release()
+        assert_match(apids, [], "Wrong apids returned.")
+        assert not alps_res.dying, "ALPSReservation marked as dying"
+        assert_match(mock_release.call_count, 1, "ALPSBridge.release call count wrong.")
+        assert_match(mock_fetch_reservations.call_count, 1, "ALPSBridge.fetch_reservations call count wrong.")
+
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.release', return_value={'claims': '1'})
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.fetch_reservations')
+    def test_ALPSReservation_release_fail_res_fetch_no_reservations(self, mock_fetch_reservations, mock_release):
+        '''ALPSReservation.release: graceful handling of already removed reservations post release request'''
+        spec = {'reserved_nodes': [1], 'reservation_id': 2, 'pagg_id': 3, }
+        mock_fetch_reservations.return_value={} #No reservation data should trigger a KeyError
+        alps_res = Cobalt.Components.system.CraySystem.ALPSReservation(self.base_job, spec, self.nodes.values())
+        apids = alps_res.release()
+        assert_match(apids, [], "Wrong apids returned.")
+        assert alps_res.dying, "ALPSReservation not marked as dying"
+        assert_match(mock_release.call_count, 1, "ALPSBridge.release call count wrong.")
+        assert_match(mock_fetch_reservations.call_count, 1, "ALPSBridge.fetch_reservations call count wrong.")
