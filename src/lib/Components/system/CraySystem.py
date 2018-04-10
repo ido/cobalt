@@ -1538,6 +1538,7 @@ class ALPSReservation(object):
         #self.gid = spec['account_name'] #appears to be gid.
         self.dying = False
         self.dead = False #System no longer has this alps reservation
+        self.label = "%s/%s" % (self.jobid, self.alps_res_id)
         _logger.info('ALPS Reservation %s registered for job %s',
                 self.alps_res_id, self.jobid)
 
@@ -1581,26 +1582,25 @@ class ALPSReservation(object):
         apids = []
         try:
             status = ALPSBridge.release(self.alps_res_id)
-        except ParseError as exc:
-            _logger.error("ALPSReservation.release: error parsing release message from ALPS: %s", exc)
-        except ALPSError as exc:
-            _logger.error("ALPSReservation.release: ALPS error in reservation release: %s", exc)
-        except xmlrpclib.Fault as exc:
-            _logger.error("ALPSReservation.release: XMLRPC error in reservation release: %s", exc)
+        except (ParseError, ALPSError, xmlrpclib.Fault) as exc:
+            _logger.error("%s: ALPSReservation.release: %s error in reservation release: %s", self.label, type(exc).__name__, exc)
         else:
-            if int(status['claims']) != 0:
-                _logger.info('ALPS reservation: %s still has %s claims.',
-                        self.alps_res_id, status['claims'])
+            claims = 0
+            try:
+                claims = int(status.get('claims', 0))
+            except TypeError, ValueError:
+                # conversion failed, log and treat as 0
+                _logger.error("%s: ALPSReservation.release: int conversion for claims failed! Got: %s",
+                        self.label, status.get('claims', 0))
+            if claims != 0:
+                _logger.info("%s: ALPS reservation: %s still has %s claims.", self.label, self.alps_res_id, status['claims'])
                 # fetch reservation information so that we can send kills to
                 # interactive apruns.
                 try:
                     resinfo = ALPSBridge.fetch_reservations()
-                except ParseError as exc:
-                    _logger.error("ALPSReservation.release: error parsing reservation fetch from ALPS: %s", exc)
-                except ALPSError as exc:
-                    _logger.error("ALPSReservation.release: ALPS error in reservation fetch: %s", exc)
-                except xmlrpclib.Fault as exc:
-                    _logger.error("ALPSReservation.release: XMLRPC error in reservation fetch: %s", exc)
+                except (ParseError, ALPSError, xmlrpclib.Fault) as exc:
+                    _logger.error("%s: ALPSReservation.release: %s error in reservation release: %s",
+                            self.label, type(exc).__name__, exc)
                 else:
                     try:
                         apids = _find_non_batch_apids(resinfo['reservations'], self.alps_res_id)
@@ -1608,11 +1608,10 @@ class ALPSReservation(object):
                         # This occurs if the claim is removed and the aprun cleanup
                         # completes between the release and the subsequent fetch reservations
                         # Generally happens on systems on the last cobalt job run.
-                        _logger.info('No ALPS reservations remaining on system.')
+                        _logger.info("%s: No ALPS reservations remaining on system.", self.label)
                     self.dying = True
             else:
-                _logger.info('ALPS reservation: %s has no claims left.',
-                    self.alps_res_id)
+                _logger.info("%s: ALPS reservation: %s has no claims left.", self.label, self.alps_res_id)
                 self.dying = True
         return apids
 
