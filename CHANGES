@@ -1,5 +1,11 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 1.0.24 ==
+ * Cweb now reports jobs in the starting state.
+ * Fixed an issue where a process exit status could be fetched twice, and
+   overwrite the actual exit status of a job with an erroneous value.
+ * Heckle and Gram support has been removed.
+
 == Changes to 1.0.23 ==
  * Support for cgroups via cgclassify has been added.  This is off by default.
    Currently, this is only supported for Cray systems, and is intended for systems
