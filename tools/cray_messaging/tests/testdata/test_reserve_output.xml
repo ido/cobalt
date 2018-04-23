@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<BasilRequest method="RESERVE" protocol="1.7">
+    <ReserveParamArray batch_id="3" user_name="frodo">
+        <ReserveParam architecture="XT" depth="1" width="2">
+            <NodeParamArray>
+                <NodeParam>1-5,8,10-11,20,34-36,42,75,5001-5003</NodeParam>
+            </NodeParamArray>
+        </ReserveParam>
+    </ReserveParamArray>
+</BasilRequest>
