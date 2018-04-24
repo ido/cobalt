@@ -51,7 +51,7 @@ def state_file_location():
     return os.path.expandvars(get_config_option('statefiles', "location", "/var/spool/cobalt"))
 
 def run_component (component_cls, argv=None, register=True, state_name=False,
-                   cls_kwargs={}, extra_getopt='', time_out=10,
+                   cls_kwargs={}, extra_getopt='', time_out=10.0,
                    single_threaded=False, seq_num=0, aug_comp_name=False,
                    state_name_match_component=False, sleeptime=10.0):
     '''Run the specified Cobalt component until recieving signal to terminate.
