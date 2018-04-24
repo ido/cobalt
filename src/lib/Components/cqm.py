@@ -2072,7 +2072,7 @@ class Job (StateMachine):
         elif rc != Job.__rc_retry:
             # if the task failed to run, then proceed with job termination by
             # starting the resource prologue scripts
-            self._sm_log_error("execution l; initiating job cleanup and "
+            self._sm_log_error("execution failure; initiating job cleanup and "
                 "removal", cobalt_log = True)
             dbwriter.log_to_db(None, "failed", "job_prog", JobProgMsg(self))
             self._sm_start_resource_epilogue_scripts()
