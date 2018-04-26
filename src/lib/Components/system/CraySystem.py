@@ -22,7 +22,6 @@ from Cobalt.Exceptions import JobValidationError
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
 from Cobalt.Util import compact_num_list, expand_num_list
 from Cobalt.Util import init_cobalt_config, get_config_option
-from Cobalt.Util import init_cobalt_config, get_config_option
 from Cobalt.Util import extract_traceback, sanatize_password, get_current_thread_identifier
 from Queue import Queue
 
