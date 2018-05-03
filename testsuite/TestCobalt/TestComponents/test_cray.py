@@ -1397,6 +1397,7 @@ class TestCraySystem2(object):
         fake_reserve_called = False
         Cobalt.Components.system.CraySystem.BACKFILL_EPSILON = 120
         Cobalt.Components.system.CraySystem.DRAIN_MODE = "first-fit"
+        Cobalt.Components.system.CraySystem.UPDATE_THREAD_TIMEOUT = 0.2
         #----boilerplatestuff----
 
         # kill it
@@ -1438,6 +1439,7 @@ class TestCraySystem2(object):
         fake_reserve_called = False
         Cobalt.Components.system.CraySystem.BACKFILL_EPSILON = 120
         Cobalt.Components.system.CraySystem.DRAIN_MODE = "first-fit"
+        Cobalt.Components.system.CraySystem.UPDATE_THREAD_TIMEOUT = 0.2
         #----boilerplatestuff----
 
         # kill it

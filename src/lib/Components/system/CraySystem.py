@@ -81,7 +81,6 @@ class CraySystem(BaseSystem):
 
         '''
         start_time = time.time()
-        self.update_thread_timeout = UPDATE_THREAD_TIMEOUT
         super(CraySystem, self).__init__(*args, **kwargs)
         _logger.info('BASE SYSTEM INITIALIZED')
         self._common_init_restart()
@@ -407,9 +406,9 @@ class CraySystem(BaseSystem):
                     self.logger.critical("_run_update_state: error occurred, timings below.")
                     for func_name, error, td in metadata_lst:
                         self.logger.critical("%s: %s", func_name, td)
-                self.logger.info('_run_update_state sleeping for %s, tid:%s', self.update_thread_timeout,
-                                  get_current_thread_identifier())
-                Cobalt.Util.sleep(self.update_thread_timeout)
+                self.logger.info('_run_update_state sleeping for %s, tid:%s', UPDATE_THREAD_TIMEOUT,
+                        get_current_thread_identifier())
+                Cobalt.Util.sleep(UPDATE_THREAD_TIMEOUT)
             self.logger.critical('_run_update_state exiting, tid:%s', get_current_thread_identifier())
             self.node_update_thread_kill_queue.get(timeout=1.0)
             self.node_update_thread_dead = True
