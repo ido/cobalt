@@ -1371,7 +1371,8 @@ class TestCraySystem2(object):
         pass
 
     @patch.object(AlpsBridge, 'init_bridge')
-    def test_run_update_state_00(self, *args, **kwargs):
+    def test_run_update_state_normal_exec(self, *args, **kwargs):
+        '''CraySystem.run_update_state: normal execution of subfunctions'''
 
         # this is silly, without fundamental change in CraySystem, we need a way to
         # set the update_thread_timeout and this can be done inside _init_nodes_and_reservations
@@ -1414,7 +1415,8 @@ class TestCraySystem2(object):
         _logger.info("test_counter passed, %s", system.test_counter)
 
     @patch.object(AlpsBridge, 'init_bridge')
-    def test_run_update_state_01(self, *args, **kwargs):
+    def test_run_update_state_all_exceptions(self, *args, **kwargs):
+        '''CraySystem.run_update_state: all functions raise exceptions'''
         # this is silly, without fundamental change in CraySystem, we need a way to
         # set the update_thread_timeout and this can be done inside _init_nodes_and_reservations
         system = FakeCraySystem(force_raise=True)
@@ -1458,9 +1460,9 @@ class TestCraySystem2(object):
     def teardown(self):
         pass
 
-if __name__ == "__main__":
-    t = TestCraySystem2()
-    t.setup()
-    t.test_run_update_state_00()
-    t.test_run_update_state_01()
-    t.teardown()
+# if __name__ == "__main__":
+    # t = TestCraySystem2()
+    # t.setup()
+    # t.test_run_update_state_00()
+    # t.test_run_update_state_01()
+    # t.teardown()
