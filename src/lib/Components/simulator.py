@@ -199,6 +199,7 @@ class Simulator (BGBaseSystem):
         self.node_update_thread_dead = False
         self.logger.info("_run_update_state thread starting.")
         self.node_update_thread = threading.Thread(target=self._run_update_state)
+        self.node_update_thread.daemon = True
         self.node_update_thread.start()
         self.logger.info("_run_update_state thread started:%s", self.node_update_thread)
 
