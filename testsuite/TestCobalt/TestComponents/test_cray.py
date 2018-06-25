@@ -26,6 +26,7 @@ sys.modules['cray_messaging'] = cray_messaging_mock
 
 from nose.tools import raises
 from testsuite.TestCobalt.Utilities.assert_functions import assert_match, assert_not_match
+from testsuite.TestCobalt.Utilities.Time import timeout
 
 
 from Cobalt.Components.system.CrayNode import CrayNode
@@ -34,6 +35,17 @@ import time
 from Cobalt.Components.system.CraySystem import CraySystem
 from Cobalt.Components.system.base_pg_manager import ProcessGroupManager
 import Cobalt.Components.system.AlpsBridge as AlpsBridge
+
+from Cobalt.Components.system.ALPSProcessGroup import ALPSProcessGroup
+import logging
+from Cobalt.Components.system.CraySystem import _logger
+logging.basicConfig()
+_logger.setLevel(logging.getLevelName('DEBUG'))
+CraySystem.logger.setLevel(logging.getLevelName('DEBUG'))
+
+from Cobalt.Util import init_cobalt_config, get_config_option
+#init_cobalt_config()
+system_size = int(get_config_option('system', 'size'))
 
 
 def is_match(a, b):
@@ -1312,157 +1324,123 @@ class TestALPSReservation(object):
         assert_match(mock_release.call_count, 1, "ALPSBridge.release call count wrong.")
         assert_match(mock_fetch_reservations.call_count, 1, "ALPSBridge.fetch_reservations call count wrong.")
 
-from Cobalt.Components.system.ALPSProcessGroup import ALPSProcessGroup
-import logging
-from Cobalt.Components.system.CraySystem import _logger
-logging.basicConfig()
-_logger.setLevel(logging.getLevelName('DEBUG'))
 
-from Cobalt.Util import init_cobalt_config, get_config_option
-#init_cobalt_config()
-system_size = int(get_config_option('system', 'size'))
+class UpdateNodeStateException(Exception):
 
-def _init_nodes_and_reservations(xself):
-    xself.logger.warning("_init_nodes_and_reservations setting update_thread_timeout")
-    xself.update_thread_timeout = 0.2
-CraySystem._init_nodes_and_reservations = _init_nodes_and_reservations
-CraySystem.logger.setLevel(logging.getLevelName('DEBUG'))
+    tripped = False
+    def __init__(self, *args, **kwargs):
+        super(UpdateNodeStateException, self).__init__(*args, **kwargs)
+        self.tripped = True
 
-class FakeCraySystem(CraySystem):
-    def __init__(self, force_raise=False):
-        self.force_raise = force_raise
-        self.test_counter = 0
-        from Cobalt.Components.system.base_pg_manager import ProcessGroupManager
-        pgm = ProcessGroupManager
-        pgm.update_launchers = self.fake_func_always_pass
-        super(FakeCraySystem, self).__init__(*[], **{})
-        pgm.update_launchers = self.fake_func
+class GetExitStatusException(Exception):
 
-    def fake_func_always_pass(self, *args, **kwargs):
-        self.logger.warning("calling fake_func_always_pass/update_launchers")
-        self.test_counter = self.test_counter | 0x80
-
-    def fake_func(self, *args, **kwargs):
-        self.logger.warning("calling fake_func/update_launchers")
-        if self.force_raise:
-            self.test_counter = self.test_counter | 0x10
-            raise Exception("0x01")
-        else:
-            self.test_counter = self.test_counter | 0x01
-
-    def update_node_state(self):
-        self.logger.warning("calling update_node_state")
-        if self.force_raise:
-            self.test_counter = self.test_counter | 0x20
-            raise Exception("0x02")
-        else:
-            self.test_counter = self.test_counter | 0x02
-
-    def _get_exit_status(self):
-        self.logger.warning("calling _get_exit_status")
-        if self.force_raise:
-            self.test_counter = self.test_counter | 0x40
-            raise Exception("0x04")
-        else:
-            self.test_counter = self.test_counter | 0x04
+    tripped = False
+    def __init__(self, *args, **kwargs):
+        super(GetExitStatusException, self).__init__(*args, **kwargs)
+        self.tripped = True
 
 class TestCraySystem2(object):
+    '''This is testing the _run_and_wrap functions, which normally we short-circuit for other unit tests.  Therefore it required
+    different setup and teardown fixtures.'''
+
+    @patch.object(AlpsBridge, 'init_bridge')
+    @patch.object(CraySystem, '_init_nodes_and_reservations', return_value=None)
     def setup(self, *args, **kwargs):
-        pass
 
-    @patch.object(AlpsBridge, 'init_bridge')
-    def test_run_update_state_normal_exec(self, *args, **kwargs):
-        '''CraySystem.run_update_state: normal execution of subfunctions'''
-
-        # this is silly, without fundamental change in CraySystem, we need a way to
-        # set the update_thread_timeout and this can be done inside _init_nodes_and_reservations
-        system = FakeCraySystem(force_raise=False)
-
-        #----boilerplatestuff----
-        base_spec = {'name':'test', 'state': 'UP', 'node_id': '1', 'role':'batch',
-                          'architecture': 'XT', 'SocketArray':['foo', 'bar'],
-                          'queues':['default'],
-                          }
+        self.system = CraySystem()
+        self.base_spec = {'name':'test', 'state': 'UP', 'node_id': '1', 'role':'batch',
+                'architecture': 'XT', 'SocketArray':['foo', 'bar'],
+                'queues':['default'],
+                }
         for i in range(1,6):
-            base_spec['name'] = "test%s" % i
-            base_spec['node_id'] = str(i)
-            node_dict=dict(base_spec)
-            system.nodes[str(i)] = CrayNode(node_dict)
-            system.node_name_to_id[node_dict['name']] = node_dict['node_id']
-        for node in system.nodes.values():
+            self.base_spec['name'] = "test%s" % i
+            self.base_spec['node_id'] = str(i)
+            node_dict=dict(self.base_spec)
+            self.system.nodes[str(i)] = CrayNode(node_dict)
+            self.system.node_name_to_id[node_dict['name']] = node_dict['node_id']
+        for node in self.system.nodes.values():
             node.managed = True
-        system._gen_node_to_queue()
-        base_job = {'jobid':1, 'user':'crusher', 'attrs':{},
-                         'queue':'default', 'nodes': 1, 'walltime': 60,
-                         }
-        fake_reserve_called = False
+        self.system._gen_node_to_queue()
+
+        self.base_job = {'jobid':1, 'user':'crusher', 'attrs':{},
+                'queue':'default', 'nodes': 1, 'walltime': 60,
+                }
+        self.fake_reserve_called = False
         Cobalt.Components.system.CraySystem.BACKFILL_EPSILON = 120
         Cobalt.Components.system.CraySystem.DRAIN_MODE = "first-fit"
         Cobalt.Components.system.CraySystem.UPDATE_THREAD_TIMEOUT = 0.2
-        #----boilerplatestuff----
-
-        # kill it
-        time.sleep(1.0)
-        system.node_update_thread_kill_queue.put(True)
-        _logger.info("node_update_thread_kill_queue sent!")
-
-        while system.node_update_thread_dead is False:
-            _logger.info("waiting for thread to die.")
-            time.sleep(0.5)
-        _logger.info("node_update_thread_dead:%s" , system.node_update_thread_dead)
-
-        assert system.test_counter == 0x87, system.test_counter
-        _logger.info("test_counter passed, %s", system.test_counter)
-
-    @patch.object(AlpsBridge, 'init_bridge')
-    def test_run_update_state_all_exceptions(self, *args, **kwargs):
-        '''CraySystem.run_update_state: all functions raise exceptions'''
-        # this is silly, without fundamental change in CraySystem, we need a way to
-        # set the update_thread_timeout and this can be done inside _init_nodes_and_reservations
-        system = FakeCraySystem(force_raise=True)
-
-        #----boilerplatestuff----
-        base_spec = {'name':'test', 'state': 'UP', 'node_id': '1', 'role':'batch',
-                          'architecture': 'XT', 'SocketArray':['foo', 'bar'],
-                          'queues':['default'],
-                          }
-        for i in range(1,6):
-            base_spec['name'] = "test%s" % i
-            base_spec['node_id'] = str(i)
-            node_dict=dict(base_spec)
-            system.nodes[str(i)] = CrayNode(node_dict)
-            system.node_name_to_id[node_dict['name']] = node_dict['node_id']
-        for node in system.nodes.values():
-            node.managed = True
-        system._gen_node_to_queue()
-        base_job = {'jobid':1, 'user':'crusher', 'attrs':{},
-                         'queue':'default', 'nodes': 1, 'walltime': 60,
-                         }
-        fake_reserve_called = False
-        Cobalt.Components.system.CraySystem.BACKFILL_EPSILON = 120
-        Cobalt.Components.system.CraySystem.DRAIN_MODE = "first-fit"
-        Cobalt.Components.system.CraySystem.UPDATE_THREAD_TIMEOUT = 0.2
-        #----boilerplatestuff----
-
-        # kill it
-        time.sleep(1.0)
-        system.node_update_thread_kill_queue.put(True)
-        _logger.info("node_update_thread_kill_queue sent!")
-
-        while system.node_update_thread_dead is False:
-            _logger.info("waiting for thread to die.")
-            time.sleep(0.5)
-        _logger.info("node_update_thread_dead:%s", system.node_update_thread_dead)
-
-        assert system.test_counter == 0xf0, system.test_counter
-        _logger.info("test_counter passed, %s", system.test_counter)
 
     def teardown(self):
-        pass
+        del self.system
+        del self.base_job
+        Cobalt.Components.system.CraySystem.BACKFILL_EPSILON = 120
+        Cobalt.Components.system.CraySystem.DRAIN_MODE = "first-fit"
+        Cobalt.Components.system.CraySystem.UPDATE_THREAD_TIMEOUT = 0.2
+        self.fake_reserve_called = False
+        UpdateNodeStateException.tripped = False
+        GetExitStatusException.tripped = False
 
-# if __name__ == "__main__":
-    # t = TestCraySystem2()
-    # t.setup()
-    # t.test_run_update_state_00()
-    # t.test_run_update_state_01()
-    # t.teardown()
+    @timeout(3)
+    @patch.object(CraySystem, '_get_exit_status')
+    @patch.object(CraySystem, 'update_node_state')
+    @patch.object(ProcessGroupManager, 'update_launchers')
+    def test_run_update_state_normal_exec(self, *args, **kwargs):
+        '''CraySystem.run_update_state: normal execution of subfunctions'''
+        # should force the thread to run once
+        mock_launchers = args[0]
+        mock_uns = args[1]
+        mock_ges = args[2]
+
+        mock_launchers.__name__ = 'foo'
+        mock_uns.__name__ = 'bar'
+        mock_ges.__name__ = 'baz'
+        while True:
+            if (mock_launchers.call_count > 0 and
+               mock_uns.call_count > 0 and
+               mock_ges.call_count > 0):
+                break
+            time.sleep(0.2)
+        self.system.node_update_thread_kill_queue.put(True)
+        _logger.info("node_update_thread_kill_queue sent!")
+
+        while self.system.node_update_thread_dead is False:
+            _logger.info("waiting for thread to die.")
+            time.sleep(0.5)
+        _logger.info("node_update_thread_dead:%s", self.system.node_update_thread_dead)
+
+        mock_launchers.assert_called()
+        mock_ges.assert_called()
+        mock_uns.assert_called()
+
+
+    @timeout(3)
+    @patch.object(CraySystem, '_get_exit_status')
+    @patch.object(CraySystem, 'update_node_state')
+    @patch.object(ProcessGroupManager, 'update_launchers')
+    def test_run_update_state_all_exceptions(self, *args, **kwargs):
+        '''CraySystem.run_update_state: all functions raise exceptions'''
+        mock_launchers = args[0]
+        mock_uns = args[1]
+        mock_ges = args[2]
+
+        mock_launchers.__name__ = 'foo'
+        mock_uns.__name__ = 'bar'
+        mock_ges.__name__ = 'baz'
+        test_uns = UpdateNodeStateException()
+        test_ges = GetExitStatusException()
+        mock_uns.side_effect = test_uns
+        mock_ges.side_effect = test_ges
+
+        # kill it
+        time.sleep(1.0)
+        self.system.node_update_thread_kill_queue.put(True)
+        _logger.info("node_update_thread_kill_queue sent!")
+
+        while self.system.node_update_thread_dead is False:
+            _logger.info("waiting for thread to die.")
+            time.sleep(0.5)
+        _logger.info("node_update_thread_dead:%s", self.system.node_update_thread_dead)
+
+        assert test_uns.tripped, "UNS not tripped"
+        assert test_ges.tripped, "GES not tripped"
+
