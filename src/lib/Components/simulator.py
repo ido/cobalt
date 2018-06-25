@@ -22,7 +22,7 @@ import Cobalt.Util
 from Cobalt.Components.base import Component, exposed, automatic, locking
 from Cobalt.Components.bg_base_system import NodeCard, PartitionDict, BGBaseSystem
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
-from Cobalt.Util import sanatize_password, extract_traceback, get_current_thread_identifier
+from Cobalt.Util import sanitize_password, extract_traceback, get_current_thread_identifier
 get_config_option = Cobalt.Util.get_config_option
 
 __all__ = [
@@ -121,7 +121,7 @@ class Simulator (BGBaseSystem):
             update_func()
         except Exception:
             te = time.time()
-            tb_str = sanatize_password('\n'.join(extract_traceback()))
+            tb_str = sanitize_password('\n'.join(extract_traceback()))
             td = te - ts
             self.logger.error('_run_and_wrap(%s): td:%s error:%s' % (update_func_name, td, tb_str))
             bool_error = True

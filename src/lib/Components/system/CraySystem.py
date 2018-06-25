@@ -22,7 +22,7 @@ from Cobalt.Exceptions import JobValidationError
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
 from Cobalt.Util import compact_num_list, expand_num_list
 from Cobalt.Util import init_cobalt_config, get_config_option
-from Cobalt.Util import extract_traceback, sanatize_password, get_current_thread_identifier
+from Cobalt.Util import extract_traceback, sanitize_password, get_current_thread_identifier
 from Queue import Queue
 
 _logger = logging.getLogger(__name__)
@@ -375,7 +375,7 @@ class CraySystem(BaseSystem):
             update_func()
         except Exception:
             te = time.time()
-            tb_str = sanatize_password('\n'.join(extract_traceback()))
+            tb_str = sanitize_password('\n'.join(extract_traceback()))
             td = te - ts
             self.logger.error('_run_and_wrap(%s): td:%s error:%s' % (update_func_name, td, tb_str))
             bool_error = True

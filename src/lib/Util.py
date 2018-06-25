@@ -1268,7 +1268,7 @@ def extract_traceback(include_time=True):
     tracebacklst.append(" ".join(("-" * 32, 'END TRACEBACK', "-" * 32)))
     return tracebacklst
 
-def sanatize_password(message):
+def sanitize_password(message):
     """strip the password out of a message"""
     # this patten will remove from a string formatted from an rpc call
     # user:pass@host:port

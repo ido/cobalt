@@ -24,7 +24,7 @@ import time
 import ssl
 
 import Cobalt
-from Cobalt.Util import extract_traceback, sanatize_password
+from Cobalt.Util import extract_traceback, sanitize_password
 from Cobalt.Proxy import ComponentProxy
 
 class ForkedChild(Exception):
@@ -185,7 +185,7 @@ class SSLServer (SocketServer.TCPServer, object):
     def handle_error(self, request, client_address):
         """used to grab the exception and format the traceback from the error."""
         timeout = request.gettimeout()
-        tb_str = sanatize_password('\n'.join(extract_traceback()))
+        tb_str = sanitize_password('\n'.join(extract_traceback()))
         self.logger.error("Exception: request:%s, addr:%s, timeout:%s "
                           "error:%s", request, client_address, timeout, tb_str)
 
@@ -270,7 +270,7 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
 
             response = self.server._marshaled_dispatch(data)
         except:
-            tb_str = sanatize_password('\n'.join(extract_traceback()))
+            tb_str = sanitize_password('\n'.join(extract_traceback()))
             self.logger.error("Exception: error:%s", tb_str)
             raise
             self.send_response(500)
@@ -366,7 +366,7 @@ class BaseXMLRPCServer (SSLServer, CobaltXMLRPCDispatcher, object):
         try:
             ComponentProxy("service-location").register(name, self.url)
         except Exception:
-            tb_str = sanatize_password('\n'.join(extract_traceback()))
+            tb_str = sanitize_password('\n'.join(extract_traceback()))
             self.logger.error("register_with_slp() [%s]" % tb_str)
             raise
     
@@ -378,7 +378,7 @@ class BaseXMLRPCServer (SSLServer, CobaltXMLRPCDispatcher, object):
         try:
             ComponentProxy("service-location").unregister(name)
         except Exception:
-            tb_str = sanatize_password('\n'.join(extract_traceback()))
+            tb_str = sanitize_password('\n'.join(extract_traceback()))
             self.logger.error("unregister_with_slp() [%s]" % tb_str)
             raise
         else:

@@ -59,7 +59,7 @@ def extract_traceback(include_time=True):
     return tracebacklst
 
 # FIXME: this cannot be imported from Cobalt.Util because Proxy is imported within Cobalt.Util
-def sanatize_password(message):
+def sanitize_password(message):
     """strip the password out of a message"""
     # this patten will remove from a string formatted from an rpc call
     # user:pass@host:port
@@ -127,45 +127,45 @@ class RetryMethod(_Method):
                 retval = _Method.__call__(self, *args)
                 return retval
             except xmlrpclib.ProtocolError as err:
-                tb_str = sanatize_password('\n'.join(extract_traceback()))
+                tb_str = sanitize_password('\n'.join(extract_traceback()))
                 log.error("ProtocolError(#%s)[%s]: code:%s msg:%s headers:%s "
                           "error:%s", retry, get_caller(jump_back_count=2), err.errcode, err.errmsg, err.headers, tb_str)
                 raise xmlrpclib.Fault(20, "Server Failure")
             except xmlrpclib.Fault as fault:
-                tb_str = sanatize_password('\n'.join(extract_traceback()))
+                tb_str = sanitize_password('\n'.join(extract_traceback()))
                 log.error("xmlrpclib.Fault(#%s)[%s]: faultCode:%s faultString:%s "
                           "error:%s", retry, get_caller(jump_back_count=2), fault.faultCode, fault.faultString, tb_str)
-                fault.faultString = sanatize_password(fault.faultString)
+                fault.faultString = sanitize_password(fault.faultString)
                 # due to clients using the same code, the error was too verbose and had to be reduced but still sanitized.
                 raise fault
                 #raise #xmlrpclib.Fault(20, tb_str)
             except socket.error as err:
                 # this is the only path that retries
-                tb_str = sanatize_password('\n'.join(extract_traceback()))
+                tb_str = sanitize_password('\n'.join(extract_traceback()))
                 log.error("socket.error(#%s)[%s]:errno%s error:%s", retry, get_caller(jump_back_count=2), err.errno, tb_str)
                 if hasattr(err, 'errno') and err.errno == 336265218:
                     break
                 if retry >= (self.max_retries - 1):
                     raise xmlrpclib.Fault(20, tb_str)
             except CertificateError as ce:
-                tb_str = sanatize_password('\n'.join(extract_traceback()))
+                tb_str = sanitize_password('\n'.join(extract_traceback()))
                 log.error("CertificateError(#%s)[%s]: invalid commonName %s from server.  error:%s",
                           retry, get_caller(jump_back_count=2), ce.commonName, tb_str)
                 break
             except KeyError:
-                tb_str = sanatize_password('\n'.join(extract_traceback()))
+                tb_str = sanitize_password('\n'.join(extract_traceback()))
                 log.error("KeyError(#%s)[%s]: Server disallowed connection.  error:%s",
                           retry, get_caller(jump_back_count=2), tb_str)
                 break
             except Exception:
-                tb_str = sanatize_password('\n'.join(extract_traceback()))
+                tb_str = sanitize_password('\n'.join(extract_traceback()))
                 log.error("KeyError(#%s)[%s]: error:%s", retry, get_caller(jump_back_count=2), tb_str)
                 break
 
             try:
                 time.sleep(0.5)
             except IOError:
-                tb_str = sanatize_password('\n'.join(extract_traceback()))
+                tb_str = sanitize_password('\n'.join(extract_traceback()))
                 log.error("time.sleep/IOERROR(#%s)[%s]: error:%s", retry, get_caller(jump_back_count=2), tb_str)
                 #Yes, you can get an IOError from ppc64 linux kernels
                 #It has to do with the select that is used to get sub-second
@@ -419,9 +419,9 @@ def ComponentProxy(component_name, **kwargs):
         proxy = _ComponentProxy(component_name, **kwargs)
     except:
         #some how we need to get the "error" and modify because on retry=False, it will be a ServerProxy, not a Retry...
-        #tb_str = sanatize_password('\n'.join(extract_traceback()))
+        #tb_str = sanitize_password('\n'.join(extract_traceback()))
         #log.error("%s, ComponentProxy: error:%s", get_caller(1), tb_str)
-        #print(sanatize_password('\n'.join(extract_traceback())))
+        #print(sanitize_password('\n'.join(extract_traceback())))
         raise
     return proxy
 
