@@ -1380,7 +1380,7 @@ class TestCraySystem2(object):
         UpdateNodeStateException.tripped = False
         GetExitStatusException.tripped = False
 
-    @timeout(3)
+    @timeout(10)
     @patch.object(CraySystem, '_get_exit_status')
     @patch.object(CraySystem, 'update_node_state')
     @patch.object(ProcessGroupManager, 'update_launchers')
@@ -1413,7 +1413,7 @@ class TestCraySystem2(object):
         mock_uns.assert_called()
 
 
-    @timeout(3)
+    @timeout(10)
     @patch.object(CraySystem, '_get_exit_status')
     @patch.object(CraySystem, 'update_node_state')
     @patch.object(ProcessGroupManager, 'update_launchers')
