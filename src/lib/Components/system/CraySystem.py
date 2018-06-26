@@ -366,7 +366,7 @@ class CraySystem(BaseSystem):
         return node_info
 
     def _run_and_wrap(self, update_func):
-        self.logger.info('_run_and_wrap %s, tid:%s', update_func, get_current_thread_identifier())
+        self.logger.debug('_run_and_wrap %s, tid:%s', update_func, get_current_thread_identifier())
         update_func_name = update_func.__name__
         bool_error = False
         td = -1.0
