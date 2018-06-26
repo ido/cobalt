@@ -144,6 +144,7 @@ class RetryMethod(_Method):
                 tb_str = sanitize_password('\n'.join(extract_traceback()))
                 log.error("socket.error(#%s)[%s]:errno%s error:%s", retry, get_caller(jump_back_count=2), err.errno, tb_str)
                 if hasattr(err, 'errno') and err.errno == 336265218:
+                    log.error("SSL Key error")
                     break
                 if retry >= (self.max_retries - 1):
                     raise xmlrpclib.Fault(20, tb_str)
