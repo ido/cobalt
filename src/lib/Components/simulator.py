@@ -23,7 +23,7 @@ from Cobalt.Components.base import Component, exposed, automatic, locking
 from Cobalt.Components.bg_base_system import NodeCard, PartitionDict, BGBaseSystem
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
 from Cobalt.Util import sanitize_password, extract_traceback, get_current_thread_identifier
-get_config_option = Cobalt.Util.get_config_option
+from Cobalt.Util import get_config_option, config_true_values
 
 __all__ = [
     "BGSimProcessGroup",
@@ -33,6 +33,7 @@ __all__ = [
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
+STRESS_COMM_CODE = get_config_option('bgsystem', 'stress_comm_code', "False").lower() in config_true_values
 
 class BGSimProcessGroup(ProcessGroup):
     """Process Group modified for Blue Gene Simulator"""
@@ -168,6 +169,7 @@ class Simulator (BGBaseSystem):
         """this is the common code that must be called when instanciating the class or
         bringing it back from a state file."""
         self.logger.info("init: Brooklyn starting.")
+        self.logger.info("Stress Comm Code: %s", STRESS_COMM_CODE)
         self._lock_a = threading.RLock()
         self._lock_b = threading.RLock()
         self.process_groups.item_cls = BGSimProcessGroup
@@ -196,12 +198,15 @@ class Simulator (BGBaseSystem):
             self._recompute_partition_state()
 
         self.node_update_thread_kill_queue = Queue()
-        self.node_update_thread_dead = False
-        self.logger.info("_run_update_state thread starting.")
-        self.node_update_thread = threading.Thread(target=self._run_update_state)
-        self.node_update_thread.daemon = True
-        self.node_update_thread.start()
-        self.logger.info("_run_update_state thread started:%s", self.node_update_thread)
+        if STRESS_COMM_CODE:
+            self.node_update_thread_dead = False
+            self.logger.info("_run_update_state thread starting.")
+            self.node_update_thread = threading.Thread(target=self._run_update_state)
+            self.node_update_thread.daemon = True
+            self.node_update_thread.start()
+            self.logger.info("_run_update_state thread started:%s", self.node_update_thread)
+        else:
+            self.node_update_thread_dead = False
 
         self.logger.info("init: Brooklyn ready.")
 
@@ -529,9 +534,10 @@ class Simulator (BGBaseSystem):
         result = super(Simulator, self).find_job_location(arg_list, end_times)
         #lets do at least 10 seconds of work.
         #self.logger.debug("Simulator:starting *** do_something_intense *** ")
-        with self._lock_a:
-            self.do_something_intense(worktime=4000)
-        #self.logger.debug("Simulator:complete *** do_something_intense *** ")
+        if STRESS_COMM_CODE:
+            with self._lock_a:
+                self.do_something_intense(worktime=4000)
+            #self.logger.debug("Simulator:complete *** do_something_intense *** ")
         self.logger.debug("Simulator:complete find_job_location")
         return result
 
@@ -543,10 +549,11 @@ class Simulator (BGBaseSystem):
         result = super(Simulator, self).reserve_resources_until(location, new_time, jobid)
         #lets do at least 10 seconds of work.
         ident = uuid.uuid4().hex
-        self.logger.debug("Simulator:starting *** %s do_something_intense *** ", ident)
-        with self._lock_a:
-            self.do_something_intense(worktime=4000)
-        self.logger.debug("Simulator:complete *** %s do_something_intense *** ", ident)
+        if STRESS_COMM_CODE:
+            self.logger.debug("Simulator:starting *** %s do_something_intense *** ", ident)
+            with self._lock_a:
+                self.do_something_intense(worktime=4000)
+            self.logger.debug("Simulator:complete *** %s do_something_intense *** ", ident)
         self.logger.debug("Simulator:complete reserve_resources_until")
         return result
 
