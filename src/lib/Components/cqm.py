@@ -2009,7 +2009,7 @@ class Job (StateMachine):
             else:
                 # if the task failed to run, then proceed with job termination by
                 #starting the resource prologue scripts
-                self._sm_log_error("execution failure; initiating job cleanup and " "removal", cobalt_log = True)
+                self._sm_log_error("execution failure; initiating job cleanup and removal", cobalt_log = True)
                 dbwriter.log_to_db(None, "running_failed", "job_prog", JobProgMsg(self))
                 self._sm_start_resource_epilogue_scripts()
 
