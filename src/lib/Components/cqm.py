@@ -1991,23 +1991,27 @@ class Job (StateMachine):
 
     def _start_run_from_prologue(self):
         # attempt to run task
-        rc = self.__task_run()
-        if rc == Job.__rc_success:
-            self._sm_state = 'Running'
-            self.task_running = True
-            dbwriter.log_to_db(None, "running", "job_prog", JobProgMsg(self))
-        elif rc == Job.__rc_retry:
+        try:
+            rc = self.__task_run()
+        except Exception:
             self._sm_state = 'Run_Retry'
-            dbwriter.log_to_db(None, "run_retrying", "job_prog",
-                    JobProgMsg(self))
+            dbwriter.log_to_db(None, "run_retrying", "job_prog", JobProgMsg(self))
+            self._sm_log_error("Unexpected Exception caught while starting task.  Proceeding to run retry.")
+            logger.debug("Job %s: Unexpected Exception from __task_run:", exc_info=True)
         else:
-            # if the task failed to run, then proceed with job termination by
-            #starting the resource prologue scripts
-            self._sm_log_error("execution failure; initiating job cleanup and "
-                    "removal", cobalt_log = True)
-            dbwriter.log_to_db(None, "running_failed", "job_prog",
-                    JobProgMsg(self))
-            self._sm_start_resource_epilogue_scripts()
+            if rc == Job.__rc_success:
+                self._sm_state = 'Running'
+                self.task_running = True
+                dbwriter.log_to_db(None, "running", "job_prog", JobProgMsg(self))
+            elif rc == Job.__rc_retry:
+                self._sm_state = 'Run_Retry'
+                dbwriter.log_to_db(None, "run_retrying", "job_prog", JobProgMsg(self))
+            else:
+                # if the task failed to run, then proceed with job termination by
+                #starting the resource prologue scripts
+                self._sm_log_error("execution failure; initiating job cleanup and removal", cobalt_log = True)
+                dbwriter.log_to_db(None, "running_failed", "job_prog", JobProgMsg(self))
+                self._sm_start_resource_epilogue_scripts()
 
 
     def log_script_failure(self, job_dict, script_type):
