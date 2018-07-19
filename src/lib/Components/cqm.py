@@ -3116,6 +3116,9 @@ class Job (StateMachine):
             self._sm_log_info(("forced delete requested by user '%s'; initiating "
                 "job termination and removal of job from the queue") % (user,),
                 cobalt_log = True)
+            if self.task_running:
+                # We need to record the TE record, and write it before the E record can be generated.
+                self.end_time_and_log()
             self.__signaling_info = Signal_Info(Signal_Info.Reason.delete,
                     signame, user)
             try:
@@ -4025,9 +4028,6 @@ class QueueManager(Component):
         for spec in specs:
             for job, q in [(job, queue) for queue in self.Queues.itervalues() for job in queue.jobs if job.match(spec)]:
                 ret.append(job)
-                if force and job.task_running:
-                    # We need to record the TE record, and write it before the E record can be generated.
-                    job.end_time_and_log()
                 job.kill(user, signame, force)
                 if force:
                     self._job_terminal_action({'job':job})
