@@ -892,15 +892,18 @@ class Job (StateMachine):
             logger.info(task_start)
         return Job.__rc_success
 
+    def end_time_and_log(self):
+        '''End all running job timers and log job termination.'''
+
+        self.__max_job_timer.stop()
+        task_end = accounting.task_end(self.jobid, self.runid, self.__max_job_timer.elapsed_times[-1], self.current_task_start,
+                time.time(), self.location)
+        self.current_task_start = None
+        accounting_logger.info(task_end)
+        logger.info(task_end)
+
     def __task_finalize(self):
         '''get exit code from system component'''
-        def end_time_and_log():
-            self.__max_job_timer.stop()
-            task_end = accounting.task_end(self.jobid, self.runid, self.__max_job_timer.elapsed_times[-1], self.current_task_start,
-                    time.time(), self.location)
-            self.current_task_start = None
-            accounting_logger.info(task_end)
-            logger.info(task_end)
         try:
             result = ComponentProxy("system").wait_process_groups([{'id':self.taskid, 'exit_status':'*'}])
             if result:
@@ -915,11 +918,11 @@ class Job (StateMachine):
         except:
             # We aren't going into a retry and anything that doesn't return a retry "ends" the task and progresses towards
             # preemption/the job terminal action.  We need the log here.
-            end_time_and_log()
+            self.end_time_and_log()
             self._sm_raise_exception("unexpected error returned from the system component while finalizing task")
             return Job.__rc_unknown
         else:
-            end_time_and_log()
+            self.end_time_and_log()
         self.taskid = None
         return Job.__rc_success
 
@@ -3107,6 +3110,9 @@ class Job (StateMachine):
             self._sm_log_info(("forced delete requested by user '%s'; initiating "
                 "job termination and removal of job from the queue") % (user,),
                 cobalt_log = True)
+            if self.task_running:
+                # We need to record the TE record, and write it before the E record can be generated.
+                self.end_time_and_log()
             self.__signaling_info = Signal_Info(Signal_Info.Reason.delete,
                     signame, user)
             try:
