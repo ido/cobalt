@@ -1286,13 +1286,26 @@ class CraySystem(BaseSystem):
         '''
         start_apg_timer = time.time()
         with self.process_manager.process_groups_lock:
+            new_pgroups = []
             for spec in specs:
+                # Check to see if there was a prior attempt that didn't register with cqm
+                # If we're already running a process group for this cobalt job, return those
+                # details.
+                found_pgroup = False
+                for pgroup in self.process_manager.process_groups.values():
+                    if int(pgroup.jobid) == int(spec['jobid']):
+                        _logger.warning("%s: Prior process group found from previous call.", pgroup.label)
+                        new_pgroups.append(pgroup)
+                        found_pgroup = True
+                        break
+                if found_pgroup:
+                    continue
                 spec['forker'] = None
                 alps_res = self.alps_reservations.get(str(spec['jobid']), None)
                 if alps_res is not None:
                     spec['alps_res_id'] = alps_res.alps_res_id
                 try:
-                    new_pgroups = self.process_manager.init_groups(specs)
+                    new_pgroups.extend(self.process_manager.init_groups(specs))
                 except RuntimeError:
                     _logger.error('Job %s: Unable to initialize process group.', spec['jobid'])
                     raise
@@ -1301,6 +1314,10 @@ class CraySystem(BaseSystem):
                         pgroup.label, pgroup.id)
                 #check resource reservation, and attempt to start.  If there's a
                 #failure here, set exit status in process group to a sentinel value.
+                if pgroup.head_pid is not None:
+                    #we've already started this one, don't try again.
+                    _logger.warning("%s: Process group already started.", pgroup.label)
+                    continue
                 try:
                     started = self.process_manager.start_groups([pgroup.id])
                 except ComponentLookupError:
