@@ -11,6 +11,8 @@ __revision__ = '$Revision: 2130 $'
 
 from xmlrpclib import ServerProxy, Fault, _Method
 from ConfigParser import SafeConfigParser, NoSectionError
+import re
+import sys
 import logging
 import socket
 import time
@@ -19,19 +21,75 @@ import urlparse
 import httplib
 import ssl
 import os.path
+import traceback
+import datetime
+import inspect
 
 import Cobalt
 from Cobalt.Exceptions import ComponentLookupError, ComponentOperationError
-
 __all__ = [
     "ComponentProxy", "ComponentLookupError", "RetryMethod",
     "register_component", "find_configured_servers",
 ]
+# FIXME: this cannot be imported from Cobalt.Util because Proxy is imported within Cobalt.Util
+def extract_traceback(include_time=True):
+    """Extract a traceback, format it nicely and return it.
+    This came from trireme.error
+    """
+    if include_time:
+        currenttime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+    else:
+        currenttime = ''
+    (exc_cls, exc, tracbk) = sys.exc_info()
+    exc_str = traceback.format_exception_only(exc_cls, exc)[0]
+    tracebacklst = []
+    tracebacklst.append(" ".join(("-" * 32, 'START TRACEBACK', "-" * 30)))
+    tracebacklst.append("    Exception  : %s" % (exc_str.strip()))
+    tracebacklst.append("    Time       : %s" % currenttime)
+    tracebacklst.append("-" * 80)
+    stack = traceback.format_tb(tracbk)
+    indent = "  "
+    for stackpiece in stack:
+        stackpiece = stackpiece.strip()
+        stackpiece_lst = stackpiece.split(os.linesep)
+        for stack_item in stackpiece_lst:
+            tracebacklst.append("%s%s|%s" % (indent, currenttime, stack_item))
+
+    tracebacklst.append(" ".join(("-" * 32, 'END TRACEBACK', "-" * 32)))
+    return tracebacklst
+
+# FIXME: this cannot be imported from Cobalt.Util because Proxy is imported within Cobalt.Util
+def sanitize_password(message):
+    """strip the password out of a message"""
+    # this patten will remove from a string formatted from an rpc call
+    # user:pass@host:port
+    # FIXME: use the password to replace
+    pattern = re.compile(":([\S]{1,64})@")
+    return pattern.sub(":********@", message)
+
+# FIXME: this cannot be imported from Cobalt.Util because Proxy is imported within Cobalt.Util
+def get_caller(jump_back_count=1):
+    """return the caller of the outer function."""
+    try:
+        current_frame = inspect.currentframe()
+        while jump_back_count > 0:
+            current_frame = current_frame.f_back
+            jump_back_count -= 1
+        frame, filename, line_number, function_name, lines, index = inspect.getouterframes(current_frame)[1]
+        fpath, fname = os.path.split(filename)
+        caller = "%-13s:L#%s" % (fname, line_number)
+    except:
+        caller = "UnknownCaller"
+    return caller
+
 
 local_components = dict()
 known_servers = dict()
 
 log = logging.getLogger("Proxy")
+# To see errors with proxy in the clients, you should turn this on.
+# If you don't turn it on, you will see an error with no log handlers for Proxy.
+#logging.basicConfig()
 
 class CertificateError(Exception):
     def __init__(self, commonName):
@@ -58,46 +116,61 @@ class RetryServerProxy(ServerProxy):
         #an even more magiv method dispatcher that includes retries.
         return RetryMethod(self._ServerProxy__request, name)
 
+
+
 class RetryMethod(_Method):
     """Method with error handling and retries built in."""
     max_retries = 4
     def __call__(self, *args):
-        #print "In Retry Version"
         for retry in range(self.max_retries):
             try:
                 retval = _Method.__call__(self, *args)
-                #print "returned: retval = %s" % retval
-                return retval 
-            except xmlrpclib.ProtocolError, err:
-                log.error("Server failure: Protocol Error: %s %s" % \
-                              (err.errcode, err.errmsg), exc_info=1)
+                return retval
+            except xmlrpclib.ProtocolError as err:
+                tb_str = sanitize_password('\n'.join(extract_traceback()))
+                log.error("ProtocolError(#%s)[%s]: code:%s msg:%s headers:%s "
+                          "error:%s", retry, get_caller(jump_back_count=2), err.errcode, err.errmsg, err.headers, tb_str)
                 raise xmlrpclib.Fault(20, "Server Failure")
             except xmlrpclib.Fault as fault:
-                raise
-            except socket.error, err:
+                tb_str = sanitize_password('\n'.join(extract_traceback()))
+                log.error("xmlrpclib.Fault(#%s)[%s]: faultCode:%s faultString:%s "
+                          "error:%s", retry, get_caller(jump_back_count=2), fault.faultCode, fault.faultString, tb_str)
+                fault.faultString = sanitize_password(fault.faultString)
+                # due to clients using the same code, the error was too verbose and had to be reduced but still sanitized.
+                raise fault
+                #raise #xmlrpclib.Fault(20, tb_str)
+            except socket.error as err:
+                # this is the only path that retries
+                tb_str = sanitize_password('\n'.join(extract_traceback()))
+                log.error("socket.error(#%s)[%s]:errno%s error:%s", retry, get_caller(jump_back_count=2), err.errno, tb_str)
                 if hasattr(err, 'errno') and err.errno == 336265218:
                     log.error("SSL Key error")
                     break
-                if retry == 3:
-                    log.error("Server failure: %s" % err)
-                    raise xmlrpclib.Fault(20, err)
-            except CertificateError, ce:
-                log.error("Got unallowed commonName %s from server" \
-                               % ce.commonName)
+                if retry >= (self.max_retries - 1):
+                    raise xmlrpclib.Fault(20, tb_str)
+            except CertificateError as ce:
+                tb_str = sanitize_password('\n'.join(extract_traceback()))
+                log.error("CertificateError(#%s)[%s]: invalid commonName %s from server.  error:%s",
+                          retry, get_caller(jump_back_count=2), ce.commonName, tb_str)
                 break
             except KeyError:
-                log.error("Server disallowed connection")
+                tb_str = sanitize_password('\n'.join(extract_traceback()))
+                log.error("KeyError(#%s)[%s]: Server disallowed connection.  error:%s",
+                          retry, get_caller(jump_back_count=2), tb_str)
                 break
-            except:
-                log.error("Unknown failure", exc_info=1)
+            except Exception:
+                tb_str = sanitize_password('\n'.join(extract_traceback()))
+                log.error("KeyError(#%s)[%s]: error:%s", retry, get_caller(jump_back_count=2), tb_str)
                 break
-            
+
             try:
                 time.sleep(0.5)
             except IOError:
+                tb_str = sanitize_password('\n'.join(extract_traceback()))
+                log.error("time.sleep/IOERROR(#%s)[%s]: error:%s", retry, get_caller(jump_back_count=2), tb_str)
                 #Yes, you can get an IOError from ppc64 linux kernels
                 #It has to do with the select that is used to get sub-second
-                #sleeps. We just ignore this attempt if the exception gets 
+                #sleeps. We just ignore this attempt if the exception gets
                 #thrown Putting this here to avoid a circular dependnecy. --PMR
                 pass
 
@@ -179,11 +252,11 @@ class SSLHTTPConnection(httplib.HTTPConnection):
             other_side_required = ssl.CERT_NONE
             log.warning("No ca is specified. Cannot authenticate the server with SSL.")
         if self.cert and not self.key:
-            log.warning("SSL cert specfied, but no key. Cannot authenticate this client with SSL.")
+            log.warning("SSL cert specified, but no key. Cannot authenticate this client with SSL.")
             self.cert = None
             raise Exception, "no SSL key specified"
         if self.key and not self.cert:
-            log.warning("SSL key specfied, but no cert. Cannot authenticate this client with SSL.")
+            log.warning("SSL key specified, but no cert. Cannot authenticate this client with SSL.")
             raise Exception, "no SSL cert specified"
 
         rawsock.settimeout(self.timeout)
@@ -191,12 +264,18 @@ class SSLHTTPConnection(httplib.HTTPConnection):
                                   ca_certs=self.ca, suppress_ragged_eofs=True,
                                   keyfile=self.key, certfile=self.cert,
                                   ssl_version=ssl_protocol_ver)
-        self.sock.connect((self.host, self.port))
+        try:
+            self.sock.connect((self.host, self.port))
+        except ssl.SSLError as err:
+            log.error("ssl.SSLError: err:%s library:%s reason:%s", err, err.library, err.reason)
+            raise
         peer_cert = self.sock.getpeercert()
         if peer_cert and self.scns:
             scn = [x[0][1] for x in peer_cert['subject'] if x[0][0] == 'commonName'][0]
             if scn not in self.scns:
                 raise CertificateError, scn
+        # reproduce SLP SSLError
+        #time.sleep(12.0)
         self.sock.closeSocket = True
 
 
@@ -247,7 +326,8 @@ class XMLRPCTransport(xmlrpclib.Transport):
 
         self.verbose = verbose
         msglen = int(headers.dict['content-length'])
-        return self._get_response(h.getfile(), msglen)
+        response = self._get_response(h.getfile(), msglen)
+        return response
 
     def _get_response(self, fd, length):
         # read response from input file/socket, and parse it
@@ -274,8 +354,7 @@ class XMLRPCTransport(xmlrpclib.Transport):
 def register_component (component):
     local_components[component.name] = component
 
-
-def ComponentProxy(component_name, **kwargs):
+def _ComponentProxy(component_name, **kwargs):
     
     """Constructs proxies to components.
     
@@ -311,29 +390,41 @@ def ComponentProxy(component_name, **kwargs):
     elif component_name in known_servers:
         method, path = urlparse.urlparse(known_servers[component_name])[:2]
         newurl = "%s://%s:%s@%s" % (method, user, passwd, path)
-        if enable_retry:
-            return RetryServerProxy(newurl, allow_none=True, transport=ssl_trans)
-        return ServerProxy(newurl, allow_none=True, transport=ssl_trans)
     elif component_name != "service-location":
         try:
             slp = ComponentProxy("service-location")
         except ComponentLookupError:
-            raise ComponentLookupError(component_name)
+            raise ComponentLookupError("%s:cn:%s" % (get_caller(), component_name))
         try:
             address = slp.locate(component_name)
         except:
-            raise ComponentLookupError(component_name)
+            raise ComponentLookupError("%s:cn:%s" % (get_caller(), component_name))
         if not address:
-            raise ComponentLookupError(component_name)
+            raise ComponentLookupError("%s:cn:%s" % (get_caller(), component_name))
         method, path = urlparse.urlparse(address)[:2]
         newurl = "%s://%s:%s@%s" % (method, user, passwd, path)
-        if enable_retry:
-            return RetryServerProxy(newurl, allow_none=True, transport=ssl_trans)
-        return ServerProxy(newurl, allow_none=True, transport=ssl_trans)
     else:
-        raise ComponentLookupError(component_name)
+        raise ComponentLookupError("%s:cn:%s" % (get_caller(), component_name))
+
+    if enable_retry:
+        proxy = RetryServerProxy(newurl, allow_none=True, transport=ssl_trans)
+    else:
+        proxy = ServerProxy(newurl, allow_none=True, transport=ssl_trans)
+    return proxy
 
 
+def ComponentProxy(component_name, **kwargs):
+    """This wraps all ComponentProxy calls to intercept all errors"""
+    proxy = None
+    try:
+        proxy = _ComponentProxy(component_name, **kwargs)
+    except:
+        #some how we need to get the "error" and modify because on retry=False, it will be a ServerProxy, not a Retry...
+        #tb_str = sanitize_password('\n'.join(extract_traceback()))
+        #log.error("%s, ComponentProxy: error:%s", get_caller(1), tb_str)
+        #print(sanitize_password('\n'.join(extract_traceback())))
+        raise
+    return proxy
 
 
 class LocalProxy (object):
