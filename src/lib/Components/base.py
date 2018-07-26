@@ -51,9 +51,9 @@ def state_file_location():
     return os.path.expandvars(get_config_option('statefiles', "location", "/var/spool/cobalt"))
 
 def run_component (component_cls, argv=None, register=True, state_name=False,
-                   cls_kwargs={}, extra_getopt='', time_out=10,
+                   cls_kwargs={}, extra_getopt='', time_out=10.0,
                    single_threaded=False, seq_num=0, aug_comp_name=False,
-                   state_name_match_component=False):
+                   state_name_match_component=False, sleeptime=10.0):
     '''Run the specified Cobalt component until recieving signal to terminate.
 
     Args::
@@ -169,11 +169,12 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
         capath = None
 
     if single_threaded:
+        # sleeptime is not used due to differences in api.
         server = BaseXMLRPCServer(location, keyfile=keypath, certfile=certpath, 
                           cafile=capath, register=register, timeout=time_out)
     else:
         server = XMLRPCServer(location, keyfile=keypath, certfile=certpath,
-                          cafile=capath, register=register, timeout=time_out)
+                          cafile=capath, register=register, timeout=time_out, sleeptime=sleeptime)
 
     #Two components of the same type cannot be allowed to run at the same time.
     if component.name != 'service-location':

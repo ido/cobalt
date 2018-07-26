@@ -9,6 +9,7 @@ from Cobalt.Components.base import run_component
 
 if __name__ == "__main__":
     try:
-        run_component(TimingServiceLocator, register=False)
+        #FIXME: we cannot register slp because of a problem with _register located in the property register.
+        run_component(TimingServiceLocator, register=False, time_out=10.0)
     except KeyboardInterrupt:
         sys.exit(1)
