@@ -548,9 +548,27 @@ class ClusterBaseSystem (Component):
                 user = jobs['user']
                 queue = jobs['queue']
                 drain_time = 0
+                # We may be in a situation where this job could be backfilled,
+                # but the drain is in another queue we need to add this window
+                # to all of the queues included, not just the queue of the job
+                # being drained, scan for this queue in the locations being
+                # drained and if we overlap, use the queue with the smallest
+                # time for your backfill time here.
+                queue_to_use = queue
+                curr_drain_time = None
+                if queue not in self.draining_queues.keys():
+                    for drain_list in self.draining_nodes.values():
+                        for node_name in drain_list:
+                            for extra_queue in self.queue_assignments.keys():
+                                if node_name in self.queue_assignments[extra_queue]:
+                                    queue_to_use = extra_queue
+                                    if curr_drain_time is None:
+                                        curr_drain_time = self.draining_queues[extra_queue]
+                                    else:
+                                        curr_drain_time = min(curr_drain_time, self.draining_queues[extra_queue])
                 try:
                     location_data, drain_time, ready_to_run = self._find_job_location(jobs, now,
-                            drain_time=int(self.draining_queues[queue]))
+                            drain_time=int(self.draining_queues[queue_to_use]))
                 except RequiredLocationError:
                     continue #location_data, drain_time and ready_to_run not set.
                 except KeyError:
