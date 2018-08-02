@@ -787,8 +787,11 @@ class ClusterBaseSystem (Component):
 
         if time is None:
             for host in location:
-                self.running_nodes.discard(host)
+                # Make sure this host doesn't get reallocated during the
+                # kill/restart.  This may be called after prologues have run and
+                # nodes may have dirty state, so run full cleanup.
                 self.logger.info("hasty job kill: freeing %s" % host)
+            self.invoke_node_cleanup([jobid])
         else:
             self.logger.error("failed to reserve location '%r' until '%s'" % (location, time))
             return True #So we can progress.
