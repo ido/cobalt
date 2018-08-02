@@ -670,8 +670,14 @@ class ClusterBaseSystem (Component):
         '''
         found_locations = set()
         for jobid in jobids:
-            user = self.jobid_to_user[jobid]
-            locations = self.locations_by_jobid[jobid]
+            user = self.jobid_to_user.get(jobid, None)
+            locations = self.locations_by_jobid.get(jobid, None)
+            if user is None:
+                self.logger.warning("Jobid: %s: WARNING: User not found for jobid", jobid)
+            if locations is None:
+                self.logger.warning("Jobid: %s: WARNING: Locations not found for jobid", jobid)
+            if user is None or locations is None:
+                continue
             locations_to_clean = set()
             for location in locations:
                 if location not in found_locations:
