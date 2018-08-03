@@ -584,6 +584,32 @@ class TestClusterSystem(object):
         assert best_location == {'2':['vs4.test']}, "ERROR: Unexpected best_location.\nExpected %s\nGot %s" % \
                 ({'2':['vs4.test']}, best_location)
 
+    def test_backfill_from_non_drain_queue(self):
+        # When we have a drain in one queue, but a valid backfill job in the
+        # other, make sure that the non-draining-but-on-related-resources-queue
+        # will be run.
+        jobs = [get_basic_job_dict() for _ in range(3)]
+        jobs[0]['walltime'] = 720
+        jobs[0]['score'] = 50000
+        jobs[0]['nodes'] = 3
+        jobs[0]['queue'] = 'default'
+        jobs[1]['jobid'] = 2
+        jobs[1]['walltime'] = 1000
+        jobs[1]['nodes'] = 2
+        jobs[1]['score'] = 100
+        jobs[1]['queue'] = 'q1'
+        jobs[2]['jobid'] = 3
+        jobs[2]['nodes'] = 2
+        jobs[2]['walltime'] = 5
+        jobs[2]['score'] = 100
+        jobs[2]['queue'] = 'q1'
+        self.cluster_system.queue_assignments = {'default': set(['vs1.test', 'vs2.test', 'vs3.test']), 'q1': self.full_node_set}
+        self.cluster_system.running_nodes = set(['vs1.test', 'vs2.test',])
+        end_times = [[['vs1.test', 'vs2.test'], int(time.time()) + 400]]
+        best_location = self.cluster_system.find_job_location(jobs, end_times)
+        assert best_location == {'3':['vs4.test', 'vs3.test']}, "ERROR: Unexpected best_location.\nExpected %s\nGot %s" % \
+                ({'3':['vs4.test', 'vs3.test']}, best_location)
+
 class TestReservationHandling(object):
     '''Test core cluster system functionality'''
 
@@ -640,6 +666,5 @@ class TestReservationHandling(object):
         best_location = self.cluster_system.find_job_location(jobs, end_times)
         assert best_location == {'2':['vs4.test']}, "ERROR: Unexpected best_location.\nExpected %s\nGot %s" % \
                 ({'2':['vs4.test']}, best_location)
-
 
 
