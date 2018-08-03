@@ -559,12 +559,14 @@ class ClusterBaseSystem (Component):
                         for drain_list in self.draining_nodes.values():
                             for node_name in drain_list:
                                 for extra_queue in self.queue_assignments.keys():
-                                    if node_name in self.queue_assignments[extra_queue]:
-                                        queue_to_use = extra_queue
-                                        if curr_drain_time is None:
-                                            curr_drain_time = self.draining_queues[extra_queue]
-                                        else:
-                                            curr_drain_time = min(curr_drain_time, self.draining_queues[extra_queue])
+                                    if extra_queue in self.draining_queues.keys():
+                                        if node_name in self.queue_assignments[extra_queue]:
+                                            # Use the queue with the smallest drain time overall
+                                            if (curr_drain_time is None or
+                                                curr_drain_time < self.draining_queues.get(extra_queue, curr_drain_time)):
+                                                curr_drain_time = self.draining_queues.get(extra_queue, curr_drain_time)
+                                                queue_to_use = extra_queue
+
                     try:
                         location_data, drain_time, ready_to_run = self._find_job_location(jobs, now,
                                 drain_time=int(self.draining_queues[queue_to_use]))
