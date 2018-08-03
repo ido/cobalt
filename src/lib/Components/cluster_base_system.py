@@ -386,6 +386,44 @@ class ClusterBaseSystem (Component):
         available_nodes = node_set.difference(self.running_nodes)
         return available_nodes.difference(self.down_nodes)
 
+    def _get_overlaping_drain_queue(self, queue):
+        '''Get a queue that is in draining_queues for overlapping hardware in this queue.
+        There are situations where a queue will cause an drain, but it's overlaping partner won't.
+        We need to consdier jobs that can run on the smallest drain time of all the overlapping queues
+        causing a drain on that node.
+
+        Args:
+            queue - A string queue name to check for overlaps
+
+        Return:
+            Queue name to use for the backfill pass.
+
+        '''
+        # Pulled out for readability.
+        # We may be in a situation where this job could be backfilled,
+        # but the drain is in another queue we need to add this window
+        # to all of the queues included, not just the queue of the job
+        # being drained, scan for this queue in the locations being
+        # drained and if we overlap, use the queue with the smallest
+        # time for your backfill time here.
+        if queue in self.draining_queues.keys():
+            # We already know waht this queue's backfill time should be.
+            return queue
+        queue_to_use = queue
+        curr_drain_time = None
+        if queue not in self.draining_queues.keys():
+            for drain_list in self.draining_nodes.values():
+                for node_name in drain_list:
+                    for extra_queue in self.queue_assignments.keys():
+                        if extra_queue in self.draining_queues.keys():
+                            if node_name in self.queue_assignments[extra_queue]:
+                                # Use the queue with the smallest drain time overall
+                                if (curr_drain_time is None or
+                                    curr_drain_time < self.draining_queues.get(extra_queue, curr_drain_time)):
+                                    curr_drain_time = self.draining_queues.get(extra_queue, curr_drain_time)
+                                    queue_to_use = extra_queue
+        return queue_to_use
+
     # the argument "required" is used to pass in the set of locations allowed by a reservation;
     def find_job_location(self, job_list, end_times):
         '''Find the best location for a job and start the job allocation
@@ -547,26 +585,7 @@ class ClusterBaseSystem (Component):
                     user = jobs['user']
                     queue = jobs['queue']
                     drain_time = 0
-                    # We may be in a situation where this job could be backfilled,
-                    # but the drain is in another queue we need to add this window
-                    # to all of the queues included, not just the queue of the job
-                    # being drained, scan for this queue in the locations being
-                    # drained and if we overlap, use the queue with the smallest
-                    # time for your backfill time here.
-                    queue_to_use = queue
-                    curr_drain_time = None
-                    if queue not in self.draining_queues.keys():
-                        for drain_list in self.draining_nodes.values():
-                            for node_name in drain_list:
-                                for extra_queue in self.queue_assignments.keys():
-                                    if extra_queue in self.draining_queues.keys():
-                                        if node_name in self.queue_assignments[extra_queue]:
-                                            # Use the queue with the smallest drain time overall
-                                            if (curr_drain_time is None or
-                                                curr_drain_time < self.draining_queues.get(extra_queue, curr_drain_time)):
-                                                curr_drain_time = self.draining_queues.get(extra_queue, curr_drain_time)
-                                                queue_to_use = extra_queue
-
+                    queue_to_use = self._get_overlaping_drain_queue(queue)
                     try:
                         location_data, drain_time, ready_to_run = self._find_job_location(jobs, now,
                                 drain_time=int(self.draining_queues[queue_to_use]))
