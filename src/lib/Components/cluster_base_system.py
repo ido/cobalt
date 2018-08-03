@@ -485,7 +485,6 @@ class ClusterBaseSystem (Component):
             drain_time = 0
             self.logger.debug('Queue considered: %s', queue)
             if queue in drain_locs_by_queue.keys():
-                #self.logger.debug('queue seen')
                 continue
             else: #first time we're seeing this queue this pass
                 if queue in self.draining_queues.keys():
@@ -537,53 +536,53 @@ class ClusterBaseSystem (Component):
         self.logger.debug('primary pass complete')
 
         #make a second pass to pick a job for the draining nodes
+        if best_location_dict == {}:
+            #for queue in drain_locs_by_queue.keys():
+            if drain_locs_by_queue != {} and self.drain_mode == 'backfill':
+                #only make this pass if we are allowing backfilling.
+                self.logger.debug("locs_by_queue: %s", drain_locs_by_queue)
+                self.logger.debug("locs_by_time: %s", self.draining_queues)
+                for jobs in job_list:
+                    jobid = int(jobs['jobid'])
+                    user = jobs['user']
+                    queue = jobs['queue']
+                    drain_time = 0
+                    # We may be in a situation where this job could be backfilled,
+                    # but the drain is in another queue we need to add this window
+                    # to all of the queues included, not just the queue of the job
+                    # being drained, scan for this queue in the locations being
+                    # drained and if we overlap, use the queue with the smallest
+                    # time for your backfill time here.
+                    queue_to_use = queue
+                    curr_drain_time = None
+                    if queue not in self.draining_queues.keys():
+                        for drain_list in self.draining_nodes.values():
+                            for node_name in drain_list:
+                                for extra_queue in self.queue_assignments.keys():
+                                    if node_name in self.queue_assignments[extra_queue]:
+                                        queue_to_use = extra_queue
+                                        if curr_drain_time is None:
+                                            curr_drain_time = self.draining_queues[extra_queue]
+                                        else:
+                                            curr_drain_time = min(curr_drain_time, self.draining_queues[extra_queue])
+                    try:
+                        location_data, drain_time, ready_to_run = self._find_job_location(jobs, now,
+                                drain_time=int(self.draining_queues[queue_to_use]))
+                    except RequiredLocationError:
+                        continue #location_data, drain_time and ready_to_run not set.
+                    except KeyError:
+                        pass
+                        #self.logger.warning("Queue %s not found in draining queue times.", queue)
+                        #raise
+                    else:
+                        if ready_to_run:
+                            #first backfill we find is the winner, and we start it.
+                            best_location_dict.update(location_data)
+                            self.logger.info("%s/%s: job selected for backfill on locations %s from queue %s",
+                                    user, jobid, ':'.join(location_data[str(jobid)]), jobs['queue'])
+                            break
 
-        #for queue in drain_locs_by_queue.keys():
-        if drain_locs_by_queue != {} and self.drain_mode == 'backfill':
-            #only make this pass if we are allowing backfilling.
-            self.logger.debug("locs_by_queue: %s", drain_locs_by_queue)
-            self.logger.debug("locs_by_time: %s", self.draining_queues)
-            for jobs in job_list:
-                jobid = int(jobs['jobid'])
-                user = jobs['user']
-                queue = jobs['queue']
-                drain_time = 0
-                # We may be in a situation where this job could be backfilled,
-                # but the drain is in another queue we need to add this window
-                # to all of the queues included, not just the queue of the job
-                # being drained, scan for this queue in the locations being
-                # drained and if we overlap, use the queue with the smallest
-                # time for your backfill time here.
-                queue_to_use = queue
-                curr_drain_time = None
-                if queue not in self.draining_queues.keys():
-                    for drain_list in self.draining_nodes.values():
-                        for node_name in drain_list:
-                            for extra_queue in self.queue_assignments.keys():
-                                if node_name in self.queue_assignments[extra_queue]:
-                                    queue_to_use = extra_queue
-                                    if curr_drain_time is None:
-                                        curr_drain_time = self.draining_queues[extra_queue]
-                                    else:
-                                        curr_drain_time = min(curr_drain_time, self.draining_queues[extra_queue])
-                try:
-                    location_data, drain_time, ready_to_run = self._find_job_location(jobs, now,
-                            drain_time=int(self.draining_queues[queue_to_use]))
-                except RequiredLocationError:
-                    continue #location_data, drain_time and ready_to_run not set.
-                except KeyError:
-                    pass
-                    #self.logger.warning("Queue %s not found in draining queue times.", queue)
-                    #raise
-                else:
-                    if ready_to_run:
-                        #first backfill we find is the winner, and we start it.
-                        best_location_dict.update(location_data)
-                        self.logger.info("%s/%s: job selected for backfill on locations %s from queue %s",
-                                user, jobid, ':'.join(location_data[str(jobid)]), jobs['queue'])
-                        break
-
-        self.logger.debug('secondary_pass_complete')
+            self.logger.debug('secondary_pass_complete')
         # reserve the stuff in the best_partition_dict, as those partitions are allegedly going to
         # be running jobs very soon
         for jobid_str, location_list in best_location_dict.iteritems():
