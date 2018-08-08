@@ -2,8 +2,11 @@
 
 '''
 
-from nose import *
 import os
+
+from nose import *
+from mock import patch
+
 import Cobalt
 import TestCobalt
 
@@ -583,6 +586,36 @@ class TestClusterSystem(object):
         best_location = self.cluster_system.find_job_location(jobs, end_times)
         assert best_location == {'2':['vs4.test']}, "ERROR: Unexpected best_location.\nExpected %s\nGot %s" % \
                 ({'2':['vs4.test']}, best_location)
+
+    @patch.object(Cobalt.Components.cluster_system.ClusterSystem, 'invoke_node_cleanup')
+    def test_hasty_delete_cleanup(self, invoke_node_cleanup_mock):
+        # This comes from gitlab bugs 149 and 147.  The original code was not
+        # doing a full cleanup, and the allocated-only node array wasn't getting
+        # purged correctly.  This caused a spurrious cleanup to run that would
+        # deallocate nodes inappropriately, and can ultimately cause a
+        # double-allocation on a node.
+        # we need to select a job for running, and then make sure that job
+        # cleanup gets invoked when reserve_resoureces_until is called to
+        # trigger the deallocation.  The nodes need to stay reserved, as the job
+        # goes into async cleanup at this point
+
+        jobs = [get_basic_job_dict() for _ in range(3)]
+        jobs[0]['walltime'] = 720
+        jobs[0]['score'] = 50000
+        jobs[0]['nodes'] = 4
+        #self.cluster_system.running_nodes = set(['vs1.test', 'vs2.test', 'vs3.test'])
+        end_times = []
+        best_location = self.cluster_system.find_job_location(jobs, end_times)
+        expected_best_location = {'1': ['vs2.test', 'vs4.test', 'vs1.test', 'vs3.test']}
+        assert best_location == expected_best_location, "ERROR: Unexpected best_location.\nExpected %s\nGot %s" %  (expected_best_location, best_location)
+        now = int(time.time())
+        job = get_basic_job_dict()
+        job['nodes'] = 4
+
+        # job allocated, now to force deletion
+        self.cluster_system.reserve_resources_until(['vs1.test', 'vs2.test', 'vs3.test', 'vs4.test'], None, 1)
+        assert self.cluster_system.running_nodes == set(['vs1.test', 'vs2.test', 'vs3.test', 'vs4.test']), "job not in running nodes %s" % self.cluster_system.running_nodes
+        invoke_node_cleanup_mock.assert_called_once_with([1])
 
 class TestReservationHandling(object):
     '''Test core cluster system functionality'''

@@ -670,8 +670,14 @@ class ClusterBaseSystem (Component):
         '''
         found_locations = set()
         for jobid in jobids:
-            user = self.jobid_to_user[jobid]
-            locations = self.locations_by_jobid[jobid]
+            user = self.jobid_to_user.get(jobid, None)
+            locations = self.locations_by_jobid.get(jobid, None)
+            if user is None:
+                self.logger.warning("Jobid: %s: WARNING: User not found for jobid", jobid)
+            if locations is None:
+                self.logger.warning("Jobid: %s: WARNING: Locations not found for jobid", jobid)
+            if user is None or locations is None:
+                continue
             locations_to_clean = set()
             for location in locations:
                 if location not in found_locations:
@@ -787,8 +793,11 @@ class ClusterBaseSystem (Component):
 
         if time is None:
             for host in location:
-                self.running_nodes.discard(host)
+                # Make sure this host doesn't get reallocated during the
+                # kill/restart.  This may be called after prologues have run and
+                # nodes may have dirty state, so run full cleanup.
                 self.logger.info("hasty job kill: freeing %s" % host)
+            self.invoke_node_cleanup([jobid])
         else:
             self.logger.error("failed to reserve location '%r' until '%s'" % (location, time))
             return True #So we can progress.
