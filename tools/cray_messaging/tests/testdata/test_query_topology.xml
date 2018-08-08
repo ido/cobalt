@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<BasilRequest method="QUERY" protocol="1.7" type="TOPOLOGY">
+    <Topology name="aries">
+        <FilterArray>
+            <Filter name="foo"/>
+            <Filter name="bar"/>
+        </FilterArray>
+    </Topology>
+</BasilRequest>
