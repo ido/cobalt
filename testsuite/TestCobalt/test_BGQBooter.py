@@ -196,7 +196,7 @@ class test_BGQBooter(object):
         while (True):
             time.sleep(1)
             if len(pybgsched.block_dict['TB-1'].statuses)== 1:
-                time.sleep(1)
+                time.sleep(3)
                 break
         boot_state = str(self.booter.stat('TB-1')[0].state)
         assert boot_state == 'failed', 'Boot state not failed, is %s instead' % boot_state
