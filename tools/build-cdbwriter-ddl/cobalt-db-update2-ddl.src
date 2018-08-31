@@ -50,7 +50,7 @@ alter table  "##COBALT_SCHEMA##"."RESERVATION_DATA"
 ------------------------------------------------
 
 update "##COBALT_SCHEMA##"."RESERVATION_EVENTS"
-    SET NAME = 'terminating'
+    SET NAME = 'terminated'
     where NAME = 'ending';
 
 insert into "##COBALT_SCHEMA##"."RESERVATION_EVENTS" values
