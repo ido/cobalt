@@ -40,11 +40,9 @@ def abort (job_id, user, resource_list, account=None, resource=RESOURCE_NAME):
     return entry("A", job_id, message)
 
 
-def begin (id_string,
-           owner, queue, ctime, start, end, duration,
-           exec_host, authorized_users, resource_list,
-           name=None, account=None, authorized_groups=None,
-           authorized_hosts=None):
+def begin (id_string, owner, queue, ctime, start_time, end_time, duration, exec_host, authorized_users, resource_list, active_id,
+           name=None, account=None, authorized_groups=None, authorized_hosts=None, resource=RESOURCE_NAME):
+
 
     """Beginning of reservation period.
 
@@ -53,8 +51,8 @@ def begin (id_string,
     owner -- name of party who submitted the resource reservation
     queue -- name of the associated queue
     ctime -- time at which the reservation was created
-    start -- time at which the reservation is to start
-    end -- time at which the reservation is to end
+    start_time -- time at which the reservation is to start
+    end_time -- time at which the reservation is to end
     duration -- duration specified or computed for the reservation
     exec_host -- nodes and node-associated resources (see qrun -H)
     authorized_users -- list of acl_users on the reservation queue
@@ -67,9 +65,10 @@ def begin (id_string,
     authorized_hosts -- the list of acl_hosts on the reservation queue
     """
 
-    message = {'owner':owner, 'queue':queue, 'ctime':ctime, 'start':start,
-        'end':end, 'duration':duration, 'exec_host':exec_host,
-        'authorized_users':authorized_users, 'Resource_List':resource_list}
+
+    message = {'owner':owner, 'queue':queue, 'ctime':ctime, 'start':start_time, 'end':end_time, 'duration':duration,
+            'exec_host':exec_host, 'authorized_users':authorized_users, 'Resource_List':resource_list, 'active_id': active_id,
+            'resource':resource}
     if name is not None:
         message['name'] = name
     if account is not None:
@@ -161,34 +160,44 @@ def end (job_id, user, group, jobname, queue, cwd, exe, args, mode, ctime, qtime
     return entry("E", job_id, message)
 
 
-def finish (reservation_id):
+def finish (reservation_id, resource=RESOURCE_NAME):
     """Resource reservation period finished."""
-    return entry("F", reservation_id)
+    return entry("F", reservation_id, {'resource':resource})
 
 
-def system_remove (reservation_id, requester):
-
-    """Scheduler or server requested removal of the reservation.
+def system_remove (reservation_id, requester, ctime, stime, etime, resource_list, active_id, account=None, resource=RESOURCE_NAME):
+    """Scheduler or server requested removal of the reservation.  This marks an active to inactive transition.
 
     Arguments:
     reservation_id -- id of the reservation that was removed
     requester -- user@host to identify who deleted the resource reservation
+    ctime -- creation time of reservation
+    stime -- start time of reservation active period
+    etime -- end time of reservation active period
+    resource_list -- list of information on resources used.  Must be sufficient for charging for resources used.
+    active_id -- identifier for which activation of the reservation this is.
+    resource  -- identifier of the resource that Cobalt is managing.  Usually the system name.
+
     """
+    #Note: for charging purposes, this is closest to the 'E' record.  This
+    #indicates the job data that should actually be charged.
+    msg = {'requester':requester, 'ctime':int(ctime), 'stime':int(stime), 'etime':int(etime),
+            'Resource_List':resource_list, 'active_id': active_id, 'resource':resource}
+    if account is not None:
+        msg['account'] = account
+    return entry("K", reservation_id, msg)
 
-    return entry("K", reservation_id, {'requester':requester})
-
-
-def remove (reservation_id, requester):
-
+def remove (reservation_id, requester, active_id, resource=RESOURCE_NAME):
     """Resource reservation terminated by ordinary client.
 
     Arguments:
     reservation_id -- id of the reservation that was terminated
     requester -- user@host to identify who deleted the resource reservation
+    active_id -- identifier for this active period of this reservation
+    resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+
     """
-
-    return entry("k", reservation_id, {'requester':requester})
-
+    return entry("k", reservation_id, {'requester':requester, 'active_id': active_id, 'resource':resource})
 
 def queue (job_id, queue, user, resource_list, account=None, resource=RESOURCE_NAME):
     """Job entered a queue.
@@ -275,28 +284,39 @@ def start (job_id, user, group, jobname, queue, cwd, exe, args, mode, ctime, qti
         message['accounting_id'] = accounting_id
     return entry("S", job_id, message)
 
-def unconfirmed (reservation_id, requester):
-
+def unconfirmed (reservation_id, requester, resource=RESOURCE_NAME):
     """Created unconfirmed resources reservation.
 
     Arguments:
     reservation_id -- id of the unconfirmed reservation
     requester -- user@host to identify who requested the resources reservation
+    resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+
     """
 
-    return entry("U", reservation_id, {'requester':requester})
+    return entry("U", reservation_id, {'requester':requester, 'resource':resource})
 
-
-def confirmed (reservation_id, requester):
-
+def confirmed (reservation_id, requester, start_time, duration, resource_list, account=None, resource=RESOURCE_NAME):
     """Created unconfirmed resources reservation.
 
     Arguments:
     reservation_id -- id of the unconfirmed reservation
     requester -- user@host to identify who requested the resources reservation
+    start_time -- the time in seconds from Epoch (1970-01-01 00:00:00 UTC) that the reservation is to start.
+    duration -- planned duration of reservation
+    resource_list -- dictionary of resource information for charging for the planned resources of this reservation
+    account -- string account identifier for this reservation.  None if not provided.
+    resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+
     """
 
-    return entry("Y", reservation_id, {'requester':requester})
+    msg = {'requester':requester, 'start':int(start), 'duration':int(duration),
+            'end':int(start) + int(duration), 'Resource_List':resource_list,
+            'resource':resource}
+    if account is not None:
+        msg['account'] = account
+
+    return entry("Y", reservation_id, msg)
 
 def task_start(job_id, task_id, start_time, location, resource=RESOURCE_NAME):
     '''Indicate a task has started.  Typically this would indicate that add_process_groups has been called successfully.
