@@ -28,6 +28,7 @@ from Queue import Queue
 _logger = logging.getLogger(__name__)
 init_cobalt_config()
 
+DEFAULT_DEPTH = int(get_config_option('alps', 'default_depth', 72))
 UPDATE_THREAD_TIMEOUT = int(get_config_option('alpssystem', 'update_thread_timeout', 10))
 TEMP_RESERVATION_TIME = int(get_config_option('alpssystem', 'temp_reservation_time', 300))
 SAVE_ME_INTERVAL = float(get_config_option('alpsssytem', 'save_me_interval', 10.0))
@@ -1575,6 +1576,49 @@ class CraySystem(BaseSystem):
         if job_not_found:
             self.logger.warning("%s: Interactive job not found", str(jobid))
         return
+
+    @exposed
+    def get_location_statistics(self, locations):
+        '''Get a list of the aggregate location statistics for a list of node locations.
+
+        Inputs:
+        locations -- String containing location names.  At this time all locations must
+                     exist as compute nodes on the Cray system as reported by ALPS.
+
+        Outputs:
+        A dictionary containing key-value pairs for resources submitted.
+        ex: {'nodect': 512:, 'nprocs':8192}
+        statistics
+
+        Exceptions:
+        KeyError -- if an invalid location name is given, a key error will be raised
+
+        Notes: returned statistics are system-component dependent.
+
+        '''
+        try:
+            loc_list = locations.split(':')
+        except AttributeError as exc:
+            extra_msg = 'Location list %s cannot be split.' % locations
+            exc.message += ' ', extra_msg
+            self.logger.warning(extra_msg)
+        stats = {'nodect': 0,
+                 'nproc': 0,
+                }
+        stats['nodect'] = 0
+        for loc in loc_list:
+            try:
+                expanded_loc = expand_num_list(loc)
+            except TypeError:
+                #if there is no block for the location raise that we have a bad value in the list
+                err_str = "Node list %s is not valid, or bad format." % loc
+                self.logger.error(err_str)
+                raise
+            else:
+                stats['nodect'] += len(expanded_loc)
+        stats['nproc'] = stats['nodect'] * DEFAULT_DEPTH
+        self.logger.debug("Reservation request stats: %s", stats)
+        return stats
 
 class ALPSReservation(object):
     '''Container for ALPS Reservation information.  Can be used to update
