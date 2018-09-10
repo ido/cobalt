@@ -5,10 +5,12 @@
 import os
 
 from nose import *
+from nose.tools import raises
 from mock import patch
 
 import Cobalt
 import TestCobalt
+from testsuite.TestCobalt.Utilities.assert_functions import assert_match
 
 #set and override config file prior to importing cluster_system
 #the "init on import" behavior is probably a "broken" thing to be doing.
@@ -616,6 +618,24 @@ class TestClusterSystem(object):
         self.cluster_system.reserve_resources_until(['vs1.test', 'vs2.test', 'vs3.test', 'vs4.test'], None, 1)
         assert self.cluster_system.running_nodes == set(['vs1.test', 'vs2.test', 'vs3.test', 'vs4.test']), "job not in running nodes %s" % self.cluster_system.running_nodes
         invoke_node_cleanup_mock.assert_called_once_with([1])
+
+
+    def test_get_location_statistics_normal(self):
+        '''ClusterSystem.get_location_statistics: generate statistics for input
+        string'''
+
+        expected = {'nproc': 4, 'nodect':4}
+        actual = self.cluster_system.get_location_statistics('foo:bar00:bar01:bar02')
+        assert_match(actual, expected, 'Node statistic mismatch')
+
+    @raises(AttributeError)
+    def test_get_location_statistics_bad_str(self):
+        '''ClusterSystem.get_location_statistics: raise exception on bad input
+        string'''
+
+        expected = {'nproc': 4, 'nodect':4}
+        actual = self.cluster_system.get_location_statistics([])
+        assert False, "exception should have been raised"
 
 class TestReservationHandling(object):
     '''Test core cluster system functionality'''
