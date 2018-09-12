@@ -293,26 +293,35 @@ class TestBGQSystem(object):
         actual = self.bgqsystem.get_location_statistics('FOO:BAR:NOTABLOCK')
         assert_match(actual, expected, "Block statistic mismatch")
 
+    def test_get_location_statistics_block_list_overlap(self):
+        self.bgqsystem._blocks = {'FOO': FakeBlock({'name':'FOO'}),
+                                        'BAR': FakeBlock({'name':'BAR'})}
+        self.bgqsystem._blocks['BAR'].node_cards['FOO-N00'] = {'name': 'FOO-N00'}
+        del self.bgqsystem._blocks['BAR'].node_cards['BAR-N00']
+        expected = {'nproc': 15872, 'nodect': 992}
+        actual = self.bgqsystem.get_location_statistics('FOO:BAR')
+        assert_match(actual, expected, "Block statistic mismatch")
+
 class FakeBlock(object):
     def __init__(self, spec):
         self.name = spec['name']
         self.draining = False
-        self.node_cards = {'N00': {'name': 'N00'},
-                           'N01': {'name': 'N01'},
-                           'N02': {'name': 'N02'},
-                           'N03': {'name': 'N03'},
-                           'N04': {'name': 'N04'},
-                           'N05': {'name': 'N05'},
-                           'N06': {'name': 'N06'},
-                           'N07': {'name': 'N07'},
-                           'N08': {'name': 'N08'},
-                           'N09': {'name': 'N09'},
-                           'N10': {'name': 'N10'},
-                           'N11': {'name': 'N11'},
-                           'N12': {'name': 'N12'},
-                           'N13': {'name': 'N13'},
-                           'N14': {'name': 'N14'},
-                           'N15': {'name': 'N15'},
+        self.node_cards = {self.name + '-N00': {'name': self.name + '-N00'},
+                           self.name + '-N01': {'name': self.name + '-N01'},
+                           self.name + '-N02': {'name': self.name + '-N02'},
+                           self.name + '-N03': {'name': self.name + '-N03'},
+                           self.name + '-N04': {'name': self.name + '-N04'},
+                           self.name + '-N05': {'name': self.name + '-N05'},
+                           self.name + '-N06': {'name': self.name + '-N06'},
+                           self.name + '-N07': {'name': self.name + '-N07'},
+                           self.name + '-N08': {'name': self.name + '-N08'},
+                           self.name + '-N09': {'name': self.name + '-N09'},
+                           self.name + '-N10': {'name': self.name + '-N10'},
+                           self.name + '-N11': {'name': self.name + '-N11'},
+                           self.name + '-N12': {'name': self.name + '-N12'},
+                           self.name + '-N13': {'name': self.name + '-N13'},
+                           self.name + '-N14': {'name': self.name + '-N14'},
+                           self.name + '-N15': {'name': self.name + '-N15'},
                           }
     def __hash__(self):
         return self.name.__hash__()
