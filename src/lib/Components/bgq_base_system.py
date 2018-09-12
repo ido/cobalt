@@ -1743,7 +1743,7 @@ class BGBaseSystem (Component):
                 raise KeyError(err_str)
             blocks.append(block)
             node_cards.update(block.node_cards)
-        stats['nodect'] = len(node_cards) * 32
-        stats['nproc'] = len(node_cards) * 32 * PROCS_PER_NODE
+            stats['nodect'] += len(node_cards) * 32
+            stats['nproc'] += len(node_cards) * 32 * PROCS_PER_NODE
         self.logger.debug("Reservation request stats: %s", stats)
         return stats

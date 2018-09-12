@@ -4,7 +4,9 @@ Mock is required for this set of tests to work
 
 """
 
+from nose.tools import raises
 from mock import MagicMock, Mock, patch
+from testsuite.TestCobalt.Utilities.assert_functions import assert_match
 
 pybgsched_mock = Mock()
 with patch.dict('sys.modules', {'pybgsched':pybgsched_mock}):
@@ -261,9 +263,56 @@ class TestBGQSystem(object):
         drain_block = self.bgqsystem._find_drain_block(job, drain_blocks)
         assert drain_block is None, 'drain_block not None'
 
+    def test_get_location_statistics_normal(self):
+        self.bgqsystem._blocks = {'FOO': FakeBlock({'name':'FOO'}),
+                                        'BAR': FakeBlock({'name':'BAR'})}
+        expected = {'nproc': 8192, 'nodect': 512}
+        actual = self.bgqsystem.get_location_statistics('FOO')
+        assert_match(actual, expected, "Block statistic mismatch")
+
+    @raises(KeyError)
+    def test_get_location_statistics_bad_block(self):
+        self.bgqsystem._blocks = {'FOO': FakeBlock({'name':'FOO'}),
+                                        'BAR': FakeBlock({'name':'BAR'})}
+        expected = {'nproc': 8192, 'nodect': 512}
+        actual = self.bgqsystem.get_location_statistics('NOTABLOCK')
+        assert_match(actual, expected, "Block statistic mismatch")
+
+    def test_get_location_statistics_block_list(self):
+        self.bgqsystem._blocks = {'FOO': FakeBlock({'name':'FOO'}),
+                                        'BAR': FakeBlock({'name':'BAR'})}
+        expected = {'nproc': 16384, 'nodect': 1024}
+        actual = self.bgqsystem.get_location_statistics('FOO:BAR')
+        assert_match(actual, expected, "Block statistic mismatch")
+
+    @raises(KeyError)
+    def test_get_location_statistics_bad_block_list(self):
+        self.bgqsystem._blocks = {'FOO': FakeBlock({'name':'FOO'}),
+                                        'BAR': FakeBlock({'name':'BAR'})}
+        expected = {'nproc': 8192, 'nodect': 512}
+        actual = self.bgqsystem.get_location_statistics('FOO:BAR:NOTABLOCK')
+        assert_match(actual, expected, "Block statistic mismatch")
+
 class FakeBlock(object):
     def __init__(self, spec):
         self.name = spec['name']
         self.draining = False
+        self.node_cards = {'N00': {'name': 'N00'},
+                           'N01': {'name': 'N01'},
+                           'N02': {'name': 'N02'},
+                           'N03': {'name': 'N03'},
+                           'N04': {'name': 'N04'},
+                           'N05': {'name': 'N05'},
+                           'N06': {'name': 'N06'},
+                           'N07': {'name': 'N07'},
+                           'N08': {'name': 'N08'},
+                           'N09': {'name': 'N09'},
+                           'N10': {'name': 'N10'},
+                           'N11': {'name': 'N11'},
+                           'N12': {'name': 'N12'},
+                           'N13': {'name': 'N13'},
+                           'N14': {'name': 'N14'},
+                           'N15': {'name': 'N15'},
+                          }
     def __hash__(self):
         return self.name.__hash__()
