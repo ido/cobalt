@@ -310,9 +310,8 @@ def confirmed (reservation_id, requester, start_time, duration, resource_list, a
 
     """
 
-    msg = {'requester':requester, 'start':int(start), 'duration':int(duration),
-            'end':int(start) + int(duration), 'Resource_List':resource_list,
-            'resource':resource}
+    msg = {'requester':requester, 'start':int(start_time), 'duration':int(duration), 'end':int(start_time) + int(duration),
+            'Resource_List':resource_list, 'resource':resource}
     if account is not None:
         msg['account'] = account
 
