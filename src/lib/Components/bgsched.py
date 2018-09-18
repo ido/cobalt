@@ -353,7 +353,7 @@ class Reservation (Data):
                 logger.info("Res %s/%s: Activating reservation: %s", self.res_id, self.cycle_id, self.name)
                 user = None
                 if self.users is not None:
-                    user = self.users[0]
+                    user = self.users
                 _write_to_accounting_log(accounting.begin(self.res_id, user, self.queue, self.ctime,
                     int(self.start), int(self.start) + int(self.duration), int(self.duration),
                     self.partitions, self.users, self.resource_list, self.active_id, name=self.name, account=self.project,
