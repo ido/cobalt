@@ -105,7 +105,7 @@ class Reservation (Data):
     fields = Data.fields + [
         "tag", "name", "start", "duration", "cycle", "users", "partitions",
         "active", "queue", "res_id", "cycle_id", 'project', "block_passthrough",
-        "resource_list", "active_id"
+        "resource_list", "active_id", "ctime", "stime",
     ]
     required = ["name", "start", "duration"]
 
@@ -134,7 +134,7 @@ class Reservation (Data):
         self.running = False
         self.project = spec.get("project", None)
         self.block_passthrough = spec.get("block_passthrough", False)
-        self.ctime = int(time.time())
+        self.ctime = spec.get("ctime", int(time.time()))
         self.stime = spec.get('stime', None)
         self.resource_list = spec['resource_list']
         self.deleting = False
@@ -293,18 +293,19 @@ class Reservation (Data):
         has cycled
 
         '''
+        # Write finish while we have the original id.
+        _write_to_accounting_log(accounting.finish(self.res_id))
         self.res_id = bgsched_id_gen.get()
         self.ctime = int(time.time())
         self.active_id_gen = IncrID()
         self.active_id = self.active_id_gen.get()
         logger.info("Res %s/%s: Cycling reservation: %s", self.res_id,
                 self.cycle_id, self.name)
-        _write_to_accounting_log(accounting.finish(self.res_id))
         self.stime = None
         if deferral_while_active:
             #if we are deferring while active, don't increment the time.  That's already happened.
             self.set_start_to_next_cycle()
-            self.running = False
+        self.running = False
         _write_to_accounting_log(accounting.confirmed(self.res_id,
             "Scheduler", self.start, self.duration, self.resource_list, self.project))
         dbwriter.log_to_db(None, "cycling", "reservation", self)
