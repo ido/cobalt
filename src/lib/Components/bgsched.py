@@ -329,7 +329,7 @@ class Reservation (Data):
                     logger.info("Res %s/%s: Active reservation %s deactivating: Deferred and cycling.",
                         self.res_id, self.cycle_id, self.name)
                     _write_to_accounting_log(accounting.system_remove(self.res_id, "Scheduler", self.ctime, self.stime,
-                        etime, self.resource_list, self.project))
+                        etime, self.resource_list, self.active_id, self.project))
                     dbwriter.log_to_db(None, "deactivating", "reservation", self, etime)
                     dbwriter.log_to_db(None, "instance_end","reservation", self)
                     self.__cycle_reservation(True)
@@ -337,7 +337,7 @@ class Reservation (Data):
                     logger.info("Res %s/%s: Active reservation %s deactivating: start time in future.",
                         self.res_id, self.cycle_id, self.name)
                     _write_to_accounting_log(accounting.system_remove(self.res_id, "Scheduler", self.ctime, self.stime,
-                        etime, self.resource_list, self.project))
+                        etime, self.resource_list, self.active_id, self.project))
                     dbwriter.log_to_db(None, "deactivating", "reservation", self, etime)
             return False
 
@@ -379,7 +379,7 @@ class Reservation (Data):
                 logger.info("Res %s/%s: Deactivating reservation: %s: Reservation Cycling",
                     self.res_id, self.cycle_id, self.name)
                 _write_to_accounting_log(accounting.system_remove(self.res_id, "Scheduler", self.ctime, self.stime,
-                    etime, self.resource_list, self.project))
+                    etime, self.resource_list, self.active_id, self.project))
                 dbwriter.log_to_db(None, "deactivating", "reservation", self, etime)
                 dbwriter.log_to_db(None, "instance_end", "reservation", self, etime)
                 self.__cycle_reservation()
@@ -393,7 +393,7 @@ class Reservation (Data):
                 logger.info("Res %s/%s: Deactivating reservation: %s",
                              self.res_id, self.cycle_id, self.name)
                 _write_to_accounting_log(accounting.system_remove(self.res_id, "Scheduler", self.ctime, self.stime,
-                    etime, self.resource_list, self.project))
+                    etime, self.resource_list, self.active_id, self.project))
                 dbwriter.log_to_db(None, "deactivating", "reservation", self, etime)
             self.running = False
             return True
@@ -499,6 +499,7 @@ class ReservationDict (DataDict):
                       Marks the reservation as dying
 
         '''
+        etime = int(time.time())
         reservations = Cobalt.Data.DataDict.q_del(self, *args, **kwargs)
         qm = ComponentProxy('queue-manager')
         queues = [spec['name'] for spec in qm.get_queues([{'name':"*"}])]
@@ -516,6 +517,8 @@ class ReservationDict (DataDict):
             #after this they're heading to GC.
             if reservation.is_active():
                 #if we are active, then drop a deactivating message.
+                _write_to_accounting_log(accounting.system_remove(reservation.res_id, "Scheduler", reservation.ctime, reservation.stime,
+                    etime, reservation.resource_list, reservation.active_id, reservation.project))
                 dbwriter.log_to_db(None, "deactivating", "reservation",
                         reservation)
                 if reservation.cycle:
@@ -830,10 +833,10 @@ class BGSched (Component):
         self.logger.info("%s releasing reservation: %r", user_name, specs)
         rel_res = self.get_reservations(specs)
         for res in rel_res:
+            _write_to_accounting_log(accounting.remove(res.res_id, user_name, res.active_id))
             dbwriter.log_to_db(user_name, "released", "reservation", res)
         del_reservations = self.reservations.q_del(specs)
         for del_reservation in del_reservations:
-            _write_to_accounting_log(accounting.remove(del_reservation.res_id, user_name, del_reservation.active_id))
             self.logger.info("Res %s/%s/: %s releasing reservation: %r", del_reservation.res_id,
                               del_reservation.cycle_id, user_name, specs)
         return del_reservations
@@ -1003,7 +1006,7 @@ class BGSched (Component):
             reservations_cache = self.reservations.copy()
         except:
             # just to make sure we don't keep the lock forever
-            self.logger.error("error in schedule_jobs")
+            self.logger.error("error in schedule_jobs", exc_info=True)
         self.component_lock_release()
 
         # clean up the started_jobs cached data
