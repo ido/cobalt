@@ -523,7 +523,7 @@ class ReservationDict (DataDict):
                 dbwriter.log_to_db(None, "deactivating", "reservation",
                         reservation)
                 if reservation.cycle:
-                    dbwriter.log_to_db(None, "instance_end","reservation", self)
+                    dbwriter.log_to_db(None, "instance_end", "reservation", reservation)
             _write_to_accounting_log(accounting.finish(reservation.res_id))
             dbwriter.log_to_db(None, "terminated", "reservation", reservation)
         return reservations
