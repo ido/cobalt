@@ -33,7 +33,21 @@ __all__ = ["abort", "begin", "checkpoint", "delete", "end", "finish",
            "modify", 'hold_acquire', 'hold_release', 'kill_job']
 
 def abort (job_id, user, resource_list, account=None, resource=RESOURCE_NAME):
-    """Job was aborted by the server."""
+    """Job was aborted by the server.
+    Generally this is a job whose walltime has ended and Cobalt is initiating termination and cleanup.
+
+    Arguments:
+        job_id -- id of job that has been checkpointed
+        user -- the user name under which the job has been submitted
+        resource_list -- list of the specified resource limits
+        account -- if submitter supplied a string for accounting
+        resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+                    (default: as specified by the resource_name option in the [system] cobalt.conf section)
+
+    Returns:
+        A string accounting log message
+
+    """
     message = {'resource':resource, 'Resource_List':resource_list, 'user': user}
     if account is not None:
         message['account'] = account
@@ -42,27 +56,29 @@ def abort (job_id, user, resource_list, account=None, resource=RESOURCE_NAME):
 
 def begin (id_string, owner, queue, ctime, start_time, end_time, duration, exec_host, authorized_users, resource_list, active_id,
            name=None, account=None, authorized_groups=None, authorized_hosts=None, resource=RESOURCE_NAME):
-
-
-    """Beginning of reservation period.
+    """Beginning of reservation active period.
 
     Arguments:
-    id_string -- reservation or reservation-job identifier
-    owner -- name of party who submitted the resource reservation
-    queue -- name of the associated queue
-    ctime -- time at which the reservation was created
-    start_time -- time at which the reservation is to start
-    end_time -- time at which the reservation is to end
-    duration -- duration specified or computed for the reservation
-    exec_host -- nodes and node-associated resources (see qrun -H)
-    authorized_users -- list of acl_users on the reservation queue
-    resource_list -- resources requested by the reservation
+        id_string -- reservation or reservation-job identifier
+        owner -- name of party who submitted the resource reservation
+        queue -- name of the associated queue
+        ctime -- time at which the reservation was created
+        start_time -- time at which the reservation is to start
+        end_time -- time at which the reservation is to end
+        duration -- duration specified or computed for the reservation
+        exec_host -- nodes and node-associated resources (see qrun -H)
+        authorized_users -- list of acl_users on the reservation queue
+        resource_list -- resources requested by the reservation
+        name -- if submitter supplied a name string for the reservation (Default: None)
+        account -- if submitter supplied a string for accounting (default: None)
+        authorized_groups -- the list of acl_groups in the reservation queue (default: None)
+        authorized_hosts -- the list of acl_hosts on the reservation queue (default: None
+        resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+                    (default: as specified by the resource_name option in the [system] cobalt.conf section)
 
-    Keyword arguments:
-    name -- if submitter supplied a name string for the reservation
-    account -- if submitter supplied a string for accounting
-    authorized_groups -- the list of acl_groups in the reservation queue
-    authorized_hosts -- the list of acl_hosts on the reservation queue
+    Returns:
+        A string accounting log message
+
     """
 
 
@@ -81,17 +97,36 @@ def begin (id_string, owner, queue, ctime, start_time, end_time, duration, exec_
 
 
 def checkpoint (job_id, resource=RESOURCE_NAME):
-    """Job was checkpointed and held."""
+    """Job was checkpointed and held.
+
+    Arguments:
+        job_id -- id of job that has been checkpointed
+        resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+                    (default: as specified by the resource_name option in the [system] cobalt.conf section)
+
+    Returns:
+        A string accounting log message
+
+    """
     return entry("C", job_id, {'resource':resource})
 
 
 def delete (job_id, requester, user, resource_list, account=None, resource=RESOURCE_NAME):
     """Job was deleted by request.
+    This may be from any authorized user on the job, the submitting user or an administrator.
 
     Arguments:
-    job_id -- id of the deleted job
-    requester -- who deleted the job (user@host)
-    resource -- the resource that this job will run on (specified in the cobalt.conf file, default: default)
+        job_id -- id of the deleted job
+        requester -- identity of who deleted the job (user@host)
+        user -- the user name under which the job has been submitted
+        resource_list -- list of the specified resource limits
+        account -- submitter supplied a string for accounting (default: None)
+        resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+                    (default: as specified by the resource_name option in the [system] cobalt.conf section)
+
+    Returns:
+        A string accounting log message
+
     """
     message = {'requester':requester, 'resource':resource, 'Resource_List':resource_list, 'user': user}
     if account is not None:
@@ -104,35 +139,40 @@ def end (job_id, user, group, jobname, queue, cwd, exe, args, mode, ctime, qtime
          total_etime=None, priority_core_hours=None, resource=RESOURCE_NAME):
 
     """Job ended (terminated execution).
+    This indicates that the job is no longer in the queue at all, and will not be restarted in case of preemption.
 
     Arguments:
-    job_id -- identifier of the job that ended
-    user -- the user name under which the job executed
-    group -- the group name under which the job executed
-    jobname -- the name of the job
-    queue -- the name of the queue in which the job executed
-    cwd -- the current working directory used by the job
-    exe -- the executable run by the job
-    args -- the arguments passsed to the executable
-    mode -- the exection mode of the job
-    ctime -- time when job was created
-    qtime -- time when job was queued into current queue
-    etime -- time in seconds when job became eligible to run
-    start -- time when job execution started
-    exec_host -- name of host on which the job is being executed
-    resource_list -- list of the specified resource limits
-    session -- session number of job
-    end -- time when job ended execution
-    exit_status -- exit status of the job
-    resources_used -- aggregate amount (value) of resources used
+        job_id -- identifier of the job that ended
+        user -- the user name under which the job executed
+        group -- the group name under which the job executed
+        jobname -- the name of the job
+        queue -- the name of the queue in which the job executed
+        cwd -- the current working directory used by the job
+        exe -- the executable run by the job
+        args -- the arguments passsed to the executable
+        mode -- the exection mode of the job
+        ctime -- time when job was created
+        qtime -- time when job was queued into current queue
+        etime -- time in seconds when job became eligible to run
+        start -- time when job execution started
+        exec_host -- name of host on which the job is being executed
+        resource_list -- list of the specified resource limits
+        session -- session number of job
+        end -- time when job ended execution
+        exit_status -- exit status of the job
+        resources_used -- aggregate amount (value) of resources used
+        account -- if job has an "account name" string (default: None)
+        accounting_id -- CSA JID, job ID (default: None)
+        alt_id -- optional alternate job identifier (default: None)
+        priority_core_hours -- core hours used. May be used for elevated priority accounting in the future. (default: None)
+        resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+                    (default: as specified by the resource_name option in the [system] cobalt.conf section)
+        resvname -- the name of the resource reservation, if applicable (default: None)
+        resv_id -- the id of the resource reservation, if applicable (default: None)
 
-    Keyword arguments:
-    account -- if job has an "account name" string
-    resvname -- the name of the resource reservation, if applicable
-    resv_id -- the id of the resource reservation, if applicable
-    alt_id -- optional alternate job identifier
-    accounting_id -- CSA JID, job ID
-    resource -- the resource that this job will run on (specified in the cobalt.conf file, default: default)
+    Returns
+        A string accounting log message
+
     """
 
     message = {'user':user, 'group':group, 'jobname':jobname, 'queue':queue,
@@ -161,7 +201,17 @@ def end (job_id, user, group, jobname, queue, cwd, exe, args, mode, ctime, qtime
 
 
 def finish (reservation_id, resource=RESOURCE_NAME):
-    """Resource reservation period finished."""
+    """Resource reservation finished and removed from list.
+
+    Arguments:
+        reservation_id - id of the reservation that has ended
+        resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+                    (default: as specified by the resource_name option in the [system] cobalt.conf section)
+
+    Returns:
+        A string accounting log message
+
+    """
     return entry("F", reservation_id, {'resource':resource})
 
 
@@ -169,14 +219,19 @@ def system_remove (reservation_id, requester, ctime, stime, etime, resource_list
     """Scheduler or server requested removal of the reservation.  This marks an active to inactive transition.
 
     Arguments:
-    reservation_id -- id of the reservation that was removed
-    requester -- user@host to identify who deleted the resource reservation
-    ctime -- creation time of reservation
-    stime -- start time of reservation active period
-    etime -- end time of reservation active period
-    resource_list -- list of information on resources used.  Must be sufficient for charging for resources used.
-    active_id -- identifier for which activation of the reservation this is.
-    resource  -- identifier of the resource that Cobalt is managing.  Usually the system name.
+        reservation_id -- id of the reservation that was removed
+        requester -- user@host to identify who deleted the resource reservation
+        ctime -- creation time of reservation
+        stime -- start time of reservation active period
+        etime -- end time of reservation active period
+        resource_list -- list of information on resources used.  Must be sufficient for charging for resources used.
+        active_id -- identifier for which activation of the reservation this is.
+        account -- submitter supplied a string for accounting (default: None)
+        resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+                    (default: as specified by the resource_name option in the [system] cobalt.conf section)
+
+    Returns:
+        A string accounting log message
 
     """
     #Note: for charging purposes, this is closest to the 'E' record.  This
@@ -191,10 +246,18 @@ def remove (reservation_id, requester, active_id, resource=RESOURCE_NAME):
     """Resource reservation terminated by ordinary client.
 
     Arguments:
-    reservation_id -- id of the reservation that was terminated
-    requester -- user@host to identify who deleted the resource reservation
-    active_id -- identifier for this active period of this reservation
-    resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+        reservation_id -- id of the reservation that was terminated
+        requester -- user@host to identify who deleted the resource reservation
+        active_id -- identifier for this active period of this reservation
+        account -- submitter supplied a string for accounting (default: None)
+        resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+                    (default: as specified by the resource_name option in the [system] cobalt.conf section)
+
+    Returns:
+        A string accounting log message
+
+    Notes:
+        This logs the request.  The end of the reservation active period will be marked by a system_remove (K) record.
 
     """
     return entry("k", reservation_id, {'requester':requester, 'active_id': active_id, 'resource':resource})
@@ -203,12 +266,16 @@ def queue (job_id, queue, user, resource_list, account=None, resource=RESOURCE_N
     """Job entered a queue.
 
     Arguments:
-    job_id -- id of the job that entered the queue
-    queue -- the queue into which the job was placed
-    user -- the user name under which the job will be executed
-    resource_list -- a dictionary of specified resource limits
-    account -- if not None, the account the job will be charged to (default: None)
-    resource -- the resource that this job will run on (specified in the cobalt.conf file, default: default)
+        job_id -- id of the job that entered the queue
+        queue -- the queue into which the job was placed
+        user -- the user name under which the job will be executed
+        resource_list -- a dictionary of specified resource limits
+        account -- submitter supplied a string for accounting (default: None)
+        resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+                    (default: as specified by the resource_name option in the [system] cobalt.conf section)
+
+    Returns:
+        A string accounting log message
 
     """
     message = {'queue':queue, 'resource':resource, 'Resource_List':resource_list, 'user': user}
@@ -220,12 +287,17 @@ def modify (job_id, queue, user, resource_list, account=None, resource=RESOURCE_
     """Job was modified
 
     Arguments:
-    job_id -- id of the job
-    queue -- the queue into which the job was placed
-    user -- the user name under which the job will be executed
-    resource_list -- a dictionary of specified resource limits
-    account -- if not None, the account the job will be charged to (default: None)
-    resource -- the resource that this job will run on (specified in the cobalt.conf file, default: default)
+        job_id -- id of the job
+        queue -- the queue into which the job was placed
+        user -- the user name under which the job will be executed
+        resource_list -- a dictionary of specified resource limits
+        account -- submitter supplied a string for accounting (default: None)
+        resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+                    (default: as specified by the resource_name option in the [system] cobalt.conf section)
+
+    Returns:
+        A string accounting log message
+
 
     """
     message = {'queue':queue, 'resource':resource, 'Resource_List':resource_list, 'user': user}
@@ -235,40 +307,53 @@ def modify (job_id, queue, user, resource_list, account=None, resource=RESOURCE_
 
 
 def rerun (job_id):
-    """Job was rerun."""
+    """Job was rerun.
+
+    Arguments:
+        job_id -- id of the job
+
+    Returns:
+        A string accounting log message
+
+    """
     return entry("R", job_id)
 
 
 def start (job_id, user, group, jobname, queue, cwd, exe, args, mode, ctime, qtime, etime, start, exec_host, resource_list, session,
            account=None, resvname=None, resv_id=None, alt_id=None, accounting_id=None, resource=RESOURCE_NAME):
 
-    """Job started (terminated execution).
+    """Job started.
+    At this point the queue manager has been instructed to start the job.  Preactions are taken, but control may not have been
+    handed to the user yet.
 
     Arguments:
-    job_id -- identifier of the job that started
-    user -- the user name under which the job executed
-    group -- the group name under which the job executed
-    jobname -- the name of the job
-    queue -- the name of the queue in which the job resides
-    cwd -- the current working directory used by the job
-    exe -- the executable run by the job
-    args -- the arguments passsed to the executable
-    mode -- the exection mode of the job
-    ctime -- time when job was created
-    qtime -- time when job was queued into current queue
-    etime -- time in seconds when job became eligible to run
-    start -- time when job execution started
-    exec_host -- name of host on which the job is being executed
-    resource_list -- list of the specified resource limits
-    session -- session number of job
+        job_id -- identifier of the job that started
+        user -- the user name under which the job executed
+        group -- the group name under which the job executed
+        jobname -- the name of the job
+        queue -- the name of the queue in which the job resides
+        cwd -- the current working directory used by the job
+        exe -- the executable run by the job
+        args -- the arguments passsed to the executable
+        mode -- the exection mode of the job
+        ctime -- time when job was created
+        qtime -- time when job was queued into current queue
+        etime -- time in seconds when job became eligible to run
+        start -- time when job execution started
+        exec_host -- name of host on which the job is being executed
+        resource_list -- list of the specified resource limits
+        session -- session number of job
+        account -- if job has an "account name" string (default: None)
+        resvname -- the name of the resource reservation, if applicable (default: None)
+        resv_id -- the id of the resource reservation, if applicable (default: None)
+        alt_id -- optional alternate job identifier (default: None)
+        accounting_id -- CSA JID, job ID (default: None)
+        resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+                    (default: as specified by the resource_name option in the [system] cobalt.conf section)
 
-    Keyword arguments:
-    account -- if job has an "account name" string
-    resvname -- the name of the resource reservation, if applicable
-    resv_id -- the id of the resource reservation, if applicable
-    alt_id -- optional alternate job identifier
-    accounting_id -- CSA JID, job ID
-    resource -- the resource that this job will run on (specified in the cobalt.conf file, default: default)
+    Returns:
+        A string accounting log message
+
     """
 
     message = {'user':user, 'group':group, 'jobname':jobname, 'queue':queue, 'cwd':cwd, 'exe':exe, 'args':args, 'mode':mode,
@@ -288,9 +373,14 @@ def unconfirmed (reservation_id, requester, resource=RESOURCE_NAME):
     """Created unconfirmed resources reservation.
 
     Arguments:
-    reservation_id -- id of the unconfirmed reservation
-    requester -- user@host to identify who requested the resources reservation
-    resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+        reservation_id -- id of the unconfirmed reservation
+        requester -- user@host to identify who requested the resources reservation
+        resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+        resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+                    (default: as specified by the resource_name option in the [system] cobalt.conf section)
+
+    Returns:
+        A string accounting log message
 
     """
 
@@ -300,13 +390,18 @@ def confirmed (reservation_id, requester, start_time, duration, resource_list, a
     """Created unconfirmed resources reservation.
 
     Arguments:
-    reservation_id -- id of the unconfirmed reservation
-    requester -- user@host to identify who requested the resources reservation
-    start_time -- the time in seconds from Epoch (1970-01-01 00:00:00 UTC) that the reservation is to start.
-    duration -- planned duration of reservation
-    resource_list -- dictionary of resource information for charging for the planned resources of this reservation
-    account -- string account identifier for this reservation.  None if not provided.
-    resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+        reservation_id -- id of the unconfirmed reservation
+        requester -- user@host to identify who requested the resources reservation
+        start_time -- the time in seconds from Epoch (1970-01-01 00:00:00 UTC) that the reservation is to start.
+        duration -- planned duration of reservation
+        resource_list -- dictionary of resource information for charging for the planned resources of this reservation
+        account -- string account identifier for this reservation.  None if not provided.
+        resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+        resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+                    (default: as specified by the resource_name option in the [system] cobalt.conf section)
+
+    Returns:
+        A string accounting log message
 
     """
 
@@ -319,28 +414,37 @@ def confirmed (reservation_id, requester, start_time, duration, resource_list, a
 
 def task_start(job_id, task_id, start_time, location, resource=RESOURCE_NAME):
     '''Indicate a task has started.  Typically this would indicate that add_process_groups has been called successfully.
+    Control has been handed to the user
 
-    Args:
-        job_id - id of job that this task belongs to
-        task_id - id of the task launched
-        start_time - time when the task started as seconds from epoch
-        location - a list of locations that this task is running on
-        resource -- the resource that this job will run on (specified in the cobalt.conf file, default: default)
+    Arguments:
+        job_id -- id of job that this task belongs to
+        task_id -- id of the task launched
+        start_time -- time when the task started as seconds from epoch
+        location -- a list of locations that this task is running on
+        resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+                    (default: as specified by the resource_name option in the [system] cobalt.conf section)
+
+    Returns:
+        A string accounting log message
 
     '''
     return entry("TS", job_id, {'task_id': task_id, 'start': start_time, 'location': location, 'resource':resource})
 
 def task_end(job_id, task_id, task_runtime, start_time, end_time, location, resource=RESOURCE_NAME):
-    '''Indicate a task has started.  Typically this would indicate that add_process_groups has been called successfully.
+    '''Indicate a task has ended.  Control has been handed back to Cobalt from the user.
 
-    Args:
-        job_id - id of job that this task belongs to
-        task_id - id of the task launched
-        task_runtime - The running time of the task in seconds.  Start time for this is the task_start record timestamp.
-        start_time - time when the task started as seconds from epoch
-        end_time - tme when the task ended as seconds from epoch
-        location - a list of locations that this task is running on
-        resource -- the resource that this job will run on (specified in the cobalt.conf file, default: default)
+    Arguments:
+        job_id -- id of job that this task belongs to
+        task_id -- id of the task launched
+        task_runtime -- The running time of the task in seconds.  Start time for this is the task_start record timestamp.
+        start_time -- time when the task started as seconds from epoch
+        end_time -- tme when the task ended as seconds from epoch
+        location -- a list of locations that this task is running on
+        resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+                    (default: as specified by the resource_name option in the [system] cobalt.conf section)
+
+    Returns:
+        A string accounting log message
 
     '''
     return entry("TE", job_id, {'task_id': task_id, 'task_runtime': task_runtime, 'start': start_time, 'end': end_time,
@@ -352,23 +456,34 @@ def kill_job(job_id, kill_time, resource=RESOURCE_NAME):
 
 def hold_acquire(job_id, hold_type, start_time, user, resource=RESOURCE_NAME):
     '''Indicate a hold has been acquired.
+    Jobs cannot run until all holds have been released.
 
-    Args:
-        job_id - id of job that this task belongs to
-        start_time - time when the task started as seconds from epoch
-        resource -- the resource that this job will run on (specified in the cobalt.conf file, default: default)
+    Arguments:
+        job_id -- id of job that this task belongs to
+        hold_type -- the type of hold that has been placed on the job.
+        start_time -- time when the task started as seconds from epoch
+        resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+                    (default: as specified by the resource_name option in the [system] cobalt.conf section)
+
+    Returns:
+        A string accounting log message
 
     '''
     return entry("HA", job_id, {'hold_type': hold_type, 'start': start_time, 'resource': resource, 'user':user})
 
 def hold_release(job_id, hold_type, end_time, user, resource=RESOURCE_NAME):
     '''Indicate a hold has been released.
+    Jobs cannot run until all holds have been released.
 
-    Args:
-        job_id - id of job that this task belongs to
-        start_time - time when the task started as seconds from epoch
-        end_time - tme when the task ended as seconds from epoch
-        resource -- the resource that this job will run on (specified in the cobalt.conf file, default: default)
+    Arguments:
+        job_id -- id of job that this task belongs to
+        start_time -- time when the task started as seconds from epoch
+        end_time -- tme when the task ended as seconds from epoch
+        resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+                    (default: as specified by the resource_name option in the [system] cobalt.conf section)
+
+    Returns:
+        A string accounting log message
 
     '''
     return entry("HR", job_id, {'hold_type': hold_type, 'end': end_time, 'resource': resource, 'user':user})
