@@ -24,13 +24,12 @@ RECORD_MAPPING = {'abort': 'A',
                   'modify': 'QA',
                   'hold_acquire': 'HA',
                   'hold_release': 'HR',
-                  'kill': 'KL',
                   }
 
 __all__ = ["abort", "begin", "checkpoint", "delete", "end", "finish",
            "system_remove", "remove", "queue", "rerun", "start", "unconfirmed",
            "confirmed", "task_start", "task_end",  "DatetimeFileHandler",
-           "modify", 'hold_acquire', 'hold_release', 'kill_job']
+           "modify", 'hold_acquire', 'hold_release',]
 
 def abort (job_id, user, resource_list, account=None, resource=RESOURCE_NAME):
     """Job was aborted by the server.
@@ -449,10 +448,6 @@ def task_end(job_id, task_id, task_runtime, start_time, end_time, location, reso
     '''
     return entry("TE", job_id, {'task_id': task_id, 'task_runtime': task_runtime, 'start': start_time, 'end': end_time,
                                 'location': location, 'resource':resource})
-
-def kill_job(job_id, kill_time, resource=RESOURCE_NAME):
-    #TODO, fixme
-    return entry(RECORD_MAPPING['kill'], job_id, {'kill_time': kill_time, 'resource':resource})
 
 def hold_acquire(job_id, hold_type, start_time, user, resource=RESOURCE_NAME):
     '''Indicate a hold has been acquired.
