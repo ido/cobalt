@@ -3459,12 +3459,12 @@ class Queue (Data):
                 if job.max_running:
                     logger.info("Job %s/%s: max_running set to False", job.jobid, job.user)
                     dbwriter.log_to_db(None, "maxrun_hold_release", "job_prog", JobProgMsg(job))
-                    accounting_logger.info(accounting.hold_release(self.jobid, "maxrun_hold", time.time(), None))
+                    accounting_logger.info(accounting.hold_release(job.jobid, "maxrun_hold", time.time(), None))
 
                     #FIXME: Confirm unreachable code.  If max_running is true, then no_holds_left is false.
                     if job.no_holds_left():
                         dbwriter.log_to_db(None, "all_holds_clear", "job_prog", JobProgMsg(job))
-                        accounting_logger.info(accounting.hold_release(self.jobid, "all_holds_clear", time.time(), None))
+                        accounting_logger.info(accounting.hold_release(job.jobid, "all_holds_clear", time.time(), None))
                 job.max_running = False
         else:
             unum = dict()
@@ -3492,13 +3492,13 @@ class Queue (Data):
                     logger.info("Job %s/%s: max_running set to %s", job.jobid, job.user, job.max_running)
                     if job.max_running:
                         dbwriter.log_to_db(None, "maxrun_hold", "job_prog", JobProgMsg(job))
-                        accounting_logger.info(accounting.hold_acquire(self.jobid, "maxrun_hold", time.time(), None))
+                        accounting_logger.info(accounting.hold_acquire(job.jobid, "maxrun_hold", time.time(), None))
                     else:
                         dbwriter.log_to_db(None, "maxrun_hold_release", "job_prog", JobProgMsg(job))
-                        accounting_logger.info(accounting.hold_release(self.jobid, "maxrun_hold", time.time(), None))
+                        accounting_logger.info(accounting.hold_release(job.jobid, "maxrun_hold", time.time(), None))
                         if job.no_holds_left():
                             dbwriter.log_to_db(None, "all_holds_clear", "job_prog", JobProgMsg(job))
-                            accounting_logger.info(accounting.hold_release(self.jobid, "all_holds_clear", time.time(), None))
+                            accounting_logger.info(accounting.hold_release(job.jobid, "all_holds_clear", time.time(), None))
 
 
 class QueueDict(DataDict):
@@ -4333,8 +4333,8 @@ class QueueManager(Component):
                 dbwriter.log_to_db(None, "dep_fail", "job_prog", JobProgMsg(job))
             if ((not job.dep_fail) and already_failed and
                 (job.no_holds_left())):
-                dbwriter.log_to_db(None, "all_holds_clear", "job_prog",
-                                   JobProgMsg(job))
+                dbwriter.log_to_db(None, "all_holds_clear", "job_prog", JobProgMsg(job))
+                accounting_logger.info(accounting.hold_release(job.jobid, "all_holds_clear", time.time(), None))
     check_dep_fail = automatic(check_dep_fail, period=60)
 
     def get_next_id(self):
