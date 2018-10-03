@@ -3105,7 +3105,7 @@ class Job (StateMachine):
 
         # write job delete information to CQM and accounting logs
         delete_msg = accounting.delete(self.jobid, user, self.user, {'ncpus':self.procs, 'nodect':self.nodes,
-                'walltime':str_elapsed_time(self.walltime * 60)})
+                'walltime':str_elapsed_time(self.walltime * 60)}, force=force, account=self.project)
         stripped_msg = ";".join(delete_msg.split(';')[1:])
         accounting_logger.info(delete_msg)
         logger.info(stripped_msg) #'D;%s;%s' % (self.jobid, self.user))

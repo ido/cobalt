@@ -110,7 +110,7 @@ def checkpoint (job_id, resource=RESOURCE_NAME):
     return entry("C", job_id, {'resource':resource})
 
 
-def delete (job_id, requester, user, resource_list, account=None, resource=RESOURCE_NAME):
+def delete (job_id, requester, user, resource_list, force=False, account=None, resource=RESOURCE_NAME):
     """Job was deleted by request.
     This may be from any authorized user on the job, the submitting user or an administrator.
 
@@ -119,6 +119,7 @@ def delete (job_id, requester, user, resource_list, account=None, resource=RESOU
         requester -- identity of who deleted the job (user@host)
         user -- the user name under which the job has been submitted
         resource_list -- list of the specified resource limits
+        force -- True if this delete request was a part of a force-delete by an administrator (default: False)
         account -- submitter supplied a string for accounting (default: None)
         resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
                     (default: as specified by the resource_name option in the [system] cobalt.conf section)
@@ -127,7 +128,7 @@ def delete (job_id, requester, user, resource_list, account=None, resource=RESOU
         A string accounting log message
 
     """
-    message = {'requester':requester, 'resource':resource, 'Resource_List':resource_list, 'user': user}
+    message = {'requester':requester, 'resource':resource, 'Resource_List':resource_list, 'user': user, 'force':True}
     if account is not None:
         message['account'] = account
     return entry("D", job_id, message)
