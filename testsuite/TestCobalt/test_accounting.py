@@ -81,7 +81,7 @@ class TestAccounting (object):
         resource_list = {'foo':'bar', 'nodect':'256'}
         requester = 'me@mydomain.net'
         user = 'frodo'
-        expected = "01/01/2000 00:00:00;D;123;Resource_List.foo=bar Resource_List.nodect=256 requester=me@mydomain.net resource=default user=frodo"
+        expected = "01/01/2000 00:00:00;D;123;Resource_List.foo=bar Resource_List.nodect=256 force=False requester=me@mydomain.net resource=default user=frodo"
         log_entry = accounting.delete(job.jobid, requester, user, resource_list)
         assert_match(log_entry, expected, "Bad delete entry.")
 

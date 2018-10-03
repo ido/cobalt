@@ -128,7 +128,7 @@ def delete (job_id, requester, user, resource_list, force=False, account=None, r
         A string accounting log message
 
     """
-    message = {'requester':requester, 'resource':resource, 'Resource_List':resource_list, 'user': user, 'force':True}
+    message = {'requester':requester, 'resource':resource, 'Resource_List':resource_list, 'user': user, 'force':force}
     if account is not None:
         message['account'] = account
     return entry("D", job_id, message)
