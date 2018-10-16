@@ -4,7 +4,7 @@ from logging.handlers import BaseRotatingHandler
 import os
 from Cobalt.Util import get_config_option
 
-RESOURCE_NAME = get_config_option('system', 'resource_name', 'default')
+RESOURCE_NAME = get_config_option('system', 'resource_name', 'NOTSET')
 RECORD_MAPPING = {'abort': 'A',
                   'begin': 'B',
                   'checkpoint': 'C',
@@ -68,6 +68,7 @@ def begin (id_string, owner, queue, ctime, start_time, end_time, duration, exec_
         exec_host -- nodes and node-associated resources (see qrun -H)
         authorized_users -- list of acl_users on the reservation queue
         resource_list -- resources requested by the reservation
+        active_id -- identifier for this active period of this reservation
         name -- if submitter supplied a name string for the reservation (Default: None)
         account -- if submitter supplied a string for accounting (default: None)
         authorized_groups -- the list of acl_groups in the reservation queue (default: None)
@@ -200,11 +201,12 @@ def end (job_id, user, group, jobname, queue, cwd, exe, args, mode, ctime, qtime
     return entry("E", job_id, message)
 
 
-def finish (reservation_id, resource=RESOURCE_NAME):
+def finish (reservation_id, active_id, resource=RESOURCE_NAME):
     """Resource reservation finished and removed from list.
 
     Arguments:
         reservation_id - id of the reservation that has ended
+        active_id -- identifier for this active period of this reservation
         resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
                     (default: as specified by the resource_name option in the [system] cobalt.conf section)
 
@@ -212,7 +214,7 @@ def finish (reservation_id, resource=RESOURCE_NAME):
         A string accounting log message
 
     """
-    return entry("F", reservation_id, {'resource':resource})
+    return entry("F", reservation_id, {'resource':resource, 'active_id':active_id})
 
 
 def system_remove (reservation_id, requester, ctime, stime, etime, resource_list, active_id, account=None, resource=RESOURCE_NAME):
@@ -369,13 +371,12 @@ def start (job_id, user, group, jobname, queue, cwd, exe, args, mode, ctime, qti
         message['accounting_id'] = accounting_id
     return entry("S", job_id, message)
 
-def unconfirmed (reservation_id, requester, resource=RESOURCE_NAME):
+def unconfirmed (reservation_id, requester, active_id, resource=RESOURCE_NAME):
     """Created unconfirmed resources reservation.
 
     Arguments:
         reservation_id -- id of the unconfirmed reservation
         requester -- user@host to identify who requested the resources reservation
-        resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
         resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
                     (default: as specified by the resource_name option in the [system] cobalt.conf section)
 
@@ -384,9 +385,9 @@ def unconfirmed (reservation_id, requester, resource=RESOURCE_NAME):
 
     """
 
-    return entry("U", reservation_id, {'requester':requester, 'resource':resource})
+    return entry("U", reservation_id, {'requester':requester, 'resource':resource, 'active_id':active_id})
 
-def confirmed (reservation_id, requester, start_time, duration, resource_list, account=None, resource=RESOURCE_NAME):
+def confirmed (reservation_id, requester, start_time, duration, resource_list, active_id, account=None, resource=RESOURCE_NAME):
     """Created unconfirmed resources reservation.
 
     Arguments:
@@ -395,6 +396,7 @@ def confirmed (reservation_id, requester, start_time, duration, resource_list, a
         start_time -- the time in seconds from Epoch (1970-01-01 00:00:00 UTC) that the reservation is to start.
         duration -- planned duration of reservation
         resource_list -- dictionary of resource information for charging for the planned resources of this reservation
+        active_id -- identifier for this active period of this reservation
         account -- string account identifier for this reservation.  None if not provided.
         resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
         resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
@@ -406,7 +408,7 @@ def confirmed (reservation_id, requester, start_time, duration, resource_list, a
     """
 
     msg = {'requester':requester, 'start':int(start_time), 'duration':int(duration), 'end':int(start_time) + int(duration),
-            'Resource_List':resource_list, 'resource':resource}
+            'active_id':active_id, 'Resource_List':resource_list, 'resource':resource}
     if account is not None:
         msg['account'] = account
 

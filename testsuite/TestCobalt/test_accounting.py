@@ -51,7 +51,7 @@ class TestAccounting (object):
         resource_list = {'foo':'bar', 'nodect':'256'}
         user = 'frodo'
         log_entry = accounting.abort(job.jobid, user, resource_list)
-        expected = "01/01/2000 00:00:00;A;123;Resource_List.foo=bar Resource_List.nodect=256 resource=default user=frodo"
+        expected = "01/01/2000 00:00:00;A;123;Resource_List.foo=bar Resource_List.nodect=256 resource=NOTSET user=frodo"
         assert_match(log_entry, expected, "Abort record mismatch.")
 
     def test_job_abort_account (self):
@@ -59,7 +59,7 @@ class TestAccounting (object):
         resource_list = {'foo':'bar', 'nodect':'256'}
         user = 'frodo'
         log_entry = accounting.abort(job.jobid, user, resource_list, account='MyProject')
-        expected = "01/01/2000 00:00:00;A;123;Resource_List.foo=bar Resource_List.nodect=256 account=MyProject resource=default user=frodo"
+        expected = "01/01/2000 00:00:00;A;123;Resource_List.foo=bar Resource_List.nodect=256 account=MyProject resource=NOTSET user=frodo"
         assert_match(log_entry, expected, "Account not properly added.")
 
     def test_job_abort_resource (self):
@@ -72,7 +72,7 @@ class TestAccounting (object):
 
     def test_job_checkpoint (self):
         job = Job({'jobid':123})
-        expected = "01/01/2000 00:00:00;C;123;resource=default"
+        expected = "01/01/2000 00:00:00;C;123;resource=NOTSET"
         log_entry = accounting.checkpoint(job.jobid)
         assert_match(log_entry, expected, "Bad Checkpoint Messagge")
 
@@ -81,7 +81,7 @@ class TestAccounting (object):
         resource_list = {'foo':'bar', 'nodect':'256'}
         requester = 'me@mydomain.net'
         user = 'frodo'
-        expected = "01/01/2000 00:00:00;D;123;Resource_List.foo=bar Resource_List.nodect=256 force=False requester=me@mydomain.net resource=default user=frodo"
+        expected = "01/01/2000 00:00:00;D;123;Resource_List.foo=bar Resource_List.nodect=256 force=False requester=me@mydomain.net resource=NOTSET user=frodo"
         log_entry = accounting.delete(job.jobid, requester, user, resource_list)
         assert_match(log_entry, expected, "Bad delete entry.")
 
@@ -98,7 +98,7 @@ class TestAccounting (object):
             {'location':"ANL",
              'nodect':job.nodes,
              'walltime':"0.0"})
-        expected = "01/01/2000 00:00:00;E;123;Exit_status=255 Resource_List.ncpus=None Resource_List.nodect=None Resource_List.walltime=0 args= ctime=0.1 cwd=None end=-2.0 etime=0.3 exe=None exec_host=None group=unknown jobname=N/A mode=co priority_core_hours=0 qtime=0.2 queue=default resource=default resources_used.location=ANL resources_used.nodect=None resources_used.walltime=0.0 session=unknown start=-1.0 user=None"
+        expected = "01/01/2000 00:00:00;E;123;Exit_status=255 Resource_List.ncpus=None Resource_List.nodect=None Resource_List.walltime=0 args= ctime=0.1 cwd=None end=-2.0 etime=0.3 exe=None exec_host=None group=unknown jobname=N/A mode=co priority_core_hours=0 qtime=0.2 queue=default resource=NOTSET resources_used.location=ANL resources_used.nodect=None resources_used.walltime=0.0 session=unknown start=-1.0 user=None"
         assert_match(log_entry, expected, "Bad End Message.")
 
 #from accounting.py

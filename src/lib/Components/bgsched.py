@@ -196,7 +196,7 @@ class Reservation (Data):
                 #have to increment here, since we will not actually trigger from going inactive.
                 self.active_id = self.active_id_gen.get()
                 _write_to_accounting_log(accounting.confirmed(self.res_id, user_name, self.start, self.duration,
-                    self.resource_list, self.project))
+                    self.resource_list, self.active_id, self.project))
                 _write_to_accounting_log(accounting.begin(self.res_id, user_name, self.queue, self.ctime,
                     int(self.start), int(self.start) + int(self.duration), int(self.duration),
                     self.partitions, self.users, self.resource_list, self.active_id, name=self.name, account=self.project,
@@ -207,7 +207,7 @@ class Reservation (Data):
 
         if write_mod_message:
             _write_to_accounting_log(accounting.confirmed(self.res_id, user_name, self.start, self.duration,
-                self.resource_list, self.project))
+                self.resource_list, self.active_id, self.project))
         if not deferred or not self.running:
             #we only want this if we aren't deferring.  If we are, the cycle will
             #take care of the new data object creation.
@@ -294,7 +294,7 @@ class Reservation (Data):
 
         '''
         # Write finish while we have the original id.
-        _write_to_accounting_log(accounting.finish(self.res_id))
+        _write_to_accounting_log(accounting.finish(self.res_id, self.active_id))
         self.res_id = bgsched_id_gen.get()
         self.ctime = int(time.time())
         self.active_id_gen = IncrID()
@@ -307,7 +307,7 @@ class Reservation (Data):
             self.set_start_to_next_cycle()
         self.running = False
         _write_to_accounting_log(accounting.confirmed(self.res_id,
-            "Scheduler", self.start, self.duration, self.resource_list, self.project))
+            "Scheduler", self.start, self.duration, self.resource_list, self.active_id, self.project))
         dbwriter.log_to_db(None, "cycling", "reservation", self)
 
 
@@ -524,7 +524,7 @@ class ReservationDict (DataDict):
                         reservation)
                 if reservation.cycle:
                     dbwriter.log_to_db(None, "instance_end", "reservation", reservation)
-            _write_to_accounting_log(accounting.finish(reservation.res_id))
+            _write_to_accounting_log(accounting.finish(reservation.res_id, reservation.active_id))
             dbwriter.log_to_db(None, "terminated", "reservation", reservation)
         return reservations
 
@@ -773,7 +773,7 @@ class BGSched (Component):
             self.logger.info("Res %s/%s: %s adding reservation: %r", added_reservation.res_id, added_reservation.cycle_id,
                 user_name, specs)
             _write_to_accounting_log(accounting.confirmed(added_reservation.res_id, user_name, added_reservation.start,
-                added_reservation.duration, added_reservation.resource_list, added_reservation.project))
+                added_reservation.duration, added_reservation.resource_list, added_reservation.active_id, added_reservation.project))
             dbwriter.log_to_db(user_name, "creating", "reservation", added_reservation)
         return added_reservations
 
