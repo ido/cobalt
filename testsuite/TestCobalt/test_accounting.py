@@ -74,7 +74,7 @@ class TestAccounting (object):
         job = Job({'jobid':123})
         expected = "01/01/2000 00:00:00;C;123;resource=NOTSET"
         log_entry = accounting.checkpoint(job.jobid)
-        assert_match(log_entry, expected, "Bad Checkpoint Messagge")
+        assert_match(log_entry, expected, "Bad Checkpoint Message")
 
     def test_job_delete (self):
         job = Job({'jobid':123})
