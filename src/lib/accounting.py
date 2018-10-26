@@ -372,7 +372,7 @@ def start (job_id, user, group, jobname, queue, cwd, exe, args, mode, ctime, qti
     return entry("S", job_id, message)
 
 def unconfirmed (reservation_id, requester, active_id, resource=RESOURCE_NAME):
-    """Created unconfirmed resources reservation.
+    """Created unconfirmed Cobalt reservation.
 
     Arguments:
         reservation_id -- id of the unconfirmed reservation
@@ -388,7 +388,7 @@ def unconfirmed (reservation_id, requester, active_id, resource=RESOURCE_NAME):
     return entry("U", reservation_id, {'requester':requester, 'resource':resource, 'active_id':active_id})
 
 def confirmed (reservation_id, requester, start_time, duration, resource_list, active_id, account=None, resource=RESOURCE_NAME):
-    """Created unconfirmed resources reservation.
+    """Created confirmed Cobalt reservation.
 
     Arguments:
         reservation_id -- id of the unconfirmed reservation
