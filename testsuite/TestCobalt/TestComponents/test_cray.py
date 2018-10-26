@@ -144,7 +144,7 @@ class TestCraySystem(object):
                 'queue':'default', 'nodes': 1, 'walltime': 60,
                 }
         self.fake_reserve_called = False
-        Cobalt.Components.system.CraySystemDEFAULT_DEPTH = 72
+        Cobalt.Components.system.CraySystem.DEFAULT_DEPTH = 72
         Cobalt.Components.system.CraySystem.BACKFILL_EPSILON = 120
         Cobalt.Components.system.CraySystem.DRAIN_MODE = "first-fit"
 
