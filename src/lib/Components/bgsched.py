@@ -818,9 +818,9 @@ class BGSched (Component):
             res.update(newattr)
         updates['__cmd_user'] = user_name
         mod_reservations = self.reservations.q_get(specs, _set_reservations, updates)
-        mod_reservation = mod_reservations[0]
-        self.logger.info("Res %s/%s: %s modifying reservation: %r", mod_reservation.res_id,
-                              mod_reservation.cycle_id, user_name, specs)
+        for mod_reservation in mod_reservations:
+            self.logger.info("Res %s/%s: %s modifying reservation: %r", mod_reservation.res_id, mod_reservation.cycle_id,
+                    user_name, specs)
         return mod_reservations
 
     set_reservations = exposed(query(set_reservations))
