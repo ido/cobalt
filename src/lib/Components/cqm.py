@@ -3460,12 +3460,10 @@ class Queue (Data):
                     logger.info("Job %s/%s: max_running set to False", job.jobid, job.user)
                     dbwriter.log_to_db(None, "maxrun_hold_release", "job_prog", JobProgMsg(job))
                     accounting_logger.info(accounting.hold_release(job.jobid, "maxrun_hold", time.time(), None))
-
-                    #FIXME: Confirm unreachable code.  If max_running is true, then no_holds_left is false.
+                    job.max_running = False
                     if job.no_holds_left():
                         dbwriter.log_to_db(None, "all_holds_clear", "job_prog", JobProgMsg(job))
                         accounting_logger.info(accounting.hold_release(job.jobid, "all_holds_clear", time.time(), None))
-                job.max_running = False
         else:
             unum = dict()
             for job in self.jobs.q_get([{'has_resources':True}]):
