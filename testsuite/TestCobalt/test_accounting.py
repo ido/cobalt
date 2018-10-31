@@ -85,6 +85,15 @@ class TestAccounting (object):
         log_entry = accounting.delete(job.jobid, requester, user, resource_list)
         assert_match(log_entry, expected, "Bad delete entry.")
 
+    def test_job_delete_force (self):
+        job = Job({'jobid':123})
+        resource_list = {'foo':'bar', 'nodect':'256'}
+        requester = 'me@mydomain.net'
+        user = 'frodo'
+        expected = "01/01/2000 00:00:00;D;123;Resource_List.foo=bar Resource_List.nodect=256 force=True requester=me@mydomain.net resource=NOTSET user=frodo"
+        log_entry = accounting.delete(job.jobid, requester, user, resource_list, force=True)
+        assert_match(log_entry, expected, "Bad delete entry.")
+
     def test_job_end (self):
         job = Job({'jobid':123})
         #group and session are unknown
