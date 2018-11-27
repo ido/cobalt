@@ -1190,3 +1190,44 @@ class ClusterBaseSystem (Component):
         if mode not in valid_modes:
             raise ValueError("Mode %s is not a valid drain mode" % mode)
         self.drain_mode = mode
+
+    @exposed
+    def get_location_statistics(self, locations):
+        '''Get a list of the aggregate location statistics for a list of
+        partitions/locations.  This list may contain partially overlapping
+        members and may also include entirely disjoint members.
+
+        Inputs:
+        locations -- String containing location names. This may include condensed
+                     ranges and ':'-delimited names.
+
+        Outputs:
+        A dictionary containing key-value pairs for resources submitted.
+        ex: {'nodect': 512:, 'nprocs':8192}
+        statistics
+
+        Exceptions:
+        KeyError -- if an invalid location name is given, a key error will be raised
+
+        Notes:
+        - Returned statistics are system-component dependent.
+        - On cluster systems, the nodecount and proccount are the same no matter the
+          number of processors/accelerators on the node, at this time.
+
+        '''
+        try:
+            loc_list = locations.split(':')
+        except AttributeError as exc:
+            extra_msg = 'Location list %s cannot be split.' % locations
+            exc_args = list(exc.args)
+            exc_args[0] += ' ' + extra_msg
+            exc.args = tuple(exc_args)
+            self.logger.warning(extra_msg)
+            raise
+        stats = {'nodect': 0,
+                 'nproc': 0,
+                }
+        stats['nodect'] = len(loc_list)
+        stats['nproc'] = stats['nodect']
+        return stats
+
