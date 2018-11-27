@@ -386,9 +386,9 @@ class ClusterBaseSystem (Component):
         available_nodes = node_set.difference(self.running_nodes)
         return available_nodes.difference(self.down_nodes)
 
-    def _get_overlaping_drain_queue(self, queue):
+    def _get_overlapping_drain_queue(self, queue):
         '''Get a queue that is in draining_queues for overlapping hardware in this queue.
-        There are situations where a queue will cause an drain, but it's overlaping partner won't.
+        There are situations where a queue will cause an drain, but it's overlapping partner won't.
         We need to consdier jobs that can run on the smallest drain time of all the overlapping queues
         causing a drain on that node.
 
@@ -585,7 +585,7 @@ class ClusterBaseSystem (Component):
                     user = jobs['user']
                     queue = jobs['queue']
                     drain_time = 0
-                    queue_to_use = self._get_overlaping_drain_queue(queue)
+                    queue_to_use = self._get_overlapping_drain_queue(queue)
                     try:
                         location_data, drain_time, ready_to_run = self._find_job_location(jobs, now,
                                 drain_time=int(self.draining_queues[queue_to_use]))
