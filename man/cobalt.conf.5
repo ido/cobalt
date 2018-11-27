@@ -70,6 +70,11 @@ restrictions in the authentication and authorization mechanisms for the mpirun
 equivalent on a given system.  This is most commonly required for Cray systems
 using eLogin nodes.
 .TP
+.B resource_name
+This is the resource name for this Cobalt instance for accounting purposes.
+This is typically the name of the cluster being run.  If unspecified the
+resource name for accounting logs is "NOTSET".
+.TP
 .B size
 Maximum size of a given system in nodes.
 .PP
