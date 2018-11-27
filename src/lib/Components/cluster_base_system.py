@@ -406,22 +406,29 @@ class ClusterBaseSystem (Component):
         # being drained, scan for this queue in the locations being
         # drained and if we overlap, use the queue with the smallest
         # time for your backfill time here.
-        if queue in self.draining_queues.keys():
-            # We already know waht this queue's backfill time should be.
-            return queue
         queue_to_use = queue
-        curr_drain_time = None
-        if queue not in self.draining_queues.keys():
-            for drain_list in self.draining_nodes.values():
-                for node_name in drain_list:
-                    for extra_queue in self.queue_assignments.keys():
-                        if extra_queue in self.draining_queues.keys():
-                            if node_name in self.queue_assignments[extra_queue]:
-                                # Use the queue with the smallest drain time overall
-                                if (curr_drain_time is None or
-                                    curr_drain_time < self.draining_queues.get(extra_queue, curr_drain_time)):
-                                    curr_drain_time = self.draining_queues.get(extra_queue, curr_drain_time)
-                                    queue_to_use = extra_queue
+        # keep the call to keys low due to the many possible loops
+        draining_queues_keys = self.draining_queues.keys()
+        queue_assignments_keys = self.queue_assignments.keys()
+        
+        if queue not in draining_queues_keys:
+            curr_drain_time = None
+            if queue not in draining_queues_keys:
+                for drain_list in self.draining_nodes.values():
+                    for node_name in drain_list:
+                        for extra_queue in queue_assignments_keys:
+                            if extra_queue in draining_queues_keys:
+                                if node_name in self.queue_assignments[extra_queue]:
+                                    # Use the queue with the largest drain time overall
+                                    possible_drain_time = self.draining_queues.get(extra_queue, curr_drain_time)
+                                    # allow entry on None  vvvv or if the current drain time is less than the new 
+                                    # possible drain, set it to the larger possible_drain_time
+                                    if (curr_drain_time is None or curr_drain_time < possible_drain_time):
+                                        curr_drain_time = possible_drain_time
+                                        queue_to_use = extra_queue
+        else:
+            # We already know what this queue's backfill time should be.
+            pass
         return queue_to_use
 
     # the argument "required" is used to pass in the set of locations allowed by a reservation;
