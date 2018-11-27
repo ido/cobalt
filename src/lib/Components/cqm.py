@@ -3457,10 +3457,10 @@ class Queue (Data):
             # if it *was* there and was removed, we better clean up
             for job in self.jobs:
                 if job.max_running:
+                    job.max_running = False
                     logger.info("Job %s/%s: max_running set to False", job.jobid, job.user)
                     dbwriter.log_to_db(None, "maxrun_hold_release", "job_prog", JobProgMsg(job))
                     accounting_logger.info(accounting.hold_release(job.jobid, "maxrun_hold", time.time(), None))
-                    job.max_running = False
                     if job.no_holds_left():
                         dbwriter.log_to_db(None, "all_holds_clear", "job_prog", JobProgMsg(job))
                         accounting_logger.info(accounting.hold_release(job.jobid, "all_holds_clear", time.time(), None))
