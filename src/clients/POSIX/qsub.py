@@ -426,7 +426,7 @@ def run_interactive_job(jobid, user, disable_preboot, nodes, procs):
         client_utils.logger.info("Opening interactive session to %s", loc)
         if deljob:
             os.system("/usr/bin/ssh -o \"SendEnv COBALT_NODEFILE COBALT_JOBID\" %s" % (loc))
-        if impl == 'alps_system':
+        elif impl == 'alps_system':
             # We may need to use a remote host depending on whether or not we
             # are on an eLogin.
             exec_user_shell(user, jobid, loc)
