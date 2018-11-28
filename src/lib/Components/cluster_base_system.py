@@ -420,7 +420,7 @@ class ClusterBaseSystem (Component):
                             if node_name in self.queue_assignments[extra_queue]:
                                 # Use the queue with the largest drain time overall
                                 possible_drain_time = self.draining_queues.get(extra_queue, curr_drain_time)
-                                # allow entry on None  vvvv or if the current drain time is less than the new 
+                                # allow entry on None or if the current drain time is less than the new 
                                 # possible drain, set it to the larger possible_drain_time
                                 if (curr_drain_time is None or curr_drain_time < possible_drain_time):
                                     curr_drain_time = possible_drain_time
