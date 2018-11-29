@@ -1,6 +1,6 @@
-"""RPC client access to cobalt components.
 # Copyright 2017 UChicago Argonne, LLC. All rights reserved.
 # Licensed under a modified BSD 3-clause license. See LICENSE for details.
+"""RPC client access to cobalt components.
 
 Classes:
 ComponentProxy -- an RPC client proxy to Cobalt components

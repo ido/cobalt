@@ -1,6 +1,6 @@
-import jr_common
 # Copyright 2017 UChicago Argonne, LLC. All rights reserved.
 # Licensed under a modified BSD 3-clause license. See LICENSE for details.
+import jr_common
 import job_dao
 import job_state
 from jr_common import DATA_LOAD

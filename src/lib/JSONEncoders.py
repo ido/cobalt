@@ -1,6 +1,6 @@
-'''JSON encoding objects for transmitting data to the logging database.'''
 # Copyright 2017 UChicago Argonne, LLC. All rights reserved.
 # Licensed under a modified BSD 3-clause license. See LICENSE for details.
+'''JSON encoding objects for transmitting data to the logging database.'''
 __revision__ = '$Revision:$'
 
 import datetime

@@ -1,6 +1,6 @@
-'''This file defines scheduler policy modules'''
 # Copyright 2017 UChicago Argonne, LLC. All rights reserved.
 # Licensed under a modified BSD 3-clause license. See LICENSE for details.
+'''This file defines scheduler policy modules'''
 __revision__ = '$Revision: 1189 $'
 
 class SchedulerPolicy(object):

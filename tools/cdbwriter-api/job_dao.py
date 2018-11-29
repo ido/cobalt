@@ -1,6 +1,6 @@
-import db2util
 # Copyright 2017 UChicago Argonne, LLC. All rights reserved.
 # Licensed under a modified BSD 3-clause license. See LICENSE for details.
+import db2util
 import jr_common
 import job_sql
 from db2util.helpers import list_to_str

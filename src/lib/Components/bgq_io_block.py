@@ -1,6 +1,6 @@
-'''BGQ IO Block representation
 # Copyright 2017 UChicago Argonne, LLC. All rights reserved.
 # Licensed under a modified BSD 3-clause license. See LICENSE for details.
+'''BGQ IO Block representation
 
 Track the hardware associated with the block as well as
 what compute blocks are currently using this block.

@@ -1,6 +1,6 @@
-# Test Cray-specific utilities/calls.
 # Copyright 2017 UChicago Argonne, LLC. All rights reserved.
 # Licensed under a modified BSD 3-clause license. See LICENSE for details.
+# Test Cray-specific utilities/calls.
 SYSTEM_CONFIG_ENTRY = """
 [system]
 size: 10

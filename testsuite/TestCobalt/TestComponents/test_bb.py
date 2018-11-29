@@ -1,6 +1,6 @@
-"""Test cases for the BBSystem component"""
 # Copyright 2017 UChicago Argonne, LLC. All rights reserved.
 # Licensed under a modified BSD 3-clause license. See LICENSE for details.
+"""Test cases for the BBSystem component"""
 import sys
 import time
 from Cobalt.Components.bb import BBSystem

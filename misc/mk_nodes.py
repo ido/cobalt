@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
 
 #Query the cluster_system component and get a list of partition states, and
 #the queues they are associated with.  Output a series of commands to stdout

@@ -1,6 +1,6 @@
-"""System script forker classes.  This forker is intended for scripts that are
 # Copyright 2017 UChicago Argonne, LLC. All rights reserved.
 # Licensed under a modified BSD 3-clause license. See LICENSE for details.
+"""System script forker classes.  This forker is intended for scripts that are
 run internally to cobalt.  This forker runs these scripts as root and does not
 setuid/setgid down to another user.
 
