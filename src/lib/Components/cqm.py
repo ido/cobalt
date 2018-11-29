@@ -699,8 +699,10 @@ class Job (StateMachine):
         dbwriter.log_to_db(self.user, "creating", "job_data", JobDataMsg(self))
         if self.admin_hold:
             dbwriter.log_to_db(self.user, "admin_hold", "job_prog", JobProgMsg(self))
+            accounting_logger.info(accounting.hold_acquire(self.jobid, 'admin_hold', time.time(), self.user))
         if self.user_hold:
             dbwriter.log_to_db(self.user, "user_hold", "job_prog", JobProgMsg(self))
+            accounting_logger.info(accounting.hold_acquire(self.jobid, 'user_hold', time.time(), self.user))
 
         self.current_task_start = time.time()
 
@@ -1024,7 +1026,8 @@ class Job (StateMachine):
         if self.__max_job_timer.has_expired:
             # if the job execution time has exceeded the wallclock time, then inform the task that it must terminate
             self._sm_log_info("maximum execution time exceeded; initiating job termination", cobalt_log = True)
-            accounting_logger.info(accounting.abort(self.jobid))
+            accounting_logger.info(accounting.abort(self.jobid, self.user, {'ncpus':self.procs, 'nodect':self.nodes,
+                'walltime':str_elapsed_time(self.walltime * 60)}))
             return Signal_Info(Signal_Info.Reason.time_limit, Signal_Map.terminate)
         else:
             return None
@@ -1348,9 +1351,10 @@ class Job (StateMachine):
             return
 
         if activity:
-            self._sm_log_info("%s hold released" % (args['type'],), cobalt_log = True)
+            self._sm_log_info("%s hold released" % (args['type'],), cobalt_log=True)
             if self.no_holds_left():
                 dbwriter.log_to_db(None, "all_holds_clear", "job_prog", JobProgMsg(self))
+                accounting_logger.info(accounting.hold_release(self.jobid, "all_holds_clear", time.time(), None))
         else:
             self._sm_log_info("%s hold not present; ignoring release request" % (args['type'],), cobalt_log = True)
 
@@ -2408,7 +2412,8 @@ class Job (StateMachine):
         if self.__max_job_timer.has_expired:
             # if the job execution time has exceeded the wallclock time, then proceed to cleanup and remove the job
             self._sm_log_info("maximum execution time exceeded; initiating job cleanup and removal", cobalt_log = True)
-            accounting_logger.info(accounting.abort(self.jobid))
+            accounting_logger.info(accounting.abort(self.jobid, self.user, {'ncpus':self.procs, 'nodect':self.nodes,
+                'walltime':str_elapsed_time(self.walltime * 60)}))
             self._sm_start_job_epilogue_scripts()
             return
 
@@ -2750,9 +2755,15 @@ class Job (StateMachine):
         return self.__queue
 
     def __set_queue(self, queue):
-        logger.info('Q;%s;%s;%s' % (self.jobid, self.user, queue))
+        '''Add a job to a given queue and log the change.
+
+        '''
+        queue_info_str = accounting.queue(self.jobid, queue, self.user, {'ncpus':self.procs, 'nodect':self.nodes,
+            'walltime':str_elapsed_time(self.walltime * 60)}, self.project)
+        stripped_info = ';'.join(queue_info_str.split(';')[1:])
+        logger.info(stripped_info) #'Q;%s;%s;%s' % (self.jobid, self.user, queue))
         self.acctlog.LogMessage('Q;%s;%s;%s' % (self.jobid, self.user, queue))
-        accounting_logger.info(accounting.queue(self.jobid, queue))
+        accounting_logger.info(queue_info_str)
         self.__timers['current_queue'] = Timer()
         self.__timers['current_queue'].start()
         self.__queue = queue
@@ -2825,6 +2836,7 @@ class Job (StateMachine):
             # log hold transition
             if not prev_dep_hold and self.__dep_hold:
                 dbwriter.log_to_db(None, "dep_hold", "job_prog", JobProgMsg(self))
+                accounting_logger.info(accounting.hold_acquire(self.jobid, "dep_hold", time.time(), None))
         else:
             # trigger state transition only; logging occurs on final dependency's termination
             self.trigger_event('Release', {'type' : 'dep'})
@@ -2844,8 +2856,9 @@ class Job (StateMachine):
                     return "dep_fail"
                 else:
                     return "dep_hold"
-            return "admin_hold"
-        if self._sm_state in ['Job_Prologue', 'Job_Prologue_Retry',
+            else:
+                return "admin_hold"
+        if self._sm_state in ['Job_Prologue','Job_Prologue_Retry',
                 'Resource_Prologue', 'Resource_Prologue_Retry', 'Run_Retry']:
             return "starting"
         if self._sm_state == 'Running':
@@ -2873,7 +2886,8 @@ class Job (StateMachine):
         of job information.
 
         '''
-        if self._sm_state in ('Ready', 'Preempted') and self.max_running:
+        if self._sm_state in ('Ready', 'Preempted') and (self.dep_hold or
+                self.max_running):
             return "H"
         if self._sm_state == 'Ready':
             return "Q"
@@ -3090,9 +3104,12 @@ class Job (StateMachine):
             user = self.user
 
         # write job delete information to CQM and accounting logs
-        accounting_logger.info(accounting.delete(self.jobid, user))
-        logger.info('D;%s;%s' % (self.jobid, self.user))
-        self.acctlog.LogMessage('D;%s;%s' % (self.jobid, self.user))
+        delete_msg = accounting.delete(self.jobid, user, self.user, {'ncpus':self.procs, 'nodect':self.nodes,
+                'walltime':str_elapsed_time(self.walltime * 60)}, force=force, account=self.project)
+        stripped_msg = ";".join(delete_msg.split(';')[1:])
+        accounting_logger.info(delete_msg)
+        logger.info(stripped_msg) #'D;%s;%s' % (self.jobid, self.user))
+        self.acctlog.LogMessage(stripped_msg) #'D;%s;%s' % (self.jobid, self.user))
 
         if not force:
             try:
@@ -3440,12 +3457,13 @@ class Queue (Data):
             # if it *was* there and was removed, we better clean up
             for job in self.jobs:
                 if job.max_running:
+                    job.max_running = False
                     logger.info("Job %s/%s: max_running set to False", job.jobid, job.user)
                     dbwriter.log_to_db(None, "maxrun_hold_release", "job_prog", JobProgMsg(job))
-
+                    accounting_logger.info(accounting.hold_release(job.jobid, "maxrun_hold", time.time(), None))
                     if job.no_holds_left():
                         dbwriter.log_to_db(None, "all_holds_clear", "job_prog", JobProgMsg(job))
-                job.max_running = False
+                        accounting_logger.info(accounting.hold_release(job.jobid, "all_holds_clear", time.time(), None))
         else:
             unum = dict()
             for job in self.jobs.q_get([{'has_resources':True}]):
@@ -3472,10 +3490,14 @@ class Queue (Data):
                     logger.info("Job %s/%s: max_running set to %s", job.jobid, job.user, job.max_running)
                     if job.max_running:
                         dbwriter.log_to_db(None, "maxrun_hold", "job_prog", JobProgMsg(job))
+                        accounting_logger.info(accounting.hold_acquire(job.jobid, "maxrun_hold", time.time(), None))
                     else:
                         dbwriter.log_to_db(None, "maxrun_hold_release", "job_prog", JobProgMsg(job))
+                        accounting_logger.info(accounting.hold_release(job.jobid, "maxrun_hold", time.time(), None))
                         if job.no_holds_left():
                             dbwriter.log_to_db(None, "all_holds_clear", "job_prog", JobProgMsg(job))
+                            accounting_logger.info(accounting.hold_release(job.jobid, "all_holds_clear", time.time(), None))
+
 
 class QueueDict(DataDict):
     item_cls = Queue
@@ -3723,8 +3745,10 @@ class QueueManager(Component):
                     if not waiting_job.dep_hold:
                         logger.info("Job %s/%s: dependencies satisfied", waiting_job.jobid, waiting_job.user)
                         dbwriter.log_to_db(None, "dep_hold_release", "job_prog", JobProgMsg(waiting_job))
+                        accounting_logger.info(accounting.hold_release(waiting_job.jobid, "dep_hold", time.time(), None))
                         if waiting_job.no_holds_left():
                             dbwriter.log_to_db(None, "all_holds_clear", "job_prog", JobProgMsg(waiting_job))
+                            accounting_logger.info(accounting.hold_release(waiting_job.jobid, "all_holds_clear", time.time(), None))
                         if job.dep_frac is None:
                             job.dep_frac = float(get_cqm_config('dep_frac', 0.5))
                             if CQM_SCALE_DEP_FRAC:
@@ -3814,20 +3838,30 @@ class QueueManager(Component):
         return walltime_p
 
     def add_jobs(self, specs):
-        '''Add a job, throws in adminemail'''
+        '''Add a job.
+        Input:
+            specs - a list of dictionaries specifying jobs to queue
+        Output:
+            a list of dictionaries containing jobid, status, and reason fields.
+        Side Effects:
+            Any jobs created will be added to queues.  Also, the job spec will
+            be modified to add in the adminemail field for a given queue.
+            A predicted walltime may also be added automatically.
+        Exceptions:
+            QueueError: Cobalt was unable to queue the list of jobs.
 
-        queue_names = self.Queues.keys()
+        '''
 
+        maxtime = get_cqm_config('max_walltime', None)
         failed = False
         for spec in specs:
             if spec['queue'] in self.Queues:
                 if 'walltime' in spec:
                     if float(spec['walltime']) <= 0 and 'maxtime' not in self.Queues[spec['queue']].restrictions:
-                        maxtime = get_cqm_config('max_walltime', None)
                         if not maxtime:
                             failure_msg = 'No Max Walltime default or for queue "%s" defined. Please contact system administrator' % spec['queue']
                             logger.error(failure_msg)
-                            raise QueueError, failure_msg
+                            raise QueueError(failure_msg)
 
                 spec.update({'adminemail':self.Queues[spec['queue']].adminemail})
                 if walltime_prediction_enabled:
@@ -3911,13 +3945,16 @@ class QueueManager(Component):
 
             if set_admin_hold and not job.admin_hold:
                 dbwriter.log_to_db(user_name, "admin_hold", "job_prog", JobProgMsg(job))
+                accounting_logger.info(accounting.hold_acquire(job.jobid, "admin_hold", time.time(), user_name))
             elif set_admin_hold == False and job.admin_hold:
                 dbwriter.log_to_db(user_name, "admin_hold_release", "job_prog", JobProgMsg(job))
+                accounting_logger.info(accounting.hold_release(job.jobid, "admin_hold", time.time(), user_name))
             if set_user_hold and not job.user_hold:
                 dbwriter.log_to_db(user_name, "user_hold", "job_prog", JobProgMsg(job))
+                accounting_logger.info(accounting.hold_acquire(job.jobid, "user_hold", time.time(), user_name))
             elif set_user_hold == False and job.user_hold:
                 dbwriter.log_to_db(user_name, "user_hold_release", "job_prog", JobProgMsg(job))
-
+                accounting_logger.info(accounting.hold_release(job.jobid, "user_hold", time.time(), user_name))
             #if we are updating the user list, make sure the submitter
             #is always on the list.
             elif 'user_list' in updates.keys():
@@ -3953,6 +3990,10 @@ class QueueManager(Component):
                     new_q.jobs.append(job)
                     new_q.update_max_running()
                 if not only_hold:
+                    queue_info_str = accounting.modify(job.jobid, new_q_name, job.user, {'ncpus': job.procs, 'nodect': job.nodes,
+                                                                                         'walltime': str_elapsed_time(
+                                                                                             job.walltime * 60)}, job.project)
+                    accounting_logger.info(queue_info_str)
                     dbwriter.log_to_db(user_name, "modifying", "job_data", JobDataMsg(job))
 
         return joblist
@@ -4157,12 +4198,18 @@ class QueueManager(Component):
 
         results = []
         for job in self.Queues.get_jobs(specs):
+            old_score = job.score
             if absolute:
                 job.score = delta
             else:
                 job.score += delta
             results.append(job.jobid)
             dbwriter.log_to_db(user_name, "modifying", "job_data", JobDataMsg(job))
+            queue_info_str = accounting.modify(job.jobid, job.queue, job.user, {'ncpus': job.procs, 'nodect': job.nodes,
+                                                                                 'walltime': str_elapsed_time(job.walltime * 60),
+                                                                                 'score_from':old_score, 'score_to':job.score,
+                                                                                 }, job.project)
+            accounting_logger.info(queue_info_str)
 
         return results
     adjust_job_scores = exposed(adjust_job_scores)
@@ -4284,8 +4331,8 @@ class QueueManager(Component):
                 dbwriter.log_to_db(None, "dep_fail", "job_prog", JobProgMsg(job))
             if ((not job.dep_fail) and already_failed and
                 (job.no_holds_left())):
-                dbwriter.log_to_db(None, "all_holds_clear", "job_prog",
-                                   JobProgMsg(job))
+                dbwriter.log_to_db(None, "all_holds_clear", "job_prog", JobProgMsg(job))
+                accounting_logger.info(accounting.hold_release(job.jobid, "all_holds_clear", time.time(), None))
     check_dep_fail = automatic(check_dep_fail, period=60)
 
     def get_next_id(self):

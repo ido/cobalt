@@ -5,10 +5,12 @@
 import os
 
 from nose import *
+from nose.tools import raises
 from mock import patch
 
 import Cobalt
 import TestCobalt
+from testsuite.TestCobalt.Utilities.assert_functions import assert_match
 
 #set and override config file prior to importing cluster_system
 #the "init on import" behavior is probably a "broken" thing to be doing.
@@ -587,6 +589,32 @@ class TestClusterSystem(object):
         assert best_location == {'2':['vs4.test']}, "ERROR: Unexpected best_location.\nExpected %s\nGot %s" % \
                 ({'2':['vs4.test']}, best_location)
 
+    def test_backfill_from_non_drain_queue(self):
+        # When we have a drain in one queue, but a valid backfill job in the
+        # other, make sure that the non-draining-but-on-related-resources-queue
+        # will be run.
+        jobs = [get_basic_job_dict() for _ in range(3)]
+        jobs[0]['walltime'] = 720
+        jobs[0]['score'] = 50000
+        jobs[0]['nodes'] = 3
+        jobs[0]['queue'] = 'default'
+        jobs[1]['jobid'] = 2
+        jobs[1]['walltime'] = 1000
+        jobs[1]['nodes'] = 2
+        jobs[1]['score'] = 100
+        jobs[1]['queue'] = 'q1'
+        jobs[2]['jobid'] = 3
+        jobs[2]['nodes'] = 2
+        jobs[2]['walltime'] = 5
+        jobs[2]['score'] = 100
+        jobs[2]['queue'] = 'q1'
+        self.cluster_system.queue_assignments = {'default': set(['vs1.test', 'vs2.test', 'vs3.test']), 'q1': self.full_node_set}
+        self.cluster_system.running_nodes = set(['vs1.test', 'vs2.test',])
+        end_times = [[['vs1.test', 'vs2.test'], int(time.time()) + 400]]
+        best_location = self.cluster_system.find_job_location(jobs, end_times)
+        assert best_location == {'3':['vs4.test', 'vs3.test']}, "ERROR: Unexpected best_location.\nExpected %s\nGot %s" % \
+                ({'3':['vs4.test', 'vs3.test']}, best_location)
+
     @patch.object(Cobalt.Components.cluster_system.ClusterSystem, 'invoke_node_cleanup')
     def test_hasty_delete_cleanup(self, invoke_node_cleanup_mock):
         # This comes from gitlab bugs 149 and 147.  The original code was not
@@ -616,6 +644,24 @@ class TestClusterSystem(object):
         self.cluster_system.reserve_resources_until(['vs1.test', 'vs2.test', 'vs3.test', 'vs4.test'], None, 1)
         assert self.cluster_system.running_nodes == set(['vs1.test', 'vs2.test', 'vs3.test', 'vs4.test']), "job not in running nodes %s" % self.cluster_system.running_nodes
         invoke_node_cleanup_mock.assert_called_once_with([1])
+
+
+    def test_get_location_statistics_normal(self):
+        '''ClusterSystem.get_location_statistics: generate statistics for input
+        string'''
+
+        expected = {'nproc': 4, 'nodect':4}
+        actual = self.cluster_system.get_location_statistics('foo:bar00:bar01:bar02')
+        assert_match(actual, expected, 'Node statistic mismatch')
+
+    @raises(AttributeError)
+    def test_get_location_statistics_bad_str(self):
+        '''ClusterSystem.get_location_statistics: raise exception on bad input
+        string'''
+
+        expected = {'nproc': 4, 'nodect':4}
+        actual = self.cluster_system.get_location_statistics([])
+        assert False, "exception should have been raised"
 
 class TestReservationHandling(object):
     '''Test core cluster system functionality'''
@@ -673,6 +719,5 @@ class TestReservationHandling(object):
         best_location = self.cluster_system.find_job_location(jobs, end_times)
         assert best_location == {'2':['vs4.test']}, "ERROR: Unexpected best_location.\nExpected %s\nGot %s" % \
                 ({'2':['vs4.test']}, best_location)
-
 
 

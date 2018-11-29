@@ -36,7 +36,7 @@ POLL_INT = 1.00 # Polling interval once we start checking for reboot completion
 CAPMC_CMD = '/opt/cray/capmc/default/bin/capmc'
 
 #syslog setup
-LOG_DATEFMT = '%Y-%d-%m %H:%M:%S'
+LOG_DATEFMT = '%Y-%m-%d %H:%M:%S'
 BASE_FMT = '%(asctime)s %(message)s'
 SYSLOG_FMT = '%(name)s[%(process)d]: %(asctime)s %(message)s'
 
