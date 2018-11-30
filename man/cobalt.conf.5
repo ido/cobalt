@@ -70,6 +70,11 @@ restrictions in the authentication and authorization mechanisms for the mpirun
 equivalent on a given system.  This is most commonly required for Cray systems
 using eLogin nodes.
 .TP
+.B resource_name
+This is the resource name for this Cobalt instance for accounting purposes.
+This is typically the name of the cluster being run.  If unspecified the
+resource name for accounting logs is "NOTSET".
+.TP
 .B size
 Maximum size of a given system in nodes.
 .PP
@@ -524,7 +529,11 @@ process on an as-needed basis.
 .TP
 .B bgtype
 The type of BlueGene being run on.  For BlueGene/Q this should be set to 'bgp'.
-
+.TP
+.B stress_comm_code
+Enables an extra function to place the system component under high-communication
+stress for race-condition debugging and fault-handling testing if True.  This is
+False by default.  This applies only to the brooklyn system simulation environment.
 
 .SS BlueGene/Q Sections
 .SS "[bgpm]"

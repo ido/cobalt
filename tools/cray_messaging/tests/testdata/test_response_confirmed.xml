@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<BasilResponse protocol="1.7">
+	  <ResponseData status="SUCCESS" method="CONFIRM">
+		      <Confirmed reservation_id="20" pagg_id="1234"/>
+		        </ResponseData>
+		</BasilResponse>

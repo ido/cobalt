@@ -7,6 +7,8 @@ elogin_hosts: foo:bar
 import Cobalt
 import TestCobalt
 import sys
+import xml.etree.ElementTree
+import xmlrpclib
 config_file = Cobalt.CONFIG_FILES[0]
 config_fp = open(config_file, "w")
 config_fp.write(SYSTEM_CONFIG_ENTRY)
@@ -24,14 +26,27 @@ sys.modules['cray_messaging'] = cray_messaging_mock
 
 from nose.tools import raises
 from testsuite.TestCobalt.Utilities.assert_functions import assert_match, assert_not_match
+from testsuite.TestCobalt.Utilities.Time import timeout
 
 
 from Cobalt.Components.system.CrayNode import CrayNode
 import Cobalt.Exceptions
 import time
+import Cobalt.Components.system
 from Cobalt.Components.system.CraySystem import CraySystem
 from Cobalt.Components.system.base_pg_manager import ProcessGroupManager
 import Cobalt.Components.system.AlpsBridge as AlpsBridge
+
+from Cobalt.Components.system.ALPSProcessGroup import ALPSProcessGroup
+import logging
+from Cobalt.Components.system.CraySystem import _logger
+logging.basicConfig()
+_logger.setLevel(logging.getLevelName('DEBUG'))
+CraySystem.logger.setLevel(logging.getLevelName('DEBUG'))
+
+from Cobalt.Util import init_cobalt_config, get_config_option
+#init_cobalt_config()
+system_size = int(get_config_option('system', 'size'))
 
 
 def is_match(a, b):
@@ -129,12 +144,14 @@ class TestCraySystem(object):
                 'queue':'default', 'nodes': 1, 'walltime': 60,
                 }
         self.fake_reserve_called = False
+        Cobalt.Components.system.CraySystem.DEFAULT_DEPTH = 72
         Cobalt.Components.system.CraySystem.BACKFILL_EPSILON = 120
         Cobalt.Components.system.CraySystem.DRAIN_MODE = "first-fit"
 
     def teardown(self):
         del self.system
         del self.base_job
+        Cobalt.Components.system.CraySystem.DEFAULT_DEPTH = 72
         Cobalt.Components.system.CraySystem.BACKFILL_EPSILON = 120
         Cobalt.Components.system.CraySystem.DRAIN_MODE = "first-fit"
         self.fake_reserve_called = False
@@ -1151,3 +1168,313 @@ class TestCraySystem(object):
         info = self.system._ALPS_reserve_resources(job, new_time, node_id_list)
         assert_match(info, node_id_list, 'Bad reservation info returned')
         TestCraySystem.verify_alps_reservation_dict(self.system)
+
+    def test__get_location_statistics_single_node(self):
+        '''CraySystem.get_location_statistics single node'''
+        expected = {'nodect': 1, 'nproc': 72}
+        loc_stat = self.system.get_location_statistics("100")
+        assert_match(loc_stat, expected, "node statistic mismatch")
+
+    def test__get_location_statistics_location_list(self):
+        '''CraySystem.get_location_statistics location list'''
+        expected = {'nodect': 204, 'nproc': 14688}
+        loc_stat = self.system.get_location_statistics("1-100,200-299,3728,9932-9934")
+        assert_match(loc_stat, expected, "node statistic mismatch")
+
+    def test__get_location_statistics_depth_adjust(self):
+        '''CraySystem.get_location_statistics modified default depth'''
+        expected = {'nodect': 1, 'nproc': 32}
+        Cobalt.Components.system.CraySystem.DEFAULT_DEPTH = 32
+        loc_stat = self.system.get_location_statistics("100")
+        assert_match(loc_stat, expected, "node statistic mismatch")
+
+    def test__get_location_statistics_colon_list(self):
+        '''CraySystem.get_location_statistics colon-delimited list'''
+        expected = {'nodect': 103, 'nproc': 7416}
+        loc_stat = self.system.get_location_statistics("100-199:3000-3002")
+        assert_match(loc_stat, expected, "node statistic mismatch")
+
+    @raises(ValueError)
+    def test__get_location_statistics_bad_list(self):
+        '''CraySystem.get_location_statistics exception for bad list'''
+        self.system.get_location_statistics("foo")
+        assert False, "No exception raised"
+
+class TestALPSReservation(object):
+    '''Tests for the ALPSReservation class in src/lib/Components/system/CraySystem.py'''
+
+    def setup(self, *args, **kwargs):
+        self.base_spec = {'name':'test', 'state': 'UP', 'node_id': '1', 'role':'batch',
+                'architecture': 'XT', 'SocketArray':['foo', 'bar'],
+                'queues':['default'],
+                }
+        self.nodes = {}
+
+        for i in range(1,6):
+            self.base_spec['name'] = "test%s" % i
+            self.base_spec['node_id'] = str(i)
+            node_dict=dict(self.base_spec)
+            self.nodes[str(i)] = CrayNode(node_dict)
+
+        self.base_job = {'jobid':1, 'user':'crusher', 'attrs':{},
+                'queue':'default', 'nodes': 1, 'walltime': 60,
+                }
+
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.release', return_value={'claims': '0'})
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.fetch_reservations')
+    def test_ALPSReservation_release_no_claims(self, mock_fetch_reservations, mock_release):
+        '''ALPSReservation.release: no claims'''
+        spec = {'reserved_nodes': [1], 'reservation_id': 2, 'pagg_id': 3, }
+        alps_res = Cobalt.Components.system.CraySystem.ALPSReservation(self.base_job, spec, self.nodes.values())
+        apids = alps_res.release()
+        assert_match(apids, [], "Wrong apids returned.")
+        assert alps_res.dying, "ALPSReservation not marked as dying"
+        assert_match(mock_release.call_count, 1, "ALPSBridge.release call count wrong.")
+        assert_match(mock_fetch_reservations.call_count, 0, "ALPSBridge.fetch_reservations call count wrong.")
+
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.release', return_value={'claims': '1'})
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.fetch_reservations')
+    def test_ALPSReservation_release_have_claims(self, mock_fetch_reservations, mock_release):
+        '''ALPSReservation.release: has claims remaining'''
+        spec = {'reserved_nodes': [1], 'reservation_id': 2, 'pagg_id': 3, }
+        mock_fetch_reservations.return_value = {'reservations':
+                                                [{'reservation_id': '2',
+                                                  'ApplicationArray': [{'Application': [{'CommandArray': [{'Command': [{'cmd': 'BASIL'}]}],
+                                                                                         'application_id': '10'
+                                                                                       }]
+                                                                       }],
+                                                 },
+                                                 {'reservation_id': '2',
+                                                  'ApplicationArray': [{'Application': [{'CommandArray': [{'Command': [{'cmd': '/bin/date'}]}],
+                                                                                         'application_id': '12'
+                                                                                       }]
+                                                                      }],
+                                                 },
+                                                 {'reservation_id': '4',
+                                                  'ApplicationArray': [{'Application': [{'CommandArray': [{'Command': [{'cmd': 'BASIL'}]}],
+                                                                                         'application_id': '13'
+                                                                                       }]
+                                                                      }],
+                                                 },
+                                                 {'reservation_id': '4',
+                                                  'ApplicationArray': [{'Application': [{'CommandArray': [{'Command': [{'cmd': '/bin/sleep'}]}],
+                                                                                         'application_id': '14'
+                                                                                       }]
+                                                                      }],
+                                                 }
+                                                ]
+                                               }
+        alps_res = Cobalt.Components.system.CraySystem.ALPSReservation(self.base_job, spec, self.nodes.values())
+        apids = alps_res.release()
+        assert_match(apids, ['12'], "Wrong apids returned.")
+        assert alps_res.dying, "ALPSReservation not marked as dying"
+        assert_match(mock_release.call_count, 1, "ALPSBridge.release call count wrong.")
+        assert_match(mock_fetch_reservations.call_count, 1, "ALPSBridge.fetch_reservations call count wrong.")
+
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.release', side_effect=xml.etree.ElementTree.ParseError('Error parsing XML'))
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.fetch_reservations')
+    def test_ALPSReservation_release_fail_release_xmlparse(self, mock_fetch_reservations, mock_release):
+        '''ALPSReservation.release: graceful reserved ParserError failure'''
+        spec = {'reserved_nodes': [1], 'reservation_id': 2, 'pagg_id': 3, }
+        alps_res = Cobalt.Components.system.CraySystem.ALPSReservation(self.base_job, spec, self.nodes.values())
+        apids = alps_res.release()
+        assert_match(apids, [], "Wrong apids returned.")
+        assert not alps_res.dying, "ALPSReservation marked as dying"
+        assert_match(mock_release.call_count, 1, "ALPSBridge.release call count wrong.")
+        assert_match(mock_fetch_reservations.call_count, 0, "ALPSBridge.fetch_reservations call count wrong.")
+
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.release',
+            side_effect=Cobalt.Components.system.AlpsBridge.ALPSError('Error reported from ALPS', "PERMANENT"))
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.fetch_reservations')
+    def test_ALPSReservation_release_fail_release_alpserror(self, mock_fetch_reservations, mock_release):
+        '''ALPSReservation.release: graceful reserved ALPS Error failure'''
+        spec = {'reserved_nodes': [1], 'reservation_id': 2, 'pagg_id': 3, }
+        alps_res = Cobalt.Components.system.CraySystem.ALPSReservation(self.base_job, spec, self.nodes.values())
+        apids = alps_res.release()
+        assert_match(apids, [], "Wrong apids returned.")
+        assert not alps_res.dying, "ALPSReservation marked as dying"
+        assert_match(mock_release.call_count, 1, "ALPSBridge.release call count wrong.")
+        assert_match(mock_fetch_reservations.call_count, 0, "ALPSBridge.fetch_reservations call count wrong.")
+
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.release', side_effect=xmlrpclib.Fault(faultCode=1, faultString='test'))
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.fetch_reservations')
+    def test_ALPSReservation_release_fail_release_xmlrpc(self, mock_fetch_reservations, mock_release):
+        '''ALPSReservation.release: graceful reserved XML-RPC failure'''
+        spec = {'reserved_nodes': [1], 'reservation_id': 2, 'pagg_id': 3, }
+        alps_res = Cobalt.Components.system.CraySystem.ALPSReservation(self.base_job, spec, self.nodes.values())
+        apids = alps_res.release()
+        assert_match(apids, [], "Wrong apids returned.")
+        assert not alps_res.dying, "ALPSReservation marked as dying"
+        assert_match(mock_release.call_count, 1, "ALPSBridge.release call count wrong.")
+        assert_match(mock_fetch_reservations.call_count, 0, "ALPSBridge.fetch_reservations call count wrong.")
+
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.release', return_value={'claims': '1'})
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.fetch_reservations', side_effect=xml.etree.ElementTree.ParseError('Error parsing XML'))
+    def test_ALPSReservation_release_fail_res_fetch_xmlparse(self, mock_fetch_reservations, mock_release):
+        '''ALPSReservation.release: graceful fetch ParserError failure'''
+        spec = {'reserved_nodes': [1], 'reservation_id': 2, 'pagg_id': 3, }
+        alps_res = Cobalt.Components.system.CraySystem.ALPSReservation(self.base_job, spec, self.nodes.values())
+        apids = alps_res.release()
+        assert_match(apids, [], "Wrong apids returned.")
+        assert not alps_res.dying, "ALPSReservation marked as dying"
+        assert_match(mock_release.call_count, 1, "ALPSBridge.release call count wrong.")
+        assert_match(mock_fetch_reservations.call_count, 1, "ALPSBridge.fetch_reservations call count wrong.")
+
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.release', return_value={'claims': '1'})
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.fetch_reservations',
+            side_effect=Cobalt.Components.system.AlpsBridge.ALPSError('Error reported from ALPS', "PERMANENT"))
+    def test_ALPSReservation_release_fail_res_fetch_alpserror(self, mock_fetch_reservations, mock_release):
+        '''ALPSReservation.release: graceful fetch ALPS Error failure'''
+        spec = {'reserved_nodes': [1], 'reservation_id': 2, 'pagg_id': 3, }
+        alps_res = Cobalt.Components.system.CraySystem.ALPSReservation(self.base_job, spec, self.nodes.values())
+        apids = alps_res.release()
+        assert_match(apids, [], "Wrong apids returned.")
+        assert not alps_res.dying, "ALPSReservation marked as dying"
+        assert_match(mock_release.call_count, 1, "ALPSBridge.release call count wrong.")
+        assert_match(mock_fetch_reservations.call_count, 1, "ALPSBridge.fetch_reservations call count wrong.")
+
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.release', return_value={'claims': '1'})
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.fetch_reservations', side_effect=xmlrpclib.Fault(faultCode=1, faultString='test'))
+    def test_ALPSReservation_release_fail_res_fetch_xmlrpc(self, mock_fetch_reservations, mock_release):
+        '''ALPSReservation.release: graceful fetch XML-RPC failure'''
+        spec = {'reserved_nodes': [1], 'reservation_id': 2, 'pagg_id': 3, }
+        alps_res = Cobalt.Components.system.CraySystem.ALPSReservation(self.base_job, spec, self.nodes.values())
+        apids = alps_res.release()
+        assert_match(apids, [], "Wrong apids returned.")
+        assert not alps_res.dying, "ALPSReservation marked as dying"
+        assert_match(mock_release.call_count, 1, "ALPSBridge.release call count wrong.")
+        assert_match(mock_fetch_reservations.call_count, 1, "ALPSBridge.fetch_reservations call count wrong.")
+
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.release', return_value={'claims': '1'})
+    @patch('Cobalt.Components.system.CraySystem.ALPSBridge.fetch_reservations')
+    def test_ALPSReservation_release_fail_res_fetch_no_reservations(self, mock_fetch_reservations, mock_release):
+        '''ALPSReservation.release: graceful handling of already removed reservations post release request'''
+        spec = {'reserved_nodes': [1], 'reservation_id': 2, 'pagg_id': 3, }
+        mock_fetch_reservations.return_value={} #No reservation data should trigger a KeyError
+        alps_res = Cobalt.Components.system.CraySystem.ALPSReservation(self.base_job, spec, self.nodes.values())
+        apids = alps_res.release()
+        assert_match(apids, [], "Wrong apids returned.")
+        assert alps_res.dying, "ALPSReservation not marked as dying"
+        assert_match(mock_release.call_count, 1, "ALPSBridge.release call count wrong.")
+        assert_match(mock_fetch_reservations.call_count, 1, "ALPSBridge.fetch_reservations call count wrong.")
+
+
+class UpdateNodeStateException(Exception):
+
+    tripped = False
+    def __init__(self, *args, **kwargs):
+        super(UpdateNodeStateException, self).__init__(*args, **kwargs)
+        self.tripped = True
+
+class GetExitStatusException(Exception):
+
+    tripped = False
+    def __init__(self, *args, **kwargs):
+        super(GetExitStatusException, self).__init__(*args, **kwargs)
+        self.tripped = True
+
+class TestCraySystem2(object):
+    '''This is testing the _run_and_wrap functions, which normally we short-circuit for other unit tests.  Therefore it required
+    different setup and teardown fixtures.'''
+
+    @patch.object(AlpsBridge, 'init_bridge')
+    @patch.object(CraySystem, '_init_nodes_and_reservations', return_value=None)
+    def setup(self, *args, **kwargs):
+
+        self.system = CraySystem()
+        self.base_spec = {'name':'test', 'state': 'UP', 'node_id': '1', 'role':'batch',
+                'architecture': 'XT', 'SocketArray':['foo', 'bar'],
+                'queues':['default'],
+                }
+        for i in range(1,6):
+            self.base_spec['name'] = "test%s" % i
+            self.base_spec['node_id'] = str(i)
+            node_dict=dict(self.base_spec)
+            self.system.nodes[str(i)] = CrayNode(node_dict)
+            self.system.node_name_to_id[node_dict['name']] = node_dict['node_id']
+        for node in self.system.nodes.values():
+            node.managed = True
+        self.system._gen_node_to_queue()
+
+        self.base_job = {'jobid':1, 'user':'crusher', 'attrs':{},
+                'queue':'default', 'nodes': 1, 'walltime': 60,
+                }
+        self.fake_reserve_called = False
+        Cobalt.Components.system.CraySystem.BACKFILL_EPSILON = 120
+        Cobalt.Components.system.CraySystem.DRAIN_MODE = "first-fit"
+        Cobalt.Components.system.CraySystem.UPDATE_THREAD_TIMEOUT = 0.2
+
+    def teardown(self):
+        del self.system
+        del self.base_job
+        Cobalt.Components.system.CraySystem.BACKFILL_EPSILON = 120
+        Cobalt.Components.system.CraySystem.DRAIN_MODE = "first-fit"
+        Cobalt.Components.system.CraySystem.UPDATE_THREAD_TIMEOUT = 0.2
+        self.fake_reserve_called = False
+        UpdateNodeStateException.tripped = False
+        GetExitStatusException.tripped = False
+
+    @timeout(10)
+    @patch.object(CraySystem, '_get_exit_status')
+    @patch.object(CraySystem, 'update_node_state')
+    @patch.object(ProcessGroupManager, 'update_launchers')
+    def test_run_update_state_normal_exec(self, *args, **kwargs):
+        '''CraySystem.run_update_state: normal execution of subfunctions'''
+        # should force the thread to run once
+        mock_launchers = args[0]
+        mock_uns = args[1]
+        mock_ges = args[2]
+
+        mock_launchers.__name__ = 'foo'
+        mock_uns.__name__ = 'bar'
+        mock_ges.__name__ = 'baz'
+        while True:
+            if (mock_launchers.call_count > 0 and
+               mock_uns.call_count > 0 and
+               mock_ges.call_count > 0):
+                break
+            time.sleep(0.2)
+        self.system.node_update_thread_kill_queue.put(True)
+        _logger.info("node_update_thread_kill_queue sent!")
+
+        while self.system.node_update_thread_dead is False:
+            _logger.info("waiting for thread to die.")
+            time.sleep(0.5)
+        _logger.info("node_update_thread_dead:%s", self.system.node_update_thread_dead)
+
+        mock_launchers.assert_called()
+        mock_ges.assert_called()
+        mock_uns.assert_called()
+
+
+    @timeout(10)
+    @patch.object(CraySystem, '_get_exit_status')
+    @patch.object(CraySystem, 'update_node_state')
+    @patch.object(ProcessGroupManager, 'update_launchers')
+    def test_run_update_state_all_exceptions(self, *args, **kwargs):
+        '''CraySystem.run_update_state: all functions raise exceptions'''
+        mock_launchers = args[0]
+        mock_uns = args[1]
+        mock_ges = args[2]
+
+        mock_launchers.__name__ = 'foo'
+        mock_uns.__name__ = 'bar'
+        mock_ges.__name__ = 'baz'
+        test_uns = UpdateNodeStateException()
+        test_ges = GetExitStatusException()
+        mock_uns.side_effect = test_uns
+        mock_ges.side_effect = test_ges
+
+        # kill it
+        time.sleep(1.0)
+        self.system.node_update_thread_kill_queue.put(True)
+        _logger.info("node_update_thread_kill_queue sent!")
+
+        while self.system.node_update_thread_dead is False:
+            _logger.info("waiting for thread to die.")
+            time.sleep(0.5)
+        _logger.info("node_update_thread_dead:%s", self.system.node_update_thread_dead)
+
+        assert test_uns.tripped, "UNS not tripped"
+        assert test_ges.tripped, "GES not tripped"
+

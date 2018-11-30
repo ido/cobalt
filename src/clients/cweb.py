@@ -78,15 +78,15 @@ color_queue = deque(['#028F5C', '#051EB8', '#70AE14', '#0A3D70', '#0CCCCC',
                      '#35C28C', '#3851E8', '#3AE144', '#3D70A0', '#3FFFFC',
                      '#428F58', '#451EB4', '#47AE10', '#4A3D6C', '#4CCCC8',
                      '#4F5C24', '#51EB80', '#547ADC', '#570A38', '#599994',
-                     '#5C28F0', '#5EB84C', '#6147A8', '#63D704', '#666660',
+                     '#5C28F0', '#5EB84C', '#6147A8', '#63D704',
                      '#68F5BC', '#6B8518', '#6E1474', '#70A3D0', '#73332C',
                      '#75C288', '#7851E4', '#7AE140', '#7D709C', '#7FFFF8',
                      '#828F54', '#851EB0', '#87AE0C', '#8A3D68', '#8CCCC4',
-                     '#8F5C20', '#91EB7C', '#947AD8', '#970A34', '#999990',
+                     '#8F5C20', '#91EB7C', '#947AD8', '#970A34',
                      '#9C28EC', '#9EB848', '#A147A4', '#A3D700', '#A6665C',
                      '#A8F5B8', '#AB8514', '#AE1470', '#B0A3CC', '#B33328',
                      '#B5C284', '#B851E0', '#BAE13C', '#BD7098', '#BFFFF4',
-                     '#C28F50', '#C51EAC', '#C7AE08', '#CA3D64', '#CCCCC0',
+                     '#C28F50', '#C51EAC', '#C7AE08', '#CA3D64',
                      '#CF5C1C', '#D1EB78', '#D47AD4', '#D70A30', '#D9998C',
                      '#DC28E8', '#DEB844', '#E147A0', '#E3D6FC', '#E66658',
                      '#E8F5B4', '#EB8510', '#EE146C', '#F0A3C8', '#F33324',
@@ -113,7 +113,7 @@ def check_finished(run_jobs):
 def cobalt_query(state):
     cqm = ComponentProxy('queue-manager', defer=True)
     scheduler = ComponentProxy('scheduler', defer=True)
-    if state not in ('running', 'queued', 'reservation'):
+    if state not in ('running', 'starting', 'queued', 'reservation'):
         return None
     # Templates for queries to coblat
 
@@ -122,7 +122,7 @@ def cobalt_query(state):
     if state == 'reservation':
         return scheduler.get_reservations([query_res])
     if state == 'running' or state == 'starting':
-        query_job['state'] = 'running'
+        query_job['state'] = state
         query_job['location'] = '*'
     if state == 'queued':
         query_job['state'] = 'queued'
@@ -139,14 +139,17 @@ def get_job_data():
             'nodeinfo': defaultdict(dict),
             'indexes': indexes,
             'running': cobalt_query('running'),
+            'starting': cobalt_query('starting'),
             'queued': cobalt_query('queued'),
             'reservation': cobalt_query('reservation'),
             'systemType': system_type,
             }
     # Remove stale jobs from color map
-    check_finished([job['jobid'] for job in jobs['running']])
+    # Extended to get starting jobs and keep their colors stable.
+    all_running_jobs = jobs['running'] + jobs['starting']
+    check_finished([job['jobid'] for job in all_running_jobs])
     for state in jobs:
-        if state not in ('running', 'queued', 'reservation'):
+        if state not in ('running', 'starting', 'queued', 'reservation'):
             continue
         for job in jobs[state]:
             if 'walltime' in job: #walltime is in minutes
@@ -163,7 +166,7 @@ def get_job_data():
                     # On BGQ jobs only have one location
                     job['location'] = job['location'][0]
                     job['locationf'] = job['location']
-            if state == 'running':
+            if state in ['running', 'starting']:
                 if not color_map.get(job['jobid']):
                     color_map[job['jobid']] = color_queue.pop()
                 job['color'] = color_map[job['jobid']]

@@ -1,0 +1,82 @@
+<BasilResponse protocol="1.2">
+    <ResponseData status="SUCCESS" method="QUERY">
+	    <Message severity="DEBUG">
+		    Test Failure
+	    </Message>
+	    <Inventory mpp_host="TEST" timestamp="1358436929">
+            <NodeArray changecount="1">
+                <Node node_id="249" name="c0-4c0s2n1" architecture="XT" role="BATCH" state="UP" router_id="124">
+                    <SegmentArray>
+                        <Segment ordinal="0">
+                            <ProcessorArray>
+                                <Processor ordinal="0" architecture="x86_64" clock_mhz="2400"/>
+                                <Processor ordinal="1" architecture="x86_64" clock_mhz="2400"/>
+                                <Processor ordinal="2" architecture="x86_64" clock_mhz="2400"/>
+                                <Processor ordinal="3" architecture="x86_64" clock_mhz="2400"/>
+                            </ProcessorArray>
+                            <MemoryArray>
+                                <Memory type="OS" page_size_kb="4" page_count="2048000"/>
+                            </MemoryArray>
+                            <LabelArray>
+                                (Anker: )
+                                (Anker: )
+                                (Anker: )
+                                (Anker: )
+                            </LabelArray>
+                        </Segment>
+                        <Segment ordinal="1">
+                            <ProcessorArray>
+                                <Processor ordinal="0" architecture="x86_64" clock_mhz="2400"/>
+                                <Processor ordinal="1" architecture="x86_64" clock_mhz="2400"/>
+                                <Processor ordinal="2" architecture="x86_64" clock_mhz="2400"/>
+                                <Processor ordinal="3" architecture="x86_64" clock_mhz="2400"/>
+                            </ProcessorArray>
+                            <MemoryArray>
+                                <Memory type="OS" page_size_kb="4" page_count="2048000"/>
+                            </MemoryArray>
+                            <LabelArray>
+                                (Anker: )
+                                (Anker: )
+                                (Anker: )
+                                (Anker: )
+                            </LabelArray>
+                        </Segment>
+                    </SegmentArray>
+                </Node>
+                <Node node_id="101" name="c0-0c0s0n1" architecture="XT" role="BATCH" state="UP" router_id="42">
+                    <SegmentArray>
+                        <Segment ordinal="1">
+                            <ProcessorArray>
+                                <Processor ordinal="0" architecture="x86_64" clock_mhz="2400"/>
+                                <Processor ordinal="1" architecture="x86_64" clock_mhz="2400"/>
+                                <Processor ordinal="2" architecture="x86_64" clock_mhz="2400"/>
+                                <Processor ordinal="3" architecture="x86_64" clock_mhz="2400"/>
+                            </ProcessorArray>
+                            <MemoryArray>
+                                <Memory type="FOO" page_size_kb="16" page_count="2048"/>
+                            </MemoryArray>
+                            <LabelArray>
+                                (Foo: )
+                                (Bar: )
+                                (Baz: )
+                                (Qux: )
+                            </LabelArray>
+                        </Segment>
+                    </SegmentArray>
+                </Node>
+            </NodeArray>
+            <ReservationArray>
+                <Reservation reservation_id="643" user_name="frodo" account_name="DEFAULT" time_stamp="1358437232" batch_id="UNKNOWN" reservation_mode="EXCLUSIVE" gpc_mode="NONE">
+                    <ApplicationArray>
+                        <Application application_id="2208" user_id="12368" group_id="100" time_stamp="1358437232">
+                            <CommandArray>
+                                <Command width="1" depth="1" nppn="0" memory="1000" architecture="XT" cmd="sleep"/>
+                            </CommandArray>
+                        </Application>
+                    </ApplicationArray>
+                </Reservation>
+            </ReservationArray>
+        </Inventory>
+    </ResponseData>
+</BasilResponse>
+

@@ -24,6 +24,7 @@ import logging
 from threading import Thread
 from Queue import Queue
 import inspect
+import threading
 import re
 import select
 import errno
@@ -31,7 +32,7 @@ import pwd
 import grp
 import stat
 import inspect
-
+import traceback
 import Cobalt
 from Cobalt.Proxy import ComponentProxy
 
@@ -1240,3 +1241,40 @@ def expand_num_list(num_list):
             high = max(int(nums[0]), int(nums[1])) + 1
             retlist.extend(xrange(low, high))
     return retlist
+
+def extract_traceback(include_time=True):
+    """Extract a traceback, format it nicely and return it.
+    This came from trireme.error
+    """
+    if include_time:
+        currenttime = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+    else:
+        currenttime = ''
+    (exc_cls, exc, tracbk) = sys.exc_info()
+    exc_str = traceback.format_exception_only(exc_cls, exc)[0]
+    tracebacklst = []
+    tracebacklst.append(" ".join(("-" * 32, 'START TRACEBACK', "-" * 30)))
+    tracebacklst.append("    Exception  : %s" % (exc_str.strip()))
+    tracebacklst.append("    Time       : %s" % currenttime)
+    tracebacklst.append("-" * 80)
+    stack = traceback.format_tb(tracbk)
+    indent = "  "
+    for stackpiece in stack:
+        stackpiece = stackpiece.strip()
+        stackpiece_lst = stackpiece.split(os.linesep)
+        for stack_item in stackpiece_lst:
+            tracebacklst.append("%s%s|%s" % (indent, currenttime, stack_item))
+
+    tracebacklst.append(" ".join(("-" * 32, 'END TRACEBACK', "-" * 32)))
+    return tracebacklst
+
+def sanitize_password(message):
+    """strip the password out of a message"""
+    # this patten will remove from a string formatted from an rpc call
+    # user:pass@host:port
+    pattern = re.compile(":([\S]{1,64})@")
+    return pattern.sub(":********@", message)
+
+def get_current_thread_identifier():
+    current_thread = threading.current_thread()
+    return "%s-%s" % (current_thread.name, current_thread.ident)
