@@ -195,7 +195,7 @@ class Reservation (Data):
                     int(time.time()), self.resource_list, self.active_id, self.project))
                 #have to increment here, since we will not actually trigger from going inactive.
                 self.active_id = self.active_id_gen.get()
-                _write_to_accounting_log(accounting.confirmed(self.res_id, user_name, self.start, self.duration,
+                _write_to_accounting_log(accounting.reservation_altered(self.res_id, user_name, self.start, self.duration,
                     self.resource_list, self.active_id, self.project))
                 _write_to_accounting_log(accounting.begin(self.res_id, user_name, self.queue, self.ctime,
                     int(self.start), int(self.start) + int(self.duration), int(self.duration),
@@ -206,7 +206,7 @@ class Reservation (Data):
         Data.update(self, spec)
 
         if write_mod_message:
-            _write_to_accounting_log(accounting.confirmed(self.res_id, user_name, self.start, self.duration,
+            _write_to_accounting_log(accounting.reservation_altered(self.res_id, user_name, self.start, self.duration,
                 self.resource_list, self.active_id, self.project))
         if not deferred or not self.running:
             #we only want this if we aren't deferring.  If we are, the cycle will
