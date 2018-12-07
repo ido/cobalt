@@ -217,7 +217,7 @@ def finish (reservation_id, active_id, resource=RESOURCE_NAME):
     return entry("F", reservation_id, {'resource':resource, 'active_id':active_id})
 
 
-def system_remove (reservation_id, requester, ctime, stime, etime, resource_list, active_id, account=None, resource=RESOURCE_NAME):
+def system_remove (reservation_id, requester, ctime, stime, etime, resource_list, active_id, duration, account=None, resource=RESOURCE_NAME):
     """Scheduler or server requested removal of the reservation.  This marks an active to inactive transition.
 
     Arguments:
@@ -228,6 +228,7 @@ def system_remove (reservation_id, requester, ctime, stime, etime, resource_list
         etime -- end time of reservation active period
         resource_list -- list of information on resources used.  Must be sufficient for charging for resources used.
         active_id -- identifier for which activation of the reservation this is.
+        duration -- requested duration of the reservation
         account -- submitter supplied a string for accounting (default: None)
         resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
                     (default: as specified by the resource_name option in the [system] cobalt.conf section)
@@ -239,7 +240,7 @@ def system_remove (reservation_id, requester, ctime, stime, etime, resource_list
     #Note: for charging purposes, this is closest to the 'E' record.  This
     #indicates the job data that should actually be charged.
     msg = {'requester':requester, 'ctime':int(ctime), 'stime':int(stime), 'etime':int(etime),
-            'Resource_List':resource_list, 'active_id': active_id, 'resource':resource}
+            'Resource_List':resource_list, 'active_id': active_id, 'resource':resource, 'duration': duration}
     if account is not None:
         msg['account'] = account
     return entry("K", reservation_id, msg)
