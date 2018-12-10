@@ -330,7 +330,8 @@ def logjob(jobid, spec, log_to_console, msg=None, ttyname=None):
                     print >> cobalt_log_file, ("jobid %d submitted from terminal %s" %
                         (jobid, ttyname))
         except IOError as exc:
-            client_utils.logger.error("WARNING: failed to create cobalt log file at: %s\n%s", filename, exc)
+            client_utils.logger.error("WARNING: failed to create cobalt log file at: %s", filename)
+            client_utils.logger.error("WARNING:     Error information: %s", exc)
     else:
         client_utils.logger.error("failed to create the job.  Maybe a queue isn't there?")
 
