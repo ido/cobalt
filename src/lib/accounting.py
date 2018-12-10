@@ -24,12 +24,13 @@ RECORD_MAPPING = {'abort': 'A',
                   'modify': 'QA',
                   'hold_acquire': 'HA',
                   'hold_release': 'HR',
+                  'reservation_altered': 'YA',
                   }
 
 __all__ = ["abort", "begin", "checkpoint", "delete", "end", "finish",
            "system_remove", "remove", "queue", "rerun", "start", "unconfirmed",
-           "confirmed", "task_start", "task_end",  "DatetimeFileHandler",
-           "modify", 'hold_acquire', 'hold_release',]
+           "confirmed", "task_start", "task_end", "DatetimeFileHandler",
+           "modify", 'hold_acquire', 'hold_release', 'reservation_altered']
 
 def abort (job_id, user, resource_list, account=None, resource=RESOURCE_NAME):
     """Job was aborted by the server.
@@ -415,6 +416,34 @@ def confirmed (reservation_id, requester, start_time, duration, resource_list, a
         msg['account'] = account
 
     return entry("Y", reservation_id, msg)
+
+def reservation_altered(reservation_id, requester, start_time, duration, resource_list, active_id, exec_host, account=None, resource=RESOURCE_NAME):
+    """Altered cobalt reservation.  Calling this "YA" to follow the same Q <-> QA relationship.
+
+    Arguments:
+        reservation_id -- id of the unconfirmed reservation
+        requester -- user@host to identify who requested the resources reservation
+        start_time -- the time in seconds from Epoch (1970-01-01 00:00:00 UTC) that the reservation is to start.
+        duration -- planned duration of reservation
+        resource_list -- dictionary of resource information for charging for the planned resources of this reservation
+        active_id -- identifier for this active period of this reservation
+        exec_host -- name of host on which the reservation has been placed
+        account -- string account identifier for this reservation.  None if not provided.
+        resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+        resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+                    (default: as specified by the resource_name option in the [system] cobalt.conf section)
+
+    Returns:
+        A string accounting log message
+
+    """
+
+    msg = {'requester':requester, 'start':int(start_time), 'duration':int(duration), 'end':int(start_time) + int(duration),
+            'active_id':active_id, 'Resource_List':resource_list, 'resource':resource, 'exec_host': exec_host}
+    if account is not None:
+        msg['account'] = account
+
+    return entry("YA", reservation_id, msg)
 
 def task_start(job_id, task_id, start_time, location, resource=RESOURCE_NAME):
     '''Indicate a task has started.  Typically this would indicate that add_process_groups has been called successfully.
