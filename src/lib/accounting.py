@@ -388,7 +388,7 @@ def unconfirmed (reservation_id, requester, active_id, resource=RESOURCE_NAME):
 
     return entry("U", reservation_id, {'requester':requester, 'resource':resource, 'active_id':active_id})
 
-def confirmed (reservation_id, requester, start_time, duration, resource_list, active_id, account=None, resource=RESOURCE_NAME):
+def confirmed (reservation_id, requester, start_time, duration, resource_list, active_id, exec_host, account=None, resource=RESOURCE_NAME):
     """Created confirmed Cobalt reservation.
 
     Arguments:
@@ -398,6 +398,7 @@ def confirmed (reservation_id, requester, start_time, duration, resource_list, a
         duration -- planned duration of reservation
         resource_list -- dictionary of resource information for charging for the planned resources of this reservation
         active_id -- identifier for this active period of this reservation
+        exec_host -- name of host on which the reservation has been placed
         account -- string account identifier for this reservation.  None if not provided.
         resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
         resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
@@ -409,13 +410,13 @@ def confirmed (reservation_id, requester, start_time, duration, resource_list, a
     """
 
     msg = {'requester':requester, 'start':int(start_time), 'duration':int(duration), 'end':int(start_time) + int(duration),
-            'active_id':active_id, 'Resource_List':resource_list, 'resource':resource}
+            'active_id':active_id, 'Resource_List':resource_list, 'resource':resource, 'exec_host':exec_host}
     if account is not None:
         msg['account'] = account
 
     return entry("Y", reservation_id, msg)
 
-def reservation_altered(reservation_id, requester, start_time, duration, resource_list, active_id, account=None, resource=RESOURCE_NAME):
+def reservation_altered(reservation_id, requester, start_time, duration, resource_list, active_id, exec_host, account=None, resource=RESOURCE_NAME):
     """Altered cobalt reservation.  Calling this "YA" to follow the same Q <-> QA relationship.
 
     Arguments:
@@ -425,6 +426,7 @@ def reservation_altered(reservation_id, requester, start_time, duration, resourc
         duration -- planned duration of reservation
         resource_list -- dictionary of resource information for charging for the planned resources of this reservation
         active_id -- identifier for this active period of this reservation
+        exec_host -- name of host on which the reservation has been placed
         account -- string account identifier for this reservation.  None if not provided.
         resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
         resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
@@ -436,7 +438,7 @@ def reservation_altered(reservation_id, requester, start_time, duration, resourc
     """
 
     msg = {'requester':requester, 'start':int(start_time), 'duration':int(duration), 'end':int(start_time) + int(duration),
-            'active_id':active_id, 'Resource_List':resource_list, 'resource':resource}
+            'active_id':active_id, 'Resource_List':resource_list, 'resource':resource, 'exec_host': exec_host}
     if account is not None:
         msg['account'] = account
 
