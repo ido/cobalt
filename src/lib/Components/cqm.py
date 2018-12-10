@@ -2831,14 +2831,29 @@ class Job (StateMachine):
         triggered on setattr(job, ('all_dependencies' | 'satisfied_dependencies'), value)
         '''
         prev_dep_hold = self.__dep_hold
-        if self.all_dependencies and not set(self.all_dependencies).issubset(set(self.satisfied_dependencies)):
+        unsatisfied_deps = self.all_dependencies and not set(self.all_dependencies).issubset(set(self.satisfied_dependencies))
+        # You must have dependencies on your job, and you have to have dependencies that are not a part of
+        # your job that are still unsatisfied
+        if unsatisfied_deps:
             self.trigger_event('Hold', {'type' : 'dep'})
             # log hold transition
             if not prev_dep_hold and self.__dep_hold:
                 dbwriter.log_to_db(None, "dep_hold", "job_prog", JobProgMsg(self))
                 accounting_logger.info(accounting.hold_acquire(self.jobid, "dep_hold", time.time(), None))
         else:
-            # trigger state transition only; logging occurs on final dependency's termination
+            # Moved dep_hold_release messaging here: this ensures that the dependency hold release
+            # message happens prior to the all_holds_clear message, and that the all_holds_clear is only
+            # written once.  --PMR
+            # We also haven't actually released the dep_hold yet, so see if we will.
+            # We will if:
+            # 1. we have removed dependencies
+            # 2. if all dependencies are satisfied.
+            # and we have a prior dep_hold set.
+            if prev_dep_hold and not unsatisfied_deps:
+                # trigger state transition only.  Transition only occurs if no dependencies are left
+                # you should also get here if all dependencies have been removed on a job (dep_fail recovery can do this)
+                dbwriter.log_to_db(None, "dep_hold_release", "job_prog", JobProgMsg(self))
+                accounting_logger.info(accounting.hold_release(self.jobid, "dep_hold", time.time(), None))
             self.trigger_event('Release', {'type' : 'dep'})
 
     def __get_job_state(self):
@@ -3744,11 +3759,6 @@ class QueueManager(Component):
                     waiting_job.update_dep_state()
                     if not waiting_job.dep_hold:
                         logger.info("Job %s/%s: dependencies satisfied", waiting_job.jobid, waiting_job.user)
-                        dbwriter.log_to_db(None, "dep_hold_release", "job_prog", JobProgMsg(waiting_job))
-                        accounting_logger.info(accounting.hold_release(waiting_job.jobid, "dep_hold", time.time(), None))
-                        if waiting_job.no_holds_left():
-                            dbwriter.log_to_db(None, "all_holds_clear", "job_prog", JobProgMsg(waiting_job))
-                            accounting_logger.info(accounting.hold_release(waiting_job.jobid, "all_holds_clear", time.time(), None))
                         if job.dep_frac is None:
                             job.dep_frac = float(get_cqm_config('dep_frac', 0.5))
                             if CQM_SCALE_DEP_FRAC:
