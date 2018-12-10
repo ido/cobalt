@@ -192,11 +192,11 @@ class Reservation (Data):
                 logger.warning("Res %s/%s/%s: WARNING: start time changed during reservation to time within duration.",
                         self.res_id, self.cycle_id, self.name)
                 _write_to_accounting_log(accounting.system_remove(self.res_id, "Scheduler", self.ctime, self.stime,
-                    int(time.time()), self.resource_list, self.active_id, self.project))
+                    int(time.time()), self.resource_list, self.active_id, self.duration, self.project))
                 #have to increment here, since we will not actually trigger from going inactive.
                 self.active_id = self.active_id_gen.get()
-                _write_to_accounting_log(accounting.confirmed(self.res_id, user_name, self.start, self.duration,
-                    self.resource_list, self.active_id, self.project))
+                _write_to_accounting_log(accounting.reservation_altered(self.res_id, user_name, self.start, self.duration,
+                   self.resource_list, self.active_id, self.partitions, self.project))
                 _write_to_accounting_log(accounting.begin(self.res_id, user_name, self.queue, self.ctime,
                     int(self.start), int(self.start) + int(self.duration), int(self.duration),
                     self.partitions, self.users, self.resource_list, self.active_id, name=self.name, account=self.project,
@@ -206,8 +206,8 @@ class Reservation (Data):
         Data.update(self, spec)
 
         if write_mod_message:
-            _write_to_accounting_log(accounting.confirmed(self.res_id, user_name, self.start, self.duration,
-                self.resource_list, self.active_id, self.project))
+            _write_to_accounting_log(accounting.reservation_altered(self.res_id, user_name, self.start, self.duration,
+                self.resource_list, self.active_id, self.partitions, self.project))
         if not deferred or not self.running:
             #we only want this if we aren't deferring.  If we are, the cycle will
             #take care of the new data object creation.
@@ -307,7 +307,7 @@ class Reservation (Data):
             self.set_start_to_next_cycle()
         self.running = False
         _write_to_accounting_log(accounting.confirmed(self.res_id,
-            "Scheduler", self.start, self.duration, self.resource_list, self.active_id, self.project))
+            "Scheduler", self.start, self.duration, self.resource_list, self.active_id, self.partitions, self.project))
         dbwriter.log_to_db(None, "cycling", "reservation", self)
 
 
@@ -330,7 +330,7 @@ class Reservation (Data):
                     logger.info("Res %s/%s: Active reservation %s deactivating: Deferred and cycling.",
                         self.res_id, self.cycle_id, self.name)
                     _write_to_accounting_log(accounting.system_remove(self.res_id, "Scheduler", self.ctime, self.stime,
-                        etime, self.resource_list, self.active_id, self.project))
+                        etime, self.resource_list, self.active_id, self.duration, self.project))
                     dbwriter.log_to_db(None, "deactivating", "reservation", self, etime)
                     dbwriter.log_to_db(None, "instance_end","reservation", self)
                     self.__cycle_reservation(True)
@@ -338,7 +338,7 @@ class Reservation (Data):
                     logger.info("Res %s/%s: Active reservation %s deactivating: start time in future.",
                         self.res_id, self.cycle_id, self.name)
                     _write_to_accounting_log(accounting.system_remove(self.res_id, "Scheduler", self.ctime, self.stime,
-                        etime, self.resource_list, self.active_id, self.project))
+                        etime, self.resource_list, self.active_id, self.duration, self.project))
                     dbwriter.log_to_db(None, "deactivating", "reservation", self, etime)
             return False
 
@@ -380,7 +380,7 @@ class Reservation (Data):
                 logger.info("Res %s/%s: Deactivating reservation: %s: Reservation Cycling",
                     self.res_id, self.cycle_id, self.name)
                 _write_to_accounting_log(accounting.system_remove(self.res_id, "Scheduler", self.ctime, self.stime,
-                    etime, self.resource_list, self.active_id, self.project))
+                    etime, self.resource_list, self.active_id, self.duration, self.project))
                 dbwriter.log_to_db(None, "deactivating", "reservation", self, etime)
                 dbwriter.log_to_db(None, "instance_end", "reservation", self, etime)
                 self.__cycle_reservation()
@@ -394,7 +394,7 @@ class Reservation (Data):
                 logger.info("Res %s/%s: Deactivating reservation: %s",
                              self.res_id, self.cycle_id, self.name)
                 _write_to_accounting_log(accounting.system_remove(self.res_id, "Scheduler", self.ctime, self.stime,
-                    etime, self.resource_list, self.active_id, self.project))
+                    etime, self.resource_list, self.active_id, self.duration, self.project))
                 dbwriter.log_to_db(None, "deactivating", "reservation", self, etime)
             self.running = False
             return True
@@ -519,7 +519,7 @@ class ReservationDict (DataDict):
             if reservation.is_active():
                 #if we are active, then drop a deactivating message.
                 _write_to_accounting_log(accounting.system_remove(reservation.res_id, "Scheduler", reservation.ctime, reservation.stime,
-                    etime, reservation.resource_list, reservation.active_id, reservation.project))
+                    etime, reservation.resource_list, reservation.active_id, reservation.duration, reservation.project))
                 dbwriter.log_to_db(None, "deactivating", "reservation",
                         reservation)
                 if reservation.cycle:
@@ -773,7 +773,8 @@ class BGSched (Component):
             self.logger.info("Res %s/%s: %s adding reservation: %r", added_reservation.res_id, added_reservation.cycle_id,
                 user_name, specs)
             _write_to_accounting_log(accounting.confirmed(added_reservation.res_id, user_name, added_reservation.start,
-                added_reservation.duration, added_reservation.resource_list, added_reservation.active_id, added_reservation.project))
+                added_reservation.duration, added_reservation.resource_list, added_reservation.active_id,
+                added_reservation.partitions, added_reservation.project))
             dbwriter.log_to_db(user_name, "creating", "reservation", added_reservation)
         return added_reservations
 
