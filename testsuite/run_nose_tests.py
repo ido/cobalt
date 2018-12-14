@@ -1,21 +1,44 @@
 #!/usr/bin/python
-"""Run Cobalt's unit tests and summarize from a test manifest file
-   Not intended for Jenkins use, but for local use
+"""
+Run Cobalt's unit tests and summarize from a test manifest file
+This should be usable for both Jenkins and local testing use.
+
+Most of the control is via environment variables for now.
+
+Test manifest files are provided by positional arguments and are paths to test files from Cobalt's top-level directory.  If multiple
+files are specified, tests from all files will be run.
+
+
+Environment Variables:
+
+    COBALT_TEST_MAX_PARALLEL_PROCESSES
+        The maximum number of nosetest instances to run at the same time. There is one nosetest instance per test file in a
+        manifest.  Default 4.
+
+    COBALT_TEST_EXE
+        The test framework executable to use.  Default is "nosetests".
+
+    COBALT_TEST_BASE_OPTS
+        Options to pass to the test framework. Default is "-v --with-xunit"
+
+    COBALT_TESTS_CLEAN_XUNIT_FILES
+        If set, remove the xunit.xml files at the end of the tests. Intended for local runs only.  Default False.
 
 """
 
 import sys
+import os
 import os.path
 import subprocess
 import xml.etree.ElementTree
 import time
 
+
 OK = 0
-MAX_PARALLEL_PROCESSES = 4
-
-TEST_EXE = "nosetests"
-TEST_BASE_OPTS = "-v --with-xunit"
-
+MAX_PARALLEL_PROCESSES = int(os.environ.get("COBALT_TEST_MAX_PARALLEL_PROCESSES", 4))
+TEST_EXE = [os.environ.get("COBALT_TEST_EXE", "nosetests")]
+TEST_BASE_OPTS = os.environ.get("COBALT_TEST_BASE_OPTS", "-v --with-xunit").split(" ")
+CLEAN_XUNIT_FILES = bool(os.environ.get("COBALT_TEST_CLEAN_XUNIT_FILES", False))
 
 def main():
     start_time = time.time()
@@ -23,6 +46,7 @@ def main():
     xunit_files = []
     failed_files = []
     processes = {}
+    completed_proccount = 0
     for manifest in sys.argv[1:]:
         with open(manifest, 'r') as manifest_file:
             test_filenames = [filename.split('#')[0].strip() for filename in manifest_file.readlines()
@@ -30,10 +54,10 @@ def main():
             for test_file in test_filenames:
                 xunit_filename = os.path.splitext(os.path.basename(test_file))[0] + ".xml"
                 xunit_files.append(xunit_filename)
-                processes[test_file] = subprocess.Popen([TEST_EXE, "-v", "--with-xunit", "--xunit-file="+ xunit_filename, test_file],
+                processes[test_file] = subprocess.Popen(TEST_EXE + TEST_BASE_OPTS + ["--xunit-file="+ xunit_filename, test_file],
                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 print "started", test_file
-                if len(processes) >= MAX_PARALLEL_PROCESSES or len(processes) >= len(test_filenames):
+                if len(processes) >= MAX_PARALLEL_PROCESSES or completed_proccount + len(processes) >= len(test_filenames):
                     # Wait for completion and harvest output.
                     for test_file, proc in processes.items():
                         print "waiting for", test_file
@@ -43,6 +67,7 @@ def main():
                             overall_status = proc.returncode
                         if proc.returncode != 0:
                             failed_files.append(test_file)
+                        completed_proccount += 1
                     processes = {} #all are cleared
     end_time = time.time()
     # Get overall run statistics for summary
@@ -79,7 +104,22 @@ def main():
         print "UNIT TESTS FOR %s FAILED" % ", ".join(sys.argv[1:])
         print "FAILURES IN FILES:"
         print "\n".join(failed_files)
+    if CLEAN_XUNIT_FILES:
+        clean_xunit_files(xunit_files)
     return overall_status
+
+
+def clean_xunit_files(xunit_files):
+    '''take a list of files and remove them'''
+    print "Cleaning xunit files..."
+    for xunit_filename in xunit_files:
+        try:
+            os.remove(xunit_filename)
+            print xunit_filename
+        except (OSError, IOError) as exc:
+            print >> sys.stderr, "Error removing file.", exc
+    print "Done."
+
 
 
 if __name__ == "__main__":
