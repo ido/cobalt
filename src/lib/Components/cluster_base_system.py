@@ -388,6 +388,50 @@ class ClusterBaseSystem (Component):
         available_nodes = node_set.difference(self.running_nodes)
         return available_nodes.difference(self.down_nodes)
 
+    def _get_overlapping_drain_queue(self, queue):
+        '''Get a queue that is in draining_queues for overlapping hardware in this queue.
+        There are situations where a queue will cause an drain, but it's overlapping partner won't.
+        We need to consdier jobs that can run on the smallest drain time of all the overlapping queues
+        causing a drain on that node.
+
+        Args:
+            queue - A string queue name to check for overlaps
+
+        Return:
+            Queue name to use for the backfill pass.
+
+        '''
+        # Pulled out for readability.
+        # We may be in a situation where this job could be backfilled,
+        # but the drain is in another queue we need to add this window
+        # to all of the queues included, not just the queue of the job
+        # being drained, scan for this queue in the locations being
+        # drained and if we overlap, use the queue with the smallest
+        # time for your backfill time here.
+        queue_to_use = queue
+        # keep the call to keys low due to the many possible loops
+        draining_queues_keys = self.draining_queues.keys()
+        queue_assignments_keys = self.queue_assignments.keys()
+        
+        if queue not in draining_queues_keys:
+            curr_drain_time = None
+            for drain_list in self.draining_nodes.values():
+                for node_name in drain_list:
+                    for extra_queue in queue_assignments_keys:
+                        if extra_queue in draining_queues_keys:
+                            if node_name in self.queue_assignments[extra_queue]:
+                                # Use the queue with the largest drain time overall
+                                possible_drain_time = self.draining_queues.get(extra_queue, curr_drain_time)
+                                # allow entry on None or if the current drain time is less than the new 
+                                # possible drain, set it to the larger possible_drain_time
+                                if (curr_drain_time is None or curr_drain_time < possible_drain_time):
+                                    curr_drain_time = possible_drain_time
+                                    queue_to_use = extra_queue
+        else:
+            # We already know what this queue's backfill time should be.
+            pass
+        return queue_to_use
+
     # the argument "required" is used to pass in the set of locations allowed by a reservation;
     def find_job_location(self, job_list, end_times):
         '''Find the best location for a job and start the job allocation
@@ -487,7 +531,6 @@ class ClusterBaseSystem (Component):
             drain_time = 0
             self.logger.debug('Queue considered: %s', queue)
             if queue in drain_locs_by_queue.keys():
-                #self.logger.debug('queue seen')
                 continue
             else: #first time we're seeing this queue this pass
                 if queue in self.draining_queues.keys():
@@ -539,35 +582,36 @@ class ClusterBaseSystem (Component):
         self.logger.debug('primary pass complete')
 
         #make a second pass to pick a job for the draining nodes
+        if best_location_dict == {}:
+            #for queue in drain_locs_by_queue.keys():
+            if drain_locs_by_queue != {} and self.drain_mode == 'backfill':
+                #only make this pass if we are allowing backfilling.
+                self.logger.debug("locs_by_queue: %s", drain_locs_by_queue)
+                self.logger.debug("locs_by_time: %s", self.draining_queues)
+                for jobs in job_list:
+                    jobid = int(jobs['jobid'])
+                    user = jobs['user']
+                    queue = jobs['queue']
+                    drain_time = 0
+                    queue_to_use = self._get_overlapping_drain_queue(queue)
+                    try:
+                        location_data, drain_time, ready_to_run = self._find_job_location(jobs, now,
+                                drain_time=int(self.draining_queues[queue_to_use]))
+                    except RequiredLocationError:
+                        continue #location_data, drain_time and ready_to_run not set.
+                    except KeyError:
+                        pass
+                        #self.logger.warning("Queue %s not found in draining queue times.", queue)
+                        #raise
+                    else:
+                        if ready_to_run:
+                            #first backfill we find is the winner, and we start it.
+                            best_location_dict.update(location_data)
+                            self.logger.info("%s/%s: job selected for backfill on locations %s from queue %s",
+                                    user, jobid, ':'.join(location_data[str(jobid)]), jobs['queue'])
+                            break
 
-        #for queue in drain_locs_by_queue.keys():
-        if drain_locs_by_queue != {} and self.drain_mode == 'backfill':
-            #only make this pass if we are allowing backfilling.
-            self.logger.debug("locs_by_queue: %s", drain_locs_by_queue)
-            self.logger.debug("locs_by_time: %s", self.draining_queues)
-            for jobs in job_list:
-                jobid = int(jobs['jobid'])
-                user = jobs['user']
-                queue = jobs['queue']
-                drain_time = 0
-                try:
-                    location_data, drain_time, ready_to_run = self._find_job_location(jobs, now,
-                            drain_time=int(self.draining_queues[queue]))
-                except RequiredLocationError:
-                    continue #location_data, drain_time and ready_to_run not set.
-                except KeyError:
-                    pass
-                    #self.logger.warning("Queue %s not found in draining queue times.", queue)
-                    #raise
-                else:
-                    if ready_to_run:
-                        #first backfill we find is the winner, and we start it.
-                        best_location_dict.update(location_data)
-                        self.logger.info("%s/%s: job selected for backfill on locations %s from queue %s",
-                                user, jobid, ':'.join(location_data[str(jobid)]), jobs['queue'])
-                        break
-
-        self.logger.debug('secondary_pass_complete')
+            self.logger.debug('secondary_pass_complete')
         # reserve the stuff in the best_partition_dict, as those partitions are allegedly going to
         # be running jobs very soon
         for jobid_str, location_list in best_location_dict.iteritems():
@@ -673,8 +717,14 @@ class ClusterBaseSystem (Component):
         '''
         found_locations = set()
         for jobid in jobids:
-            user = self.jobid_to_user[jobid]
-            locations = self.locations_by_jobid[jobid]
+            user = self.jobid_to_user.get(jobid, None)
+            locations = self.locations_by_jobid.get(jobid, None)
+            if user is None:
+                self.logger.warning("Jobid: %s: WARNING: User not found for jobid", jobid)
+            if locations is None:
+                self.logger.warning("Jobid: %s: WARNING: Locations not found for jobid", jobid)
+            if user is None or locations is None:
+                continue
             locations_to_clean = set()
             for location in locations:
                 if location not in found_locations:
@@ -790,8 +840,11 @@ class ClusterBaseSystem (Component):
 
         if time is None:
             for host in location:
-                self.running_nodes.discard(host)
+                # Make sure this host doesn't get reallocated during the
+                # kill/restart.  This may be called after prologues have run and
+                # nodes may have dirty state, so run full cleanup.
                 self.logger.info("hasty job kill: freeing %s" % host)
+            self.invoke_node_cleanup([jobid])
         else:
             self.logger.error("failed to reserve location '%r' until '%s'" % (location, time))
             return True #So we can progress.
@@ -1184,3 +1237,44 @@ class ClusterBaseSystem (Component):
         if mode not in valid_modes:
             raise ValueError("Mode %s is not a valid drain mode" % mode)
         self.drain_mode = mode
+
+    @exposed
+    def get_location_statistics(self, locations):
+        '''Get a list of the aggregate location statistics for a list of
+        partitions/locations.  This list may contain partially overlapping
+        members and may also include entirely disjoint members.
+
+        Inputs:
+        locations -- String containing location names. This may include condensed
+                     ranges and ':'-delimited names.
+
+        Outputs:
+        A dictionary containing key-value pairs for resources submitted.
+        ex: {'nodect': 512:, 'nprocs':8192}
+        statistics
+
+        Exceptions:
+        KeyError -- if an invalid location name is given, a key error will be raised
+
+        Notes:
+        - Returned statistics are system-component dependent.
+        - On cluster systems, the nodecount and proccount are the same no matter the
+          number of processors/accelerators on the node, at this time.
+
+        '''
+        try:
+            loc_list = locations.split(':')
+        except AttributeError as exc:
+            extra_msg = 'Location list %s cannot be split.' % locations
+            exc_args = list(exc.args)
+            exc_args[0] += ' ' + extra_msg
+            exc.args = tuple(exc_args)
+            self.logger.warning(extra_msg)
+            raise
+        stats = {'nodect': 0,
+                 'nproc': 0,
+                }
+        stats['nodect'] = len(loc_list)
+        stats['nproc'] = stats['nodect']
+        return stats
+

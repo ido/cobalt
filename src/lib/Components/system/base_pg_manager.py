@@ -203,7 +203,7 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
         orphaned = []
         completed_pgs = []
         # Hold for update.  Process group addition also results in a forker call, so we need to lock that, too
-        # so we have a consistient view
+        # so we have a consistent view
         with self.process_groups_lock:
             now = int(time.time())
             for forker in self.forkers:
@@ -218,9 +218,11 @@ class ProcessGroupManager(object): #degenerate with ProcessMonitor.
                     completed[forker] = []
                     for child in child_data:
                         children[(forker, child['id'])] = child
-
             #clean up orphaned process groups
             for pg in self.process_groups.values():
+                if pg.exit_status is not None:
+                    # already have an exit status for this, and we've already cleaned it up.  Don't reset this
+                    continue
                 if pg.forker in completed:
                     if now < pg.startup_timeout:
                         #wait for startup timeout.  We don't want any hasty kills

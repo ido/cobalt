@@ -701,8 +701,10 @@ class Job (StateMachine):
         dbwriter.log_to_db(self.user, "creating", "job_data", JobDataMsg(self))
         if self.admin_hold:
             dbwriter.log_to_db(self.user, "admin_hold", "job_prog", JobProgMsg(self))
+            accounting_logger.info(accounting.hold_acquire(self.jobid, 'admin_hold', time.time(), self.user))
         if self.user_hold:
             dbwriter.log_to_db(self.user, "user_hold", "job_prog", JobProgMsg(self))
+            accounting_logger.info(accounting.hold_acquire(self.jobid, 'user_hold', time.time(), self.user))
 
         self.current_task_start = time.time()
 
@@ -894,15 +896,18 @@ class Job (StateMachine):
             logger.info(task_start)
         return Job.__rc_success
 
+    def end_time_and_log(self):
+        '''End all running job timers and log job termination.'''
+
+        self.__max_job_timer.stop()
+        task_end = accounting.task_end(self.jobid, self.runid, self.__max_job_timer.elapsed_times[-1], self.current_task_start,
+                time.time(), self.location)
+        self.current_task_start = None
+        accounting_logger.info(task_end)
+        logger.info(task_end)
+
     def __task_finalize(self):
         '''get exit code from system component'''
-        def end_time_and_log():
-            self.__max_job_timer.stop()
-            task_end = accounting.task_end(self.jobid, self.runid, self.__max_job_timer.elapsed_times[-1], self.current_task_start,
-                    time.time(), self.location)
-            self.current_task_start = None
-            accounting_logger.info(task_end)
-            logger.info(task_end)
         try:
             result = ComponentProxy("system").wait_process_groups([{'id':self.taskid, 'exit_status':'*'}])
             if result:
@@ -917,11 +922,11 @@ class Job (StateMachine):
         except:
             # We aren't going into a retry and anything that doesn't return a retry "ends" the task and progresses towards
             # preemption/the job terminal action.  We need the log here.
-            end_time_and_log()
+            self.end_time_and_log()
             self._sm_raise_exception("unexpected error returned from the system component while finalizing task")
             return Job.__rc_unknown
         else:
-            end_time_and_log()
+            self.end_time_and_log()
         self.taskid = None
         return Job.__rc_success
 
@@ -1023,7 +1028,8 @@ class Job (StateMachine):
         if self.__max_job_timer.has_expired:
             # if the job execution time has exceeded the wallclock time, then inform the task that it must terminate
             self._sm_log_info("maximum execution time exceeded; initiating job termination", cobalt_log = True)
-            accounting_logger.info(accounting.abort(self.jobid))
+            accounting_logger.info(accounting.abort(self.jobid, self.user, {'ncpus':self.procs, 'nodect':self.nodes,
+                'walltime':str_elapsed_time(self.walltime * 60)}))
             return Signal_Info(Signal_Info.Reason.time_limit, Signal_Map.terminate)
         else:
             return None
@@ -1347,9 +1353,10 @@ class Job (StateMachine):
             return
 
         if activity:
-            self._sm_log_info("%s hold released" % (args['type'],), cobalt_log = True)
+            self._sm_log_info("%s hold released" % (args['type'],), cobalt_log=True)
             if self.no_holds_left():
                 dbwriter.log_to_db(None, "all_holds_clear", "job_prog", JobProgMsg(self))
+                accounting_logger.info(accounting.hold_release(self.jobid, "all_holds_clear", time.time(), None))
         else:
             self._sm_log_info("%s hold not present; ignoring release request" % (args['type'],), cobalt_log = True)
 
@@ -1529,8 +1536,7 @@ class Job (StateMachine):
             count = 0
             for local_id in self.job_prescript_ids:
                 if local_id == None:
-                    logger.error("Job %s/%s: Script: %s failed to run.",
-                        self.user, self.jobid, script[count])
+                    logger.error("Job %s/%s: Script: %s failed to run.", self.user, self.jobid, script[count])
                     break
                 count += 1
             dbwriter.log_to_db(None, "job_prologue_failed",
@@ -1557,20 +1563,17 @@ class Job (StateMachine):
 
         for script in scripts:
             try:
-               retval = ComponentProxy("system_script_forker").fork(
-                   script, tag, label, None)
-               if retval != None:
-                   script_ids.append(retval)
-               else:
-                   #job failed to run
-                   script_ids = [None]
+                retval = ComponentProxy("system_script_forker", retry=False).fork(script, tag, label, None)
+                if retval != None:
+                    script_ids.append(retval)
+                else:
+                    #job failed to run
+                    script_ids = [None]
             except ComponentLookupError:
-                logger.error("%s: Error connecting to forker. Retrying",
-                        label)
+                logger.error("%s: Error connecting to forker. Retrying", label)
                 raise ComponentLookupError
             except xmlrpclib.Fault:
-                logger.error("%s: Failure in exectuing script: %s",
-                        label, script)
+                logger.error("%s: Failure in exectuing script: %s", label, script)
                 script_ids.append(None)
         return script_ids
 
@@ -1829,8 +1832,7 @@ class Job (StateMachine):
                 else:
                     self._sm_state = 'Job_Prologue_Retry_Release'
             else:
-                logger.info("Job %s/%s: Job Prologue scripts completed "
-                    "successfuly.", self.jobid, self.user)
+                logger.info("Job %s/%s: Job Prologue scripts completed successfuly.", self.jobid, self.user)
                 #if we have recieved a kill, we shouldn't bother running any further
                 #scripts and should invoke cleanup.
                 if (has_private_attr(self, '__signaling_info')  and
@@ -1993,23 +1995,27 @@ class Job (StateMachine):
 
     def _start_run_from_prologue(self):
         # attempt to run task
-        rc = self.__task_run()
-        if rc == Job.__rc_success:
-            self._sm_state = 'Running'
-            self.task_running = True
-            dbwriter.log_to_db(None, "running", "job_prog", JobProgMsg(self))
-        elif rc == Job.__rc_retry:
+        try:
+            rc = self.__task_run()
+        except Exception:
             self._sm_state = 'Run_Retry'
-            dbwriter.log_to_db(None, "run_retrying", "job_prog",
-                    JobProgMsg(self))
+            dbwriter.log_to_db(None, "run_retrying", "job_prog", JobProgMsg(self))
+            self._sm_log_error("Unexpected Exception caught while starting task.  Proceeding to run retry.")
+            logger.debug("Job %s: Unexpected Exception from __task_run:", exc_info=True)
         else:
-            # if the task failed to run, then proceed with job termination by
-            #starting the resource prologue scripts
-            self._sm_log_error("execution failure; initiating job cleanup and "
-                    "removal", cobalt_log = True)
-            dbwriter.log_to_db(None, "running_failed", "job_prog",
-                    JobProgMsg(self))
-            self._sm_start_resource_epilogue_scripts()
+            if rc == Job.__rc_success:
+                self._sm_state = 'Running'
+                self.task_running = True
+                dbwriter.log_to_db(None, "running", "job_prog", JobProgMsg(self))
+            elif rc == Job.__rc_retry:
+                self._sm_state = 'Run_Retry'
+                dbwriter.log_to_db(None, "run_retrying", "job_prog", JobProgMsg(self))
+            else:
+                # if the task failed to run, then proceed with job termination by
+                #starting the resource prologue scripts
+                self._sm_log_error("execution failure; initiating job cleanup and removal", cobalt_log = True)
+                dbwriter.log_to_db(None, "running_failed", "job_prog", JobProgMsg(self))
+                self._sm_start_resource_epilogue_scripts()
 
 
     def log_script_failure(self, job_dict, script_type):
@@ -2408,7 +2414,8 @@ class Job (StateMachine):
         if self.__max_job_timer.has_expired:
             # if the job execution time has exceeded the wallclock time, then proceed to cleanup and remove the job
             self._sm_log_info("maximum execution time exceeded; initiating job cleanup and removal", cobalt_log = True)
-            accounting_logger.info(accounting.abort(self.jobid))
+            accounting_logger.info(accounting.abort(self.jobid, self.user, {'ncpus':self.procs, 'nodect':self.nodes,
+                'walltime':str_elapsed_time(self.walltime * 60)}))
             self._sm_start_job_epilogue_scripts()
             return
 
@@ -2750,9 +2757,15 @@ class Job (StateMachine):
         return self.__queue
 
     def __set_queue(self, queue):
-        logger.info('Q;%s;%s;%s' % (self.jobid, self.user, queue))
+        '''Add a job to a given queue and log the change.
+
+        '''
+        queue_info_str = accounting.queue(self.jobid, queue, self.user, {'ncpus':self.procs, 'nodect':self.nodes,
+            'walltime':str_elapsed_time(self.walltime * 60)}, self.project)
+        stripped_info = ';'.join(queue_info_str.split(';')[1:])
+        logger.info(stripped_info) #'Q;%s;%s;%s' % (self.jobid, self.user, queue))
         self.acctlog.LogMessage('Q;%s;%s;%s' % (self.jobid, self.user, queue))
-        accounting_logger.info(accounting.queue(self.jobid, queue))
+        accounting_logger.info(queue_info_str)
         self.__timers['current_queue'] = Timer()
         self.__timers['current_queue'].start()
         self.__queue = queue
@@ -2820,13 +2833,29 @@ class Job (StateMachine):
         triggered on setattr(job, ('all_dependencies' | 'satisfied_dependencies'), value)
         '''
         prev_dep_hold = self.__dep_hold
-        if self.all_dependencies and not set(self.all_dependencies).issubset(set(self.satisfied_dependencies)):
+        unsatisfied_deps = self.all_dependencies and not set(self.all_dependencies).issubset(set(self.satisfied_dependencies))
+        # You must have dependencies on your job, and you have to have dependencies that are not a part of
+        # your job that are still unsatisfied
+        if unsatisfied_deps:
             self.trigger_event('Hold', {'type' : 'dep'})
             # log hold transition
             if not prev_dep_hold and self.__dep_hold:
                 dbwriter.log_to_db(None, "dep_hold", "job_prog", JobProgMsg(self))
+                accounting_logger.info(accounting.hold_acquire(self.jobid, "dep_hold", time.time(), None))
         else:
-            # trigger state transition only; logging occurs on final dependency's termination
+            # Moved dep_hold_release messaging here: this ensures that the dependency hold release
+            # message happens prior to the all_holds_clear message, and that the all_holds_clear is only
+            # written once.  --PMR
+            # We also haven't actually released the dep_hold yet, so see if we will.
+            # We will if:
+            # 1. we have removed dependencies
+            # 2. if all dependencies are satisfied.
+            # and we have a prior dep_hold set.
+            if prev_dep_hold and not unsatisfied_deps:
+                # trigger state transition only.  Transition only occurs if no dependencies are left
+                # you should also get here if all dependencies have been removed on a job (dep_fail recovery can do this)
+                dbwriter.log_to_db(None, "dep_hold_release", "job_prog", JobProgMsg(self))
+                accounting_logger.info(accounting.hold_release(self.jobid, "dep_hold", time.time(), None))
             self.trigger_event('Release', {'type' : 'dep'})
 
     def __get_job_state(self):
@@ -2844,8 +2873,9 @@ class Job (StateMachine):
                     return "dep_fail"
                 else:
                     return "dep_hold"
-            return "admin_hold"
-        if self._sm_state in ['Job_Prologue', 'Job_Prologue_Retry',
+            else:
+                return "admin_hold"
+        if self._sm_state in ['Job_Prologue','Job_Prologue_Retry',
                 'Resource_Prologue', 'Resource_Prologue_Retry', 'Run_Retry']:
             return "starting"
         if self._sm_state == 'Running':
@@ -2873,7 +2903,8 @@ class Job (StateMachine):
         of job information.
 
         '''
-        if self._sm_state in ('Ready', 'Preempted') and self.max_running:
+        if self._sm_state in ('Ready', 'Preempted') and (self.dep_hold or
+                self.max_running):
             return "H"
         if self._sm_state == 'Ready':
             return "Q"
@@ -3019,7 +3050,7 @@ class Job (StateMachine):
         try:
             self.trigger_event('Progress')
         except:
-            self._sm_log_exception(None, "an exception occurred during a progress event")
+            self._sm_log_exception("an exception occurred during a progress event", cobalt_log=True)
 
     def run(self, nodelist, user = None):
         '''casue the job to go from queued to starting.
@@ -3033,7 +3064,7 @@ class Job (StateMachine):
             raise JobRunError("Jobs in the '%s' state may not be started." % (self.state,), self.jobid,
                 self.state, self._sm_state)
         except:
-            self._sm_log_exception(None, "an unexpected exception occurred while attempting to start the task")
+            self._sm_log_exception("an unexpected exception occurred while attempting to start the task", cobalt_log=True)
             raise JobRunError("An unexpected exception occurred while attempting to start the job.  See log for details.",
                 self.jobid, self.state, self._sm_state)
         finally:
@@ -3080,7 +3111,7 @@ class Job (StateMachine):
         except StateMachineIllegalEventError:
             raise JobPreemptionError("Jobs in the '%s' state may not be preempted." % (self.state,), self.jobid, user, force)
         except:
-            self._sm_log_exception(None, "an unexpected exception occurred while attempting to preempt the task")
+            self._sm_log_exception("an unexpected exception occurred while attempting to preempt the task", cobalt_log=True)
             raise JobPreemptionError("An unexpected exception occurred while attempting to preempt the job.  See log for details.",
                 self.jobid, user, force)
 
@@ -3090,9 +3121,12 @@ class Job (StateMachine):
             user = self.user
 
         # write job delete information to CQM and accounting logs
-        accounting_logger.info(accounting.delete(self.jobid, user))
-        logger.info('D;%s;%s' % (self.jobid, self.user))
-        self.acctlog.LogMessage('D;%s;%s' % (self.jobid, self.user))
+        delete_msg = accounting.delete(self.jobid, user, self.user, {'ncpus':self.procs, 'nodect':self.nodes,
+                'walltime':str_elapsed_time(self.walltime * 60)}, force=force, account=self.project)
+        stripped_msg = ";".join(delete_msg.split(';')[1:])
+        accounting_logger.info(delete_msg)
+        logger.info(stripped_msg) #'D;%s;%s' % (self.jobid, self.user))
+        self.acctlog.LogMessage(stripped_msg) #'D;%s;%s' % (self.jobid, self.user))
 
         if not force:
             try:
@@ -3101,8 +3135,7 @@ class Job (StateMachine):
                 self.trigger_event('Kill', {'user' : user,
                                             'signal' : signame})
             except:
-                self._sm_log_exception(None, "an unexpected exception occurred"
-                    " while attempting to kill the task")
+                self._sm_log_exception("an unexpected exception occurred while attempting to kill the task", cobalt_log=True)
                 raise JobDeleteError("An unexpected exception occurred while "
                     "attempting to delete the job.  See log for details.",
                     self.jobid, user, force, self.state, self._sm_state)
@@ -3111,14 +3144,16 @@ class Job (StateMachine):
             self._sm_log_info(("forced delete requested by user '%s'; initiating "
                 "job termination and removal of job from the queue") % (user,),
                 cobalt_log = True)
+            if self.task_running:
+                # We need to record the TE record, and write it before the E record can be generated.
+                self.end_time_and_log()
             self.__signaling_info = Signal_Info(Signal_Info.Reason.delete,
                     signame, user)
             try:
                 if self.taskid != None:
                     self.__task_signal(retry = False)
             except:
-                self._sm_log_exception(None, "an exception occurred while "
-                        "attempting to forcibly kill the task")
+                self._sm_log_exception("an exception occurred while attempting to forcibly kill the task", cobalt_log=True)
                 raise JobDeleteError(("An error occurred while forcibly "
                     "killing the job.  The job has been removed from the "
                     "queue; however, resouces may not have been released.  "
@@ -3439,12 +3474,13 @@ class Queue (Data):
             # if it *was* there and was removed, we better clean up
             for job in self.jobs:
                 if job.max_running:
+                    job.max_running = False
                     logger.info("Job %s/%s: max_running set to False", job.jobid, job.user)
                     dbwriter.log_to_db(None, "maxrun_hold_release", "job_prog", JobProgMsg(job))
-
+                    accounting_logger.info(accounting.hold_release(job.jobid, "maxrun_hold", time.time(), None))
                     if job.no_holds_left():
                         dbwriter.log_to_db(None, "all_holds_clear", "job_prog", JobProgMsg(job))
-                job.max_running = False
+                        accounting_logger.info(accounting.hold_release(job.jobid, "all_holds_clear", time.time(), None))
         else:
             unum = dict()
             for job in self.jobs.q_get([{'has_resources':True}]):
@@ -3471,10 +3507,14 @@ class Queue (Data):
                     logger.info("Job %s/%s: max_running set to %s", job.jobid, job.user, job.max_running)
                     if job.max_running:
                         dbwriter.log_to_db(None, "maxrun_hold", "job_prog", JobProgMsg(job))
+                        accounting_logger.info(accounting.hold_acquire(job.jobid, "maxrun_hold", time.time(), None))
                     else:
                         dbwriter.log_to_db(None, "maxrun_hold_release", "job_prog", JobProgMsg(job))
+                        accounting_logger.info(accounting.hold_release(job.jobid, "maxrun_hold", time.time(), None))
                         if job.no_holds_left():
                             dbwriter.log_to_db(None, "all_holds_clear", "job_prog", JobProgMsg(job))
+                            accounting_logger.info(accounting.hold_release(job.jobid, "all_holds_clear", time.time(), None))
+
 
 class QueueDict(DataDict):
     item_cls = Queue
@@ -3721,9 +3761,6 @@ class QueueManager(Component):
                     waiting_job.update_dep_state()
                     if not waiting_job.dep_hold:
                         logger.info("Job %s/%s: dependencies satisfied", waiting_job.jobid, waiting_job.user)
-                        dbwriter.log_to_db(None, "dep_hold_release", "job_prog", JobProgMsg(waiting_job))
-                        if waiting_job.no_holds_left():
-                            dbwriter.log_to_db(None, "all_holds_clear", "job_prog", JobProgMsg(waiting_job))
                         if job.dep_frac is None:
                             job.dep_frac = float(get_cqm_config('dep_frac', 0.5))
                             if CQM_SCALE_DEP_FRAC:
@@ -3813,20 +3850,30 @@ class QueueManager(Component):
         return walltime_p
 
     def add_jobs(self, specs):
-        '''Add a job, throws in adminemail'''
+        '''Add a job.
+        Input:
+            specs - a list of dictionaries specifying jobs to queue
+        Output:
+            a list of dictionaries containing jobid, status, and reason fields.
+        Side Effects:
+            Any jobs created will be added to queues.  Also, the job spec will
+            be modified to add in the adminemail field for a given queue.
+            A predicted walltime may also be added automatically.
+        Exceptions:
+            QueueError: Cobalt was unable to queue the list of jobs.
 
-        queue_names = self.Queues.keys()
+        '''
 
+        maxtime = get_cqm_config('max_walltime', None)
         failed = False
         for spec in specs:
             if spec['queue'] in self.Queues:
                 if 'walltime' in spec:
                     if float(spec['walltime']) <= 0 and 'maxtime' not in self.Queues[spec['queue']].restrictions:
-                        maxtime = get_cqm_config('max_walltime', None)
                         if not maxtime:
                             failure_msg = 'No Max Walltime default or for queue "%s" defined. Please contact system administrator' % spec['queue']
                             logger.error(failure_msg)
-                            raise QueueError, failure_msg
+                            raise QueueError(failure_msg)
 
                 spec.update({'adminemail':self.Queues[spec['queue']].adminemail})
                 if walltime_prediction_enabled:
@@ -3910,13 +3957,16 @@ class QueueManager(Component):
 
             if set_admin_hold and not job.admin_hold:
                 dbwriter.log_to_db(user_name, "admin_hold", "job_prog", JobProgMsg(job))
+                accounting_logger.info(accounting.hold_acquire(job.jobid, "admin_hold", time.time(), user_name))
             elif set_admin_hold == False and job.admin_hold:
                 dbwriter.log_to_db(user_name, "admin_hold_release", "job_prog", JobProgMsg(job))
+                accounting_logger.info(accounting.hold_release(job.jobid, "admin_hold", time.time(), user_name))
             if set_user_hold and not job.user_hold:
                 dbwriter.log_to_db(user_name, "user_hold", "job_prog", JobProgMsg(job))
+                accounting_logger.info(accounting.hold_acquire(job.jobid, "user_hold", time.time(), user_name))
             elif set_user_hold == False and job.user_hold:
                 dbwriter.log_to_db(user_name, "user_hold_release", "job_prog", JobProgMsg(job))
-
+                accounting_logger.info(accounting.hold_release(job.jobid, "user_hold", time.time(), user_name))
             #if we are updating the user list, make sure the submitter
             #is always on the list.
             elif 'user_list' in updates.keys():
@@ -3952,6 +4002,10 @@ class QueueManager(Component):
                     new_q.jobs.append(job)
                     new_q.update_max_running()
                 if not only_hold:
+                    queue_info_str = accounting.modify(job.jobid, new_q_name, job.user, {'ncpus': job.procs, 'nodect': job.nodes,
+                                                                                         'walltime': str_elapsed_time(
+                                                                                             job.walltime * 60)}, job.project)
+                    accounting_logger.info(queue_info_str)
                     dbwriter.log_to_db(user_name, "modifying", "job_data", JobDataMsg(job))
 
         return joblist
@@ -4113,7 +4167,7 @@ class QueueManager(Component):
         try:
             f = open(filename)
         except:
-            self.logger.error("Can't read utility function definitions from file %s" % get_bgsched_config("utility_file", ""))
+            self.logger.error("Can't read utility function definitions from file %s" % filename)
             return
 
         str = f.read()
@@ -4156,12 +4210,18 @@ class QueueManager(Component):
 
         results = []
         for job in self.Queues.get_jobs(specs):
+            old_score = job.score
             if absolute:
                 job.score = delta
             else:
                 job.score += delta
             results.append(job.jobid)
             dbwriter.log_to_db(user_name, "modifying", "job_data", JobDataMsg(job))
+            queue_info_str = accounting.modify(job.jobid, job.queue, job.user, {'ncpus': job.procs, 'nodect': job.nodes,
+                                                                                 'walltime': str_elapsed_time(job.walltime * 60),
+                                                                                 'score_from':old_score, 'score_to':job.score,
+                                                                                 }, job.project)
+            accounting_logger.info(queue_info_str)
 
         return results
     adjust_job_scores = exposed(adjust_job_scores)
@@ -4283,8 +4343,8 @@ class QueueManager(Component):
                 dbwriter.log_to_db(None, "dep_fail", "job_prog", JobProgMsg(job))
             if ((not job.dep_fail) and already_failed and
                 (job.no_holds_left())):
-                dbwriter.log_to_db(None, "all_holds_clear", "job_prog",
-                                   JobProgMsg(job))
+                dbwriter.log_to_db(None, "all_holds_clear", "job_prog", JobProgMsg(job))
+                accounting_logger.info(accounting.hold_release(job.jobid, "all_holds_clear", time.time(), None))
     check_dep_fail = automatic(check_dep_fail, period=60)
 
     def get_next_id(self):

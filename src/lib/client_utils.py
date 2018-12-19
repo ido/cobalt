@@ -179,10 +179,10 @@ def component_call(comp_name, defer, func_name, args, exit_on_error = True):
        client_data.components[comp_name]['defer'] != defer:
         try:
             comp = ComponentProxy(comp_name, defer = defer)
-        except ComponentLookupError:
-            component_error("Failed to connect to %s\n", comp_name)
-        except Exception, e:
-            component_error("Following exception occured in %s: %s\n", comp_name, e)
+        except ComponentLookupError as err:
+            component_error("Failed to connect to %s: %s\n", comp_name, err)
+        except Exception as err:
+            component_error("Following exception occurred in %s: %s\n", comp_name, err)
 
         client_data.components[comp_name]['conn']  = comp
         client_data.components[comp_name]['defer'] = defer
@@ -196,7 +196,7 @@ def component_call(comp_name, defer, func_name, args, exit_on_error = True):
     except xmlrpclib.Fault, fault:
         component_error("XMLRPC failure %s in %s.%s\n", fault, comp_name, func_name)
     except Exception, e:
-        component_error("Following exception occured while trying to execute %s.%s: %s\n", comp_name, func_name, e)
+        component_error("Following exception occurred while trying to execute %s.%s: %s\n", comp_name, func_name, e)
 
     return retVal
 
@@ -821,6 +821,11 @@ def cb_debug(option, opt_str, value, parser, *args):
     Set debug mode for logging
     """
     logger.setLevel(logging.DEBUG)
+
+    #These are added to allow logging of the proxy errors.
+    logger_proxy = logging.getLogger("Proxy")
+    logger_proxy.setLevel(logging.DEBUG)
+    logger_proxy.addHandler(logging.StreamHandler())
 
     # log the command line arguments for the current command
     cmdinfo = os.path.split(sys.argv[0])

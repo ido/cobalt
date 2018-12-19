@@ -6,36 +6,26 @@ Classes:
 BGSimProcessGroup -- virtual process group running on the system
 Simulator -- simulated system component
 """
-
-import pwd
 import logging
 import sys
 import os
-import operator
 import random
 import time
-import thread
+import uuid
 import threading
-import xmlrpclib
-from datetime import datetime
-
+from Queue import Queue
 try:
     from elementtree import ElementTree
 except ImportError:
     from xml.etree import ElementTree
-
 import Cobalt
 import Cobalt.Data
 import Cobalt.Util
-get_config_option = Cobalt.Util.get_config_option
-from Cobalt.Components import bg_base_system
-from Cobalt.Data import Data, DataDict, IncrID
-from Cobalt.Components.base import Component, exposed, automatic, query
-from Cobalt.Components.bg_base_system import NodeCard, Partition, PartitionDict, BGProcessGroupDict, BGBaseSystem
-from Cobalt.Exceptions import ProcessGroupCreationError, ComponentLookupError
-from Cobalt.Proxy import ComponentProxy
-from Cobalt.Statistics import Statistics
+from Cobalt.Components.base import Component, exposed, automatic, locking
+from Cobalt.Components.bg_base_system import NodeCard, PartitionDict, BGBaseSystem
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
+from Cobalt.Util import sanitize_password, extract_traceback, get_current_thread_identifier
+from Cobalt.Util import get_config_option, config_true_values
 
 __all__ = [
     "BGSimProcessGroup",
@@ -43,7 +33,9 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
+STRESS_COMM_CODE = get_config_option('bgsystem', 'stress_comm_code', "False").lower() in config_true_values
 
 class BGSimProcessGroup(ProcessGroup):
     """Process Group modified for Blue Gene Simulator"""
@@ -76,15 +68,149 @@ class Simulator (BGBaseSystem):
     def __init__ (self, *args, **kwargs):
         BGBaseSystem.__init__(self, *args, **kwargs)
         sys.setrecursionlimit(5000) #why this magic number?
+        self.config_file = kwargs.get("config_file", get_config_option('bgsystem', 'system_def_file', None))
+        self._common_init_restart()
+
+    def do_lookup(self):
+        system_script_forker = Cobalt.Proxy.ComponentProxy('system_script_forker')
+        current_killing_jobs = system_script_forker.get_children(None, [])
+        pass
+
+    def do_something_intense(self, worktime=20000):
+        """This will create some synthetic work for python and the lst.sort() will not release the GIL.
+        This can be used to find timeouts due to locking in the GIL."""
+        # worktime can be increased to find race conditions.
+        # worktime = worktime * 1000
+        lst = list([random.random() for x in range(worktime)])
+        lst.sort()
+
+    def do_something_intense_lock_a(self):
+        """Do some work and grab a lock"""
+        self.logger.info('do_something_intense_lock_a, tid:%s, lock_a try', get_current_thread_identifier())
+        with self._lock_a:
+            self.logger.info('do_something_intense_lock_a, tid:%s, lock_a acq', get_current_thread_identifier())
+            self.do_lookup()
+            self.do_something_intense(worktime=4000)
+        self.logger.info('do_something_intense_lock_a, tid:%s, lock_a rel', get_current_thread_identifier())
+
+    def do_something_intense_lock_b(self):
+        """Do some work and grab b lock"""
+        self.logger.info('do_something_intense_lock_b, tid:%s, lock_b try', get_current_thread_identifier())
+        with self._lock_b:
+            self.logger.info('do_something_intense_lock_b, tid:%s, lock_b acq', get_current_thread_identifier())
+            self.do_lookup()
+            self.do_something_intense(worktime=4000)
+        self.logger.info('do_something_intense_lock_b, tid:%s, lock_b rel', get_current_thread_identifier())
+
+    def do_something_intense_with_lock(self):
+        """Do some work and grab b lock, then a lock"""
+        self.logger.info('do_something_intense_with_lock, tid:%s, lock_b try', get_current_thread_identifier())
+        with self._lock_b:
+            self.logger.info('do_something_intense_with_lock, tid:%s, lock_b acq', get_current_thread_identifier())
+            self.logger.info('do_something_intense_with_lock, tid:%s, lock_a try', get_current_thread_identifier())
+            with self._lock_a:
+                self.logger.info('do_something_intense_with_lock, tid:%s, lock_a acq', get_current_thread_identifier())
+                self.do_lookup()
+                self.do_something_intense(worktime=4000)
+            self.logger.info('do_something_intense_with_lock, tid:%s, lock_a rel', get_current_thread_identifier())
+        self.logger.info('do_something_intense_with_lock, tid:%s, lock_b rel', get_current_thread_identifier())
+
+    def _run_and_wrap(self, update_func):
+        """same code pulled from CraySystem.py"""
+        self.logger.info('_run_and_wrap %s, tid:%s', update_func, get_current_thread_identifier())
+        update_func_name = update_func.__name__
+        ts = time.time()
+        try:
+            update_func()
+        except Exception:
+            te = time.time()
+            tb_str = sanitize_password('\n'.join(extract_traceback()))
+            td = te - ts
+            self.logger.error('_run_and_wrap(%s): td:%s error:%s' % (update_func_name, td, tb_str))
+            bool_error = True
+        else:
+            te = time.time()
+            td = te - ts
+            bool_error = False
+        return update_func_name, bool_error, td
+
+    def _run_update_state(self):
+        '''automated node update functions on the update timer go here.'''
+        try:
+            self.logger.info('_run_update_state starting, tid:%s, queue:%s',
+                              get_current_thread_identifier(), self.node_update_thread_kill_queue.qsize())
+            while self.node_update_thread_kill_queue.empty() is True:
+                self.logger.info('_run_update_state running, tid:%s', get_current_thread_identifier())
+                # Each of these is wrapped in it's own log-and-preserve block.
+                # The outer try is there to ensure the thread update timeout happens.
+                metadata_lst = []
+                metadata_lst.append(self._run_and_wrap(self.do_something_intense_lock_a))
+                metadata_lst.append(self._run_and_wrap(self.do_something_intense_lock_b))
+                metadata_lst.append(self._run_and_wrap(self.do_something_intense_with_lock))
+                any_error = False
+                for func_name, error, td in metadata_lst:
+                    if error is True:
+                        any_error = True
+                if any_error is True:
+                    self.logger.critical("_run_update_state: error occurred, timings below.")
+                    for func_name, error, td in metadata_lst:
+                        self.logger.critical("%s: %s", func_name, td)
+                self.logger.info('_run_update_state sleeping for %s, tid:%s', self.update_thread_timeout,
+                                 get_current_thread_identifier())
+                Cobalt.Util.sleep(self.update_thread_timeout)
+            self.logger.critical('_run_update_state exiting, tid:%s', get_current_thread_identifier())
+            self.node_update_thread_kill_queue.get(timeout=1.0)
+            self.node_update_thread_dead = True
+        finally:
+            self.node_update_thread_dead = True
+        self.logger.critical('_run_update_state dead, tid:%s', get_current_thread_identifier())
+        return
+
+
+    def _common_init_restart(self, spec=None):
+        """this is the common code that must be called when instanciating the class or
+        bringing it back from a state file."""
+        self.logger.info("init: Brooklyn starting.")
+        self.logger.info("Stress Comm Code: %s", STRESS_COMM_CODE)
+        self._lock_a = threading.RLock()
+        self._lock_b = threading.RLock()
         self.process_groups.item_cls = BGSimProcessGroup
         self.node_card_cache = dict()
-        self.failed_components = set()
-        self.config_file = kwargs.get("config_file", get_config_option('bgsystem', 'system_def_file', None))
+        self.update_thread_timeout = 10.0
+        if spec is None:
+            operation = 'start'
+            self.failed_components = set()
+        else:
+            operation = 'restart'
+            try:
+                self.failed_components = spec['failed_components']
+            except KeyError:
+                self.failed_components = set()
+            try:
+                self.config_file = spec['config_file']
+            except KeyError:
+                self.config_file = os.path.expandvars(get_config_option('system', 'def_file', ""))
         if self.config_file is not None:
-            self.logger.log(1, "init: loading machine configuration")
+            self.logger.log(1, "%s: loading machine configuration", operation)
             self.configure(self.config_file)
-            self.logger.log(1, "init: recomputing partition state")
+            self.logger.log(1, "%s: restoring partition state", operation)
+            if spec is not None:
+                self._restore_partition_state(spec)
+            self.logger.log(1, "%s: recomputing partition state", operation)
             self._recompute_partition_state()
+
+        self.node_update_thread_kill_queue = Queue()
+        if STRESS_COMM_CODE:
+            self.node_update_thread_dead = False
+            self.logger.info("_run_update_state thread starting.")
+            self.node_update_thread = threading.Thread(target=self._run_update_state)
+            self.node_update_thread.daemon = True
+            self.node_update_thread.start()
+            self.logger.info("_run_update_state thread started:%s", self.node_update_thread)
+        else:
+            self.node_update_thread_dead = False
+
+        self.logger.info("init: Brooklyn ready.")
 
     def __getstate__(self):
         state = {}
@@ -96,29 +222,14 @@ class Simulator (BGBaseSystem):
         return state
 
     def __setstate__(self, state):
+        operation = 'restart'
         try:
-            self.logger.log(1, "restart: initializing base system class")
+            self.logger.log(1, "%s: initializing base system class", operation)
             BGBaseSystem.__setstate__(self, state)
-            self.process_groups.item_cls = BGSimProcessGroup
-            self.node_card_cache = dict()
-            try:
-                self.failed_components = state['failed_components']
-            except KeyError:
-                self.failed_components = set()
-            try:
-                self.config_file = state['config_file']
-            except KeyError:
-                self.config_file = os.path.expandvars(get_config_option('system', 'def_file', ""))
-            if self.config_file:
-                self.logger.log(1, "restart: loading machine configuration")
-                self.configure(self.config_file)
-                self.logger.log(1, "restart: restoring partition state")
-                self._restore_partition_state(state)
-                self.logger.log(1, "restart: recomputing partition state")
-                self._recompute_partition_state()
+            self._common_init_restart(spec=state)
         except:
-            self.logger.error("A fatal error occurred while restarting the system component", exc_info=True)
-            print "A fatal error occurred while restarting the system component.  Terminating."
+            self.logger.error("A fatal error occurred while %sing the system component", operation, exc_info=True)
+            print("A fatal error occurred while restarting the system component.  Terminating.")
             sys.exit(1)
 
     def save_me(self):
@@ -415,3 +526,36 @@ class Simulator (BGBaseSystem):
     def list_failed_components(self, component_names):
         return list(self.failed_components)
     list_failed_components = exposed(list_failed_components)
+
+    @locking
+    @exposed
+    def find_job_location(self, arg_list, end_times):
+        """This is a wrapper around find_job_location that can be used to create a circumstance
+        that can allow finding of errors.  This also provides entry and exit logging."""
+        self.logger.debug("Simulator:starting find_job_location")
+        result = super(Simulator, self).find_job_location(arg_list, end_times)
+        #lets do at least 10 seconds of work.
+        #self.logger.debug("Simulator:starting *** do_something_intense *** ")
+        if STRESS_COMM_CODE:
+            with self._lock_a:
+                self.do_something_intense(worktime=4000)
+            #self.logger.debug("Simulator:complete *** do_something_intense *** ")
+        self.logger.debug("Simulator:complete find_job_location")
+        return result
+
+    @exposed
+    def reserve_resources_until(self, location, new_time, jobid):
+        """This is a wrapper around reserve_resources_until that can be used to create a circumstance
+        that can allow finding of errors.  This also provides entry and exit logging."""
+        self.logger.debug("Simulator:starting reserve_resources_until")
+        result = super(Simulator, self).reserve_resources_until(location, new_time, jobid)
+        #lets do at least 10 seconds of work.
+        ident = uuid.uuid4().hex
+        if STRESS_COMM_CODE:
+            self.logger.debug("Simulator:starting *** %s do_something_intense *** ", ident)
+            with self._lock_a:
+                self.do_something_intense(worktime=4000)
+            self.logger.debug("Simulator:complete *** %s do_something_intense *** ", ident)
+        self.logger.debug("Simulator:complete reserve_resources_until")
+        return result
+

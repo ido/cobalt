@@ -113,6 +113,7 @@ class ServiceLocator (Component):
         service_name -- name of the service to register
         location -- location of the service
         """
+        self.logger.debug("register(%r, %r)" % (service_name, location))
         try:
             service = self.services[service_name]
         except KeyError:
@@ -149,6 +150,8 @@ class ServiceLocator (Component):
         except KeyError:
             self.logger.debug("locate(%r) [not registered]" % (service_name))
             return ""
+        else:
+            self.logger.debug("locate(%r) [registered]" % (service_name))
         return service.location
     locate = exposed(locate)
 

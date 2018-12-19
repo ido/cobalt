@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+
+<BasilResponse protocol="1.7">
+ <ResponseData status="SUCCESS" method="QUERY">
+  <Engine name="ALPS" version="5.1.0" basil_support="1.7,1.6,1.5,1.4,1.3,1.2,1.1,1.0"/>
+ </ResponseData>
+</BasilResponse>
+

@@ -295,7 +295,7 @@ def _log_xmlrpc_error(runid, fault):
         None
 
     '''
-    _logger.error('XMLRPC Fault recieved while fetching child %s status:', runid)
+    _logger.error('XMLRPC Fault received while fetching child %s status:', runid)
     _logger.error('Child %s: Fault code: %s', runid, fault.faultCode)
     _logger.error('Child %s: Fault string: %s', runid,
             fault.faultString)

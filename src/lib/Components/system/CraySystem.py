@@ -3,14 +3,15 @@
 # Licensed under a modified BSD 3-clause license. See LICENSE for details.
 import logging
 import threading
-import thread
 import time
 import sys
 import xmlrpclib
 import json
+from xml.etree.ElementTree import ParseError
 import ConfigParser
 import Cobalt.Util
 import Cobalt.Components.system.AlpsBridge as ALPSBridge
+from Cobalt.Components.system.AlpsBridge import ALPSError
 from Cobalt.Components.base import Component, exposed, automatic, query, locking
 from Cobalt.Components.system.base_system import BaseSystem
 from Cobalt.Components.system.CrayNode import CrayNode
@@ -23,15 +24,19 @@ from Cobalt.Exceptions import JobValidationError
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
 from Cobalt.Util import compact_num_list, expand_num_list
 from Cobalt.Util import init_cobalt_config, get_config_option
+from Cobalt.Util import extract_traceback, sanitize_password, get_current_thread_identifier
+from Queue import Queue
 
 _logger = logging.getLogger(__name__)
 init_cobalt_config()
 
+DEFAULT_DEPTH = int(get_config_option('alps', 'default_depth', 72))
 UPDATE_THREAD_TIMEOUT = int(get_config_option('alpssystem', 'update_thread_timeout', 10))
 TEMP_RESERVATION_TIME = int(get_config_option('alpssystem', 'temp_reservation_time', 300))
 SAVE_ME_INTERVAL = float(get_config_option('alpsssytem', 'save_me_interval', 10.0))
 #default 20 minutes to account for boot.
-PENDING_STARTUP_TIMEOUT = float(get_config_option('alpssystem', 'pending_startup_timeout', 1200))
+# DISABLED: Not used
+#PENDING_STARTUP_TIMEOUT = float(get_config_option('alpssystem', 'pending_startup_timeout', 1200))
 APKILL_CMD = get_config_option('alps', 'apkill', '/opt/cray/alps/default/bin/apkill')
 DRAIN_MODE = get_config_option('system', 'drain_mode', 'first-fit')
 #cleanup time in seconds
@@ -51,7 +56,6 @@ DEFAULT_NUMA_MODE = get_config_option('alpssystem', 'default_numa_mode', 'quad')
 MCDRAM_TO_HBMCACHEPCT = {'flat':'0', 'cache':'100', 'split':'25', 'equal':'50', '0':'0', '25':'25', '50':'50', '100':'100'}
 VALID_MCDRAM_MODES = ['flat', 'cache', 'split', 'equal', '0', '25', '50', '100']
 VALID_NUMA_MODES = ['a2a', 'hemi', 'quad', 'snc2', 'snc4']
-
 
 def chain_loc_list(loc_list):
     '''Take a list of compact Cray locations,
@@ -84,22 +88,22 @@ class CraySystem(BaseSystem):
         _logger.info('BASE SYSTEM INITIALIZED')
         self._common_init_restart()
         _logger.info('ALPS SYSTEM COMPONENT READY TO RUN')
-        _logger.info('Initilaization complete in %s sec.', (time.time() -
+        _logger.info('Initialization complete in %s sec.', (time.time() -
                 start_time))
 
     def _common_init_restart(self, spec=None):
-        '''Common routine for cold and restart intialization of the system
+        '''Common routine for cold and restart initialization of the system
         component.
 
         '''
         try:
             self.system_size = int(get_config_option('system', 'size'))
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-            _logger.critical('ALPS SYSTEM: ABORT STARTUP: System size must be specified in the [system] section of the cobalt configuration file.')
+            self.logger.critical('ALPS SYSTEM: ABORT STARTUP: System size must be specified in the [system] section of the cobalt configuration file.')
             sys.exit(1)
         if DRAIN_MODE not in DRAIN_MODES:
             #abort startup, we have a completely invalid config.
-            _logger.critical('ALPS SYSTEM: ABORT STARTUP: %s is not a valid drain mode.  Must be one of %s.',
+            self.logger.critical('ALPS SYSTEM: ABORT STARTUP: %s is not a valid drain mode.  Must be one of %s.',
                 DRAIN_MODE, ", ".join(DRAIN_MODES))
             sys.exit(1)
         #initilaize bridge.
@@ -112,14 +116,14 @@ class CraySystem(BaseSystem):
             try:
                 ALPSBridge.init_bridge()
             except ALPSBridge.BridgeError:
-                _logger.error('Bridge Initialization failed.  Retrying.')
+                self.logger.error('Bridge Initialization failed.  Retrying.')
                 Cobalt.Util.sleep(10)
             except ComponentLookupError:
-                _logger.warning('Error reaching forker.  Retrying.')
+                self.logger.warning('Error reaching forker.  Retrying.')
                 Cobalt.Util.sleep(10)
             else:
                 bridge_pending = False
-                _logger.info('BRIDGE INITIALIZED')
+                self.logger.info('BRIDGE INITIALIZED')
         #process manager setup
         if spec is None:
             self.process_manager = ProcessGroupManager(pgroup_type=ALPSProcessGroup)
@@ -135,9 +139,16 @@ class CraySystem(BaseSystem):
                 self.process_manager = spec['process_manager']
                 self.process_manager.pgroup_type = ALPSProcessGroup
                 self.logger.debug('pg type %s', self.process_manager.process_groups.item_cls)
-        self.process_manager.update_launchers()
-        self.pending_start_timeout = PENDING_STARTUP_TIMEOUT
-        _logger.info('PROCESS MANAGER INTIALIZED')
+
+        # DISABLED: Why are we calling this here?  It's called below in the update thread.
+        # Any error in update_launchers will cause CraySystem to fail to start.
+        # the below thread that has wrappers will protect it and should be used.
+        #self.process_manager.update_launchers()
+        self.logger.info('PROCESS MANAGER INITIALIZED')
+
+        # DISABLED: Not used
+        # self.pending_start_timeout = PENDING_STARTUP_TIMEOUT
+
         #resource management setup
         self.nodes = {} #cray node_id: CrayNode
         self.node_name_to_id = {} #cray node name to node_id map
@@ -160,8 +171,13 @@ class CraySystem(BaseSystem):
         #state update thread and lock
         self._node_lock = threading.RLock()
         self._gen_node_to_queue()
-        self.node_update_thread = thread.start_new_thread(self._run_update_state, tuple())
-        _logger.info('UPDATE THREAD STARTED')
+        self.node_update_thread_kill_queue = Queue()
+        self.node_update_thread_dead = False
+        self.logger.info("_run_update_state thread starting.")
+        self.node_update_thread = threading.Thread(target=self._run_update_state)
+        self.node_update_thread.daemon = True
+        self.node_update_thread.start()
+        self.logger.info("_run_update_state thread started:%s", self.node_update_thread)
         self.killing_jobs = {}
         #hold on to the initial spec in case nodes appear out of nowhere.
         self.init_spec = None
@@ -352,23 +368,57 @@ class CraySystem(BaseSystem):
             return json.dumps(node_info)
         return node_info
 
+    def _run_and_wrap(self, update_func):
+        self.logger.debug('_run_and_wrap %s, tid:%s', update_func, get_current_thread_identifier())
+        update_func_name = update_func.__name__
+        bool_error = False
+        td = -1.0
+        ts = time.time()
+        try:
+            update_func()
+        except Exception:
+            te = time.time()
+            tb_str = sanitize_password('\n'.join(extract_traceback()))
+            td = te - ts
+            self.logger.error('_run_and_wrap(%s): td:%s error:%s' % (update_func_name, td, tb_str))
+            bool_error = True
+        else:
+            te = time.time()
+            td = te - ts
+            bool_error = False
+        return update_func_name, bool_error, td
+
     def _run_update_state(self):
         '''automated node update functions on the update timer go here.'''
-
-        def _run_and_wrap(func):
-            try:
-                func()
-            except Exception:
-                # Prevent this thread from dying.
-                _logger.critical('Error in _run_update_state', exc_info=True)
-
-        while True:
-            # Each of these is wrapped in it's own log-and-preserve block.
-            # The outer try is there to ensure the thread update timeout happens.
-            _run_and_wrap(self.process_manager.update_launchers)
-            _run_and_wrap(self.update_node_state)
-            _run_and_wrap(self._get_exit_status)
-            Cobalt.Util.sleep(UPDATE_THREAD_TIMEOUT)
+        try:
+            self.logger.info('_run_update_state starting, tid:%s, queue:%s',
+                              get_current_thread_identifier(), self.node_update_thread_kill_queue.qsize())
+            while self.node_update_thread_kill_queue.empty() is True:
+                self.logger.info('_run_update_state running, tid:%s', get_current_thread_identifier())
+                # Each of these is wrapped in it's own log-and-preserve block.
+                # The outer try is there to ensure the thread update timeout happens.
+                metadata_lst = []
+                metadata_lst.append(self._run_and_wrap(self.process_manager.update_launchers))
+                metadata_lst.append(self._run_and_wrap(self.update_node_state))
+                metadata_lst.append(self._run_and_wrap(self._get_exit_status))
+                any_error = False
+                for func_name, error, td in metadata_lst:
+                    if error is True:
+                        any_error = True
+                if any_error is True:
+                    self.logger.critical("_run_update_state: error occurred, timings below.")
+                    for func_name, error, td in metadata_lst:
+                        self.logger.critical("%s: %s", func_name, td)
+                self.logger.info('_run_update_state sleeping for %s, tid:%s', UPDATE_THREAD_TIMEOUT,
+                        get_current_thread_identifier())
+                Cobalt.Util.sleep(UPDATE_THREAD_TIMEOUT)
+            self.logger.critical('_run_update_state exiting, tid:%s', get_current_thread_identifier())
+            self.node_update_thread_kill_queue.get(timeout=1.0)
+            self.node_update_thread_dead = True
+        finally:
+            self.node_update_thread_dead = True
+        self.logger.critical('_run_update_state dead, tid:%s', get_current_thread_identifier())
+        return
 
     def _reconstruct_node(self, inven_node, inventory):
         '''Reconstruct a node from statefile information.  Needed whenever we
@@ -907,6 +957,7 @@ class CraySystem(BaseSystem):
             if job_locs is not None and len(job_locs) == int(job['nodes']):
                 compact_locs = compact_num_list(job_locs)
                 #temporary reservation until job actually starts
+                #FIXME: data race, self.pending_starts can be modified without locks
                 self.pending_starts[job['jobid']] = resource_until_time
                 self.reserve_resources_until(compact_locs, resource_until_time, job['jobid'])
         return compact_locs
@@ -1158,6 +1209,7 @@ class CraySystem(BaseSystem):
 
         '''
         completed = False
+        self.logger.info("job %s: tid:%s reserve_resources_until:%s", get_current_thread_identifier(), jobid, new_time)
         with self._node_lock:
             succeeded_nodes = []
             failed_nodes = []
@@ -1168,7 +1220,7 @@ class CraySystem(BaseSystem):
             elif isinstance(location, str):
                 exp_location = expand_num_list(location)
             else:
-                raise TypeError("location type is %s.  Must be one of 'list' or 'str'", type(location))
+                raise TypeError("job %s: location type is %s.  Must be one of 'list' or 'str'", jobid, type(location))
             if new_time is not None:
                 #reserve the location. Unconfirmed reservations will have to
                 #be lengthened.  Maintain a list of what we have reserved, so we
@@ -1232,18 +1284,31 @@ class CraySystem(BaseSystem):
             fatal startup error, will release resource reservations.
 
         Note:
-            Process Group startup and intialization holds the process group data lock.
+            Process Group startup and initialization holds the process group data lock.
 
         '''
         start_apg_timer = time.time()
         with self.process_manager.process_groups_lock:
+            new_pgroups = []
             for spec in specs:
+                # Check to see if there was a prior attempt that didn't register with cqm
+                # If we're already running a process group for this cobalt job, return those
+                # details.
+                found_pgroup = False
+                for pgroup in self.process_manager.process_groups.values():
+                    if int(pgroup.jobid) == int(spec['jobid']):
+                        _logger.warning("%s: Prior process group found from previous call.", pgroup.label)
+                        new_pgroups.append(pgroup)
+                        found_pgroup = True
+                        break
+                if found_pgroup:
+                    continue
                 spec['forker'] = None
                 alps_res = self.alps_reservations.get(str(spec['jobid']), None)
                 if alps_res is not None:
                     spec['alps_res_id'] = alps_res.alps_res_id
                 try:
-                    new_pgroups = self.process_manager.init_groups(specs)
+                    new_pgroups.extend(self.process_manager.init_groups(specs))
                 except RuntimeError:
                     _logger.error('Job %s: Unable to initialize process group.', spec['jobid'])
                     raise
@@ -1252,6 +1317,10 @@ class CraySystem(BaseSystem):
                         pgroup.label, pgroup.id)
                 #check resource reservation, and attempt to start.  If there's a
                 #failure here, set exit status in process group to a sentinel value.
+                if pgroup.head_pid is not None:
+                    #we've already started this one, don't try again.
+                    _logger.warning("%s: Process group already started.", pgroup.label)
+                    continue
                 try:
                     started = self.process_manager.start_groups([pgroup.id])
                 except ComponentLookupError:
@@ -1510,6 +1579,49 @@ class CraySystem(BaseSystem):
             self.logger.warning("%s: Interactive job not found", str(jobid))
         return
 
+    @exposed
+    def get_location_statistics(self, locations):
+        '''Get a list of the aggregate location statistics for a list of node locations.
+
+        Inputs:
+        locations -- String containing location names.  At this time all locations must
+                     exist as compute nodes on the Cray system as reported by ALPS.
+
+        Outputs:
+        A dictionary containing key-value pairs for resources submitted.
+        ex: {'nodect': 512:, 'nprocs':8192}
+        statistics
+
+        Exceptions:
+        KeyError -- if an invalid location name is given, a key error will be raised
+
+        Notes: returned statistics are system-component dependent.
+
+        '''
+        try:
+            loc_list = locations.split(':')
+        except AttributeError as exc:
+            extra_msg = 'Location list %s cannot be split.' % locations
+            exc.message += ' ', extra_msg
+            self.logger.warning(extra_msg)
+        stats = {'nodect': 0,
+                 'nproc': 0,
+                }
+        stats['nodect'] = 0
+        for loc in loc_list:
+            try:
+                expanded_loc = expand_num_list(loc)
+            except TypeError:
+                #if there is no block for the location raise that we have a bad value in the list
+                err_str = "Node list %s is not valid, or bad format." % loc
+                self.logger.error(err_str)
+                raise
+            else:
+                stats['nodect'] += len(expanded_loc)
+        stats['nproc'] = stats['nodect'] * DEFAULT_DEPTH
+        self.logger.debug("Reservation request stats: %s", stats)
+        return stats
+
 class ALPSReservation(object):
     '''Container for ALPS Reservation information.  Can be used to update
     reservations and also internally relases reservation.
@@ -1538,6 +1650,7 @@ class ALPSReservation(object):
         #self.gid = spec['account_name'] #appears to be gid.
         self.dying = False
         self.dead = False #System no longer has this alps reservation
+        self.label = "%s/%s" % (self.jobid, self.alps_res_id)
         _logger.info('ALPS Reservation %s registered for job %s',
                 self.alps_res_id, self.jobid)
 
@@ -1579,18 +1692,39 @@ class ALPSReservation(object):
             #release already issued.  Ignore
             return
         apids = []
-        status = ALPSBridge.release(self.alps_res_id)
-        if int(status['claims']) != 0:
-            _logger.info('ALPS reservation: %s still has %s claims.',
-                    self.alps_res_id, status['claims'])
-            # fetch reservation information so that we can send kills to
-            # interactive apruns.
-            resinfo = ALPSBridge.fetch_reservations()
-            apids = _find_non_batch_apids(resinfo['reservations'], self.alps_res_id)
+        try:
+            status = ALPSBridge.release(self.alps_res_id)
+        except (ParseError, ALPSError, xmlrpclib.Fault) as exc:
+            _logger.error("%s: ALPSReservation.release: %s error in reservation release: %s", self.label, type(exc).__name__, exc)
         else:
-            _logger.info('ALPS reservation: %s has no claims left.',
-                self.alps_res_id)
-        self.dying = True
+            claims = 0
+            try:
+                claims = int(status.get('claims', 0))
+            except TypeError, ValueError:
+                # conversion failed, log and treat as 0
+                _logger.error("%s: ALPSReservation.release: int conversion for claims failed! Got: %s",
+                        self.label, status.get('claims', 0))
+            if claims != 0:
+                _logger.info("%s: ALPS reservation: %s still has %s claims.", self.label, self.alps_res_id, status['claims'])
+                # fetch reservation information so that we can send kills to
+                # interactive apruns.
+                try:
+                    resinfo = ALPSBridge.fetch_reservations()
+                except (ParseError, ALPSError, xmlrpclib.Fault) as exc:
+                    _logger.error("%s: ALPSReservation.release: %s error in reservation release: %s",
+                            self.label, type(exc).__name__, exc)
+                else:
+                    try:
+                        apids = _find_non_batch_apids(resinfo['reservations'], self.alps_res_id)
+                    except KeyError:
+                        # This occurs if the claim is removed and the aprun cleanup
+                        # completes between the release and the subsequent fetch reservations
+                        # Generally happens on systems on the last cobalt job run.
+                        _logger.info("%s: No ALPS reservations remaining on system.", self.label)
+                    self.dying = True
+            else:
+                _logger.info("%s: ALPS reservation: %s has no claims left.", self.label, self.alps_res_id)
+                self.dying = True
         return apids
 
 def _find_non_batch_apids(resinfo, alps_res_id):
@@ -1602,14 +1736,18 @@ def _find_non_batch_apids(resinfo, alps_res_id):
             for applications in alps_res['ApplicationArray']:
                 for application in applications.values():
                     for app_data in application:
-                        # applicaiton id is at the app_data level.  Multiple
+                        # application id is at the app_data level.  Multiple
                         # commands don't normally happen.  Maybe in a MPMD job?
-                        # All commands will have the same applicaiton id.
+                        # All commands will have the same application id.
                         for commands in app_data['CommandArray']:
                             for command in commands.values():
-                                # BASIL is the indicaiton of a apbasil
+                                # BASIL is the indication of a apbasil
                                 # reservation.  apruns with the application of
                                 # BASIL would be an error.
-                                if command[0]['cmd'] != 'BASIL':
-                                    apids.append(app_data['application_id'])
+                                # in case of MPMD command, iterate
+                                for command_data in command: #this is actually a list of arrays
+                                    if command_data['cmd'] != 'BASIL':
+                                        # This is the basil tracking reservation, so we can get appid from here
+                                        apids.append(app_data['application_id'])
+
     return apids

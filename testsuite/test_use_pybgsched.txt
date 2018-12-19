@@ -1,0 +1,6 @@
+# These tests require adding <path-to-cobalt>/testsuite/TestCobalt/Utilities
+# to your PYTHONPATH to run.  This adds a stub pybgsched that will allow these
+# tests to run properly.  Do not use this stub generally, especially with the
+# BG/Q simulator.
+testsuite/TestCobalt/test_BGQBooter.py
+testsuite/TestCobalt/TestComponents/test_bgqsystem.py

@@ -727,6 +727,8 @@ class BGBaseSystem (Component):
     initiate_proxy_boot -- prompt the system component to start booting a compute block
     set_autoreboot -- set autoreboot flags for IO blocks
 
+    get_location_statistics -- given a list of locations, return the list of resource statistics for
+        the overlapping set
 
     Note: This class uses Python's threading module.
 
@@ -1696,3 +1698,54 @@ class BGBaseSystem (Component):
     def disable_io_autoreboot(self):
         '''Disable ION autorebooting on the BG/Q'''
         raise NotImplementedError, "ION Autoreboot not supported for this configuration."
+
+    @exposed
+    def get_location_statistics(self, locations):
+        '''Get a list of the aggregate location statistics for a list of
+        partitions/locations.  This list may contain partially overlapping
+        members and may also include entirely disjoint members.
+
+        Inputs:
+        locations -- String containing location names.  All locations must be
+                    valid locations in the BlueGene control system.  If an
+                    invalid location is in the list, an exception will
+                    be raised.  This may include ':'-delimited strings from
+                    the command requesting the location information.
+
+        Outputs:
+        A dictionary containing key-value pairs for resources submitted.
+        ex: {'nodect': 512:, 'nprocs':8192}
+        statistics
+
+        Exceptions:
+        KeyError -- if an invalid location name is given, a key error will be raised
+
+        Notes: returned statistics are system-component dependent.
+
+        '''
+        try:
+            loc_list = locations.split(':')
+        except AttributeError as exc:
+            extra_msg = 'Location list %s cannot be split.' % locations
+            exc.message += ' ', extra_msg
+            self.logger.warning(extra_msg)
+        stats = {'nodect': 0,
+                 'nproc': 0,
+                }
+        blocks = []
+        node_cards = set([])
+        PROCS_PER_NODE = 16
+        for loc in loc_list:
+            try:
+                block = self._blocks[loc]
+            except KeyError:
+                #if there is no block for the location raise that we have a bad value in the list
+                err_str = "Block %s not found in block cache." % loc
+                self.logger.error(err_str)
+                raise KeyError(err_str)
+            blocks.append(block)
+            node_cards.update(block.node_cards)
+        stats['nodect'] += len(node_cards) * 32
+        stats['nproc'] += len(node_cards) * 32 * PROCS_PER_NODE
+        self.logger.debug("Reservation request stats: %s", stats)
+        return stats

@@ -39,7 +39,7 @@ POLL_INT = 0.25
 CAPMC_CMD = '/opt/cray/capmc/default/bin/capmc'
 
 #syslog setup
-log_datefmt = '%Y-%d-%m %H:%M:%S'
+log_datefmt = '%Y-%m-%d %H:%M:%S'
 base_fmt = '%(asctime)s %(message)s'
 syslog_fmt = '%(name)s[%(process)d]: %(asctime)s %(message)s'
 
