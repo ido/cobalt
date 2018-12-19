@@ -1,3 +1,5 @@
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
 from ctypes import CDLL, cast, byref, c_void_p, c_int, c_int64, c_char_p, POINTER, pointer, Structure
 
 __all__ = [

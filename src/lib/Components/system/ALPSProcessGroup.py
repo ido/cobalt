@@ -1,3 +1,5 @@
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
 """Process group for Cray systems.  The earliest system this targets is the
 XC-40 running ALPS.  This adds server-side information for interactive job
 launch that is unique to the ALPS environment and is necessary on systems using

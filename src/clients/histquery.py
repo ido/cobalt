@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
 '''Query history data. get the walltime adjusting parameter by project name, user name or combining both.'''
 
 import sys

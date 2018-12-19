@@ -1,3 +1,5 @@
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
 HOLD_RELEASE_LABEL = '_release'		# literal found at end of event name for release events
 ALL_HOLDS_CLEAR = 'all_holds_clear'
 
