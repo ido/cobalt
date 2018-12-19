@@ -1,3 +1,5 @@
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
 # Test Cray-specific utilities/calls.
 SYSTEM_CONFIG_ENTRY = """
 [system]
@@ -32,6 +34,7 @@ from testsuite.TestCobalt.Utilities.Time import timeout
 from Cobalt.Components.system.CrayNode import CrayNode
 import Cobalt.Exceptions
 import time
+import Cobalt.Components.system
 from Cobalt.Components.system.CraySystem import CraySystem
 from Cobalt.Components.system.base_pg_manager import ProcessGroupManager
 import Cobalt.Components.system.AlpsBridge as AlpsBridge
@@ -143,12 +146,14 @@ class TestCraySystem(object):
                 'queue':'default', 'nodes': 1, 'walltime': 60,
                 }
         self.fake_reserve_called = False
+        Cobalt.Components.system.CraySystem.DEFAULT_DEPTH = 72
         Cobalt.Components.system.CraySystem.BACKFILL_EPSILON = 120
         Cobalt.Components.system.CraySystem.DRAIN_MODE = "first-fit"
 
     def teardown(self):
         del self.system
         del self.base_job
+        Cobalt.Components.system.CraySystem.DEFAULT_DEPTH = 72
         Cobalt.Components.system.CraySystem.BACKFILL_EPSILON = 120
         Cobalt.Components.system.CraySystem.DRAIN_MODE = "first-fit"
         self.fake_reserve_called = False
@@ -1165,6 +1170,37 @@ class TestCraySystem(object):
         info = self.system._ALPS_reserve_resources(job, new_time, node_id_list)
         assert_match(info, node_id_list, 'Bad reservation info returned')
         TestCraySystem.verify_alps_reservation_dict(self.system)
+
+    def test__get_location_statistics_single_node(self):
+        '''CraySystem.get_location_statistics single node'''
+        expected = {'nodect': 1, 'nproc': 72}
+        loc_stat = self.system.get_location_statistics("100")
+        assert_match(loc_stat, expected, "node statistic mismatch")
+
+    def test__get_location_statistics_location_list(self):
+        '''CraySystem.get_location_statistics location list'''
+        expected = {'nodect': 204, 'nproc': 14688}
+        loc_stat = self.system.get_location_statistics("1-100,200-299,3728,9932-9934")
+        assert_match(loc_stat, expected, "node statistic mismatch")
+
+    def test__get_location_statistics_depth_adjust(self):
+        '''CraySystem.get_location_statistics modified default depth'''
+        expected = {'nodect': 1, 'nproc': 32}
+        Cobalt.Components.system.CraySystem.DEFAULT_DEPTH = 32
+        loc_stat = self.system.get_location_statistics("100")
+        assert_match(loc_stat, expected, "node statistic mismatch")
+
+    def test__get_location_statistics_colon_list(self):
+        '''CraySystem.get_location_statistics colon-delimited list'''
+        expected = {'nodect': 103, 'nproc': 7416}
+        loc_stat = self.system.get_location_statistics("100-199:3000-3002")
+        assert_match(loc_stat, expected, "node statistic mismatch")
+
+    @raises(ValueError)
+    def test__get_location_statistics_bad_list(self):
+        '''CraySystem.get_location_statistics exception for bad list'''
+        self.system.get_location_statistics("foo")
+        assert False, "No exception raised"
 
 class TestALPSReservation(object):
     '''Tests for the ALPSReservation class in src/lib/Components/system/CraySystem.py'''

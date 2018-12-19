@@ -1,3 +1,5 @@
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
 # no one could possibly need more than a million kinds of exceptions?  right?
 fault_code_counter = xrange(1000, 1000000).__iter__()
 

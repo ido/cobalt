@@ -1,4 +1,6 @@
 #!/bin/bash
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
 
 LOG=$HOME/cron/log/watchblock.log
 MSG=$HOME/cron/log/message_$(date +"%F-%T_TZ%z")

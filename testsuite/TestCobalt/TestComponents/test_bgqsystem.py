@@ -1,10 +1,14 @@
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
 """Tests for the bgqsystem component of Cobalt.  Right now these focus on subblock handling.
 
 Mock is required for this set of tests to work
 
 """
 
+from nose.tools import raises
 from mock import MagicMock, Mock, patch
+from testsuite.TestCobalt.Utilities.assert_functions import assert_match
 
 pybgsched_mock = Mock()
 with patch.dict('sys.modules', {'pybgsched':pybgsched_mock}):
@@ -261,9 +265,65 @@ class TestBGQSystem(object):
         drain_block = self.bgqsystem._find_drain_block(job, drain_blocks)
         assert drain_block is None, 'drain_block not None'
 
+    def test_get_location_statistics_normal(self):
+        self.bgqsystem._blocks = {'FOO': FakeBlock({'name':'FOO'}),
+                                        'BAR': FakeBlock({'name':'BAR'})}
+        expected = {'nproc': 8192, 'nodect': 512}
+        actual = self.bgqsystem.get_location_statistics('FOO')
+        assert_match(actual, expected, "Block statistic mismatch")
+
+    @raises(KeyError)
+    def test_get_location_statistics_bad_block(self):
+        self.bgqsystem._blocks = {'FOO': FakeBlock({'name':'FOO'}),
+                                        'BAR': FakeBlock({'name':'BAR'})}
+        expected = {'nproc': 8192, 'nodect': 512}
+        actual = self.bgqsystem.get_location_statistics('NOTABLOCK')
+        assert_match(actual, expected, "Block statistic mismatch")
+
+    def test_get_location_statistics_block_list(self):
+        self.bgqsystem._blocks = {'FOO': FakeBlock({'name':'FOO'}),
+                                        'BAR': FakeBlock({'name':'BAR'})}
+        expected = {'nproc': 16384, 'nodect': 1024}
+        actual = self.bgqsystem.get_location_statistics('FOO:BAR')
+        assert_match(actual, expected, "Block statistic mismatch")
+
+    @raises(KeyError)
+    def test_get_location_statistics_bad_block_list(self):
+        self.bgqsystem._blocks = {'FOO': FakeBlock({'name':'FOO'}),
+                                        'BAR': FakeBlock({'name':'BAR'})}
+        expected = {'nproc': 8192, 'nodect': 512}
+        actual = self.bgqsystem.get_location_statistics('FOO:BAR:NOTABLOCK')
+        assert_match(actual, expected, "Block statistic mismatch")
+
+    def test_get_location_statistics_block_list_overlap(self):
+        self.bgqsystem._blocks = {'FOO': FakeBlock({'name':'FOO'}),
+                                        'BAR': FakeBlock({'name':'BAR'})}
+        self.bgqsystem._blocks['BAR'].node_cards['FOO-N00'] = {'name': 'FOO-N00'}
+        del self.bgqsystem._blocks['BAR'].node_cards['BAR-N00']
+        expected = {'nproc': 15872, 'nodect': 992}
+        actual = self.bgqsystem.get_location_statistics('FOO:BAR')
+        assert_match(actual, expected, "Block statistic mismatch")
+
 class FakeBlock(object):
     def __init__(self, spec):
         self.name = spec['name']
         self.draining = False
+        self.node_cards = {self.name + '-N00': {'name': self.name + '-N00'},
+                           self.name + '-N01': {'name': self.name + '-N01'},
+                           self.name + '-N02': {'name': self.name + '-N02'},
+                           self.name + '-N03': {'name': self.name + '-N03'},
+                           self.name + '-N04': {'name': self.name + '-N04'},
+                           self.name + '-N05': {'name': self.name + '-N05'},
+                           self.name + '-N06': {'name': self.name + '-N06'},
+                           self.name + '-N07': {'name': self.name + '-N07'},
+                           self.name + '-N08': {'name': self.name + '-N08'},
+                           self.name + '-N09': {'name': self.name + '-N09'},
+                           self.name + '-N10': {'name': self.name + '-N10'},
+                           self.name + '-N11': {'name': self.name + '-N11'},
+                           self.name + '-N12': {'name': self.name + '-N12'},
+                           self.name + '-N13': {'name': self.name + '-N13'},
+                           self.name + '-N14': {'name': self.name + '-N14'},
+                           self.name + '-N15': {'name': self.name + '-N15'},
+                          }
     def __hash__(self):
         return self.name.__hash__()

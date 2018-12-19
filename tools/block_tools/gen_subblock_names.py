@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
 
 import Cobalt
 from Cobddalt.Components.bgq_base_system import node_position_exp, nodecard_exp, midplane_exp, rack_exp

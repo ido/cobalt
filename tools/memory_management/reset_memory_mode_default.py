@@ -1,4 +1,6 @@
 #!/usr/bin/env python2.7
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
 '''Reset MCDRAM configuration and NUMA mode on KNL nodes. If we are on a Cray,
 this will use CAPMC controls, otherwise we're using Intel controls.
 
@@ -37,7 +39,7 @@ POLL_INT = 0.25
 CAPMC_CMD = '/opt/cray/capmc/default/bin/capmc'
 
 #syslog setup
-log_datefmt = '%Y-%d-%m %H:%M:%S'
+log_datefmt = '%Y-%m-%d %H:%M:%S'
 base_fmt = '%(asctime)s %(message)s'
 syslog_fmt = '%(name)s[%(process)d]: %(asctime)s %(message)s'
 

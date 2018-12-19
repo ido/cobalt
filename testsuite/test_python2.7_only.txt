@@ -1,0 +1,2 @@
+# Python2.7-only tests.  Do not run on 2.6 only systems.
+testsuite/TestCobalt/TestComponents/test_cray.py # Cray system component tests

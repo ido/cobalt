@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
 """
 Return a space delimited list of names that a user can boot within their job.
 Block names are sent to standard output in a space delimited list.

@@ -1,4 +1,6 @@
-""" 
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
+"""
 This module defines the ArgParse class.
 The purpose of this module is to define  ArgParse for the purpose of
 parsing command line options and positional arguments. 

@@ -1,4 +1,6 @@
 /*This one has to be modified by us. 
+// Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+// Licensed under a modified BSD 3-clause license. See LICENSE for details.
     Let's hear it for nested classes! 
     I'll see if a more recent version of SWIG can be put on the simulator and EAS.
     Could alleviate this.

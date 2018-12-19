@@ -1,4 +1,10 @@
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
+
 """Contains the ProcessGroup and ProcessGroupDict Data Types"""
+__revision__ = "$Revision$"
+
+
 import logging
 import signal
 import xmlrpclib

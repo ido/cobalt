@@ -1,6 +1,8 @@
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
 """Generic resource model for Cobalt.  This should be used as the base for any
-allocatable reource.  Under certain circumstances this may also be used as a
-base for a resource grouping, like a machine parition.
+allocatable resource.  Under certain circumstances this may also be used as a
+base for a resource grouping, like a machine partition.
 
 """
 import logging
@@ -14,7 +16,7 @@ _logger = logging.getLogger()
 
 class Resource(object):
     '''Generic resource class.  This may be used as a base for any schedulable
-    resource in Cobalt.  Subclasses of Resource may contain aggretates of other
+    resource in Cobalt.  Subclasses of Resource may contain aggregates of other
     resources as well.
 
     '''

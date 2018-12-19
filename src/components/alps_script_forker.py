@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
 '''Launcher for alps_script_forkers.  If we are running multiple on a node,
 this will spawn the actual forkers as subprocesses.
 

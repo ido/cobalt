@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# Copyright 2017 UChicago Argonne, LLC. All rights reserved.
+# Licensed under a modified BSD 3-clause license. See LICENSE for details.
 """
 This python script will setup the cobalt simulators by getting the cobalt repo and setting up all 
 the files needed.
