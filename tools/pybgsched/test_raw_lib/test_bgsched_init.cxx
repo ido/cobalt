@@ -1,6 +1,6 @@
-#include <iostream>
 // Copyright 2017 UChicago Argonne, LLC. All rights reserved.
 // Licensed under a modified BSD 3-clause license. See LICENSE for details.
+#include <iostream>
 #include <exception>
 
 #include "bgsched/bgsched.h"

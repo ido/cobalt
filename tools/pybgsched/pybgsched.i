@@ -1,6 +1,7 @@
-%module pybgsched
 // Copyright 2017 UChicago Argonne, LLC. All rights reserved.
 // Licensed under a modified BSD 3-clause license. See LICENSE for details.
+
+%module pybgsched
 
 typedef unsigned int uint32_t;
 typedef unsigned long uint64_t;
