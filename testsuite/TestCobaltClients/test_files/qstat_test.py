@@ -113,7 +113,7 @@ component: "queue-manager.get_queues", defer: True
 
 component: "queue-manager.get_jobs", defer: False
   get_jobs(
-     [{'timeremaining': '*', 'kernel': '*', 'ion_kerneloptions': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'ion_kernel': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': '*', 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}],
+     [{'timeremaining': '*', 'kernel': '*', 'ion_kerneloptions': '*', 'errorpath': '*', 'est_start_time': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'ion_kernel': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': '*', 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}],
      )
 
 
@@ -146,6 +146,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -265,7 +267,7 @@ component: "queue-manager.get_queues", defer: True
 
 component: "queue-manager.get_jobs", defer: False
   get_jobs(
-     [{'timeremaining': '*', 'kernel': '*', 'ion_kerneloptions': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'ion_kernel': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': 1, 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}, {'timeremaining': '*', 'kernel': '*', 'ion_kerneloptions': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'ion_kernel': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': 2, 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}, {'timeremaining': '*', 'kernel': '*', 'ion_kerneloptions': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'ion_kernel': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': 3, 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}, {'timeremaining': '*', 'kernel': '*', 'ion_kerneloptions': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'ion_kernel': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': 4, 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}, {'timeremaining': '*', 'kernel': '*', 'ion_kerneloptions': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'ion_kernel': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': 5, 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}],
+     [{'timeremaining': '*', 'kernel': '*', 'ion_kerneloptions': '*', 'errorpath': '*', 'est_start_time': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'ion_kernel': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': 1, 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}, {'timeremaining': '*', 'kernel': '*', 'ion_kerneloptions': '*', 'errorpath': '*', 'est_start_time': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'ion_kernel': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': 2, 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}, {'timeremaining': '*', 'kernel': '*', 'ion_kerneloptions': '*', 'errorpath': '*', 'est_start_time': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'ion_kernel': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': 3, 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}, {'timeremaining': '*', 'kernel': '*', 'ion_kerneloptions': '*', 'errorpath': '*', 'est_start_time': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'ion_kernel': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': 4, 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}, {'timeremaining': '*', 'kernel': '*', 'ion_kerneloptions': '*', 'errorpath': '*', 'est_start_time': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'jobname': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'dependencies': '*', 'path': '*', 'ion_kernel': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'admin_hold': '*', 'jobid': 5, 'queue': '*', 'submittime': '*', 'state': '*', 'queuedtime': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}],
      )
 
 
@@ -298,6 +300,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -380,6 +384,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -462,6 +468,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -544,6 +552,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -626,6 +636,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -762,6 +774,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -844,6 +858,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -926,6 +942,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -1008,6 +1026,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -1090,6 +1110,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -1226,6 +1248,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -1308,6 +1332,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -1390,6 +1416,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -1472,6 +1500,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -1554,6 +1584,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -1692,6 +1724,7 @@ def test_qstat_full_option_4():
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 JobID: 3
     JobName           : -
@@ -1733,6 +1766,7 @@ JobID: 3
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 JobID: 1
     JobName           : -
@@ -1774,6 +1808,7 @@ JobID: 1
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 JobID: 2
     JobName           : -
@@ -1815,6 +1850,7 @@ JobID: 2
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 JobID: 4
     JobName           : -
@@ -1856,6 +1892,7 @@ JobID: 4
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 """
 
@@ -1888,6 +1925,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -1970,6 +2009,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -2052,6 +2093,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -2134,6 +2177,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -2216,6 +2261,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -2354,6 +2401,7 @@ def test_qstat_full_option_5():
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 JobID: 2
     JobName           : -
@@ -2395,6 +2443,7 @@ JobID: 2
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 JobID: 1
     JobName           : -
@@ -2436,6 +2485,7 @@ JobID: 1
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 JobID: 3
     JobName           : -
@@ -2477,6 +2527,7 @@ JobID: 3
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 JobID: 5
     JobName           : -
@@ -2518,6 +2569,7 @@ JobID: 5
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 """
 
@@ -2550,6 +2602,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -2632,6 +2686,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -2714,6 +2770,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -2796,6 +2854,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -2878,6 +2938,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -3016,6 +3078,7 @@ def test_qstat_full_option_6():
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 JobID: 3
     JobName           : -
@@ -3057,6 +3120,7 @@ JobID: 3
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 JobID: 5
     JobName           : -
@@ -3098,6 +3162,7 @@ JobID: 5
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 JobID: 2
     JobName           : -
@@ -3139,6 +3204,7 @@ JobID: 2
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 JobID: 1
     JobName           : -
@@ -3180,6 +3246,7 @@ JobID: 1
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 """
 
@@ -3212,6 +3279,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -3294,6 +3363,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -3376,6 +3447,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -3458,6 +3531,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -3540,6 +3615,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -3678,6 +3755,7 @@ def test_qstat_full_option_7():
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 JobID: 2
     JobName           : -
@@ -3719,6 +3797,7 @@ JobID: 2
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 JobID: 5
     JobName           : -
@@ -3760,6 +3839,7 @@ JobID: 5
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 JobID: 3
     JobName           : -
@@ -3801,6 +3881,7 @@ JobID: 3
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 JobID: 4
     JobName           : -
@@ -3842,6 +3923,7 @@ JobID: 4
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 """
 
@@ -3874,6 +3956,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -3956,6 +4040,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -4038,6 +4124,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -4120,6 +4208,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -4202,6 +4292,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -4340,6 +4432,7 @@ def test_qstat_full_option_8():
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 JobID: 4
     JobName           : -
@@ -4381,6 +4474,7 @@ JobID: 4
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 JobID: 2
     JobName           : -
@@ -4422,6 +4516,7 @@ JobID: 2
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 JobID: 5
     JobName           : -
@@ -4463,6 +4558,7 @@ JobID: 5
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 JobID: 1
     JobName           : -
@@ -4504,6 +4600,7 @@ JobID: 1
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 """
 
@@ -4536,6 +4633,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -4618,6 +4717,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -4700,6 +4801,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -4782,6 +4885,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -4864,6 +4969,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -5002,6 +5109,7 @@ def test_qstat_full_option_9():
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 JobID: 5
     JobName           : -
@@ -5043,6 +5151,7 @@ JobID: 5
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 JobID: 2
     JobName           : -
@@ -5084,6 +5193,7 @@ JobID: 2
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 JobID: 4
     JobName           : -
@@ -5125,6 +5235,7 @@ JobID: 4
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 JobID: 3
     JobName           : -
@@ -5166,6 +5277,7 @@ JobID: 3
     dep_frac          : -
     user_list         : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry          : Any
+    Est_Start_Time    : -
 
 """
 
@@ -5198,6 +5310,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -5280,6 +5394,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -5362,6 +5478,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -5444,6 +5562,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -5526,6 +5646,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -5658,6 +5780,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -5792,6 +5916,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -5874,6 +6000,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -5956,6 +6084,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -6092,6 +6222,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -6256,6 +6388,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -6338,6 +6472,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -6420,6 +6556,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -6502,6 +6640,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -6584,6 +6724,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -6748,6 +6890,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -6830,6 +6974,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -6912,6 +7058,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -6994,6 +7142,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -7076,6 +7226,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -7240,6 +7392,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -7322,6 +7476,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -7404,6 +7560,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -7486,6 +7644,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -7568,6 +7728,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -7732,6 +7894,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -7814,6 +7978,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -7896,6 +8062,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -7978,6 +8146,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -8060,6 +8230,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -8224,6 +8396,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -8306,6 +8480,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -8388,6 +8564,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -8470,6 +8648,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -8552,6 +8732,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -8693,6 +8875,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -8775,6 +8959,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -8857,6 +9043,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
@@ -10697,6 +10885,8 @@ envs:*
 envs type: <type 'str'>
 errorpath:*
 errorpath type: <type 'str'>
+est_start_time:*
+est_start_time type: <type 'str'>
 geometry:*
 geometry type: <type 'str'>
 index:*
