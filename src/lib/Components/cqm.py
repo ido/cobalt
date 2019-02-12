@@ -544,7 +544,7 @@ class Job (StateMachine):
         "is_runnable", "is_active",
         "has_completed", "sm_state", "score", "attrs", "has_resources", 
         "exit_status", "dep_frac", "walltime_p", "user_list", "runid",
-        "geometry"
+        "geometry", 'est_start_time',
     ]
 
     _states = get_job_sm_states() + StateMachine._states
@@ -707,7 +707,7 @@ class Job (StateMachine):
             accounting_logger.info(accounting.hold_acquire(self.jobid, 'user_hold', time.time(), self.user))
 
         self.current_task_start = time.time()
-
+        self.est_start_time = 0.0
         self.initializing = False
 
     # end def __init__()
@@ -791,6 +791,7 @@ class Job (StateMachine):
         self.current_task_start = state.get("current_task_start", None)
         #for old statefiles, make sure to update the dependency state on restart:
         self.__dep_hold = False
+        self.est_start_time = 0.0 # Old wait times are invalid.  Regenerate after first score pass.
         self.initializing = False
 
     def __task_signal(self, retry = True):
@@ -1289,6 +1290,7 @@ class Job (StateMachine):
         self.__timers['hold'].start()
         self._sm_log_info("%s hold placed on job" % (args['type'],),
                 cobalt_log = True)
+        self.est_start_time = 0.0 # Jobs on hold are ineligible to run, and estimates are no longer valid or updated
         self._sm_state = hold_state
 
     def _sm_common_queued__release(self, args):
@@ -4244,6 +4246,26 @@ class QueueManager(Component):
         self.builtin_utility_functions["default"] = default
         self.builtin_utility_functions["high_prio"] = high_prio
 
+    @staticmethod
+    def _get_active_machine_seconds(current_time, sys_size, active_jobs):
+        def job_ams(job):
+            return float(max(float(job.walltime) * 60.0 - (current_time - float(job.starttime)), 0.0)) * float(job.nodes)
+        return float(sum([job_ams(j) for j in active_jobs])) / float(sys_size) # An empty list gives an int 0
+
+    @staticmethod
+    def _estimate_start_times(current_time, sys_size, active_jobs, eligible_jobs):
+        '''Provide a naive estimate of job wait times after scores have been updated.
+            return dict of wait times to apply to jobs
+        '''
+        # We will need to update all eligible jobs with time estimates
+        # Get the active jobs as a base and gen currently running machine hours.
+        active_machine_seconds = QueueManager._get_active_machine_seconds(current_time, sys_size, active_jobs)
+        eligible_jobs.sort(reverse=True, key=lambda x: x.score)
+        wait_times = {}
+        for e_job in eligible_jobs:
+            wait_times[e_job.jobid] = current_time + active_machine_seconds
+            active_machine_seconds += float(e_job.walltime) * 60.0 * float(e_job.nodes) / float(sys_size)
+        return wait_times
 
     def compute_utility_scores (self):
         '''Evaluate score functions for a job based on the job's queue.
@@ -4319,6 +4341,18 @@ class QueueManager(Component):
                 core_hours += (4*int(job.nodes)*float(job.walltime)/60.0)
 
         self.score_timestamp = current_time
+        # revising eligible times after scores updated
+        try:
+            sys_size = float(get_config_option('system', 'size'))
+        except:
+            logger.critical('Could not find system size!', exc_info=True)
+        else:
+            active_jobs = self.Queues.get_jobs([{'is_active':True}])
+            for a_job in active_jobs:
+                a_job.est_start_time = 0.0 # Running jobs no longer need this.
+            wait_times = self._estimate_start_times(current_time, sys_size, active_jobs, queued_jobs)
+            for q_job in queued_jobs:
+                q_job.est_start_time = wait_times[q_job.jobid]
 
     compute_utility_scores = automatic(compute_utility_scores, float(get_cqm_config('compute_utility_interval', 10)))
 

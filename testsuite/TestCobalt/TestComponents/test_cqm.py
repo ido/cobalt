@@ -37,6 +37,7 @@ import os.path
 import pwd
 import grp
 import tempfile
+import time
 from threading import Lock, Condition
 import traceback
 import types
@@ -47,7 +48,7 @@ from mock import patch
 
 import Cobalt.Components.cqm
 from Cobalt.Components.base import Component, exposed, automatic, query
-from Cobalt.Components.cqm import QueueManager, Signal_Map
+from Cobalt.Components.cqm import QueueManager, Signal_Map, Job
 from Cobalt.Components.slp import TimingServiceLocator
 from Cobalt.Data import IncrID, Data, DataDict
 import Cobalt.Exceptions
@@ -61,6 +62,7 @@ from TestCobalt.Utilities.ThreadSupport import *
 from TestCobalt.Utilities.Time import timeout
 from TestCobalt.Utilities.disable import disabled
 
+from testsuite.TestCobalt.Utilities.assert_functions import assert_match
 
 # if logging is enabled, send all cqm and generic component logging to a file
 if ENABLE_LOGGING:
@@ -3673,4 +3675,143 @@ class TestJobStatuses(object):
                         (state, printable_status[0], self.job.state))
                 assert self.job.short_state == printable_status[1], ("Bad State %s: Expected %s, got %s" %
                         (state, printable_status[1], self.job.short_state))
+
+class TestCQMEligibleWaitTiems(object):
+
+    def setup(self):
+        self.sys_size = 4
+        self.current_time = 100
+        self.test_active_jobs = [Job({'jobid': 1, 'nodes': 4, 'walltime': 60, 'starttime': 50.0})]
+
+    def teardown(self):
+        pass
+
+    def test__get_active_machine_seconds_empty(self):
+        '''cqm.QueueManager._get_active_machine_seconds no running jobs'''
+        expected_time = 0.0
+        ams_time = QueueManager._get_active_machine_seconds(self.current_time, self.sys_size, [])
+        assert_match(ams_time, expected_time, "Nonempty ams_times for empty system")
+        assert_match(type(ams_time), type(expected_time), "Wrong type")
+
+    def test__get_active_machine_seconds_full_machine_single(self):
+        '''cqm.QueueManager._get_active_machine_seconds full machine job'''
+        expected_time = 3550.0
+        active_jobs = [Job({'jobid': 1, 'nodes': 4, 'walltime': 60, 'starttime': 50.0})]
+        ams_time = QueueManager._get_active_machine_seconds(self.current_time, self.sys_size, active_jobs)
+        assert_match(ams_time, expected_time, "Wrong ams time")
+        assert_match(type(ams_time), type(expected_time), "Wrong type")
+
+    def test__get_active_machine_seconds_partial_machine_single(self):
+        '''cqm.QueueManager._get_active_machine_seconds partial machine single job'''
+        expected_time = 3550.0 * (1.0 / self.sys_size)
+        active_jobs = [Job({'jobid': 1, 'nodes': 1, 'walltime': 60, 'starttime': 50.0})]
+        ams_time = QueueManager._get_active_machine_seconds(self.current_time, self.sys_size, active_jobs)
+        assert_match(ams_time, expected_time, "Wrong ams time")
+        assert_match(type(ams_time), type(expected_time), "Wrong type")
+
+    def test__get_active_machine_seconds_partial_machine_multi(self):
+        '''cqm.QueueManager._get_active_machine_seconds multiple jobs, partial machine'''
+        expected_time = 3550.0 * (2.0 / self.sys_size)
+        active_jobs = [Job({'jobid': 1, 'nodes': 1, 'walltime': 60, 'starttime': 50.0}),
+                       Job({'jobid': 2, 'nodes': 1, 'walltime': 60, 'starttime': 50.0})]
+        ams_time = QueueManager._get_active_machine_seconds(self.current_time, self.sys_size, active_jobs)
+        assert_match(ams_time, expected_time, "Wrong ams time")
+        assert_match(type(ams_time), type(expected_time), "Wrong type")
+
+    def test__get_active_machine_seconds_partial_machine_multi_nodes(self):
+        '''cqm.QueueManager._get_active_machine_seconds multiple jobs, partial machine, multi-nodes'''
+        expected_time = 3550.0 * (3.0 / self.sys_size)
+        active_jobs = [Job({'jobid': 1, 'nodes': 1, 'walltime': 60, 'starttime': 50.0}),
+                       Job({'jobid': 2, 'nodes': 2, 'walltime': 60, 'starttime': 50.0})]
+        ams_time = QueueManager._get_active_machine_seconds(self.current_time, self.sys_size, active_jobs)
+        assert_match(ams_time, expected_time, "Wrong ams time")
+        assert_match(type(ams_time), type(expected_time), "Wrong type")
+
+    def test__get_active_machine_seconds_full_machine_multi(self):
+        '''cqm.QueueManager._get_active_machine_seconds full machine job: multiple jobs'''
+        expected_time = 3550.0
+        active_jobs = [Job({'jobid': 1, 'nodes': 1, 'walltime': 60, 'starttime': 50.0}),
+                       Job({'jobid': 2, 'nodes': 1, 'walltime': 60, 'starttime': 50.0}),
+                       Job({'jobid': 3, 'nodes': 1, 'walltime': 60, 'starttime': 50.0}),
+                       Job({'jobid': 4, 'nodes': 1, 'walltime': 60, 'starttime': 50.0})]
+        ams_time = QueueManager._get_active_machine_seconds(self.current_time, self.sys_size, active_jobs)
+        assert_match(ams_time, expected_time, "Wrong ams time")
+        assert_match(type(ams_time), type(expected_time), "Wrong type")
+
+    def test__get_active_machine_seconds_full_machine_multi_walltimes(self):
+        '''cqm.QueueManager._get_active_machine_seconds full machine job: multiple jobs, diff walltimes'''
+        expected_time = 13575.0
+        active_jobs = [Job({'jobid': 1, 'nodes': 1, 'walltime': 60, 'starttime': 10.0}),
+                       Job({'jobid': 2, 'nodes': 1, 'walltime': 720, 'starttime': 20.0}),
+                       Job({'jobid': 3, 'nodes': 1, 'walltime': 120, 'starttime': 30.0}),
+                       Job({'jobid': 4, 'nodes': 1, 'walltime': 10, 'starttime': 40.0})]
+        ams_time = QueueManager._get_active_machine_seconds(self.current_time, self.sys_size, active_jobs)
+        assert_match(ams_time, expected_time, "Wrong ams time")
+        assert_match(type(ams_time), type(expected_time), "Wrong type")
+
+    def test__get_active_machine_seconds_full_machine_multi_size_time(self):
+        '''cqm.QueueManager._get_active_machine_seconds full machine job: multiple jobs, diff walltimes and sizes'''
+        expected_time = 23315.0
+        active_jobs = [Job({'jobid': 1, 'nodes': 2, 'walltime': 60, 'starttime': 10.0}),
+                       Job({'jobid': 2, 'nodes': 2, 'walltime': 720, 'starttime': 20.0}),]
+        ams_time = QueueManager._get_active_machine_seconds(self.current_time, self.sys_size, active_jobs)
+        assert_match(ams_time, expected_time, "Wrong ams time")
+        assert_match(type(ams_time), type(expected_time), "Wrong type")
+
+    def test__get_active_machine_seconds_full_machine_over_runtime(self):
+        '''cqm.QueueManager._get_active_machine_seconds full machine job: job over walltime'''
+        expected_time = 0.0
+        active_jobs = [Job({'jobid': 1, 'nodes': 2, 'walltime': 60, 'starttime': 50.0})]
+        ams_time = QueueManager._get_active_machine_seconds(100000, self.sys_size, active_jobs)
+        assert_match(ams_time, expected_time, "Wrong ams time")
+        assert_match(type(ams_time), type(expected_time), "Wrong type")
+
+    def test__est_wait_times_empty(self):
+        '''cqm.QueueManager._est_wait_times no jobs at all'''
+        expected_times = {}
+        wait_times = QueueManager._estimate_start_times(self.current_time, self.sys_size, [], [])
+        assert_match(wait_times, expected_times, "Nonempty wait_times for empty system")
+
+    def test__est_wait_times_empty_queued(self):
+        '''cqm.QueueManager._est_wait_times empty jobs, full system'''
+        expected_times = {}
+        active_jobs = [Job({'jobid': 1, 'nodes': 4, 'walltime': 60, 'starttime': 50.0})]
+        wait_times = QueueManager._estimate_start_times(self.current_time, self.sys_size, active_jobs, [])
+        assert_match(wait_times, expected_times, "Nonempty wait_times for empty system")
+
+    def test__est_wait_times_single_queued_job(self):
+        '''cqm.QueueManager._est_wait_times running system, one job queued'''
+        expected_times = {2: 3650.0}
+        running_jobs = [Job({'jobid' : 2, 'walltime': 10, 'nodes': 1, 'score': 50.0}),
+                       ]
+        wait_times = QueueManager._estimate_start_times(self.current_time, self.sys_size, self.test_active_jobs, running_jobs)
+        assert_match(wait_times, expected_times, "Wrong wait times")
+
+    def test__est_wait_times_single_queued_job_real_time(self):
+        '''cqm.QueueManager._est_wait_times running system, one job queued, time.time()'''
+        now = time.time()
+        expected_times = {2: (now + 3550.0)}
+        active_jobs = [Job({'jobid': 1, 'nodes': 4, 'walltime': 60, 'starttime': now - 50.0})]
+        running_jobs = [Job({'jobid': 2, 'walltime': 10, 'nodes': 1, 'score': 50.0}),
+                       ]
+        wait_times = QueueManager._estimate_start_times(now, self.sys_size, active_jobs, running_jobs)
+        assert_match(wait_times, expected_times, "Wrong wait times")
+
+    def test__est_wait_times_multi_jobs(self):
+        '''cqm.QueueManager._est_wait_times running system, multiple jobs'''
+        expected_times ={2: 3650.0, 3: 3800.0}
+        running_jobs = [Job({'jobid' : 2, 'walltime': 10, 'nodes': 1, 'score': 50.0}),
+                        Job({'jobid' : 3, 'walltime': 720, 'nodes': 2, 'score': 10.0}),
+                       ]
+        wait_times = QueueManager._estimate_start_times(self.current_time, self.sys_size, self.test_active_jobs, running_jobs)
+        assert_match(wait_times, expected_times, "Wrong wait times")
+
+    def test__est_wait_times_multi_jobs_sort_score(self):
+        '''cqm.QueueManager._est_wait_times running system, multiple jobs score reorder'''
+        expected_times = {2: 25250.0, 3: 3650.0}
+        running_jobs = [Job({'jobid' : 2, 'walltime': 10, 'nodes': 1, 'score': 50.0}),
+                        Job({'jobid' : 3, 'walltime': 720, 'nodes': 2, 'score': 100.0}),
+                       ]
+        wait_times = QueueManager._estimate_start_times(self.current_time, self.sys_size, self.test_active_jobs, running_jobs)
+        assert_match(wait_times, expected_times, "Wrong wait times")
 

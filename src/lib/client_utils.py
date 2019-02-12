@@ -316,7 +316,7 @@ class header_info(object):
                    'Location', 'Mode', 'Procs', 'Preemptable', 'User_Hold', 'Admin_Hold', 'Queue', 'StartTime',
                    'Index', 'SubmitTime', 'Path', 'OutputDir', 'ErrorPath', 'OutputPath', 'Envs', 'Command', 'Args', 'Kernel',
                    'KernelOptions',  'ION_Kernel',  'ION_KernelOptions',  'Project', 'Dependencies', 'short_state', 'Notify',
-                   'Score', 'Maxtasktime', 'attrs', 'dep_frac', 'user_list', 'Geometry']
+                   'Score', 'Maxtasktime', 'attrs', 'dep_frac', 'user_list', 'Geometry', 'Est_Start_Time']
 
     custom_header      = None
     custom_header_full = None
