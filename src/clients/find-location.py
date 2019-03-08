@@ -126,6 +126,24 @@ def get_existing_res_data(impl, opts, current_time):
                         res_nodes.append(loc)
     return res_nodes
 
+def flatten_attrs(attrs):
+    ret_attrs = {}
+    for attr_key, attr_val in attrs.items():
+        if type(attr_val) == type(dict()):
+            for subattr_key, subattr_val in flatten_attrs(attr_val).items():
+                ret_attrs[attr_key + "." + subattr_key] = subattr_val
+        else:
+            ret_attrs[attr_key] = attr_val
+    return ret_attrs
+
+def has_attributes(check_attrs, n):
+    if check_attrs:
+        n_attrs = flatten_attrs(n['attributes'])
+        for attr_key, attr_val in check_attrs.items():
+            if str(n_attrs.get(attr_key, False)) != str(attr_val):
+                return False
+    return True
+
 def get_node_list(impl, opts, node_data, node_status_field, host_key):
     '''Node status field changes from platform to platform.  Get the actual nodes needed.'''
     current_time = int(time.time())
@@ -155,6 +173,7 @@ def get_reservation_location(impl, opts):
         # basically required on any large production XC40
         node_data = json.loads(client_utils.component_call(SYSMGR, False, 'get_nodes', (True, None, fetch_header, True))).values()
         nodes = get_node_list(impl, opts, node_data, 'status', 'node_id')
+        nodes = [n for n in nodes if has_attributes(opts['attrs'], n)]
         nodect = int(opts['nodecount']) if opts['nodecount'] else len(nodes)
         if len(nodes) < nodect:
             return "Unable to match requested parameters"
