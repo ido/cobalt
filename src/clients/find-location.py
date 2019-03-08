@@ -31,10 +31,12 @@ Option with values:
 import logging
 import time
 import sys
+import json
 from Cobalt import client_utils
 from Cobalt.client_utils import cb_debug,  cb_nodes, cb_time, cb_attrs,  cb_gtzero
 from Cobalt.client_utils import SYSMGR, SCHMGR
 from Cobalt.arg_parser import ArgParse
+from Cobalt.Util import compact_num_list, expand_num_list
 
 __revision__ = '$Revision: 559 $'
 __version__  = '$Version$'
@@ -85,57 +87,81 @@ def node_avail(incl_unavail, node, field):
 def node_ready(immediate, node, field):
     return not immediate or node[field] in ['idle']
 
-def node_in_queues(queues, node):
+def node_in_queues(impl, queues, node):
     if not queues:
         return True
-    return set(queues) & set(node['queue'].split(":"))
+    if impl == "cluster_system":
+        return set(queues) & set(node['queue'].split(":"))
+    else:
+        return set(queues) & set(node['queues'])
 
-def node_not_reserved(res_nodes, current_time, expect_time, node):
-    return not (node['host'] in res_nodes)
+def node_not_reserved(res_nodes, current_time, expect_time, node, host_key):
+    return not (node[host_key] in res_nodes)
 
-def time_in_res(res_start, duration, check_time):
+def time_in_res(res_start, duration, check_time_start, check_duration):
     '''get if a time falls in a reservation'''
-    return (res_start <= check_time) and (check_time <= res_start + duration)
+    res_end = res_start + duration
+    check_time_end = check_time_start + check_duration
+    start_in_res = (res_start <= check_time_start) and (check_time_start <= res_end)
+    end_in_res = (res_start <= check_time_end) and (check_time_end <= res_end)
+    res_in_check = (res_start <= check_time_end) and (res_end >= check_time_start)
+    return start_in_res or end_in_res or res_in_check
 
-def get_existing_res_data(opts, current_time):
+def get_existing_res_data(impl, opts, current_time):
     res_nodes = []
     expected_start_time = current_time
     if opts['start']:
         expected_start_time = opts['start']
     if opts['time']:
-        res_data = client_utils.component_call(SCHMGR, False, 'get_reservations', ([{'start':'*', 'duration':'*', 'partitions':'*',
-            'block_passthrough':'*'}], ))
+        res_data = client_utils.component_call(SCHMGR, False, 'get_reservations',
+                ([{'start':'*', 'duration':'*', 'partitions':'*',}], ))
         for res in res_data:
-            if (time_in_res(int(res['start']), int(res['duration']), expected_start_time) or
-                time_in_res(int(res['start']), int(res['duration']), expected_start_time + int(opts['time']))):
-                loc_list = res['partitions'].split(":")
+            if time_in_res(int(res['start']), int(res['duration']), expected_start_time, int(opts['time']) * 60):
+                if impl == "cluster_systems":
+                    loc_list = res['partitions'].split(":")
+                else:
+                    loc_list = [str(p) for p in expand_num_list(res['partitions'])]
                 for loc in loc_list:
                     if loc not in res_nodes:
                         res_nodes.append(loc)
     return res_nodes
 
+def get_node_list(impl, opts, node_data, node_status_field, host_key):
+    '''Node status field changes from platform to platform.  Get the actual nodes needed.'''
+    current_time = int(time.time())
+    res_nodes = get_existing_res_data(impl, opts, current_time)
+    expect_time = current_time + int(opts['time']) * 60
+    queues = set(opts['queue'].split(":")) if opts['queue'] else set([])
+    return sorted([n for n in node_data if (node_ready(opts['immediate'], n, node_status_field) and
+                                  node_avail(opts['unavailable'], n, node_status_field) and
+                                  node_not_reserved(res_nodes, current_time, expect_time, n, host_key) and
+                                  node_in_queues(impl, queues, n)
+                                 )])
 
 def get_reservation_location(impl, opts):
     '''given a set of constraints, get reservation data.'''
     loc_list = []
-    if impl in ['alps_system', 'bgqsystem', 'bgpsystem', 'brooklyn']:
-        raise NotImplementedError("%s not a currently supported system type")
-    elif impl in ['cluster_system']:
+    if impl in ['cluster_system']:
         # if we have requested a forward time, get information about reservations so we don't overlap.
-        current_time = int(time.time())
-        res_nodes = get_existing_res_data(opts, current_time)
-        expect_time = current_time + int(opts['time']) * 60
-        queues = set(opts['queue'].split(":")) if opts['queue'] else set([])
-        nodes = tag_lists(*client_utils.cluster_display_node_info())
-        nodes = [n for n in nodes if (node_ready(opts['immediate'], n, 'state') and
-                                      node_avail(opts['unavailable'], n, 'state') and
-                                      node_not_reserved(res_nodes, current_time, expect_time, n) and
-                                      node_in_queues(queues, n)
-                                     )]
-
+        node_data = tag_lists(*client_utils.cluster_display_node_info())
+        nodes = get_node_list(impl, opts, node_data, 'state', 'host')
         nodect = int(opts['nodecount']) if opts['nodecount'] else len(nodes)
         if len(nodes) < nodect:
             return "Unable to match requested parameters"
+    elif impl in ['alps_system']:
+        #we're going to give the compact "Cray nid list" notation as you would get from cnselect.
+        fetch_header = ['Node_id', 'Name', 'Queues', 'Status', 'attributes', 'drain_until']
+        # Converting into and out of JSON bypasses the XML-RPC marshal step and makes this much, much faster
+        # basically required on any large production XC40
+        node_data = json.loads(client_utils.component_call(SYSMGR, False, 'get_nodes', (True, None, fetch_header, True))).values()
+        nodes = get_node_list(impl, opts, node_data, 'status', 'node_id')
+        nodect = int(opts['nodecount']) if opts['nodecount'] else len(nodes)
+        if len(nodes) < nodect:
+            return "Unable to match requested parameters"
+        else:
+            return compact_num_list([int(n['node_id']) for n in nodes[:nodect]])
+    else:
+        raise NotImplementedError("%s not a currently supported system type")
     return ":".join([n['host'] for n in nodes[:nodect]])
 
 
