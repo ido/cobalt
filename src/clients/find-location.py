@@ -117,7 +117,7 @@ def get_existing_res_data(impl, opts, current_time):
                 ([{'start':'*', 'duration':'*', 'partitions':'*',}], ))
         for res in res_data:
             if time_in_res(int(res['start']), int(res['duration']), expected_start_time, int(opts['time']) * 60):
-                if impl == "cluster_systems":
+                if impl == "cluster_system":
                     loc_list = res['partitions'].split(":")
                 else:
                     loc_list = [str(p) for p in expand_num_list(res['partitions'])]
