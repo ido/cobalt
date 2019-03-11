@@ -317,7 +317,7 @@ def logjob(jobid, spec, log_to_console, msg=None, ttyname=None):
         if spec.has_key('cobalt_log_file'):
             filename = spec['cobalt_log_file']
             template = string.Template(filename)
-            filename = template.safe_substitute(jobid=jobid)
+            filename = template.safe_substitute(jobid=jobid, COBALT_JOBID=jobid)
         else:
             filename = "%s/%s.cobaltlog" % (spec['outputdir'], jobid)
         try:
