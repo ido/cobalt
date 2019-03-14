@@ -51,11 +51,12 @@ def cb_date_no_log(option, opt_str, value, parser, *args):
             if _value.lower() == 'now':
                 allow_now = args[0]
                 if not allow_now:
-                    raise
+                    raise ValueError("%s is not configured as a valid value for the %s option" % (_value, opt_str))
                 _value = client_utils.cobalt_date(time.localtime(time.time()))
         starttime = client_utils.parse_datetime(_value)
     except ValueError, exc:
-        client_utils.logger.error("start time '%s. Error: %s' is invalid", value, exc)
+        client_utils.logger.error("start time '%s' is invalid", value)
+        client_utils.logger.error("Error: %s", exc)
         client_utils.logger.error("start time is expected to be in the format: YYYY_MM_DD-HH:MM")
         sys.exit(1)
     setattr(parser.values, option.dest, starttime)
