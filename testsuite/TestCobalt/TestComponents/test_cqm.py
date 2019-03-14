@@ -3676,7 +3676,7 @@ class TestJobStatuses(object):
                 assert self.job.short_state == printable_status[1], ("Bad State %s: Expected %s, got %s" %
                         (state, printable_status[1], self.job.short_state))
 
-class TestCQMEligibleWaitTiems(object):
+class TestCQMEligibleWaitTimes(object):
 
     def setup(self):
         self.sys_size = 4
@@ -3782,9 +3782,9 @@ class TestCQMEligibleWaitTiems(object):
     def test__est_wait_times_single_queued_job(self):
         '''cqm.QueueManager._est_wait_times running system, one job queued'''
         expected_times = {2: 3650.0}
-        running_jobs = [Job({'jobid' : 2, 'walltime': 10, 'nodes': 1, 'score': 50.0}),
+        eligible_jobs = [Job({'jobid' : 2, 'walltime': 10, 'nodes': 1, 'score': 50.0}),
                        ]
-        wait_times = QueueManager._estimate_start_times(self.current_time, self.sys_size, self.test_active_jobs, running_jobs)
+        wait_times = QueueManager._estimate_start_times(self.current_time, self.sys_size, self.test_active_jobs, eligible_jobs)
         assert_match(wait_times, expected_times, "Wrong wait times")
 
     def test__est_wait_times_single_queued_job_real_time(self):
@@ -3792,26 +3792,26 @@ class TestCQMEligibleWaitTiems(object):
         now = time.time()
         expected_times = {2: (now + 3550.0)}
         active_jobs = [Job({'jobid': 1, 'nodes': 4, 'walltime': 60, 'starttime': now - 50.0})]
-        running_jobs = [Job({'jobid': 2, 'walltime': 10, 'nodes': 1, 'score': 50.0}),
+        eligible_jobs = [Job({'jobid': 2, 'walltime': 10, 'nodes': 1, 'score': 50.0}),
                        ]
-        wait_times = QueueManager._estimate_start_times(now, self.sys_size, active_jobs, running_jobs)
+        wait_times = QueueManager._estimate_start_times(now, self.sys_size, active_jobs, eligible_jobs)
         assert_match(wait_times, expected_times, "Wrong wait times")
 
     def test__est_wait_times_multi_jobs(self):
         '''cqm.QueueManager._est_wait_times running system, multiple jobs'''
         expected_times ={2: 3650.0, 3: 3800.0}
-        running_jobs = [Job({'jobid' : 2, 'walltime': 10, 'nodes': 1, 'score': 50.0}),
+        eligible_jobs = [Job({'jobid' : 2, 'walltime': 10, 'nodes': 1, 'score': 50.0}),
                         Job({'jobid' : 3, 'walltime': 720, 'nodes': 2, 'score': 10.0}),
                        ]
-        wait_times = QueueManager._estimate_start_times(self.current_time, self.sys_size, self.test_active_jobs, running_jobs)
+        wait_times = QueueManager._estimate_start_times(self.current_time, self.sys_size, self.test_active_jobs, eligible_jobs)
         assert_match(wait_times, expected_times, "Wrong wait times")
 
     def test__est_wait_times_multi_jobs_sort_score(self):
         '''cqm.QueueManager._est_wait_times running system, multiple jobs score reorder'''
         expected_times = {2: 25250.0, 3: 3650.0}
-        running_jobs = [Job({'jobid' : 2, 'walltime': 10, 'nodes': 1, 'score': 50.0}),
+        eligible_jobs = [Job({'jobid' : 2, 'walltime': 10, 'nodes': 1, 'score': 50.0}),
                         Job({'jobid' : 3, 'walltime': 720, 'nodes': 2, 'score': 100.0}),
                        ]
-        wait_times = QueueManager._estimate_start_times(self.current_time, self.sys_size, self.test_active_jobs, running_jobs)
+        wait_times = QueueManager._estimate_start_times(self.current_time, self.sys_size, self.test_active_jobs, eligible_jobs)
         assert_match(wait_times, expected_times, "Wrong wait times")
 
