@@ -4248,9 +4248,17 @@ class QueueManager(Component):
 
     @staticmethod
     def _get_active_machine_seconds(current_time, sys_size, active_jobs):
+        '''get the max machine seconds of any job running on the system.
+            This is ultimately providing remaining wallitme(sec)
+
+        '''
+        if not active_jobs:
+            return 0.0
         def job_ams(job):
-            return float(max(float(job.walltime) * 60.0 - (current_time - float(job.starttime)), 0.0)) * float(job.nodes)
-        return float(sum([job_ams(j) for j in active_jobs])) / float(sys_size) # An empty list gives an int 0
+            # expand job time to full machine seconds
+            return float(max(float(job.walltime) * 60.0 - (current_time - float(job.starttime)), 0.0))
+        # Choose the longest job as the "long tentpole
+        return float(max([job_ams(j) for j in active_jobs]))
 
     @staticmethod
     def _estimate_start_times(current_time, sys_size, active_jobs, eligible_jobs):

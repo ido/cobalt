@@ -3703,7 +3703,7 @@ class TestCQMEligibleWaitTimes(object):
 
     def test__get_active_machine_seconds_partial_machine_single(self):
         '''cqm.QueueManager._get_active_machine_seconds partial machine single job'''
-        expected_time = 3550.0 * (1.0 / self.sys_size)
+        expected_time = 3600.0 - 50.0
         active_jobs = [Job({'jobid': 1, 'nodes': 1, 'walltime': 60, 'starttime': 50.0})]
         ams_time = QueueManager._get_active_machine_seconds(self.current_time, self.sys_size, active_jobs)
         assert_match(ams_time, expected_time, "Wrong ams time")
@@ -3711,7 +3711,7 @@ class TestCQMEligibleWaitTimes(object):
 
     def test__get_active_machine_seconds_partial_machine_multi(self):
         '''cqm.QueueManager._get_active_machine_seconds multiple jobs, partial machine'''
-        expected_time = 3550.0 * (2.0 / self.sys_size)
+        expected_time = 3600.0 - 50.0
         active_jobs = [Job({'jobid': 1, 'nodes': 1, 'walltime': 60, 'starttime': 50.0}),
                        Job({'jobid': 2, 'nodes': 1, 'walltime': 60, 'starttime': 50.0})]
         ams_time = QueueManager._get_active_machine_seconds(self.current_time, self.sys_size, active_jobs)
@@ -3720,7 +3720,7 @@ class TestCQMEligibleWaitTimes(object):
 
     def test__get_active_machine_seconds_partial_machine_multi_nodes(self):
         '''cqm.QueueManager._get_active_machine_seconds multiple jobs, partial machine, multi-nodes'''
-        expected_time = 3550.0 * (3.0 / self.sys_size)
+        expected_time = 3600.0 -50.0
         active_jobs = [Job({'jobid': 1, 'nodes': 1, 'walltime': 60, 'starttime': 50.0}),
                        Job({'jobid': 2, 'nodes': 2, 'walltime': 60, 'starttime': 50.0})]
         ams_time = QueueManager._get_active_machine_seconds(self.current_time, self.sys_size, active_jobs)
@@ -3740,7 +3740,7 @@ class TestCQMEligibleWaitTimes(object):
 
     def test__get_active_machine_seconds_full_machine_multi_walltimes(self):
         '''cqm.QueueManager._get_active_machine_seconds full machine job: multiple jobs, diff walltimes'''
-        expected_time = 13575.0
+        expected_time = 43120.0
         active_jobs = [Job({'jobid': 1, 'nodes': 1, 'walltime': 60, 'starttime': 10.0}),
                        Job({'jobid': 2, 'nodes': 1, 'walltime': 720, 'starttime': 20.0}),
                        Job({'jobid': 3, 'nodes': 1, 'walltime': 120, 'starttime': 30.0}),
@@ -3751,7 +3751,7 @@ class TestCQMEligibleWaitTimes(object):
 
     def test__get_active_machine_seconds_full_machine_multi_size_time(self):
         '''cqm.QueueManager._get_active_machine_seconds full machine job: multiple jobs, diff walltimes and sizes'''
-        expected_time = 23315.0
+        expected_time = 43120.0
         active_jobs = [Job({'jobid': 1, 'nodes': 2, 'walltime': 60, 'starttime': 10.0}),
                        Job({'jobid': 2, 'nodes': 2, 'walltime': 720, 'starttime': 20.0}),]
         ams_time = QueueManager._get_active_machine_seconds(self.current_time, self.sys_size, active_jobs)
