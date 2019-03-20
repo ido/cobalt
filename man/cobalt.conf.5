@@ -396,6 +396,14 @@ A colon-delimited list of display headers to use with
 .BR qstat (1)'s
 -f flag.  If not set, a default set of display headers are used.  This does
 not change the -f -l combination for display.
+.TP
+.B starttime_estimate_shadow
+A floating point time to add to the current time for a minimum start time
+estimate. This will force a minimum start time in the future to handle
+situations where there is an ongoing cleanup or other system issue where
+a job may be running long.  This only affects display of Est_Start_Time in
+.BR qstat (1)'s
+display.  The default is 300.0 seconds.
 
 .SS "[cdbwriter]"
 .TP

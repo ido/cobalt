@@ -593,6 +593,8 @@ class CqmStub(object):
             _job['geometry']      = None
             _job['resid']         = None
             _job['score']         = SCORES[ndx]
+            if job.has_key('est_start_time'):
+                _job['est_start_time'] = 0.0
             ndx += 1
             _job_specs.append(_job)
             wtime += 5
