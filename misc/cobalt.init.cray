@@ -13,6 +13,7 @@ CONFIGFILE="${CONFIGPATH}/cobalt.conf"
 DAEMONDIR=/usr/sbin
 PIDPATH=/var/run/
 HOSTNAME=`hostname`
+YEARMONTH=`date +"%Y%m"`
 
 # Configure DB2 environment
 # . /discovery/db.src
@@ -49,8 +50,8 @@ start_component () {
     then
         (
          date=`/bin/date`
-         echo "--- $date: START ${component} ---" >>/var/log/cobalt/${component}_${HOSTNAME}.out
-         nohup "${DAEMONDIR}/${component}.py" $component_args --config-files "${CONFIGFILE}" >>/var/log/cobalt/${component}_${HOSTNAME}.out 2>&1 &
+         echo "--- $date: START ${component} ---" >>/var/log/cobalt/${component}_${HOSTNAME}_${YEARMONTH}.out
+         nohup "${DAEMONDIR}/${component}.py" $component_args --config-files "${CONFIGFILE}" >>/var/log/cobalt/${component}_${HOSTNAME}_${YEARMONTH}.out 2>&1 &
         )
         echo "done"
         return 0

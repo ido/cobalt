@@ -1,12 +1,39 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 1.0.26 ==
+ * Interactive mode jobs on cluster systems no longer get the Cray-style
+   double shell execution.
+ * Fixed an error in the logging timestamps of Cray KNL memory reboot scripts
+ * Added extended accounting log records for Jobs.  Holds are now tracked and
+   most records have additional information on job specification and resource.
+ * Added in accounting records for Cobalt reservations.
+ * Fixed double reporting of all-holds-clear on a dependency hold release.
+ * Fixed a logging bug in the event that a job fails to create a
+   .cobaltlog file.
+ * $COBALT_JOBID now properly expanded for .cobaltlog files
+ * Users may see a start time estimate for their jobs in qstat by adding
+   the start_time_est header to their header option.  This is a conservative
+   naive start time estimate based on the running job times and the number of
+   machine-hours of jobs ahead of a given job in the queue.  The minimum of this
+   estimate may be configured by sites to allow for potentially long resource
+   cleanups.
+ * A utility, find-location, has been added.  This can be used to find a
+   location on cluster systems or Cray systems that can be used for setting
+   reservations or as a location attribute.  This may be set to allow or avoid
+   currently down nodes, restricted to queues, avoid reservations, and on Cray
+   systems may be restricted to specific node attributes.
+ * An update to the Cray Cobalt initialization script has been made to tag the
+   component output redirect with a year and month for easier management of this
+   log.
+
+
 == Changes to 1.0.25 ==
  * Fixed not writing a TE record for jobs that had started running but
-   were adminstratively force-killed.
+   were administratively force-killed.
  * Fixed an issue where an error during run initialization was not
    entering the Run_Retry state correctly and would cause a job to fail.
  * Fixed a condition that could cause a node to be allocated to two jobs
-   simulataneously on cluster systems if a job is selected to run in both
+   simultaneously on cluster systems if a job is selected to run in both
    the primary and backfill scheduling passes.
  * Fixed a race condition where a job that was starting up and deleted by a
    user could set up a situation where a node would be freed twice, allowing

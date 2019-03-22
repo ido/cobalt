@@ -35,11 +35,16 @@ from Cobalt.client_utils import \
     cb_debug, cb_split
 
 from Cobalt.arg_parser import ArgParse
+from Cobalt.Util import get_config_option, init_cobalt_config
 
 __revision__ = '$Revision: 406 $'
 __version__ = '$Version$'
 
 QUEMGR = client_utils.QUEMGR
+
+init_cobalt_config()
+STARTTIME_ESTIMATE_SHADOW = float(get_config_option("cqm", 'starttime_estimate_shadow', 300.0))
+
 
 def human_format(x):
     units = ['  ', ' K', ' M', ' G', ' T', ' P']
@@ -198,10 +203,11 @@ def process_the_output(output,parser,hinfo):
     """
     process the qstat output
     """
+    current_time = time.time()
     fields            = ['score'] if parser.options.sort == None else [f.lower() for f in parser.options.sort]
     lower_case_header = [str(h).lower() for h in hinfo.header]
     idxes             = []
-    
+
     for f in fields:
         try:
             idx = lower_case_header.index(f)
@@ -228,7 +234,7 @@ def process_the_output(output,parser,hinfo):
 
     if parser.options.reverse != None:
         output.reverse()
-    
+
     if "short_state" in lower_case_header:
         idx = lower_case_header.index("short_state")
         hinfo.header[idx] = "S"
@@ -237,6 +243,15 @@ def process_the_output(output,parser,hinfo):
         idx = lower_case_header.index("score")
         for line in output:
             line[idx] = human_format(float(line[idx]))
+
+    if "est_start_time" in lower_case_header:
+        idx = lower_case_header.index("est_start_time")
+        for line in output:
+            if line[idx] is None or line[idx] == 0.0:
+                line[idx] = "-"
+            else:
+                line[idx] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(
+                    max(current_time + STARTTIME_ESTIMATE_SHADOW, float(line[idx]))))
 
     if parser.options.long != None:
         client_utils.print_vertical([tuple(x) for x in [hinfo.header] + output])

@@ -316,7 +316,7 @@ class header_info(object):
                    'Location', 'Mode', 'Procs', 'Preemptable', 'User_Hold', 'Admin_Hold', 'Queue', 'StartTime',
                    'Index', 'SubmitTime', 'Path', 'OutputDir', 'ErrorPath', 'OutputPath', 'Envs', 'Command', 'Args', 'Kernel',
                    'KernelOptions',  'ION_Kernel',  'ION_KernelOptions',  'Project', 'Dependencies', 'short_state', 'Notify',
-                   'Score', 'Maxtasktime', 'attrs', 'dep_frac', 'user_list', 'Geometry']
+                   'Score', 'Maxtasktime', 'attrs', 'dep_frac', 'user_list', 'Geometry', 'Est_Start_Time']
 
     custom_header      = None
     custom_header_full = None
@@ -1240,7 +1240,6 @@ def cb_passthrough(option,opt_str,value,parser,*args):
     """
     _setbool_attr(parser,opt_str,'block_passthrough',['--block_passthrough'])
 
-        
 def cb_date(option,opt_str,value,parser,*args):
     """
     parse date
@@ -1250,8 +1249,8 @@ def cb_date(option,opt_str,value,parser,*args):
         if args is not ():
             if _value.lower() == 'now':
                 allow_now = args[0]
-                if not allow_now: 
-                    raise
+                if not allow_now:
+                    raise ValueError("%s is not configured as a valid value for the %s option" % (_value, opt_str))
                 _value = cobalt_date(time.localtime(time.time()))
 
         starttime = parse_datetime(_value)
