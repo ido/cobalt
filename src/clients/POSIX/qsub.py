@@ -379,6 +379,11 @@ def parse_options(parser, spec, opts, opt2spec, def_spec):
     opts['disable_preboot'] = not spec['script_preboot']
     return opt_count
 
+def clear_setgid_cobalt():
+    # Clear setgid before attempting to start an interactive shell session
+    real_gid = os.getgid()
+    os.setregid(real_gid, real_gid)
+
 def fetch_pgid(user, jobid, loc, pgid=None):
     '''fetch and set pgid for user shell.  Needed for cray systems'''
     if client_utils.component_call(SYSMGR, False, 'get_implementation', ()) == 'alps_system':
@@ -398,8 +403,10 @@ def exec_user_shell(user, jobid, loc):
 
     '''
     pgid = os.getsid(0)
-    proc = subprocess.Popen([os.environ['SHELL']], shell=True,
-            preexec_fn=(lambda: fetch_pgid(user, jobid, loc, pgid=pgid)))
+    def preexec_fn():
+        fetch_pgid(user, jobid, loc, pgid=pgid)
+        clear_setgid_cobalt()
+    proc = subprocess.Popen([os.environ['SHELL']], shell=True, preexec_fn=preexec_fn)
     os.waitpid(proc.pid, 0)
 
 def run_interactive_job(jobid, user, disable_preboot, nodes, procs):
@@ -600,6 +607,7 @@ def main():
                 if opts['qsub_host'] != opts['ssh_host']:
                     #remote execute qsub on the ssh_host
                     client_utils.logger.info('Connecting to %s for interactive qsub...', opts['ssh_host'])
+                    clear_setgid_cobalt()
                     sys.exit(qsub_remote_host(opts['ssh_host'])) # return status from qsub-ssh
 
     filters = client_utils.get_filters()
