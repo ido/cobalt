@@ -1,5 +1,13 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 1.0.28 ==
+ * Fix an issue where defering a cyclic reservation could result in the
+   reservation start time being sent two cycle periods forward rather
+   than one.
+
+== Changes to 1.0.27 ==
+ * Security fix for Cray systems.
+
 == Changes to 1.0.26 ==
  * Interactive mode jobs on cluster systems no longer get the Cray-style
    double shell execution.
