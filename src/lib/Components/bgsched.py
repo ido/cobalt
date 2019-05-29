@@ -303,7 +303,7 @@ class Reservation (Data):
         logger.info("Res %s/%s: Cycling reservation: %s", self.res_id,
                 self.cycle_id, self.name)
         self.stime = None
-        if deferral_while_active:
+        if not deferral_while_active:
             #if we are deferring while active, don't increment the time.  That's already happened.
             self.set_start_to_next_cycle()
         self.running = False
@@ -326,7 +326,7 @@ class Reservation (Data):
             if self.running:
                 self.running = False
                 if self.cycle:
-                    #handle a deferral of a cyclic reservation while active, shold not increment normally
+                    #handle a deferral of a cyclic reservation while active, should not increment normally
                     #Time's already tweaked at this point.
                     logger.info("Res %s/%s: Active reservation %s deactivating: Deferred and cycling.",
                         self.res_id, self.cycle_id, self.name)
