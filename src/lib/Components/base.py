@@ -55,7 +55,7 @@ def state_file_location():
 def run_component (component_cls, argv=None, register=True, state_name=False,
                    cls_kwargs={}, extra_getopt='', time_out=10.0,
                    single_threaded=False, seq_num=0, aug_comp_name=False,
-                   state_name_match_component=False, sleeptime=10.0):
+                   state_name_match_component=False, sleeptime=0.01):
     '''Run the specified Cobalt component until recieving signal to terminate.
 
     Args::
@@ -172,8 +172,8 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
 
     if single_threaded:
         # sleeptime is not used due to differences in api.
-        server = BaseXMLRPCServer(location, keyfile=keypath, certfile=certpath, 
-                          cafile=capath, register=register, timeout=time_out)
+        server = BaseXMLRPCServer(location, keyfile=keypath, certfile=certpath,
+                          cafile=capath, register=register, timeout=time_out, sleeptime=sleeptime)
     else:
         server = XMLRPCServer(location, keyfile=keypath, certfile=certpath,
                           cafile=capath, register=register, timeout=time_out, sleeptime=sleeptime)
