@@ -52,10 +52,29 @@ def state_file_location():
     '''
     return os.path.expandvars(get_config_option('statefiles', "location", "/var/spool/cobalt"))
 
+def get_sleeptime(my_name):
+    '''Return what sleeptime should be for the base level automatic threads loop.
+    Checks the components section first, then the named component section.
+
+    Args:
+        my_name: the string identifier for this component
+
+    Returns:
+        A floating point time interval in seconds.  The default is 0.01 sec.
+
+    Note:
+        Any automatic timing value lower than this value will be effectively overridden by this value.
+    '''
+    sleeptime = float(get_config_option("components", "sleeptime", 0.01))
+    comp_sleeptime = get_config_option(my_name, "sleeptime", None)
+    if comp_sleeptime is not None:
+        return float(comp_sleeptime)
+    return sleeptime
+
 def run_component (component_cls, argv=None, register=True, state_name=False,
                    cls_kwargs={}, extra_getopt='', time_out=10.0,
                    single_threaded=False, seq_num=0, aug_comp_name=False,
-                   state_name_match_component=False, sleeptime=10.0):
+                   state_name_match_component=False):
     '''Run the specified Cobalt component until recieving signal to terminate.
 
     Args::
@@ -126,6 +145,7 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
     logging.getLogger().setLevel(level)
     Cobalt.Logging.setup_logging(component_cls.implementation, console_timestamp=True)
 
+
     if daemon:
         child_pid = os.fork()
         if child_pid != 0:
@@ -170,10 +190,13 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
         certpath = None
         capath = None
 
+    sleeptime = get_sleeptime(component_cls.implementation)
+    component.logger.info("Component sleep interval set to %s", sleeptime)
+
     if single_threaded:
         # sleeptime is not used due to differences in api.
-        server = BaseXMLRPCServer(location, keyfile=keypath, certfile=certpath, 
-                          cafile=capath, register=register, timeout=time_out)
+        server = BaseXMLRPCServer(location, keyfile=keypath, certfile=certpath,
+                          cafile=capath, register=register, timeout=time_out, sleeptime=sleeptime)
     else:
         server = XMLRPCServer(location, keyfile=keypath, certfile=certpath,
                           cafile=capath, register=register, timeout=time_out, sleeptime=sleeptime)
