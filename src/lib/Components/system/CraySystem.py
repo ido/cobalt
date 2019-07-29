@@ -470,16 +470,6 @@ class CraySystem(BaseSystem):
         #nodes.  If there is no resource reservation and the node is not in
         #current alps reservations, the node is ready to schedule again.
         now = time.time()
-        startup_time_to_clear = []
-        #clear pending starttimes.
-        for jobid, start_time in self.pending_starts.items():
-            if int(now) > int(start_time):
-                startup_time_to_clear.append(jobid)
-        for jobid in startup_time_to_clear:
-            _logger.info("Jobid %s: Clearing pending start.", jobid)
-            del self.pending_starts[jobid]
-
-        self.check_killing_aprun()
         # This lock doesn't need to be held for most update operations
         fetch_time_start = time.time()
         try:
@@ -495,6 +485,21 @@ class CraySystem(BaseSystem):
             return
         #_logger.debug("time in ALPS fetch: %s seconds", (time.time() - fetch_time_start))
         with self._node_lock:
+            # We set a pending startup timeout from the scheduler so that the queue-manager has
+            # time to start the job, but will also release resources should the resource manager
+            # fail to start the job in a timely fashion or errors out (like a badly timed hold)
+            startup_time_to_clear = []
+            #clear pending starttimes.
+            for jobid, start_time in self.pending_starts.items():
+                if int(now) > int(start_time):
+                    startup_time_to_clear.append(jobid)
+            for jobid in startup_time_to_clear:
+                _logger.info("Jobid %s: Clearing pending start.", jobid)
+                del self.pending_starts[jobid]
+
+            self.check_killing_aprun()
+
+            # ALPS reservation cleanup
             inven_reservations = reservations.get('reservations', [])
             start_time = time.time()
             self._detect_rereservation(inven_reservations)
