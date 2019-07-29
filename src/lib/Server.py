@@ -314,7 +314,8 @@ class BaseXMLRPCServer (SSLServer, CobaltXMLRPCDispatcher, object):
                   keyfile=None, certfile=None,
                   timeout=10,
                   logRequests=False,
-                  register=True, allow_none=True, encoding=None, cafile=None):
+                  register=True, allow_none=True, encoding=None, cafile=None,
+                  sleeptime=0.01):
         
         """Initialize the XML-RPC server.
         
@@ -347,6 +348,7 @@ class BaseXMLRPCServer (SSLServer, CobaltXMLRPCDispatcher, object):
         self.register_function(self.ping)
         self.logger.info("service available at %s" % self.url)
         self.timeout = timeout
+        self.sleeptime=sleeptime
 
     
     def register_instance (self, instance, *args, **kwargs):
@@ -410,7 +412,7 @@ class BaseXMLRPCServer (SSLServer, CobaltXMLRPCDispatcher, object):
                 except:
                     self.logger.error("Unexpected task failure", exc_info=1)
                 # this causes delays such as in control-c
-                Cobalt.Util.sleep(self.timeout)
+                Cobalt.Util.sleep(self.sleeptime)
         except:
             self.logger.error("tasks_thread failed", exc_info=1)
 
@@ -497,8 +499,7 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, BaseXMLRPCServer):
         
         BaseXMLRPCServer.__init__(self, server_address, RequestHandlerClass, keyfile, 
                                   certfile, timeout, logRequests, register, allow_none, encoding, cafile=cafile,
-                                  )
-        self.sleeptime=sleeptime
+                                  sleeptime=sleeptime)
         self.task_thread = threading.Thread(target=self._tasks_thread)
 
     #FIXME: this will fail if a get is called before self._register is defined
