@@ -470,36 +470,37 @@ class CraySystem(BaseSystem):
         #nodes.  If there is no resource reservation and the node is not in
         #current alps reservations, the node is ready to schedule again.
         now = time.time()
-        startup_time_to_clear = []
-        #clear pending starttimes.
-        for jobid, start_time in self.pending_starts.items():
-            if int(now) > int(start_time):
-                startup_time_to_clear.append(jobid)
-        for jobid in startup_time_to_clear:
-            del self.pending_starts[jobid]
-
-        self.check_killing_aprun()
+        # This lock doesn't need to be held for most update operations
+        fetch_time_start = time.time()
+        try:
+            #updated for >= 1.6 interface
+            inven_nodes = ALPSBridge.extract_system_node_data(ALPSBridge.system())
+            reservations = ALPSBridge.fetch_reservations()
+            # Fetch SSD diagnostic data and enabled flags. I would hope these change in event of dead ssd
+            ssd_enabled = ALPSBridge.fetch_ssd_enable()
+            ssd_diags = ALPSBridge.fetch_ssd_diags()
+        except (ALPSBridge.ALPSError, ComponentLookupError):
+            _logger.warning('Error contacting ALPS for state update.  Aborting this update',
+                    exc_info=True)
+            return
+        #_logger.debug("time in ALPS fetch: %s seconds", (time.time() - fetch_time_start))
         with self._node_lock:
-            fetch_time_start = time.time()
-            try:
-                #I have seen problems with the kitchen-sink query here, where
-                #the output gets truncated on it's way into Cobalt.
-                #inventory = ALPSBridge.fetch_inventory(resinfo=True) #This is a full-refresh,
-                #determine if summary may be used under normal operation
-                #updated for >= 1.6 interface
-                inven_nodes = ALPSBridge.extract_system_node_data(ALPSBridge.system())
-                reservations = ALPSBridge.fetch_reservations()
-                #reserved_nodes = ALPSBridge.reserved_nodes()
-                # Fetch SSD diagnostic data and enabled flags. I would hope these change in event of dead ssd
-                ssd_enabled = ALPSBridge.fetch_ssd_enable()
-                ssd_diags = ALPSBridge.fetch_ssd_diags()
-            except (ALPSBridge.ALPSError, ComponentLookupError):
-                _logger.warning('Error contacting ALPS for state update.  Aborting this update',
-                        exc_info=True)
-                return
+            # We set a pending startup timeout from the scheduler so that the queue-manager has
+            # time to start the job, but will also release resources should the resource manager
+            # fail to start the job in a timely fashion or errors out (like a badly timed hold)
+            startup_time_to_clear = []
+            #clear pending starttimes.
+            for jobid, start_time in self.pending_starts.items():
+                if int(now) > int(start_time):
+                    startup_time_to_clear.append(jobid)
+            for jobid in startup_time_to_clear:
+                _logger.info("Jobid %s: Clearing pending start.", jobid)
+                del self.pending_starts[jobid]
+
+            self.check_killing_aprun()
+
+            # ALPS reservation cleanup
             inven_reservations = reservations.get('reservations', [])
-            fetch_time_start = time.time()
-            #_logger.debug("time in ALPS fetch: %s seconds", (time.time() - fetch_time_start))
             start_time = time.time()
             self._detect_rereservation(inven_reservations)
             # check our reservation objects.  If a res object doesn't correspond
@@ -519,7 +520,7 @@ class CraySystem(BaseSystem):
                     if node.status in ['cleanup', 'cleanup-pending']:
                         node.status = 'idle'
             for alps_res in self.alps_reservations.values():
-                if alps_res.jobid in self.pending_starts.keys():
+                if int(alps_res.jobid) in [int(i) for i in self.pending_starts.keys()]:
                     continue #Get to this only after timeout happens
                 #find alps_id associated reservation
                 if int(alps_res.alps_res_id) not in current_alps_res_ids:
