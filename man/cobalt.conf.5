@@ -23,13 +23,19 @@ If a configuration value definition is mandatory, that will be noted.
 .SS General Sections
 .SS "[components]"
 .TP
+.B python
+The path to the python interpreter to use.  If omitted, the default is
+.I /usr/bin/python
+.TP
 .B service-location
 The url:port of the service-locator component (slp).  The default port is 8256.
 This must be specified for a given Cobalt instance
 .TP
-.B python
-The path to the python interpreter to use.  If omitted, the default is
-.I /usr/bin/python
+.B sleeptime
+This sets the base sleeptime for all components for automatic methods.  This
+is the floor for all components.  This may be overridden with the same option
+in each component section.  The time is a floating point value in seconds.
+The default interval is 0.01 sec.
 
 .SS "[communication]"
 SSL configuration for Cobalt. These must be specified per-install
@@ -261,6 +267,12 @@ Location of file for site-defined utility functions.
 If true, send messages to CobaltDB, or cache the messages that would be sent
 if the CobaltDB writer is currently unavailable for later writing.  The default
 is false
+.TP
+.B sleeptime
+This sets the base sleeptime for automatic methods in this component.  This
+is the floor for all components.  This may be overridden with the same option
+in each component section.  The time is a floating point value in seconds.
+The default interval is the [components] section sleeptime.
 
 .SS "[cqm]"
 These are options for the queue-manager component, cqm. Cqm handles queueing
@@ -404,6 +416,12 @@ situations where there is an ongoing cleanup or other system issue where
 a job may be running long.  This only affects display of Est_Start_Time in
 .BR qstat (1)'s
 display.  The default is 300.0 seconds.
+.TP
+.B sleeptime
+This sets the base sleeptime for automatic methods in this component.  This
+is the floor for all components.  This may be overridden with the same option
+in each component section.  The time is a floating point value in seconds.
+The default interval is the [components] section sleeptime.
 
 .SS "[cdbwriter]"
 .TP
@@ -430,6 +448,12 @@ Cobalt instances.
 The minimum interval that Cobalt will wait between saving statefiles for this
 component, in seconds. By default the interval is 10.0 seconds.  Under periods
 of high load on the component, the interval between statefiles may be longer.
+.TP
+.B sleeptime
+This sets the base sleeptime for automatic methods in this component.  This
+is the floor for all components.  This may be overridden with the same option
+in each component section.  The time is a floating point value in seconds.
+The default interval is the [components] section sleeptime.
 
 .SS Cluster System Sections
 .SS "[cluster_system]"
@@ -509,6 +533,12 @@ draining is permitted for improved utilization of cluster resources.
 .B minimum_backfill_window
 This is the minimum amount of backfill time to set for a set of resources that
 being cleaned by post-job epilogue scripts.  The default is 300 seconds.
+.TP
+.B sleeptime
+This sets the base sleeptime for automatic methods in this component.  This
+is the floor for all components.  This may be overridden with the same option
+in each component section.  The time is a floating point value in seconds.
+The default interval is the [components] section sleeptime.
 
 
 .SS BlueGene/P Sections
@@ -542,6 +572,12 @@ The type of BlueGene being run on.  For BlueGene/Q this should be set to 'bgp'.
 Enables an extra function to place the system component under high-communication
 stress for race-condition debugging and fault-handling testing if True.  This is
 False by default.  This applies only to the brooklyn system simulation environment.
+.TP
+.B sleeptime
+This sets the base sleeptime for automatic methods in this component.  This
+is the floor for all components.  This may be overridden with the same option
+in each component section.  The time is a floating point value in seconds.
+The default interval is the [components] section sleeptime.
 
 .SS BlueGene/Q Sections
 .SS "[bgpm]"
@@ -622,6 +658,12 @@ command.  The default is 300 seconds.
 .TP
 .B bgtype
 The type of BlueGene being run on.  For BlueGene/Q this should be set to 'bgq'.
+.TP
+.B sleeptime
+This sets the base sleeptime for automatic methods in this component.  This
+is the floor for all components.  This may be overridden with the same option
+in each component section.  The time is a floating point value in seconds.
+The default interval is the [components] section sleeptime.
 
 .SS "CRAY SECTIONS"
 .SS "[alps]"
@@ -664,6 +706,12 @@ seconds.  The default is 300 seconds.
 .B update_thread_timeout
 The polling interval for state updates from ALPS in seconds.  The default is
 10 seconds.
+.TP
+.B sleeptime
+This sets the base sleeptime for automatic methods in this component.  This
+is the floor for all components.  This may be overridden with the same option
+in each component section.  The time is a floating point value in seconds.
+The default interval is the [components] section sleeptime.
 .SS [capmc]
 .TP
 .B path
