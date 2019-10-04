@@ -691,6 +691,24 @@ class TestCraySystem(object):
             assert_match(self.system.nodes[str(i)].drain_jobid, 1, "Bad drain job")
             assert_match(self.system.nodes[str(i)].drain_until, 100.0, "Bad drain time")
 
+    def test_seelct_nodes_for_draining_no_exit_flap(self):
+        '''CraySystem._select_nodes_for_draining: do not flap when job exits with other running jobs.'''
+        # This results in the "draining flap" on job exit during a large job drain.  You need multiple running
+        # jobs, an exiting job on a cleanup node that still shows as running from the queue manager, and you
+        # have to get a duplicate node into the candidate_list while this is running.  This is based on the
+        # local simulator reproduction case.
+        end_times = [[['2'], 100.0], [['3'], 200.0]]
+        self.system.nodes['2'].status = 'cleanup-pending'
+        self.system.nodes['3'].status = 'busy'
+        self.base_job['nodes'] = 5
+        drain_nodes = self.system._select_nodes_for_draining(self.base_job,
+                end_times)
+        assert_match(sorted(drain_nodes), ['1', '2', '3', '4', '5'], "Bad Selection")
+        for i in ['1', '2', '3', '4', '5']:
+            assert_match(self.system.nodes[str(i)].draining, True, "Draining not set")
+            assert_match(self.system.nodes[str(i)].drain_jobid, 1, "Bad drain job")
+            assert_match(self.system.nodes[str(i)].drain_until, 200.0, "Bad drain time")
+
     # common checks for find_job_location
     def assert_draining(self, nid, until, drain_jobid):
         assert self.system.nodes[str(nid)].draining, "Node %s should be draining" % nid
