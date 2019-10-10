@@ -1137,7 +1137,7 @@ class CraySystem(BaseSystem):
                 #    a drain window on cleaning nodes easily.  Not sure if this
                 #    is the right thing to do. --PMR
                 candidate_list = []
-                candidate_list = [nid for nid in node_id_list
+                candidate_list = [str(nid) for nid in node_id_list
                         if (not self.nodes[str(nid)].draining and
                             (self.nodes[str(nid)].status in ['idle']) or
                             (self.nodes[str(nid)].status in cleanup_statuses)
@@ -1159,8 +1159,8 @@ class CraySystem(BaseSystem):
                                 self.nodes[str(nid)].managed):
                             self.nodes[str(nid)].set_drain(loc_time[1], job['jobid'])
                     # It's a list not a set, need to ensure uniqueness
-                    candidate_list.extend([nid for nid in running_nodes if
-                        self.nodes[str(nid)].draining and nid not in candidate_list])
+                    candidate_list.extend([str(nid) for nid in running_nodes if
+                        self.nodes[str(nid)].draining and str(nid) not in candidate_list])
                     candidate_drain_time = int(loc_time[1])
                     if len(candidate_list) >= int(job['nodes']):
                         # Enough nodes have been found to drain for this job
