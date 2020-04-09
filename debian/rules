@@ -10,7 +10,7 @@ export DH_VERBOSE=1
 client_wrapper_dir = /usr/libexec/cobalt
 python_wrapper_dir = $(client_wrapper_dir)/bin
 python_site_packages = /usr/local/lib/python2.7/site-packages
-
+debian_base = debian/tmp
 configure: configure-stamp
 
 configure-stamp:
@@ -51,40 +51,40 @@ install: build
 	mkdir -p debian/tmp/$(python_wrapper_dir)
 	mkdir -p debian/tmp/$(python_site_packages)
 	python setup.py install --prefix=debian/tmp/$(client_wrapper_dir)  --install-lib debian/tmp/$(python_site_packages)
-	mv debian/tmp/usr/bin/slp.py debian/tmp/usr/sbin
-	mv debian/tmp/usr/bin/bgsched.py debian/tmp/usr/sbin
-	mv debian/tmp/usr/bin/user_script_forker.py debian/tmp/usr/sbin
-	mv debian/tmp/usr/bin/system_script_forker.py debian/tmp/usr/sbin
-	mv debian/tmp/usr/bin/gravina.py debian/tmp/usr/sbin
-	mv debian/tmp/usr/bin/cqm.py debian/tmp/usr/sbin
-	mv debian/tmp/usr/bin/brooklyn.py debian/tmp/usr/sbin
-	mv debian/tmp/usr/bin/partadm.py debian/tmp/usr/sbin
-	mv debian/tmp/usr/bin/setres.py debian/tmp/usr/sbin
-	mv debian/tmp/usr/bin/releaseres.py debian/tmp/usr/sbin
-	mv debian/tmp/usr/bin/cqadm.py debian/tmp/usr/sbin
-	mv debian/tmp/usr/bin/schedctl.py debian/tmp/usr/sbin
-	mv debian/tmp/usr/bin/cluster_system.py debian/tmp/usr/sbin
-	mv debian/tmp/usr/bin/cluster_simulator.py debian/tmp/usr/sbin
-	mv debian/tmp/usr/bin/nodeadm.py debian/tmp/usr/sbin
-	mv debian/tmp/usr/bin/prologue_helper.py debian/tmp/usr/sbin
-	mv debian/tmp/usr/bin/cdbwriter.py debian/tmp/usr/sbin
-	mv debian/tmp/usr/bin/perfdata.py debian/tmp/usr/sbin
-	mv debian/tmp/usr/bin/bb.py debian/tmp/usr/sbin
-	mv debian/tmp/usr/bin/bbsim.py debian/tmp/usr/sbin
-	mv debian/tmp/usr/bin/hammer.py debian/tmp/usr/sbin
-	mv debian/tmp/usr/bin/radm.py debian/tmp/usr/sbin
-	mv debian/tmp/usr/bin/cweb.py debian/tmp/usr/sbin
-	rm -f debian/tmp/usr/bin/*test*
-	rm -f debian/tmp/usr/bin/brun.py
-	rm -f debian/tmp/usr/bin/bstat.py
-	rm -f debian/tmp/usr/bin/pmrun.py
-	rm -f debian/tmp/usr/bin/cdump.py
-	mkdir -p debian/tmp/etc/
-	install -m 644 misc/cobalt.bb.conf debian/tmp/etc/cobalt.conf
-	mkdir -p debian/tmp/var/log/cobalt/
-	mkdir -p debian/tmp/var/spool/cobalt/
-	touch debian/tmp/etc/cobalt.utility
-	install -m 755 src/clients/wrapper debian/tmp/usr/bin
+	mv $(debian_base)$(python_wrapper_dir)/slp.py $(debian_base)/usr/sbin
+	mv $(debian_base)$(python_wrapper_dir)/bgsched.py $(debian_base)/usr/sbin
+	mv $(debian_base)$(python_wrapper_dir)/user_script_forker.py $(debian_base)/usr/sbin
+	mv $(debian_base)$(python_wrapper_dir)/system_script_forker.py $(debian_base)/usr/sbin
+	mv $(debian_base)$(python_wrapper_dir)/gravina.py $(debian_base)/usr/sbin
+	mv $(debian_base)$(python_wrapper_dir)/cqm.py $(debian_base)/usr/sbin
+	mv $(debian_base)$(python_wrapper_dir)/brooklyn.py $(debian_base)/usr/sbin
+	mv $(debian_base)$(python_wrapper_dir)/partadm.py $(debian_base)/usr/sbin
+	mv $(debian_base)$(python_wrapper_dir)/setres.py $(debian_base)/usr/sbin
+	mv $(debian_base)$(python_wrapper_dir)/releaseres.py $(debian_base)/usr/sbin
+	mv $(debian_base)$(python_wrapper_dir)/cqadm.py $(debian_base)/usr/sbin
+	mv $(debian_base)$(python_wrapper_dir)/schedctl.py $(debian_base)/usr/sbin
+	mv $(debian_base)$(python_wrapper_dir)/cluster_system.py $(debian_base)/usr/sbin
+	mv $(debian_base)$(python_wrapper_dir)/cluster_simulator.py $(debian_base)/usr/sbin
+	mv $(debian_base)$(python_wrapper_dir)/nodeadm.py $(debian_base)/usr/sbin
+	mv $(debian_base)$(python_wrapper_dir)/prologue_helper.py $(debian_base)/usr/sbin
+	mv $(debian_base)$(python_wrapper_dir)/cdbwriter.py $(debian_base)/usr/sbin
+	mv $(debian_base)$(python_wrapper_dir)/perfdata.py $(debian_base)/usr/sbin
+	mv $(debian_base)$(python_wrapper_dir)/bb.py $(debian_base)/usr/sbin
+	mv $(debian_base)$(python_wrapper_dir)/bbsim.py $(debian_base)/usr/sbin
+	mv $(debian_base)$(python_wrapper_dir)/hammer.py $(debian_base)/usr/sbin
+	mv $(debian_base)$(python_wrapper_dir)/radm.py $(debian_base)/usr/sbin
+	mv $(debian_base)$(python_wrapper_dir)/cweb.py $(debian_base)/usr/sbin
+	rm -f $(debian_base)$(python_wrapper_dir)/*test*
+	rm -f $(debian_base)$(python_wrapper_dir)/brun.py
+	rm -f $(debian_base)$(python_wrapper_dir)/bstat.py
+	rm -f $(debian_base)$(python_wrapper_dir)/pmrun.py
+	rm -f $(debian_base)$(python_wrapper_dir)/cdump.py
+	mkdir -p $(debian_base)/etc/
+	install -m 644 misc/cobalt.bb.conf $(debian_base)/etc/cobalt.conf
+	mkdir -p $(debian_base)/var/log/cobalt/
+	mkdir -p $(debian_base)/var/spool/cobalt/
+	touch $(debian_base)/etc/cobalt.utility
+	install -m 755 src/clients/wrapper $(debian_base)/usr/bin
 	for file in `find debian/tmp/usr/bin -name \*.py | sed -e 's/\.py//' |grep -v fake | grep -v cobalt-launcher` ; do echo $${file} ; ln -sf wrapper $${file} ;done 
 
 binary-indep: build install

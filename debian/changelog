@@ -1,3 +1,9 @@
+cobalt (1.0.29) unstable; urgency=low
+
+  * updating to a modern version of Cobalt
+
+ -- Paul Rich <richp@alcf.anl.gov>  Thu, 9 Apr 2020 16:07:00 -0500
+
 cobalt (0.99) unstable; urgency=low
 
   * adding installation of cobalt.init script to debian installation
