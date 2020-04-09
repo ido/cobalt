@@ -1,0 +1,7 @@
+usr/bin
+usr/sbin
+usr/libexec
+etc
+var/spool/cobalt
+var/log/cobalt
+usr/local/lib/python2.7/site-packages/Cobalt
