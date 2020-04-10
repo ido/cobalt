@@ -1,0 +1,11 @@
+#!/bin/bash -e
+
+
+# create cobalt group and set setgid bit for wrapper
+if [ -z `getent group cobalt` ]
+then
+  groupadd cobalt
+fi
+
+chown root:cobalt /usr/libexec/cobalt/bin/wrapper
+chmod 2755 /usr/libexec/cobalt/bin/wrapper 

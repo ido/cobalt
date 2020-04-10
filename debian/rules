@@ -9,7 +9,7 @@
 export DH_VERBOSE=1
 client_wrapper_dir = /usr/libexec/cobalt
 python_wrapper_dir = $(client_wrapper_dir)/bin
-python_site_packages = /usr/local/lib/python2.7/site-packages
+python_site_packages = /usr/lib/python2.7/dist-packages
 debian_base = debian/tmp
 configure: configure-stamp
 
@@ -83,9 +83,15 @@ install: build
 	install -m 644 misc/cobalt.bb.conf $(debian_base)/etc/cobalt.conf
 	mkdir -p $(debian_base)/var/log/cobalt/
 	mkdir -p $(debian_base)/var/spool/cobalt/
+	mkdir -p $(debian_base)/var/spool/cobalt/overflow
 	touch $(debian_base)/etc/cobalt.utility
-	install -m 755 src/clients/wrapper $(debian_base)/usr/bin
-	for file in `find debian/tmp/usr/bin -name \*.py | sed -e 's/\.py//' |grep -v fake | grep -v cobalt-launcher` ; do echo $${file} ; ln -sf wrapper $${file} ;done 
+	install -m 755 src/clients/wrapper $(debian_base)$(python_wrapper_dir)
+	for file in `find $(debian_base)$(python_wrapper_dir) -name \*.py | sed -e 's/\.py//' | grep -v fake | grep -v cobalt-launcher` ; do echo $${file} ; ln -sf $(python_wrapper_dir)/wrapper `echo $${file} | sed -e 's,$(python_wrapper_dir),/usr/bin,'` ;done 
+	# Make softlinks for admin commands and daemons
+	for file in `find $(debian_base)/usr/sbin -name \*.py -print` ; do ln -sf `echo $${file} | sed -e 's,$(debian_base),,'` `echo $${file} | sed -e 's/.py//'` ; done
+	# Move manpages back to the right place
+	mv $(debian_base)$(client_wrapper_dir)/share $(debian_base)/usr/share
+	chmod 644 $(debian_base)/usr/share/man/man*/*
 
 binary-indep: build install
 	# We have nothing to do by default.
