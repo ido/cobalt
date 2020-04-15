@@ -1,0 +1,15 @@
+bgqsystem
+bgsched
+bgsystem
+cqadm
+cqm
+cweb
+nodeadm
+partadm
+perfdata
+prologue_helper
+releaseres
+schedctl
+setres
+system_script_forker
+user_script_forker
