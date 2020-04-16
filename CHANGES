@@ -1,5 +1,10 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 1.0.30 ==
+ * Fixed a race condition for Cray systems where a job draining may be
+   disrupted briefly on job termination, allowing other jobs to run
+   instead.
+
 == Changes to 1.0.29 ==
  * A timeout for automatic functions that was forcing a once-per-ten-seconds
    cycle time has been relaxed.  The default is now much faster and should
@@ -9,7 +14,7 @@
    be responsive while ALPS updates are being fetched for Cray systems.
 
 == Changes to 1.0.28 ==
- * Fix an issue where defering a cyclic reservation could result in the
+ * Fix an issue where deferring a cyclic reservation could result in the
    reservation start time being sent two cycle periods forward rather
    than one.
 

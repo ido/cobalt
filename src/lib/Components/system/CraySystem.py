@@ -1133,11 +1133,11 @@ class CraySystem(BaseSystem):
                 # 1. idle nodes that are already marked for draining.
                 # 2. Nodes that are in an in-use status (busy, allocated).
                 # 3. Nodes marked for cleanup that are not allocated to a real
-                #    jobid. CLEANING_ID is a sentiel jobid value so we can set
-                #    a drain window on cleaning nodes easiliy.  Not sure if this
+                #    jobid. CLEANING_ID is a sentinel jobid value so we can set
+                #    a drain window on cleaning nodes easily.  Not sure if this
                 #    is the right thing to do. --PMR
                 candidate_list = []
-                candidate_list = [nid for nid in node_id_list
+                candidate_list = [str(nid) for nid in node_id_list
                         if (not self.nodes[str(nid)].draining and
                             (self.nodes[str(nid)].status in ['idle']) or
                             (self.nodes[str(nid)].status in cleanup_statuses)
@@ -1158,8 +1158,9 @@ class CraySystem(BaseSystem):
                         if (self.nodes[str(nid)].status != 'down' and
                                 self.nodes[str(nid)].managed):
                             self.nodes[str(nid)].set_drain(loc_time[1], job['jobid'])
-                    candidate_list.extend([nid for nid in running_nodes if
-                        self.nodes[str(nid)].draining])
+                    # It's a list not a set, need to ensure uniqueness
+                    candidate_list.extend([str(nid) for nid in running_nodes if
+                        self.nodes[str(nid)].draining and str(nid) not in candidate_list])
                     candidate_drain_time = int(loc_time[1])
                     if len(candidate_list) >= int(job['nodes']):
                         # Enough nodes have been found to drain for this job
