@@ -272,6 +272,13 @@ def dgetopt(arglist, opt, vopt, msg):
             ret[vopt[option]] = garg
     return ret, list(args)
 
+# regexes for merging nodelists:
+cluster_node_reg = re.compile(r'(\D+)(\d+)')
+device_reg = re.compile(r'(\D+\d+-\D+)(\d)')
+cray_loc = re.compile(r'^(\d+)')
+node_and_dev = re.compile(r'(\D+\d+)-(\D+[\[\]\-\d]+)')
+first_number_reg = re.compile(r'(\d+)')
+
 def merge_nodelist(locations):
     '''create a set of dashed-ranges from a node list
 
@@ -283,9 +290,6 @@ def merge_nodelist(locations):
         list.
 
     '''
-    reg = re.compile(r'(\D+)(\d+)')
-    device_reg = re.compile(r'(\D+\d+-\D+)(\d)')
-    cray_loc = re.compile(r'^(\d+)')
     # create a dictionary with a key for each node prefix,
     # with sorted lists of node numbers as the values
     noderanges = {}
@@ -296,7 +300,7 @@ def merge_nodelist(locations):
     ret = []
 
     if (len(locations) > 1 and
-        reg.match(locations[0]) is None and
+        cluster_node_reg.match(locations[0]) is None and
         device_reg.match(locations[0]) is None and
         cray_loc.match(locations[0]) is None):
         # We don't know how to merge this list of locations.
@@ -310,12 +314,12 @@ def merge_nodelist(locations):
 
     for name in locations:
         try:
-            prefix = reg.match(name).group(1)
-            nodenum = reg.match(name).group(2)
-            if device_reg.match(name):
+            dev_match = device_reg.match(name)
+            if dev_match:
                 has_device_naming = True
-                prefix = device_reg.match(name).group(1)
-                nodenum = device_reg.match(name).group(2)
+                prefix, nodenum = dev_match.groups()
+            else:
+                prefix, nodenum = cluster_node_reg.match(name).groups()
             num_digits = len(nodenum)
             newnum = int(nodenum)
             if not prefix in noderanges:
@@ -345,7 +349,8 @@ def merge_nodelist(locations):
             prefix_format_str[prefix] = {'compact': "[%s%s-%s]",
                                          'single': "%s%s"}
 
-    ret = _gen_compacted_list(noderanges, prefix_format_str)
+    # may have some node names from above
+    ret.extend(_gen_compacted_list(noderanges, prefix_format_str))
 
     # Compact Nodes and Devices
     if has_device_naming:
@@ -359,19 +364,20 @@ def _compact_device_list(locations):
     this is a second stage for the more complex device-split locations
     '''
     ret = []
-    node_and_dev = re.compile(r'(\D+\d+)-(\D+[\[\]\-\d]+)')
     nodes_by_dev = {}
     for node in sorted(locations):
         match = node_and_dev.match(node)
-        if match is None:
-            ret.append(node)
-        else:
-            node_name = match.group(1)
-            dev_set = match.group(2)
-            if nodes_by_dev.get(dev_set, None):
-                nodes_by_dev[dev_set].append(node_name)
+        try:
+            if match is None:
+                ret.append(node)
             else:
-                nodes_by_dev[dev_set] = [node_name]
+                node_name, dev_set = match.groups()
+                if nodes_by_dev.get(dev_set, None):
+                    nodes_by_dev[dev_set].append(node_name)
+                else:
+                    nodes_by_dev[dev_set] = [node_name]
+        except AttributeError:
+            ret.append(node)
     for dev_set, nodes in nodes_by_dev.items():
         compacted_nodes = merge_nodelist(nodes).split(',')
         ret.extend(["%s-%s" % (node, dev_set) for node in compacted_nodes])
@@ -379,9 +385,16 @@ def _compact_device_list(locations):
 
 def _compare_on_low_range(left, right):
     '''comparison to sort a compressed list'''
-    first_number_reg = re.compile(r'(\d+)')
-    left_num = first_number_reg.search(left).group(1)
-    right_num = first_number_reg.search(right).group(1)
+    try:
+        left_num = first_number_reg.search(left).group(1)
+        right_num = first_number_reg.search(right).group(1)
+    except AttributeError:
+        # Didn't have a number with this particular node, fall back to lexical.
+        if left == right:
+            return 0
+        elif left > right:
+            return 1
+        return -1
     if left_num == right_num:
         return 0
     elif left_num > right_num:

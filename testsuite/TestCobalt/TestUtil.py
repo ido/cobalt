@@ -411,6 +411,13 @@ class TestMergeNodelist(object):
             "cc01.test", "cc44.test"])
         assert_match(resp, correct, "Incorrect merged list")
 
+    def test_merge_nodelist_cluster_with_oneoff(self):
+        '''cluster system style full nodes with one-off nonconforming node name'''
+        correct = 'bombadil,cc01,cc[42-44],frodo'
+        resp = Cobalt.Util.merge_nodelist(["cc43.test", "cc42.test",
+            "cc01.test", "cc44.test", "frodo", "bombadil"])
+        assert_match(resp, correct, "Incorrect merged list")
+
     def test_merge_nodelist_cluster_gpu(self):
         '''cluster system style gpu-naming from single node'''
         correct = 'cc01-gpu[0-3]'
@@ -457,6 +464,21 @@ class TestMergeNodelist(object):
                     'cc03-gpu0', 'cc03-gpu1', 'cc03-gpu2', 'cc03-gpu3',
                     'cc04-gpu4', 'cc04-gpu5', 'cc04-gpu6', 'cc04-gpu7',
                     'cc06-gpu0', 'cc09-gpu5', 'cc08-gpu5', 'cc01', 'cc07',
+                ]
+        resp = Cobalt.Util.merge_nodelist(location)
+        assert_match(resp, correct, "Incorrect merged list")
+
+    def test_merge_nodelist_cluster_gpu_oneoff(self):
+        '''cluster system style gpu-naming mixed with standard and one-off nodes'''
+        correct = 'bombadil,cc01,cc[01-03]-gpu[0-3],cc04-gpu[4-7],cc05-gpu[0-3],cc06-gpu0,cc07,cc[08-09]-gpu5,cc[10-12],cc42'
+        location = ['cc01-gpu0', 'cc01-gpu1', 'cc01-gpu2', 'cc01-gpu3',
+                    'cc02-gpu0', 'cc02-gpu1', 'cc02-gpu2', 'cc02-gpu3',
+                    'cc10', 'cc11', 'cc12', 'cc42',
+                    'cc05-gpu0', 'cc05-gpu1', 'cc05-gpu2', 'cc05-gpu3',
+                    'cc03-gpu0', 'cc03-gpu1', 'cc03-gpu2', 'cc03-gpu3',
+                    'cc04-gpu4', 'cc04-gpu5', 'cc04-gpu6', 'cc04-gpu7',
+                    'cc06-gpu0', 'cc09-gpu5', 'cc08-gpu5', 'cc01', 'cc07',
+                    'bombadil',
                 ]
         resp = Cobalt.Util.merge_nodelist(location)
         assert_match(resp, correct, "Incorrect merged list")
