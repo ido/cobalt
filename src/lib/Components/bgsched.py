@@ -346,7 +346,7 @@ class Reservation (Data):
                         etime, int(self.start), int(self.start) + int(self.duration), self.name, self.queue,
                         self.resource_list, self.active_id, self.duration, self.partitions, self.users, self.project))
                     dbwriter.log_to_db(None, "deactivating", "reservation", self, etime)
-                    dbwriter.log_to_db(None, "instance_end","reservation", self)
+                    dbwriter.log_to_db(None, "instance_end", "reservation", self)
                     self.__cycle_reservation(True)
                 else:
                     logger.info("Res %s/%s: Active reservation %s deactivating: start time in future.",
@@ -355,6 +355,7 @@ class Reservation (Data):
                         etime, int(self.start), int(self.start) + int(self.duration), self.name, self.queue,
                         self.resource_list, self.active_id, self.duration, self.partitions, self.users, self.project))
                     dbwriter.log_to_db(None, "deactivating", "reservation", self, etime)
+                    self.active_id = self.active_id_gen.get()
             return False
 
         if self.cycle:

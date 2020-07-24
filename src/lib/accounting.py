@@ -234,11 +234,11 @@ def finish(reservation_id, requester, ctime, stime, etime, start_time, end_time,
     """
     #Note: for charging purposes, this is closest to the 'E' record.  This
     #indicates the job data that should actually be charged.
-    msg = {'requester':requester, 'ctime':int(ctime), 'stime':int(stime), 'etime':int(etime),
+    msg = {'requester':requester, 'ctime':ctime, 'stime': stime, 'etime': etime,
             'Resource_List':resource_list, 'active_id': active_id,
             'resource':resource, 'duration': duration, 'exec_host':exec_host,
             'authorized_users': authorized_users, 'users':authorized_users,
-            'start_time': start_time, 'end_time': end_time, 'queue': queue}
+            'start': start_time, 'end': end_time, 'queue': queue}
     if name is not None:
         msg['name'] = name
     if account is not None:
@@ -275,11 +275,11 @@ def system_remove (reservation_id, requester, ctime, stime, etime, start_time, e
     """
     #Note: for charging purposes, this is closest to the 'E' record.  This
     #indicates the job data that should actually be charged.
-    msg = {'requester':requester, 'ctime':int(ctime), 'stime':int(stime), 'etime':int(etime),
+    msg = {'requester':requester, 'ctime':ctime, 'stime':stime, 'etime': etime,
             'Resource_List':resource_list, 'active_id': active_id,
             'resource':resource, 'duration': duration, 'exec_host':exec_host,
             'authorized_users': authorized_users, 'users':authorized_users,
-            'start_time': start_time, 'end_time': end_time, 'queue': queue}
+            'start': start_time, 'end': end_time, 'queue': queue}
     if name is not None:
         msg['name'] = name
     if account is not None:
@@ -314,11 +314,11 @@ def remove (reservation_id, requester, ctime, stime, etime, start_time, end_time
     """
     #Note: for charging purposes, this is closest to the 'E' record.  This
     #indicates the job data that should actually be charged.
-    msg = {'requester':requester, 'ctime':int(ctime), 'stime':int(stime), 'etime':int(etime),
+    msg = {'requester':requester, 'ctime':ctime, 'stime':stime, 'etime':etime,
             'Resource_List':resource_list, 'active_id': active_id,
             'resource':resource, 'duration': duration, 'exec_host':exec_host,
             'authorized_users': authorized_users, 'users':authorized_users,
-            'start_time': start_time, 'end_time': end_time, 'queue': queue}
+            'start': start_time, 'end': end_time, 'queue': queue}
     if name is not None:
         msg['name'] = name
     if account is not None:
