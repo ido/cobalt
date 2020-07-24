@@ -184,13 +184,15 @@ class Reservation (Data):
 
         write_mod_message = True
         updated = False
-        if self.running and spec.has_key('start'):
+        if self.running and (spec.has_key('start') or spec.has_key('duration') or spec.has_key('partitions')):
             #if we are modifying a reservation's start time for an actively running reservation, then
             #we need to emit a specific set of records so an accounting system can sanely determine holds.
             #The reservation will have to "system remove (stop), modify, and then begin"  the active id will
             #be incremented for the new begin.  Our normal mechanisms don't catch this in the is_active check
             #since the reservation will never actually go inactive.
-            if int(spec['start']) > int(self.start) and int(spec['start']) < (int(self.start) + int(self.duration)):
+            if (spec.has_key('duration') or
+                spec.has_key('partitions') or
+                int(spec['start']) > int(self.start) and int(spec['start']) < (int(self.start) + int(self.duration))):
                 logger.warning("Res %s/%s/%s: WARNING: start time changed during reservation to time within duration.",
                         self.res_id, self.cycle_id, self.name)
                 # the etime (when this really ended) is now.
