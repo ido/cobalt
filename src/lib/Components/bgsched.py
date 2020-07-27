@@ -531,7 +531,12 @@ class ReservationDict (DataDict):
             reservation.deleting = True #Do not let the is_active check succeed.
             #This should be the last place we have handles to reservations,
             #after this they're heading to GC.
-            if reservation.is_active():
+            # This seems redundant, but there is a race condition where is_over
+            # may not have been invoked yet, but the reservation is no longer
+            # active.  In this case, if is over would be true, but hadn't bene
+            # invoked yet, is_active would be false and we would miss this.  So,
+            # this should coerce the right behavior.
+            if (not reservation.is_over()) and reservation.running:
                 #if we are active, then drop a deactivating message.
                 _write_to_accounting_log(accounting.system_remove(reservation.res_id, "Scheduler", reservation.ctime, reservation.stime,
                     etime, int(reservation.start), int(reservation.start) + int(reservation.duration), reservation.name, reservation.queue,
