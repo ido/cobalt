@@ -182,40 +182,35 @@ class Reservation (Data):
         if spec.has_key('partitions'):
             self.resource_list = ComponentProxy("system").get_location_statistics(spec['partitions'])
 
-        write_mod_message = True
-        updated = False
-        if self.running and (spec.has_key('start') or spec.has_key('duration') or spec.has_key('partitions')):
+        if self.running:
             #if we are modifying a reservation's start time for an actively running reservation, then
             #we need to emit a specific set of records so an accounting system can sanely determine holds.
             #The reservation will have to "system remove (stop), modify, and then begin"  the active id will
             #be incremented for the new begin.  Our normal mechanisms don't catch this in the is_active check
             #since the reservation will never actually go inactive.
-            if (spec.has_key('duration') or
-                spec.has_key('partitions') or
-                int(spec['start']) > int(self.start) and int(spec['start']) < (int(self.start) + int(self.duration))):
+            logger.warning("Res %s/%s/%s: WARNING: modification of a currently active reservation.",
+                    self.res_id, self.cycle_id, self.name)
+            if (spec.has_key('start') and
+                int(spec['start']) > int(self.start) and
+                int(spec['start']) < (int(self.start) + int(self.duration))):
                 logger.warning("Res %s/%s/%s: WARNING: start time changed during reservation to time within duration.",
                         self.res_id, self.cycle_id, self.name)
-                # the etime (when this really ended) is now.
-                _write_to_accounting_log(accounting.system_remove(self.res_id, "Scheduler", self.ctime, self.stime,
-                    int(time.time()), int(self.start), int(self.start) + int(self.duration), self.name, self.queue,
-                    self.resource_list, self.active_id, self.duration, self.partitions, self.users, self.project))
-                #have to increment here, since we will not actually trigger from going inactive.
-                self.active_id = self.active_id_gen.get()
-                Data.update(self, spec)
-                updated = True
-                _write_to_accounting_log(accounting.reservation_altered(self.res_id, user_name, self.start, self.duration,
-                   self.resource_list, self.ctime, self.stime, None, self.active_id, self.partitions, self.queue, self.name,
-                   self.users,  self.project))
-                _write_to_accounting_log(accounting.begin(self.res_id, self.users, self.queue, self.ctime, self.stime,
-                    int(self.start), int(self.start) + int(self.duration), int(self.duration),
-                    self.partitions, self.users, self.resource_list, self.active_id, name=self.name, account=self.project,
-                    authorized_groups=None, authorized_hosts=None))
-                write_mod_message = False
-
-        if not updated:
+            # the etime (when this really ended) is now.
+            _write_to_accounting_log(accounting.system_remove(self.res_id, "Scheduler", self.ctime, self.stime,
+                int(time.time()), int(self.start), int(self.start) + int(self.duration), self.name, self.queue,
+                self.resource_list, self.active_id, self.duration, self.partitions, self.users, self.project))
+            #have to increment here, since we will not actually trigger from going inactive.
+            self.active_id = self.active_id_gen.get()
             Data.update(self, spec)
-
-        if write_mod_message:
+            _write_to_accounting_log(accounting.reservation_altered(self.res_id, user_name, self.start, self.duration,
+               self.resource_list, self.ctime, self.stime, None, self.active_id, self.partitions, self.queue, self.name,
+               self.users,  self.project))
+            _write_to_accounting_log(accounting.begin(self.res_id, self.users, self.queue, self.ctime, self.stime,
+                int(self.start), int(self.start) + int(self.duration), int(self.duration),
+                self.partitions, self.users, self.resource_list, self.active_id, name=self.name, account=self.project,
+                authorized_groups=None, authorized_hosts=None))
+        else:
+            Data.update(self, spec)
             _write_to_accounting_log(accounting.reservation_altered(self.res_id, user_name, self.start, self.duration,
                self.resource_list, self.ctime, self.stime, None, self.active_id, self.partitions, self.queue, self.name,
                self.users,  self.project))
