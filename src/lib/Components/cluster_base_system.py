@@ -280,6 +280,11 @@ class ClusterBaseSystem (Component):
         return ""
     unfail_partitions = exposed(unfail_partitions)
 
+    def _expand_attrs_location(self, location):
+        if location is not None and location != '':
+            return location.split(':')
+        return []
+
     def _find_job_location(self, job, now, drain_time=0, already_draining=set([])):
         '''Get a list of nodes capable of running a job.
 
@@ -304,19 +309,32 @@ class ClusterBaseSystem (Component):
         '''
         forbidden = set(job.get('forbidden', [])) #These are locations the scheduler has decided are inelligible for running.
         required = set(job.get('required', [])) #Always consider these nodes for scheduling, due to things being in a reservation
+        requested_locations = set([]) #Restrict placement to these nodes.  The user has requested this restriction
+        if job.get('attrs', None) is not None:
+            requested_locations = set([str(n) for n in self._expand_attrs_location(job['attrs'].get('location', ''))])
         selected_locations = set()
         new_drain_time = 0
         ready_to_run = False
         nodes = int(job['nodes'])
         available_nodes = set()
+        # required nodes are used for reservations
+        # requested nodes are requested by the user via --attrs location
+        # therefore required in this case should become the intersection of required and requested_locations
+        # this will also play nice with the later overlap check.
+        if requested_locations:
+            required = required.intersection(requested_locations)
         try:
             available_nodes = self.queue_assignments[job['queue']].difference(forbidden).difference(already_draining)
+            if requested_locations:
+                available_nodes = available_nodes.intersection(requested_locations)
         except KeyError:
             #The key error is due to the queue being a reservation queue.  Those have no resources assigned in the system
             #component.  This should be changed in a later version, but for now, we can run straight off the "required"
             #nodes list
             pass
         finally:
+            # this is a reservation job, so it's got it's list of valid locations with it.  Add the required reserved nodes.
+            # nothing is forbidden in reservations.
             available_nodes.update(set(required))
 
         #TODO: include bit to enable predicted walltimes to be used
