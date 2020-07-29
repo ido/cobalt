@@ -282,7 +282,7 @@ class ClusterBaseSystem (Component):
 
     def _expand_attrs_location(self, location):
         if location is not None and location != '':
-            return location.split(':')
+            return location.split(',')
         return []
 
     def _find_job_location(self, job, now, drain_time=0, already_draining=set([])):

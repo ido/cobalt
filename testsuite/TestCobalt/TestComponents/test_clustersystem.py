@@ -309,7 +309,7 @@ class TestClusterSystem(object):
     def test__find_job_location_multi_location_specified(self):
         now = int(time.time())
         job = get_basic_job_dict()
-        job['attrs']['location'] = "vs1.test:vs4.test"
+        job['attrs']['location'] = "vs1.test,vs4.test"
         job['nodes'] = 2
 
         self.cluster_system.init_drain_times([]) #All resources are clear
@@ -324,7 +324,7 @@ class TestClusterSystem(object):
     def test__find_job_location_loc_and_res(self):
         now = int(time.time())
         job = get_basic_job_dict()
-        job['attrs']['location'] = "vs1.test:vs4.test"
+        job['attrs']['location'] = "vs1.test,vs4.test"
         job['required'] = ['vs1.test', 'vs2.test', 'vs4.test']
         job['nodes'] = 2
 
@@ -340,7 +340,7 @@ class TestClusterSystem(object):
     def test__find_job_location_loc_no_forbidden(self):
         now = int(time.time())
         job = get_basic_job_dict()
-        job['attrs']['location'] = "vs1.test:vs4.test"
+        job['attrs']['location'] = "vs1.test,vs4.test"
         job['forbidden'] = ['vs1.test', 'vs2.test', 'vs4.test']
         job['nodes'] = 2
 
@@ -356,7 +356,7 @@ class TestClusterSystem(object):
         end_time = now + 600
         job = get_basic_job_dict()
         job['nodes'] = 3
-        job['attrs']['location'] = 'vs1.test:vs2.test:vs3.test'
+        job['attrs']['location'] = 'vs1.test,vs2.test,vs3.test'
         self.cluster_system.running_nodes.update(['vs1.test'])
         self.cluster_system.init_drain_times([[['vs1.test'], end_time]])
         best_location, new_drain_time, ready_to_run = self.cluster_system._find_job_location(job, now)
