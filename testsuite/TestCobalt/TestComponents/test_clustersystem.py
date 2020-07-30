@@ -276,6 +276,20 @@ class TestClusterSystem(object):
         assert best_location == {'1':['vs1.test']}, "ERROR: Missing nodes from best location," \
             " got: %s" % best_location
 
+    def test__find_job_location_bad_location(self):
+        now = int(time.time())
+        job = get_basic_job_dict()
+        job['attrs']['location'] = "idontexist"
+        job['nodes'] = 1
+
+        self.cluster_system.init_drain_times([]) #All resources are clear
+        best_location, new_drain_time, ready_to_run = self.cluster_system._find_job_location(job, now)
+
+        assert not ready_to_run, "ERROR: Job ready to run with invalid location"
+        assert new_drain_time == 0, "No job to run, drain time must be 0"
+        assert best_location == {}, "ERROR: Missing nodes from best location," \
+            " got: %s" % best_location
+
     def test__find_job_location_attr_wo_location(self):
         now = int(time.time())
         job = get_basic_job_dict()
