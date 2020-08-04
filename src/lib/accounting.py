@@ -89,9 +89,7 @@ def begin (id_string, users, queue, ctime, stime, start_time, end_time, duration
 
     message = {'users':users, 'queue':queue, 'ctime':ctime, 'stime':stime, 'etime':None, 'start':start_time, 'end':end_time,
             'duration':duration, 'exec_host':exec_host, 'authorized_users':authorized_users, 'Resource_List':resource_list,
-            'active_id': active_id, 'resource':resource, 'requester': requester}
-    if name is not None:
-        message['name'] = name
+            'active_id': active_id, 'resource':resource, 'requester': requester, 'name': name}
     if account is not None:
         message['account'] = account
     if authorized_groups is not None:
@@ -238,9 +236,7 @@ def finish(reservation_id, requester, ctime, stime, etime, start_time, end_time,
             'Resource_List':resource_list, 'active_id': active_id,
             'resource':resource, 'duration': duration, 'exec_host':exec_host,
             'authorized_users': authorized_users, 'users':authorized_users,
-            'start': start_time, 'end': end_time, 'queue': queue}
-    if name is not None:
-        msg['name'] = name
+            'start': start_time, 'end': end_time, 'queue': queue, 'name': name}
     if account is not None:
         msg['account'] = account
 
@@ -279,9 +275,7 @@ def system_remove (reservation_id, requester, ctime, stime, etime, start_time, e
             'Resource_List':resource_list, 'active_id': active_id,
             'resource':resource, 'duration': duration, 'exec_host':exec_host,
             'authorized_users': authorized_users, 'users':authorized_users,
-            'start': start_time, 'end': end_time, 'queue': queue}
-    if name is not None:
-        msg['name'] = name
+            'start': start_time, 'end': end_time, 'queue': queue, 'name': name}
     if account is not None:
         msg['account'] = account
     return entry("K", reservation_id, msg)
@@ -318,9 +312,7 @@ def remove (reservation_id, requester, ctime, stime, etime, start_time, end_time
             'Resource_List':resource_list, 'active_id': active_id,
             'resource':resource, 'duration': duration, 'exec_host':exec_host,
             'authorized_users': authorized_users, 'users':authorized_users,
-            'start': start_time, 'end': end_time, 'queue': queue}
-    if name is not None:
-        msg['name'] = name
+            'start': start_time, 'end': end_time, 'queue': queue, 'name': name}
     if account is not None:
         msg['account'] = account
     return entry("k", reservation_id, msg)
@@ -483,8 +475,6 @@ def confirmed (reservation_id, requester, start_time, duration, resource_list,
             'resource':resource, 'exec_host':exec_host,
             'authorized_users':authorized_users, 'users':authorized_users,
             'queue': queue, 'name': name, 'ctime':ctime, 'stime':stime, 'etime':etime}
-    if name is not None:
-        msg['name'] = name
     if account is not None:
         msg['account'] = account
 
@@ -520,8 +510,6 @@ def reservation_altered (reservation_id, requester, start_time, duration, resour
             'resource':resource, 'exec_host':exec_host,
             'authorized_users':authorized_users, 'users':authorized_users,
             'queue': queue, 'name': name, 'ctime':ctime, 'stime':stime, 'etime':etime}
-    if name is not None:
-        msg['name'] = name
     if account is not None:
         msg['account'] = account
 
