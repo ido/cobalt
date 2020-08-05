@@ -1438,7 +1438,7 @@ class Job (StateMachine):
                     mserver = 'localhost'
                 else:
                     mserver = mailserver
-                subj = 'Cobalt: Job %s/%s starting - %s/%s' % (self.jobid, self.user, self.queue, self.location[0])
+                subj = 'Cobalt: Job %s/%s starting - %s' % (self.jobid, self.user, self.queue)
                 mmsg = ("Job %s/%s, in the '%s' queue, starting at %s.\nJobName: %s\nCWD: %s\nCommand: %s\nArgs: %s\n" + \
                         "Project: %s\nWallTime: %s\nSubmitTime: %s\nResources allocated: %s") % \
                         (self.jobid, self.user, self.queue, time.strftime('%c', time.localtime()), self.jobname, self.cwd,
@@ -2689,7 +2689,7 @@ class Job (StateMachine):
                 mserver = 'localhost'
             else:
                 mserver = mailserver
-            subj = 'Cobalt: Job %s/%s finished - %s/%s %s' % (self.jobid, self.user, self.queue, self.location[0], stats)
+            subj = 'Cobalt: Job %s/%s finished - %s %s' % (self.jobid, self.user, self.queue, stats)
             mmsg = ("Job %s/%s, in the '%s' queue, finished at %s\nJobName: %s\nCWD: %s\nCommand: %s\nArgs: %s\n" + \
                     "Project: %s\nWallTime: %s\nSubmitTime: %s\nStats: %s\nExit code: %s\nResources used: %s") % \
                     (self.jobid, self.user, self.queue, time.strftime('%c', time.localtime()), self.jobname, self.cwd,
