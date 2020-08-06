@@ -25,6 +25,7 @@ STD_COBALT_CONFIG_FILE = '''
 hostfile = cobalt.hostfile
 simulation_mode = True
 run_remote = false
+log_dir: /tmp
 
 [system]
 size = 4
