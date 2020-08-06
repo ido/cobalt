@@ -606,8 +606,12 @@ def node_up(node, reason, job_id=None, user=None, resource=RESOURCE_NAME):
         A string accounting log message
 
     '''
-    return entry("NU", node, {'reason': reason, 'job_id': job_id if job_id else '', 'user': user if user else '',
-                              'resource': resource})
+    message = {'reason': reason, 'resource': resource}
+    if job_id is not None:
+        message['jobid'] = job_id
+    if user is not None:
+        message['user'] = user
+    return entry("NU", node, message)
 
 
 def node_down(node, reason, job_id=None, user=None, resource=RESOURCE_NAME):
@@ -625,8 +629,12 @@ def node_down(node, reason, job_id=None, user=None, resource=RESOURCE_NAME):
         A string accounting log message
 
     '''
-    return entry("ND", node, {'reason': reason, 'job_id': job_id if job_id else '', 'user': user if user else '',
-                              'resource': resource})
+    message = {'reason': reason, 'resource': resource}
+    if job_id is not None:
+        message['jobid'] = job_id
+    if user is not None:
+        message['user'] = user
+    return entry("ND", node, message)
 
 
 class DatetimeFileHandler (BaseRotatingHandler):
@@ -752,5 +760,3 @@ def serialize_td (timedelta_):
             + (timedelta_.microseconds / 1000000))
     except AttributeError, ex:
         raise ValueError(ex)
-
-

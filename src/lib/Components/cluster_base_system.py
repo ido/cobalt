@@ -1326,4 +1326,3 @@ class ClusterBaseSystem (Component):
         stats['nodect'] = len(loc_list)
         stats['nproc'] = stats['nodect']
         return stats
-
