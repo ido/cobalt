@@ -9,6 +9,8 @@
  * Job running location has been removed from Cobalt email subject lines.  Large
    jobs would cause the subject line to exceed the maximum permitted length and
    could cause the email to be dropped.
+ * Added system-related PBS-style accounting records for node up and node down
+   in cluster systems.
 
 == Changes to 1.0.30 ==
  * Fixed a race condition for Cray systems where a job draining may be
