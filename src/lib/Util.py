@@ -272,20 +272,40 @@ def dgetopt(arglist, opt, vopt, msg):
             ret[vopt[option]] = garg
     return ret, list(args)
 
+# regexes for merging nodelists:
+cluster_node_reg = re.compile(r'(\D+)(\d+)')
+device_reg = re.compile(r'(\D+\d+-\D+)(\d)')
+cray_loc = re.compile(r'^(\d+)')
+node_and_dev = re.compile(r'(\D+\d+)-(\D+[\[\]\-\d]+)')
+first_number_reg = re.compile(r'(\d+)')
+
 def merge_nodelist(locations):
     '''create a set of dashed-ranges from a node list
 
+    Args:
+        location - a list of string location identifiers for a system
+
+    Returns:
+        A string system-appropriate compact represetntation of the location
+        list.
+
     '''
-    reg = re.compile(r'(\D+)(\d+)')
-    cray_loc = re.compile(r'^(\d+)')
     # create a dictionary with a key for each node prefix,
     # with sorted lists of node numbers as the values
     noderanges = {}
     prefix_min_digits = {}
     prefix_max_digits = {}
     prefix_format_str = {}
-
+    has_device_naming = False
     ret = []
+
+    if (len(locations) > 1 and
+        cluster_node_reg.match(locations[0]) is None and
+        device_reg.match(locations[0]) is None and
+        cray_loc.match(locations[0]) is None):
+        # We don't know how to merge this list of locations.
+        return ','.join(sorted(locations))
+
     #if this doesn't have a prefix, like a Cray nidlist, short circut
     if len(locations) >= 1:
         if cray_loc.match(locations[0]) is not None:
@@ -294,8 +314,12 @@ def merge_nodelist(locations):
 
     for name in locations:
         try:
-            prefix = reg.match(name).group(1)
-            nodenum = reg.match(name).group(2)
+            dev_match = device_reg.match(name)
+            if dev_match:
+                has_device_naming = True
+                prefix, nodenum = dev_match.groups()
+            else:
+                prefix, nodenum = cluster_node_reg.match(name).groups()
             num_digits = len(nodenum)
             newnum = int(nodenum)
             if not prefix in noderanges:
@@ -325,6 +349,71 @@ def merge_nodelist(locations):
             prefix_format_str[prefix] = {'compact': "[%s%s-%s]",
                                          'single': "%s%s"}
 
+    # may have some node names from above
+    ret.extend(_gen_compacted_list(noderanges, prefix_format_str))
+
+    # Compact Nodes and Devices
+    if has_device_naming:
+        ret = _compact_device_list(ret)
+
+    return ','.join(sorted(ret, cmp=_compare_on_low_range))
+
+def _compact_device_list(locations):
+    '''compact down node ids for nodes with the same device alllocations.
+
+    this is a second stage for the more complex device-split locations
+    '''
+    ret = []
+    nodes_by_dev = {}
+    for node in sorted(locations):
+        match = node_and_dev.match(node)
+        try:
+            if match is None:
+                ret.append(node)
+            else:
+                node_name, dev_set = match.groups()
+                if nodes_by_dev.get(dev_set, None):
+                    nodes_by_dev[dev_set].append(node_name)
+                else:
+                    nodes_by_dev[dev_set] = [node_name]
+        except AttributeError:
+            ret.append(node)
+    for dev_set, nodes in nodes_by_dev.items():
+        compacted_nodes = merge_nodelist(nodes).split(',')
+        ret.extend(["%s-%s" % (node, dev_set) for node in compacted_nodes])
+    return ret
+
+def _compare_on_low_range(left, right):
+    '''comparison to sort a compressed list'''
+    try:
+        left_num = first_number_reg.search(left).group(1)
+        right_num = first_number_reg.search(right).group(1)
+    except AttributeError:
+        # Didn't have a number with this particular node, fall back to lexical.
+        if left == right:
+            return 0
+        elif left > right:
+            return 1
+        return -1
+    if left_num == right_num:
+        return 0
+    elif left_num > right_num:
+        return 1
+    return -1
+
+
+def _gen_compacted_list(noderanges, prefix_format_str):
+    '''generate a prefixed compact list of a range, or the singleton pattern
+    based on a list of locations
+
+    noderanges - list of numeric integer id numbers
+    prefix_format_str - the formatting string dict with a 'compact' and a
+                        'single' format
+
+    Returns:
+        A list of strings of the form name[X-Y] or nameX
+    '''
+    ret = []
     # iterate through the sorted lists, identifying gaps in the sequential numbers
     for prefix in sorted(noderanges.keys()):
         noderanges[prefix].sort()
@@ -347,8 +436,7 @@ def merge_nodelist(locations):
             else:
                 ret.append(prefix_format_str[prefix]['single'] %
                         (prefix, noderanges[prefix][brk[0]]))
-
-    return ','.join(sorted(ret))
+    return ret
 
 def dgetopt_long(arglist, opt, vopt, msg):
     '''parse options into a dictionary, long and short options supported'''

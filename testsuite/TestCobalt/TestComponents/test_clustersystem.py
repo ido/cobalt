@@ -25,6 +25,7 @@ STD_COBALT_CONFIG_FILE = '''
 hostfile = cobalt.hostfile
 simulation_mode = True
 run_remote = false
+log_dir: /tmp
 
 [system]
 size = 4
@@ -84,8 +85,9 @@ def get_basic_job_dict():
             'nodes': 1,
             'queue': 'default',
             'walltime': 10,
-            'user': 'testuser'
-            } 
+            'user': 'testuser',
+            'attrs':{}
+            }
 
 class TestClusterSystem(object):
     '''Test core cluster system functionality'''
@@ -95,7 +97,7 @@ class TestClusterSystem(object):
         self.full_node_set = set(['vs1.test', 'vs2.test', 'vs3.test', 'vs4.test'])
 
     def setup(self):
-        '''Ensure cluster s ystem exists for all tests.  Refresh the setup between tests'''
+        '''Ensure cluster system exists for all tests.  Refresh the setup between tests'''
         self.cluster_system = Cobalt.Components.cluster_system.ClusterSystem()
 
     def teardown(self):
@@ -260,6 +262,138 @@ class TestClusterSystem(object):
         assert best_location == {}, "ERROR: Expected best location: %s\nGot:%s" % \
                 ({}, best_location)
 
+    def test__find_job_location_location_specified(self):
+        now = int(time.time())
+        job = get_basic_job_dict()
+        job['attrs']['location'] = "vs1.test"
+        job['nodes'] = 1
+
+        self.cluster_system.init_drain_times([]) #All resources are clear
+        best_location, new_drain_time, ready_to_run = self.cluster_system._find_job_location(job, now)
+
+        assert ready_to_run, "ERROR: Job not ready to run on empty system"
+        assert new_drain_time == 0, "Job ready to run, drain time must be 0"
+        assert best_location != {}, "ERROR: Ready to run, but we have no best location."
+        assert best_location == {'1':['vs1.test']}, "ERROR: Missing nodes from best location," \
+            " got: %s" % best_location
+
+    def test__find_job_location_bad_location(self):
+        now = int(time.time())
+        job = get_basic_job_dict()
+        job['attrs']['location'] = "idontexist"
+        job['nodes'] = 1
+
+        self.cluster_system.init_drain_times([]) #All resources are clear
+        best_location, new_drain_time, ready_to_run = self.cluster_system._find_job_location(job, now)
+
+        assert not ready_to_run, "ERROR: Job ready to run with invalid location"
+        assert new_drain_time == 0, "No job to run, drain time must be 0"
+        assert best_location == {}, "ERROR: Missing nodes from best location," \
+            " got: %s" % best_location
+
+    def test__find_job_location_attr_wo_location(self):
+        now = int(time.time())
+        job = get_basic_job_dict()
+        job['attrs']['foo'] = "bar"
+        job['nodes'] = 4
+
+        self.cluster_system.init_drain_times([]) #All resources are clear
+        best_location, new_drain_time, ready_to_run = self.cluster_system._find_job_location(job, now)
+
+        assert ready_to_run, "ERROR: Job not ready to run on empty system"
+        assert new_drain_time == 0, "Job ready to run, drain time must be 0"
+        assert best_location != {}, "ERROR: Ready to run, but we have no best location."
+        assert best_location == {'1':['vs2.test', 'vs4.test', 'vs1.test', 'vs3.test']}, "ERROR: Missing nodes from best location," \
+            " got: %s" % best_location
+
+    def test__find_job_location_no_attrs(self):
+        now = int(time.time())
+        job = get_basic_job_dict()
+        del job['attrs']
+        job['nodes'] = 4
+
+        self.cluster_system.init_drain_times([]) #All resources are clear
+        best_location, new_drain_time, ready_to_run = self.cluster_system._find_job_location(job, now)
+
+        assert ready_to_run, "ERROR: Job not ready to run on empty system"
+        assert new_drain_time == 0, "Job ready to run, drain time must be 0"
+        assert best_location != {}, "ERROR: Ready to run, but we have no best location."
+        assert best_location == {'1':['vs2.test', 'vs4.test', 'vs1.test', 'vs3.test']}, "ERROR: Missing nodes from best location," \
+            " got: %s" % best_location
+
+    def test__find_job_location_multi_location_specified(self):
+        now = int(time.time())
+        job = get_basic_job_dict()
+        job['attrs']['location'] = "vs1.test,vs4.test"
+        job['nodes'] = 2
+
+        self.cluster_system.init_drain_times([]) #All resources are clear
+        best_location, new_drain_time, ready_to_run = self.cluster_system._find_job_location(job, now)
+
+        assert ready_to_run, "ERROR: Job not ready to run on empty system"
+        assert new_drain_time == 0, "Job ready to run, drain time must be 0"
+        assert best_location != {}, "ERROR: Ready to run, but we have no best location."
+        assert best_location == {'1':['vs4.test', 'vs1.test']}, "ERROR: Missing nodes from best location," \
+            " got: %s" % best_location
+
+    def test__find_job_location_loc_and_res(self):
+        now = int(time.time())
+        job = get_basic_job_dict()
+        job['attrs']['location'] = "vs1.test,vs4.test"
+        job['required'] = ['vs1.test', 'vs2.test', 'vs4.test']
+        job['nodes'] = 2
+
+        self.cluster_system.init_drain_times([]) #All resources are clear
+        best_location, new_drain_time, ready_to_run = self.cluster_system._find_job_location(job, now)
+
+        assert ready_to_run, "ERROR: Job not ready to run on empty system"
+        assert new_drain_time == 0, "Job ready to run, drain time must be 0"
+        assert best_location != {}, "ERROR: Ready to run, but we have no best location."
+        assert best_location == {'1':['vs4.test', 'vs1.test']}, "ERROR: Missing nodes from best location," \
+            " got: %s" % best_location
+
+    def test__find_job_location_loc_no_forbidden(self):
+        now = int(time.time())
+        job = get_basic_job_dict()
+        job['attrs']['location'] = "vs1.test,vs4.test"
+        job['forbidden'] = ['vs1.test', 'vs2.test', 'vs4.test']
+        job['nodes'] = 2
+
+        self.cluster_system.init_drain_times([]) #All resources are clear
+        best_location, new_drain_time, ready_to_run = self.cluster_system._find_job_location(job, now)
+
+        assert not ready_to_run, "ERROR: No job should be ready to run"
+        assert new_drain_time == 0, "Job ready to run, drain time must be 0"
+        assert best_location == {}, "ERROR: Ready to run, but we have no best location."
+
+    def test__find_job_location_loc_drain(self):
+        now = int(time.time())
+        end_time = now + 600
+        job = get_basic_job_dict()
+        job['nodes'] = 3
+        job['attrs']['location'] = 'vs1.test,vs2.test,vs3.test'
+        self.cluster_system.running_nodes.update(['vs1.test'])
+        self.cluster_system.init_drain_times([[['vs1.test'], end_time]])
+        best_location, new_drain_time, ready_to_run = self.cluster_system._find_job_location(job, now)
+        assert not ready_to_run, "ERROR: marked ready to run when running impossible."
+        assert new_drain_time == end_time, "ERROR: Expected new drain time of %d but got %d." % (end_time, new_drain_time)
+        assert best_location == {'1':['vs2.test', 'vs1.test', 'vs3.test']}, \
+                "ERROR: Unexpected best location selection.  Generated %s." % best_location
+
+    def test__find_job_location_loc_no_drain_if_down(self):
+        now = int(time.time())
+        end_time = now + 600
+        job = get_basic_job_dict()
+        job['nodes'] = 3
+        job['attrs']['location'] = 'vs1.test:vs2.test:vs3.test'
+        self.cluster_system.nodes_down(['vs2.test'])
+        self.cluster_system.running_nodes.update(['vs1.test'])
+        self.cluster_system.init_drain_times([[['vs1.test'], end_time]])
+        best_location, new_drain_time, ready_to_run = self.cluster_system._find_job_location(job, now)
+        assert not ready_to_run, "ERROR: marked ready to run when running impossible."
+        assert new_drain_time == 0, "Job can't run, drain time must be 0"
+        assert best_location == {}, "ERROR: Unexpected best location selection.  Generated %s." % best_location
+
     #Test find_job_location.  Take list of jobs and end times, and find a valid location.
     def test_find_job_locaiton_single_valid_job(self):
         jobs = [get_basic_job_dict()]
@@ -267,7 +401,7 @@ class TestClusterSystem(object):
         assert best_location == {'1':['vs2.test']}, "ERROR: Unexpected best_location.\nExpected %s\nGot %s" % \
                 ({'1':['vs2.test']}, best_location)
 
-    def test_find_job_locaiton_no_valid_job(self):
+    def test_find_job_location_no_valid_job(self):
         jobs = [get_basic_job_dict()]
         jobs[0]['walltime'] = 300
         self.cluster_system.running_nodes = self.full_node_set
@@ -722,4 +856,27 @@ class TestReservationHandling(object):
         assert best_location == {'2':['vs4.test']}, "ERROR: Unexpected best_location.\nExpected %s\nGot %s" % \
                 ({'2':['vs4.test']}, best_location)
 
-
+    def test_reservations_run_spec_location_occupied(self):
+        #make sure first-fit rules are used for reservation jobs
+        #self.cluster_system.drain_mode = 'backfill'
+        jobs = [get_basic_job_dict() for _ in range(3)]
+        jobs[0]['walltime'] = 720
+        jobs[0]['score'] = 50000
+        jobs[0]['nodes'] = 2
+        jobs[0]['required'] = ['vs2.test', 'vs3.test', 'vs4.test']
+        jobs[0]['attrs']['location'] = 'vs3.test'
+        jobs[1]['jobid'] = 2
+        jobs[1]['walltime'] = 10
+        jobs[1]['score'] = 100
+        jobs[1]['required'] = ['vs2.test', 'vs3.test', 'vs4.test']
+        jobs[1]['attrs']['location'] = 'vs3.test'
+        jobs[2]['jobid'] = 3
+        jobs[2]['walltime'] = 5
+        jobs[2]['score'] = 10
+        jobs[2]['required'] = ['vs2.test', 'vs3.test', 'vs4.test']
+        jobs[2]['attrs']['location'] = 'vs3.test'
+        self.cluster_system.running_nodes = set(['vs1.test', 'vs2.test', 'vs3.test'])
+        end_times = []
+        best_location = self.cluster_system.find_job_location(jobs, end_times)
+        assert best_location == {}, "ERROR: Unexpected best_location.\nExpected %s\nGot %s" % \
+                ({}, best_location)
