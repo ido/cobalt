@@ -27,12 +27,15 @@ RECORD_MAPPING = {'abort': 'A',
                   'hold_acquire': 'HA',
                   'hold_release': 'HR',
                   'reservation_altered': 'YA',
+                  'node_up': 'NU',
+                  'node_down': 'ND',
                   }
 
 __all__ = ["abort", "begin", "checkpoint", "delete", "end", "finish",
            "system_remove", "remove", "queue", "rerun", "start", "unconfirmed",
            "confirmed", "task_start", "task_end", "DatetimeFileHandler",
-           "modify", 'hold_acquire', 'hold_release', 'reservation_altered']
+           "modify", 'hold_acquire', 'hold_release', 'reservation_altered',
+           'node_up', 'node_down']
 
 def abort (job_id, user, resource_list, account=None, resource=RESOURCE_NAME):
     """Job was aborted by the server.
@@ -588,6 +591,51 @@ def hold_release(job_id, hold_type, end_time, user, resource=RESOURCE_NAME):
     return entry("HR", job_id, {'hold_type': hold_type, 'end': end_time, 'resource': resource, 'user':user})
 
 
+def node_up(node, reason, job_id=None, user=None, resource=RESOURCE_NAME):
+    '''Indicate a node is up.
+
+    Arguments:
+        node -- the node up
+        reason -- the function or reason for the change
+        job_id -- id of job that this task belongs to
+        user -- user in the context
+        resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+                    (default: as specified by the resource_name option in the [system] cobalt.conf section)
+
+    Returns:
+        A string accounting log message
+
+    '''
+    message = {'reason': reason, 'resource': resource}
+    if job_id is not None:
+        message['jobid'] = job_id
+    if user is not None:
+        message['user'] = user
+    return entry("NU", node, message)
+
+
+def node_down(node, reason, job_id=None, user=None, resource=RESOURCE_NAME):
+    '''Indicate a node is down.
+
+    Arguments:
+        node -- the node down
+        reason -- the function or reason for the change
+        job_id -- id of job that this task belongs to
+        user -- user in the context
+        resource -- identifier of the resource that Cobalt is managing.  Usually the system name.
+                    (default: as specified by the resource_name option in the [system] cobalt.conf section)
+
+    Returns:
+        A string accounting log message
+
+    '''
+    message = {'reason': reason, 'resource': resource}
+    if job_id is not None:
+        message['jobid'] = job_id
+    if user is not None:
+        message['user'] = user
+    return entry("ND", node, message)
+
 
 class DatetimeFileHandler (BaseRotatingHandler):
 
@@ -712,5 +760,3 @@ def serialize_td (timedelta_):
             + (timedelta_.microseconds / 1000000))
     except AttributeError, ex:
         raise ValueError(ex)
-
-

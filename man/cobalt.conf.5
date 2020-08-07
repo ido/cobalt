@@ -483,6 +483,9 @@ This is a list of hostnames for nodes that the cluster system component can
 schedule.  Nodes may be added or removed, and the list of available nodes
 is updated at restart.
 .TP
+.B log_dir
+The directory to place the system state change accounting logs.
+.TP
 .B epilogue
 This is a colon-delimited set of scripts to run on a per-node basis on task
 termination on a resource. If any script returns a non-zero exit status,
