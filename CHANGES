@@ -1,5 +1,17 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 1.0.31 ==
+ * Fixed a race condition where a K-accounting record could be missed if a
+   reservation was manually removed as it was ending.
+ * Reservation accounting records have had numerous fields added.
+ * cluster_systems now respect the --attrs location attribute with a
+   ','-delimited list of nodes.
+ * Job running location has been removed from Cobalt email subject lines.  Large
+   jobs would cause the subject line to exceed the maximum permitted length and
+   could cause the email to be dropped.
+ * Added system-related PBS-style accounting records for node up and node down
+   in cluster systems.
+
 == Changes to 1.0.30 ==
  * Fixed a race condition for Cray systems where a job draining may be
    disrupted briefly on job termination, allowing other jobs to run

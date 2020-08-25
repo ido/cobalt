@@ -11,6 +11,7 @@ import sys
 import Cobalt
 import pwd
 import grp
+import logging
 import ConfigParser
 import os
 import Cobalt.Util
@@ -20,6 +21,7 @@ from Cobalt.Data import DataDict
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Components.base import Component, exposed, automatic
 from Cobalt.Util import config_true_values
+import Cobalt.accounting as accounting
 
 __all__ = [
     "ClusterBaseSystem",
@@ -43,7 +45,6 @@ cluster_hostfile = os.path.expandvars(get_cluster_system_config('hostfile', None
 if cluster_hostfile == None:
     print '''ERROR: No "hostfile" entry in "cluster_system" section of cobalt config file'''
     sys.exit(1)
-
 
 class ClusterNode(object):
 
@@ -143,6 +144,7 @@ class ClusterBaseSystem (Component):
 
     def __init__ (self, *args, **kwargs):
         Component.__init__(self, *args, **kwargs)
+        self._init_accounting_log()
         self.process_groups = ProcessGroupDict()
         self.active_queues = []
         self.all_nodes = set()
@@ -174,6 +176,21 @@ class ClusterBaseSystem (Component):
         self.logger.info("allocation timeout set to %d seconds." % self.alloc_timeout)
         self.logger.info("Minimum Backfill Window set to %d seconds." % self.MINIMUM_BACKFILL_WINDOW)
 
+        for node in self.all_nodes:
+            self._write_to_accounting_log(accounting.node_up(node, '__init__'))
+
+    def _init_accounting_log(self):
+        '''Initialize PBS-style accounting log for this module'''
+        self.accounting_logger = logging.getLogger("system.accounting")
+        filename = "%s-%%Y%%m%%d" % get_cluster_system_config("accounting_log_prefix", 'system')
+        accounting_logdir = os.path.expandvars(get_cluster_system_config("log_dir", Cobalt.DEFAULT_LOG_DIRECTORY))
+        self.accounting_logger.addHandler(accounting.DatetimeFileHandler(os.path.join(accounting_logdir, filename)))
+
+    def _write_to_accounting_log(self, msg):
+        '''Send to PBS-style accounting log for this module to accounting log and syslog'''
+        self.logger.info(msg)
+        self.accounting_logger.info(msg)
+
     def __getstate__(self):
         state = {}
         state.update(Component.__getstate__(self))
@@ -185,6 +202,7 @@ class ClusterBaseSystem (Component):
 
     def __setstate__(self, state):
         Component.__setstate__( self, state)
+        self._init_accounting_log()
         self.all_nodes = set()
         self.active_queues = []
         self.node_order = {}
@@ -208,6 +226,10 @@ class ClusterBaseSystem (Component):
             for queue in nonexistent_queues:
                 del self.queue_assignments[queue]
         self.down_nodes = self.all_nodes & set(state.get('down_nodes', set()))
+        for node in self.down_nodes:
+            self._write_to_accounting_log(accounting.node_down(node, '__setstate__'))
+        for node in self.all_nodes - self.down_nodes:
+            self._write_to_accounting_log(accounting.node_up(node, '__setstate__'))
         self.process_groups = ProcessGroupDict()
         self.running_nodes = set()
         self.alloc_only_nodes = {} # nodename:starttime
@@ -280,6 +302,11 @@ class ClusterBaseSystem (Component):
         return ""
     unfail_partitions = exposed(unfail_partitions)
 
+    def _expand_attrs_location(self, location):
+        if location is not None and location != '':
+            return location.split(',')
+        return []
+
     def _find_job_location(self, job, now, drain_time=0, already_draining=set([])):
         '''Get a list of nodes capable of running a job.
 
@@ -304,19 +331,32 @@ class ClusterBaseSystem (Component):
         '''
         forbidden = set(job.get('forbidden', [])) #These are locations the scheduler has decided are inelligible for running.
         required = set(job.get('required', [])) #Always consider these nodes for scheduling, due to things being in a reservation
+        requested_locations = set([]) #Restrict placement to these nodes.  The user has requested this restriction
+        if job.get('attrs', None) is not None:
+            requested_locations = set([str(n) for n in self._expand_attrs_location(job['attrs'].get('location', ''))])
         selected_locations = set()
         new_drain_time = 0
         ready_to_run = False
         nodes = int(job['nodes'])
         available_nodes = set()
+        # required nodes are used for reservations
+        # requested nodes are requested by the user via --attrs location
+        # therefore required in this case should become the intersection of required and requested_locations
+        # this will also play nice with the later overlap check.
+        if requested_locations:
+            required = required.intersection(requested_locations)
         try:
             available_nodes = self.queue_assignments[job['queue']].difference(forbidden).difference(already_draining)
+            if requested_locations:
+                available_nodes = available_nodes.intersection(requested_locations)
         except KeyError:
             #The key error is due to the queue being a reservation queue.  Those have no resources assigned in the system
             #component.  This should be changed in a later version, but for now, we can run straight off the "required"
             #nodes list
             pass
         finally:
+            # this is a reservation job, so it's got it's list of valid locations with it.  Add the required reserved nodes.
+            # nothing is forbidden in reservations.
             available_nodes.update(set(required))
 
         #TODO: include bit to enable predicted walltimes to be used
@@ -861,6 +901,8 @@ class ClusterBaseSystem (Component):
                 changed.append(n)
         if changed:
             self.logger.info("%s marking nodes up: %s", user_name, ", ".join(changed))
+            for node in changed:
+                self._write_to_accounting_log(accounting.node_up(node, 'nodes_up', user=user_name))
         return changed
     nodes_up = exposed(nodes_up)
 
@@ -872,6 +914,8 @@ class ClusterBaseSystem (Component):
                 changed.append(n)
         if changed:
             self.logger.info("%s marking nodes down: %s", user_name, ", ".join(changed))
+            for node in changed:
+                self._write_to_accounting_log(accounting.node_down(node, 'nodes_down', user=user_name))
         return changed
     nodes_down = exposed(nodes_down)
 
@@ -1040,6 +1084,7 @@ class ClusterBaseSystem (Component):
                 self.logger.error("Job %s/%s: Failed to run epilogue on host "
                         "%s, marking node down", jobid, user, h, exc_info=True)
                 self.down_nodes.add(h)
+                self._write_to_accounting_log(accounting.node_down(h, 'clean_nodes', job_id=jobid, user=user))
                 self.running_nodes.discard(h)
 
     def launch_script(self, config_option, host, jobid, user, group_name):
@@ -1091,6 +1136,9 @@ class ClusterBaseSystem (Component):
                             exc_info=True)
                     self.cleaning_host_count[cleaning_process['jobid']] -= 1
                     self.down_nodes.add(cleaning_process['host'])
+                    self._write_to_accounting_log(accounting.node_down(cleaning_process['host'],
+                                                                       'retry_cleaning_scripts',
+                                                                       jobid=cleaning_process['jobid']))
                     self.running_nodes.discard(cleaning_process['host'])
 
     retry_cleaning_scripts = automatic(retry_cleaning_scripts,
@@ -1219,6 +1267,7 @@ class ClusterBaseSystem (Component):
                     (user, jobid, host)
 
         self.down_nodes.add(host)
+        self._write_to_accounting_log(accounting.node_down(host, "__mark_failed_cleaning", job_id=jobid, user=user))
         self.running_nodes.discard(host)
         self.cleaning_host_count[jobid] -= 1
         cleaning_process['completed'] = True
@@ -1277,4 +1326,3 @@ class ClusterBaseSystem (Component):
         stats['nodect'] = len(loc_list)
         stats['nproc'] = stats['nodect']
         return stats
-
