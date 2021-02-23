@@ -83,7 +83,6 @@ ION_DEFAULT_KERNEL = get_config_option('bgsystem', 'ion_default_kernel', 'defaul
 CRAY_MOM_QSUB      = get_config_option('alps', 'cray_mom_qsub', '/usr/bin/qsub')
 
 
-
 def validate_args(parser, spec):
     """
     If the argument is a script job it will validate it, and get the Cobalt directives
@@ -170,24 +169,6 @@ def validate_options(parser, opt_count):
         sys.exit(1)
 
 
-def update_spec(parser, opts, spec, opt2spec):
-    """
-    This function will update the appropriate spec values with the opts values
-    """
-    # Get the key validated values into spec dictionary
-    for opt in ['mode', 'proccount', 'nodecount', 'attrs']:
-        spec[opt2spec[opt]] = opts[opt]
-
-    # Hack until the Cluster Systems get re-written.
-    if parser.options.mode == 'interactive' and 'command' in opts and 'args' in opts:
-        spec['command'] = opts['command']
-        spec['args']    = opts['args']
-
-    #stamp the tty info, if it exists into the spec.
-    spec['ttysession'] = fetch_tty_session()
-    spec['submithost'] = socket.gethostname()
-
-
 def env_union():
     """
     Take all env options and their values in sys.argv and make the union of them to create one consolidated --env.
@@ -217,6 +198,7 @@ def env_union():
         client_utils.logger.error( "No values specified or invalid usage of --env option: %s --> %s", str(sys.argv), e)
         sys.exit(1)
 
+
 def parse_options(parser, spec, opts, opt2spec, def_spec):
     """
     Will initialize the specs and then parse the command line options
@@ -229,7 +211,6 @@ def parse_options(parser, spec, opts, opt2spec, def_spec):
     opt_count               = client_utils.get_options(spec, opts, opt2spec, parser)
     opts['disable_preboot'] = not spec['script_preboot']
     return opt_count
-
 
 
 def hhmmss(minutes_str):
@@ -302,8 +283,6 @@ def main():
     """
     # setup logging for client. The clients should call this before doing anything else.
     client_utils.setup_logging(logging.INFO)
-
-
 
     spec     = {} # map of destination option strings and parsed values
     opts     = {} # old map
