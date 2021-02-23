@@ -238,7 +238,7 @@ def convert_to_pbs(opts, spec):
     if not target:
         print 'set QSUB_TARGET_SYSTEM to a hostname (like theta) to get something other than host=None'
     parms=[]
-    parms.append('-l %s:host=%s' % (opts['nodecount'], target))
+    parms.append('-l select %s:host=%s' % (opts['nodecount'], target))
     parms.append('-l walltime=%s' % (hhmmss(opts['time'])))
     # I realize there is a lot of very similar code in the if statements below
     # Given the limited duration I didn't think it was worth refactoring.
