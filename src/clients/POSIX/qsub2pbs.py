@@ -59,23 +59,17 @@ The following options are only valid on IBM BlueGene architecture platforms:
 '--geometry', dest='geometry', type='string', help='set geometry (AxBxCxDxE)',callback=cb_geometry
 
 """
+
 import logging
-import time
-import string
 import os
 import sys
-import signal
 import socket
-import ast
 from Cobalt import client_utils
 from Cobalt.client_utils import \
     cb_debug, cb_env, cb_nodes, cb_time, cb_umask, cb_path, cb_dep, \
     cb_attrs, cb_user_list, cb_geometry, cb_gtzero, cb_mode, cb_interactive
 from Cobalt.arg_parser import ArgParse
-from Cobalt.Util import get_config_option, init_cobalt_config, sleep
-from Cobalt.Proxy import ComponentProxy
-import xmlrpclib
-import subprocess
+from Cobalt.Util import get_config_option, init_cobalt_config
 
 __revision__ = '$Revision: 559 $'
 __version__  = '$Version$'
@@ -88,58 +82,7 @@ CN_DEFAULT_KERNEL  = get_config_option('bgsystem', 'cn_default_kernel', 'default
 ION_DEFAULT_KERNEL = get_config_option('bgsystem', 'ion_default_kernel', 'default')
 CRAY_MOM_QSUB      = get_config_option('alps', 'cray_mom_qsub', '/usr/bin/qsub')
 
-def on_interrupt(sig, func=None):
-    """
-    Interrupt Handler to cleanup the interactive job if the user interrupts
-    Will contain two static variables: count and exit.
-    'count' will keep track how many interruptions happened and
-    'exit' flags whether we completely exit once the interrupt occurs.
-    """
-    on_interrupt.count += 1
-    if on_interrupt.exit:
-        sys.exit(1)
 
-# Initializing on_interrupt static variables
-on_interrupt.count = 0
-on_interrupt.exit  = True
-
-def exit_on_interrupt():
-    """
-    Set to exit when interrupt occurs
-    """
-    on_interrupt.exit = True
-    if on_interrupt.count > 0:
-        sys.exit(1)
-
-def not_exit_on_interrupt():
-    """
-    Set to not exit on interrupt
-    """
-    on_interrupt.exit = False
-
-# Reset sigint and sigterm interrupt handlers to deal with interactive failures
-signal.signal(signal.SIGINT, on_interrupt)
-signal.signal(signal.SIGTERM, on_interrupt)
-signal.signal(signal.SIGQUIT, on_interrupt)
-signal.signal(signal.SIGABRT, on_interrupt)
-signal.signal(signal.SIGXCPU, on_interrupt)
-signal.signal(signal.SIGPIPE, on_interrupt)
-
-def exit_interactive_job(deljob, jobid, user):
-    """
-    Exit job normally or delete job
-    """
-    not_exit_on_interrupt()
-    # If no jobid assigned yet return
-    if not jobid:
-        return
-    if deljob:
-        job_to_del = [{'tag':'job', 'jobid':jobid, 'user':user}]
-        client_utils.logger.info("Deleting interactive job %s", str(jobid))
-        client_utils.component_call(QUEMGR, False, 'del_jobs', (job_to_del, False, user))
-    else:
-        client_utils.logger.info("Exiting interactive job %d", int(jobid))
-        client_utils.component_call(SYSMGR, False, 'interactive_job_complete', (jobid,))
 
 def validate_args(parser, spec):
     """
@@ -226,56 +169,6 @@ def validate_options(parser, opt_count):
         client_utils.logger.error("'nodecount' not provided")
         sys.exit(1)
 
-def update_outputprefix(parser,spec):
-    """
-    Update the the appropriate paths with the outputprefix path
-    """
-    # If the paths for the error log, output log, or the debuglog are not provided
-    # then update them with what is provided in outputprefix.
-    if parser.options.outputprefix != None:
-        # pop the value for outputrefix
-        op = spec.pop('outputprefix')
-
-        # if error path, cobalt log path or output log path not provide then update them wiht outputprefix
-        if parser.options.errorpath == None:
-            spec['errorpath'] = op + ".error"
-        if parser.options.cobalt_log_file == None:
-            spec['cobalt_log_file'] = op + ".cobaltlog"
-        if parser.options.outputpath == None:
-            spec['outputpath'] = op + ".output"
-
-def update_paths(spec):
-    """
-    This functiojn will update all the paths in spec that need the current working directory.
-    """
-    for key in spec:
-        value = spec[key]
-        # if path needs current working directory then
-        if type(value) == type(""):
-            if value.find(client_utils.CWD_TAG) != -1:
-                if 'cwd' in spec:
-                    _cwd = spec['cwd']
-                else:
-                    _cwd = client_utils.getcwd()
-                _path = spec[key].replace(client_utils.CWD_TAG,_cwd)
-                # validate the path
-                if not os.path.isdir(os.path.dirname(_path)):
-                    client_utils.logger.error("directory %s does not exist" % _path)
-                    sys.exit(1)
-                spec[key] = _path
-
-def check_inputfile(parser, spec):
-    """
-    Verify the input file is an actual file
-    """
-    if parser.options.inputfile != None:
-        if parser.options.mode == 'interactive':
-            client_utils.logger.error("Cannot specify an input file for interactive jobs.")
-            sys.exit(1)
-        inputfile = spec['inputfile']
-        if not os.path.isfile(inputfile):
-            client_utils.logger.error("file %s not found, or is not a file" % inputfile)
-            sys.exit(1)
 
 def update_spec(parser, opts, spec, opt2spec):
     """
@@ -294,52 +187,6 @@ def update_spec(parser, opts, spec, opt2spec):
     spec['ttysession'] = fetch_tty_session()
     spec['submithost'] = socket.gethostname()
 
-def fetch_tty_session():
-    '''Grab the tty session stdout is attached to.  This will return None
-    if stdout is not going to a terminal.
-
-    '''
-    ttyname = None
-    try:
-        stdoutfh = sys.stdout.fileno()
-        ttyname = os.ttyname(stdoutfh)
-    except (OSError, IOError):
-        client_utils.logger.debug("fd %d not associated with a terminal device", stdoutfh)
-    return ttyname
-
-def logjob(jobid, spec, log_to_console, msg=None, ttyname=None):
-    """
-    log job info
-    """
-    # log jobid to stdout
-    if jobid:
-        if log_to_console:
-            if msg is None:
-                client_utils.logger.info(jobid)
-            else:
-                client_utils.logger.info("%s %s", jobid, msg)
-        if spec.has_key('cobalt_log_file'):
-            filename = spec['cobalt_log_file']
-            template = string.Template(filename)
-            filename = template.safe_substitute(jobid=jobid, COBALT_JOBID=jobid)
-        else:
-            filename = "%s/%s.cobaltlog" % (spec['outputdir'], jobid)
-        try:
-            with open(filename, "a") as cobalt_log_file:
-                print >> cobalt_log_file, "Jobid: %s" % jobid
-                print >> cobalt_log_file, "qsub %s" % (" ".join(sys.argv[1:]))
-                print >> cobalt_log_file, ("%s submitted with cwd set to: %s" %
-                    (client_utils.sec_to_str(time.time()), spec['cwd']))
-                if msg is not None:
-                    print >> cobalt_log_file, "Special Message for jobid %s: %s" % (jobid, msg)
-                if ttyname is not None:
-                    print >> cobalt_log_file, ("jobid %d submitted from terminal %s" %
-                        (jobid, ttyname))
-        except IOError as exc:
-            client_utils.logger.error("WARNING: failed to create cobalt log file at: %s", filename)
-            client_utils.logger.error("WARNING:     Error information: %s", exc)
-    else:
-        client_utils.logger.error("failed to create the job.  Maybe a queue isn't there?")
 
 def env_union():
     """
@@ -383,148 +230,7 @@ def parse_options(parser, spec, opts, opt2spec, def_spec):
     opts['disable_preboot'] = not spec['script_preboot']
     return opt_count
 
-def clear_setgid_cobalt():
-    # Clear setgid before attempting to start an interactive shell session
-    real_gid = os.getgid()
-    os.setregid(real_gid, real_gid)
 
-def fetch_pgid(user, jobid, loc, pgid=None):
-    '''fetch and set pgid for user shell.  Needed for cray systems'''
-    if client_utils.component_call(SYSMGR, False, 'get_implementation', ()) == 'alps_system':
-        #Cray is apparently using the session id for interactive jobs.
-        spec = [{'user': user, 'jobid': jobid, 'pgid': pgid, 'location':loc}]
-        if not client_utils.component_call(SYSMGR, False, 'confirm_alps_reservation', (spec)):
-            client_utils.logger.error('Unable to confirm ALPS reservation.  Exiting.')
-            sys.exit(1)
-    return
-
-def exec_user_shell(user, jobid, loc):
-    '''Execute shell for user for interactive jobs.  Uses the user's defined
-    SHELL.  Will also send the pgid for cray systems so that aprun will work
-    from within the shell.
-
-    Wait until termination.
-
-    '''
-    pgid = os.getsid(0)
-    def preexec_fn():
-        fetch_pgid(user, jobid, loc, pgid=pgid)
-        clear_setgid_cobalt()
-    proc = subprocess.Popen([os.environ['SHELL']], shell=True, preexec_fn=preexec_fn)
-    os.waitpid(proc.pid, 0)
-
-def run_interactive_job(jobid, user, disable_preboot, nodes, procs):
-    """
-    This will create the shell or ssh session for user
-    """
-    not_exit_on_interrupt()
-    # save whether we are running on a cluster system
-    impl =  client_utils.component_call(SYSMGR, False, 'get_implementation', ())
-    exit_on_interrupt()
-    deljob = True if impl == "cluster_system" else False
-
-    def start_session(loc, resid, nodes, procs):
-        """
-        start ssh or shell session
-        """
-        # Create necesary env vars
-        os.putenv("COBALT_NODEFILE", "/var/tmp/cobalt.%s" % (jobid))
-        os.putenv("COBALT_JOBID", "%s" % (jobid))
-        if resid:
-            os.putenv("COBALT_RESID", "%s" % (resid))
-        os.putenv("COBALT_PARTNAME", loc)
-        os.putenv("COBALT_BLOCKNAME", loc)
-        os.putenv("COBALT_JOBSIZE", str(procs))
-        os.putenv("COBALT_BLOCKSIZE",str(nodes))
-        os.putenv("COBALT_PARTSIZE", str(nodes))
-        client_utils.logger.info("Opening interactive session to %s", loc)
-        if deljob:
-            os.system("/usr/bin/ssh -o \"SendEnv COBALT_NODEFILE COBALT_JOBID\" %s" % (loc))
-        elif impl == 'alps_system':
-            # We may need to use a remote host depending on whether or not we
-            # are on an eLogin.
-            exec_user_shell(user, jobid, loc)
-        else:
-            os.system(os.environ['SHELL'])
-
-    # Wait for job to start
-    query = [{'tag':'job', 'jobid':jobid, 'location':'*', 'state':"*",
-        'resid':"*"}]
-    client_utils.logger.info("Wait for job %s to start...", str(jobid))
-
-    while True:
-        # If we get a ssl timeout error or component lookup error try again
-        try:
-            not_exit_on_interrupt()
-            response =  client_utils.component_call(QUEMGR, False, 'get_jobs', (query, ), False)
-            exit_on_interrupt()
-            # if jobid not found flag an error and exit
-            if not response:
-                client_utils.logger.error("Jobid %s not found after submission", str(jobid))
-                sys.exit()
-        except (xmlrpclib.Fault, ComponentProxy) as fault:
-            # This can happen if the component is down so try again
-            client_utils.logger.error('Error getting job info: %s. Try again', fault)
-            sleep(2)
-        state    = response[0]['state']
-        location = response[0]['location']
-        resid    = response[0]['resid']
-        if state == 'running' and location:
-            start_session(location[0], resid, nodes, procs)
-            break
-        client_utils.logger.debug('Current State "%s" for job %s', str(state), str(jobid))
-        sleep(2)
-
-    return deljob
-
-def qsub_remote_host(host):
-    '''On ALPS eLogins, we need to remote interactive mode qusubs to a host that
-    actually can run aprun.  If you don't do this, authentication to the batch
-    reservation fails due to the session id being used to authenticate and the
-    eLogin aprun being a ssh wrapper.
-
-    '''
-    SSH_CMD = '/usr/bin/ssh'
-    # And yes, that behavior is inherently broken.
-    ssh_cmd =  [SSH_CMD, '-t', host, CRAY_MOM_QSUB]
-    ssh_cmd.extend(sys.argv[1:])
-    return subprocess.call(ssh_cmd)
-
-def run_job(parser, user, spec, opts):
-    """
-    run the job
-    """
-    jobid        = None
-    deljob       = True
-    exc_occurred = False
-    interactive_remote_host = opts.get('ssh_host', None)
-
-    try:
-        not_exit_on_interrupt()
-        jobs  =  client_utils.component_call(QUEMGR, False, 'add_jobs',([spec],), False)
-        jobid = jobs[0]['jobid']
-        msg = None
-        if 'message' in jobs[0]:
-            msg = jobs[0]['message']
-        exit_on_interrupt()
-
-        if parser.options.envs:
-            client_utils.logger.debug("Environment Vars: %s", parser.options.envs)
-
-        # If this is an interactive job, wait for it to start, then start user shell
-        if parser.options.mode == 'interactive':
-            logjob(jobid, spec, False, msg=msg, ttyname=spec['ttysession'])
-            deljob = run_interactive_job(jobid, user,  opts['disable_preboot'], opts['nodecount'], opts['proccount'])
-        else:
-            logjob(jobid, spec, True, msg=msg, ttyname=spec['ttysession'])
-    except Exception, e:
-        client_utils.logger.error(e)
-        exc_occurred = True
-    finally:
-        if parser.options.mode == 'interactive':
-            exit_interactive_job(deljob, jobid, user)
-        if exc_occurred: 
-            sys.exit(1)
 
 def hhmmss(minutes_str):
     """ Cobalt stores the walltime in integer minutes. This converts it back 
@@ -656,38 +362,9 @@ def main():
         #       in a valid syntax, but it would not be what the user would want.
         opt_count = parse_options(parser, spec, opts, opt2spec, def_spec)
 
-    #client_utils.setumask(spec['umask'])
     validate_options(parser, opt_count)
     convert_to_pbs(opts,spec)
-"""
-    update_outputprefix(parser, spec)
-    update_paths(spec)
-    check_inputfile(parser, spec)
-
-    not_exit_on_interrupt()
-    opts['qsub_host'] = socket.gethostname()
-    opts = client_utils.component_call(SYSMGR, False, 'validate_job',(opts,))
-    impl = client_utils.component_call(SYSMGR, False, 'get_implementation',())
-    exit_on_interrupt()
-
-    if impl in ['alps_system']:
-        # If we're interactive, remote and go.
-        if opts['mode'] == 'interactive':
-            if opts.get('ssh_host', None) is not None:
-                if opts['qsub_host'] != opts['ssh_host']:
-                    #remote execute qsub on the ssh_host
-                    client_utils.logger.info('Connecting to %s for interactive qsub...', opts['ssh_host'])
-                    clear_setgid_cobalt()
-                    sys.exit(qsub_remote_host(opts['ssh_host'])) # return status from qsub-ssh
-
-    filters = client_utils.get_filters()
-    client_utils.process_filters(filters, spec)
-    # Attrs needs special handling filter won't set otherwise
-    if spec.get('attrs', None) is not None:
-        opts['attrs'].update(ast.literal_eval(str(spec['attrs'])))
-    update_spec(parser, opts, spec, opt2spec)
-    run_job(parser, user, spec, opts)
-"""
+    
 if __name__ == '__main__':
     try:
         main()
