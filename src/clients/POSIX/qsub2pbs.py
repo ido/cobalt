@@ -322,7 +322,7 @@ def main():
     def_spec['kernel']         = CN_DEFAULT_KERNEL
     def_spec['ion_kernel']     = ION_DEFAULT_KERNEL
     def_spec['queue']          = 'default'
-    def_spec['umask']          = 022
+    def_spec['umask']          = 0o022
     def_spec['run_project']    = False
     def_spec['user_list']      = [user]
     def_spec['procs']          = False
