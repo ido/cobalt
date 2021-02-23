@@ -194,7 +194,7 @@ def env_union():
             ndx += 1
         new_args[env_val_ndx] = ':'.join(env_values)
         sys.argv = new_args
-    except Exception, e:
+    except Exception as e:
         client_utils.logger.error( "No values specified or invalid usage of --env option: %s --> %s", str(sys.argv), e)
         sys.exit(1)
 
@@ -236,7 +236,7 @@ def convert_to_pbs(opts, spec):
     """
     target = os.getenv('QSUB_TARGET_SYSTEM')
     if not target:
-        print 'set QSUB_TARGET_SYSTEM to a hostname (like theta) to get something other than host=None'
+        print('set QSUB_TARGET_SYSTEM to a hostname (like theta) to get something other than host=None')
     parms=[]
     parms.append('-l select %s:host=%s' % (opts['nodecount'], target))
     parms.append('-l walltime=%s' % (hhmmss(opts['time'])))
@@ -271,7 +271,7 @@ def convert_to_pbs(opts, spec):
         parms.append('-v %s' % (opts['env'].replace(':',',')))
     if opts['directives']:
         for i in range(len(parms)):
-            print '#PBS ' + parms[i]
+            print('#PBS ' + parms[i])
     else:
         parms.append(spec['command'])
         parms.append(' '.join(spec['args']))
@@ -349,6 +349,6 @@ if __name__ == '__main__':
         main()
     except SystemExit:
         raise
-    except Exception, exc:
+    except Exception as exc:
         client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", exc)
         sys.exit(1)
