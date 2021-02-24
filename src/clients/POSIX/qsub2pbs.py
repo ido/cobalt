@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # Copyright 2017 UChicago Argonne, LLC. All rights reserved.
 # Licensed under a modified BSD 3-clause license. See LICENSE for details.
 """
@@ -272,6 +272,8 @@ def convert_to_pbs(opts, spec):
     if opts['directives']:
         for i in range(len(parms)):
             print('#PBS ' + parms[i])
+        print('\nNOTE: Directives should be immediately below the shebang line (#!/bin/bash or similar)')
+        print('PBS will stop procesing directives once it detects the first executable command')
     else:
         parms.append(spec['command'])
         parms.append(' '.join(spec['args']))
