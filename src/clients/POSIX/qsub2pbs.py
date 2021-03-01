@@ -274,12 +274,13 @@ def convert_to_pbs(opts, spec):
     if opts['env']:
         parms.append('-v %s' % (opts['env'].replace(':',',')))
     if opts['directives']:
+        print('#!/bin/bash')
         for i in range(len(parms)):
             print('#PBS ' + parms[i])
         if spec['mode'] != 'interactive':
             print(spec['command'] + ' ' + ' '.join(spec['args']))
-        print('\nNOTE: Directives should be immediately below the shebang line (#!/bin/bash or similar)')
-        print('PBS will stop procesing directives once it detects the first executable command')
+        print('\n#NOTE: Directives should be immediately below the shebang line (#!/bin/bash or similar)')
+        print('#PBS will stop procesing directives once it detects the first executable command')
     else:
         if spec['mode'] != 'interactive':
             if opts['exe']:
