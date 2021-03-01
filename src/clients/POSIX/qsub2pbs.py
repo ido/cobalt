@@ -16,6 +16,11 @@ version: "%prog " + __revision__ + , Cobalt  + __version__
 
 OPTIONS DEFINITIONS:
 
+Options specific to qsub2pbs.py:
+'--directives',dest='directives',help='output directives for a script rather than a command line',action='store_true'
+'--exe',dest='exe',help='add this if you are directly executing a command like /bin/sleep rather than a script',action='store_true'
+
+
 Option with no values:
 
 '-d','--debug',dest='debug',help='turn on communication debugging',callback=cb_debug
@@ -25,7 +30,6 @@ Option with no values:
 '--run_project',dest='run_project',help='set run project flag for this job',action='store_true'
 '--disable_preboot',dest='script_preboot',help='disable script preboot',action='store_false'
 '-I','--interactive',help='run qsub in interactive mode',callback=cb_interactive
-'--directives',dest='directives',help='output directives for a script rather than a command line',action='store_true'
 
 Option with values:
 
@@ -238,7 +242,7 @@ def convert_to_pbs(opts, spec):
     if not target:
         print('set QSUB_TARGET_SYSTEM to a hostname (like theta) to get something other than host=None')
     parms=[]
-    parms.append('-l select %s:host=%s' % (opts['nodecount'], target))
+    parms.append('-l select=%s:system=%s' % (opts['nodecount'], target))
     parms.append('-l walltime=%s' % (hhmmss(opts['time'])))
     # I realize there is a lot of very similar code in the if statements below
     # Given the limited duration I didn't think it was worth refactoring.
@@ -272,10 +276,14 @@ def convert_to_pbs(opts, spec):
     if opts['directives']:
         for i in range(len(parms)):
             print('#PBS ' + parms[i])
+        if spec['mode'] != 'interactive':
+            print(spec['command'] + ' ' + ' '.join(spec['args']))
         print('\nNOTE: Directives should be immediately below the shebang line (#!/bin/bash or similar)')
         print('PBS will stop procesing directives once it detects the first executable command')
     else:
         if spec['mode'] != 'interactive':
+            if opts['exe']:
+                parms.append(' -- ')
             parms.append(spec['command'])
             parms.append(' '.join(spec['args']))
         print(' '.join(['qsub'] + parms))
