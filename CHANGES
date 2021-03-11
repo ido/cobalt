@@ -1,5 +1,9 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 1.0.32 ==
+ * Added a utility qsub2pbs which takes Cobalt qsub command line arguments
+   and provides equivalents for PBSPro/OpenPBS.
+
 == Changes to 1.0.31 ==
  * Fixed a race condition where a K-accounting record could be missed if a
    reservation was manually removed as it was ending.
