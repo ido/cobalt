@@ -1,3 +1,9 @@
+cobalt (1.0.32) unstable; urgency=low
+
+  * adding client for pbs command generation.
+
+ -- Paul Rich <richp@alcf.anl.gov>  Thu, 18 Mar 2021 00:00:00 -0500
+
 cobalt (1.0.31) unstable; urgency=low
 
   * updates for clusters.
