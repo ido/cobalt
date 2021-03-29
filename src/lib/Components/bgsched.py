@@ -730,6 +730,25 @@ class BGSched (Component):
         if state.has_key('overflow') and (dbwriter.max_queued != None):
             dbwriter.overflow = state['overflow']
 
+        # Add potentially missing information:
+        for res in self.reservations.values():
+            if getattr(res, "ctime", 0) is 0:
+                res.ctime = 0 #set to Epoch as sentinel
+            if getattr(res, "stime", 0) == 0:
+                if res.active:
+                    # Reservation went active but stime didn't exist at the
+                    # time.  Use the planned start time, it's the closest we're
+                    # going to get.
+                    res.stime = res.start
+                else:
+                    res.stime = None
+            if getattr(res, "active_id_gen", None) is None:
+                res.active_id_gen = IncrID()
+                # Active id doesn't exist so create one.
+                res.active_id = res.active_id_gen.get()
+            if getattr(res, "resource_list", None) is None:
+                res.resource_list = {}
+
     # order the jobs with biggest utility first
     def utilitycmp(self, job1, job2):
         return -cmp(job1.score, job2.score)
