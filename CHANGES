@@ -1,5 +1,10 @@
 = Changes from previous Cobalt Versions =
 
+== Changes to 1.0.33 ==
+ * Fix for a bug where upgrading from significantly older versions of Cobalt
+   with existing reservations set will cause those reservations to be
+   unresponsive.
+
 == Changes to 1.0.32 ==
  * Added a utility qsub2pbs which takes Cobalt qsub command line arguments
    and provides equivalents for PBSPro/OpenPBS.
